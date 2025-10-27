@@ -1,13 +1,29 @@
 #!/usr/bin/env -S deno run -A
-/**
- * Entrée CLI placeholder pour TSera.
- *
- * Le routage Cliffy et les commandes (`init`, `dev`, `doctor`, `update`) seront ajoutés ultérieurement.
- */
-export function main(): void {
-  console.log("TSera CLI en construction. Consultez le README pour la feuille de route.");
+import { createRouter } from "./router.ts";
+
+export interface CliMetadata {
+  version: string;
+}
+
+const DEFAULT_METADATA: CliMetadata = {
+  version: "0.0.0-dev",
+};
+
+export async function main(
+  args: string[] = Deno.args,
+  metadata: CliMetadata = DEFAULT_METADATA,
+): Promise<void> {
+  const router = createRouter(metadata);
+  router.throwErrors();
+
+  try {
+    await router.parse(args);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    Deno.exit(1);
+  }
 }
 
 if (import.meta.main) {
-  main();
+  await main();
 }
