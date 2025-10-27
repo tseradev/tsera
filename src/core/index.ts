@@ -1,7 +1,12 @@
-/**
- * Placeholder entrypoint for TSera core exports.
- *
- * The concrete implementations (defineEntity, schema helpers, OpenAPI bridge, Drizzle bindings)
- * seront ajoutées dans les prochaines itérations.
- */
-export {};
+export {
+  defineEntity,
+  type EntityDef,
+  type EntitySpec,
+  isArrayColumnType,
+  type TArrayColumn,
+  type TColumn,
+  type TPrimitive,
+} from "./entity.ts";
+export { entityToDDL } from "./drizzle.ts";
+export { entityToOpenAPI, type OpenAPIOptions } from "./openapi.ts";
+export { entityToZod } from "./schema.ts";
