@@ -1,0 +1,98 @@
+import { join } from "../../shared/path.ts";
+import { createDefaultInitHandler } from "./init.ts";
+import { createDefaultDoctorHandler } from "./doctor.ts";
+import { assertEquals } from "../../testing/asserts.ts";
+
+const NOOP_WRITER = () => {};
+
+function createExitCollector() {
+  const codes: number[] = [];
+  const exit = (code: number): never => {
+    codes.push(code);
+    throw new Error(`exit:${code}`);
+  };
+  return { codes, exit };
+}
+
+Deno.test("doctor signale un plan nécessaire avec code de sortie", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const projectDir = join(tempDir, "doctor-app");
+    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    await init({
+      directory: projectDir,
+      template: "app-minimal",
+      force: false,
+      yes: true,
+      global: { json: false, strict: false },
+    });
+
+    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const original = await Deno.readTextFile(entityPath);
+    const updated = original.replace(
+      "Nom d'affichage facultatif.",
+      "Nom d'affichage facultatif (doctor test).",
+    );
+    await Deno.writeTextFile(entityPath, updated);
+
+    const collector = createExitCollector();
+    const doctor = createDefaultDoctorHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+      exit: collector.exit,
+    });
+
+    try {
+      await doctor({ cwd: projectDir, fix: false, global: { json: false, strict: false } });
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.startsWith("exit:")) {
+        throw error;
+      }
+    }
+
+    assertEquals(collector.codes, [1]);
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("doctor --fix applique les changements et laisse un état propre", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const projectDir = join(tempDir, "doctor-fix");
+    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    await init({
+      directory: projectDir,
+      template: "app-minimal",
+      force: false,
+      yes: true,
+      global: { json: false, strict: false },
+    });
+
+    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const original = await Deno.readTextFile(entityPath);
+    await Deno.writeTextFile(entityPath, `${original}\n// mutation`);
+
+    const doctor = createDefaultDoctorHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+      exit: (_code) => {
+        throw new Error("unexpected-exit");
+      },
+    });
+
+    await doctor({ cwd: projectDir, fix: true, global: { json: false, strict: false } });
+
+    const collector = createExitCollector();
+    const check = createDefaultDoctorHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+      exit: collector.exit,
+    });
+
+    await check({ cwd: projectDir, fix: false, global: { json: false, strict: false } });
+    assertEquals(collector.codes.length, 0);
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
