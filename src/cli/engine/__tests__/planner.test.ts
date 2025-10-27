@@ -1,0 +1,109 @@
+import { assertEquals } from "tsera/testing/asserts.ts";
+import { defineEntity } from "tsera/core/entity.ts";
+import type { TseraConfig } from "../../contracts/types.ts";
+import { buildDocsArtifacts } from "../artifacts/docs.ts";
+import { buildDrizzleArtifacts } from "../artifacts/drizzle.ts";
+import { buildOpenAPIArtifacts } from "../artifacts/openapi.ts";
+import { buildTestArtifacts } from "../artifacts/tests.ts";
+import { buildZodArtifacts } from "../artifacts/zod.ts";
+import { createDag } from "../dag.ts";
+import { planDag, type PlanStep } from "../planner.ts";
+import { applySnapshots, createEmptyState } from "../state.ts";
+
+const config: TseraConfig = {
+  projectName: "Demo",
+  rootDir: ".",
+  entitiesDir: "domain",
+  artifactsDir: ".tsera",
+  db: {
+    dialect: "postgres",
+    connectionString: "postgres://localhost/demo",
+    migrationsDir: "drizzle",
+    schemaDir: "drizzle/schema",
+  },
+};
+
+const entityV1 = defineEntity({
+  name: "Invoice",
+  table: true,
+  columns: {
+    id: { type: "string" },
+    total: { type: "number" },
+  },
+  doc: true,
+  test: "smoke",
+});
+
+const entityV2 = defineEntity({
+  name: "Invoice",
+  table: true,
+  columns: {
+    id: { type: "string" },
+    total: { type: "number" },
+    currency: { type: "string", default: "EUR" },
+  },
+  doc: true,
+  test: "smoke",
+});
+
+Deno.test("planDag calcule create/update/delete", async () => {
+  const artifactsV1 = [
+    ...(await buildZodArtifacts({ entity: entityV1, config })),
+    ...(await buildOpenAPIArtifacts({ entity: entityV1, config })),
+    ...(await buildDrizzleArtifacts({ entity: entityV1, config })),
+    ...(await buildDocsArtifacts({ entity: entityV1, config })),
+    ...(await buildTestArtifacts({ entity: entityV1, config })),
+  ];
+
+  const dagV1 = await createDag([
+    { entity: entityV1, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV1 },
+  ], { cliVersion: "0.1.0" });
+
+  let state = createEmptyState();
+  const planCreate = planDag(dagV1, state);
+  assertEquals(planCreate.summary.create, artifactsV1.length);
+  assertEquals(planCreate.summary.changed, true);
+
+  state = applySnapshots(state, toUpdates(planCreate.steps));
+
+  const artifactsV2 = [
+    ...(await buildZodArtifacts({ entity: entityV2, config })),
+    ...(await buildOpenAPIArtifacts({ entity: entityV2, config })),
+    ...(await buildDrizzleArtifacts({ entity: entityV2, config })),
+    ...(await buildDocsArtifacts({ entity: entityV2, config })),
+    ...(await buildTestArtifacts({ entity: entityV2, config })),
+  ];
+
+  const dagV2 = await createDag([
+    { entity: entityV2, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV2 },
+  ], { cliVersion: "0.1.0" });
+
+  const planUpdate = planDag(dagV2, state);
+  assertEquals(planUpdate.summary.update > 0, true);
+  state = applySnapshots(state, toUpdates(planUpdate.steps));
+
+  const artifactsV3 = [
+    ...(await buildZodArtifacts({ entity: entityV2, config })),
+    ...(await buildOpenAPIArtifacts({ entity: entityV2, config })),
+    ...(await buildDrizzleArtifacts({ entity: entityV2, config })),
+  ];
+  const dagV3 = await createDag([
+    { entity: entityV2, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV3 },
+  ], { cliVersion: "0.1.0" });
+
+  const planDelete = planDag(dagV3, state);
+  assertEquals(planDelete.summary.delete > 0, true);
+});
+
+function toUpdates(
+  steps: PlanStep[],
+): { node: PlanStep["node"]; action: "create" | "update" | "delete" }[] {
+  const updates: { node: PlanStep["node"]; action: "create" | "update" | "delete" }[] = [];
+  for (const step of steps) {
+    if (step.kind === "noop") {
+      continue;
+    }
+    updates.push({ node: step.node, action: step.kind });
+  }
+  return updates;
+}
