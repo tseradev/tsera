@@ -154,8 +154,14 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
 }
 
 export function serialiseDag(dag: Dag): { nodes: DagNode[]; edges: DagEdge[] } {
-  return {
-    nodes: Array.from(dag.nodes.values()),
-    edges: dag.edges,
-  };
+  const nodes = Array.from(dag.nodes.values()).sort((a, b) => a.id.localeCompare(b.id));
+  const edges = dag.edges.slice().sort((a, b) => {
+    const from = a.from.localeCompare(b.from);
+    if (from !== 0) {
+      return from;
+    }
+    return a.to.localeCompare(b.to);
+  });
+
+  return { nodes, edges };
 }

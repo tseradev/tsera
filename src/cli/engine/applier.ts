@@ -41,7 +41,7 @@ export async function applyPlan(
         }
         break;
       default:
-        step satisfies never;
+        break;
     }
   }
 
@@ -49,7 +49,7 @@ export async function applyPlan(
 }
 
 async function handleWriteStep(
-  step: Extract<PlanStep, { kind: "create" | "update" }>,
+  step: PlanStep,
   options: ApplyOptions,
   updates: { node: PlanStep["node"]; action: "create" | "update" | "delete" }[],
 ): Promise<void> {
@@ -64,7 +64,7 @@ async function handleWriteStep(
 
   const absolute = join(options.projectDir, targetPath);
   const result = await safeWrite(absolute, content);
-  updates.push({ node: step.node, action: step.kind });
+  updates.push({ node: step.node, action: step.kind as "create" | "update" });
 
   if (options.onStep) {
     await options.onStep(step, { kind: step.kind, path: targetPath, changed: result.changed });
@@ -72,7 +72,7 @@ async function handleWriteStep(
 }
 
 async function handleDeleteStep(
-  step: Extract<PlanStep, { kind: "delete" }>,
+  step: PlanStep,
   options: ApplyOptions,
   updates: { node: PlanStep["node"]; action: "create" | "update" | "delete" }[],
 ): Promise<void> {
