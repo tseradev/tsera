@@ -31,12 +31,28 @@ function assertDbConfig(value: unknown): asserts value is TseraConfig["db"] {
   assertString(db.schemaDir, "db.schemaDir");
 }
 
+function assertOptionalEntitiesList(value: unknown): void {
+  if (value === undefined) {
+    return;
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("Le champ entities doit être un tableau de chemins.");
+  }
+  for (const [index, item] of value.entries()) {
+    if (typeof item !== "string" || item.length === 0) {
+      throw new Error(`Chemin d'entité invalide à l'index ${index} dans entities.`);
+    }
+  }
+}
+
 function validateConfig(config: TseraConfig): void {
   assertString(config.projectName, "projectName");
   assertString(config.rootDir, "rootDir");
   assertString(config.entitiesDir, "entitiesDir");
   assertString(config.artifactsDir, "artifactsDir");
   assertDbConfig(config.db);
+  const maybe = config as { entities?: unknown };
+  assertOptionalEntitiesList(maybe.entities);
 }
 
 export async function resolveConfig(startDir: string): Promise<ResolvedTseraConfig> {

@@ -21,6 +21,7 @@ export interface TseraConfig {
   rootDir: string;
   entitiesDir: string;
   artifactsDir: string;
+  entities?: string[];
   db: DbConfig;
   deploy?: DeployTarget[];
 }

@@ -35,7 +35,7 @@ export function createRouter(
     });
 
   root.command("init", createInitCommand(handlers.init));
-  root.command("dev", createDevCommand(handlers.dev));
+  root.command("dev", createDevCommand(metadata, handlers.dev));
   root.command("doctor", createDoctorCommand(handlers.doctor));
   root.command("update", createUpdateCommand(handlers.update));
 
