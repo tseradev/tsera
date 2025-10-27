@@ -1,0 +1,25 @@
+{
+  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+  "importMap": "./import_map.json",
+  "compilerOptions": {
+    "strict": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "tasks": {
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "test": "deno test -A --fail-fast",
+    "e2e": "deno run -A scripts/e2e.ts",
+    "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
+    "publish": "deno publish"
+  }
+}
