@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "@app/": "./",
+    "tsera/core": "../../src/core/index.ts"
+  }
+}

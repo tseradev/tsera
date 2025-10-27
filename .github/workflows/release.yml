@@ -1,0 +1,21 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+      - name: Compile binaries
+        run: deno task compile
+      - name: Publish placeholder
+        run: echo "TODO: upload binaries and deno publish"
