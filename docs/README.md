@@ -1,15 +1,27 @@
-# TSera documentation (placeholder)
+# TSera documentation hub
 
-This folder gathers TSera's public guides. The documentation will progressively detail the vision,
-CLI workflows, and generated artifacts (entities, schemas, migrations, docs, tests). The sections
-below are an initial structure that will be filled iteratively.
+Welcome to the documentation index. Each guide focuses on a specific aspect of TSera so developers
+can quickly find the information they need.
 
-## Upcoming guides
+## Start here
 
-1. **Getting started**: install the binary or the JSR module, configure a project, and run the first
-   commands.
-2. **Entities & Continuous Coherence**: design entities with `defineEntity`, generate schemas, and
-   keep artifacts synchronized.
-3. **Templates**: use and customize `templates/app-minimal`.
+- [Getting Started](./GETTING_STARTED.md) — install the CLI, bootstrap a project, and run your first
+  coherence cycle.
+- [Task-oriented recipes](./RECIPES.md) — follow concise workflows to add entities, regenerate
+  artifacts, or fix drift.
+- [CLI command reference](./CLI_REFERENCE.md) — dive into every option supported by the four core
+  commands (`init`, `dev`, `doctor`, `update`).
 
-Each guide will rely on reproducible examples and the Deno tasks described in `deno.jsonc`.
+## Deep dives
+
+- [Architecture](./ARCHITECTURE.md) — understand the DAG, planner, applier, and watcher internals.
+- [Communication playbook](./COMMUNICATION.md) — messaging, channels, and launch guidance.
+
+## How to contribute to the docs
+
+- Keep guides practical and reproducible: every command should work in a fresh checkout.
+- Reference the relevant recipe or command section when adding new features.
+- When adding screenshots or code samples, prefer short snippets and highlight the expected output.
+
+If you spot gaps or want to propose a new section, open an issue describing the scenario you want to
+document.

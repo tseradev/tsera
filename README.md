@@ -26,26 +26,63 @@ team-facing documentation.
 
 ## Quick start
 
+### Prerequisites
+
+- [Install Deno v2](https://docs.deno.com/runtime/manual/getting_started/installation) and enable
+  the `deno` binary in your `PATH`.
+- Clone this repository or install the published binary/module when releases are available.
+
+### Install the CLI locally
+
+From the repository root you can install the CLI globally with `deno install`:
+
 ```bash
-# 1. Format the repository
-deno task fmt
-# 2. Run strict linting
-deno task lint
-# 3. Execute the test suite
-deno task test
+deno install -A -f --name tsera src/cli/main.ts
 ```
 
-Once the CLI core is ready, the following commands will showcase the end-to-end workflow:
+This makes a `tsera` executable available in your shell (the command can also be run directly with
+`deno run -A src/cli/main.ts ...` during development).
+
+### Hello world walkthrough
 
 ```bash
-# Initialize a new project
-deno run -A src/cli/main.ts init my-app
-# Regenerate artifacts with continuous watching
-deno run -A src/cli/main.ts dev
+# 1. Scaffold a new project in ./demo
+tsera init demo
+
+# 2. Move into the generated project and inspect the structure
+cd demo
+ls
+# (optional) run `tree -L 2` if the tree command is available
+
+# 3. Start the continuous coherence loop
+tsera dev --once
+
+# 4. Keep the watcher active during development
+tsera dev
 ```
+
+When `tsera init` completes you will find:
+
+- `tsera.config.ts` — a fully documented configuration with defaults for entities, paths, and deploy
+  targets.
+- `.tsera/graph.json` & `.tsera/manifest.json` — cached hashes and manifest produced by the engine.
+- `drizzle/`, `docs/`, and `tests/` — folders that will receive generated migrations, documentation,
+  and smoke tests as soon as entities are introduced.
+- `templates/app-minimal` files copied into the new project: a Hono API, Fresh front-end islands,
+  and an example `User` entity to explore.
+
+Running `tsera dev` triggers a full **plan → apply** cycle. The default (interactive) mode displays
+a summary of the detected entities, the generated artifacts, and the resulting coherence status. Use
+`--json` for NDJSON output suitable for CI pipelines.
+
+For a more exhaustive, step-by-step onboarding (including sample outputs), read the
+[Getting Started guide](./docs/GETTING_STARTED.md).
 
 ## Documentation
 
+- [Getting Started](./docs/GETTING_STARTED.md)
+- [Task-oriented recipes](./docs/RECIPES.md)
+- [CLI command reference](./docs/CLI_REFERENCE.md)
 - [Detailed architecture guide](./docs/ARCHITECTURE.md)
 - [Community landing & resources](./docs/README.md)
 - [Communication playbook & assets](./docs/COMMUNICATION.md)
@@ -93,17 +130,26 @@ After completing these checks, create the `vX.Y.Z` tag and follow the release pr
 
 The cycle can run manually (`plan/apply`) or automatically through `tsera dev`.
 
-## CLI commands (preview)
+## CLI commands at a glance
 
-| Command                | Quick description                                                                  | Status    |
-| ---------------------- | ---------------------------------------------------------------------------------- | --------- |
-| `tsera init <name>`    | Generates `tsera.config.ts`, the `app-minimal` template, and the `.tsera/` layout. | 🛠️ In dev |
-| `tsera dev [--json]`   | Watches entities, computes the plan, and applies artifacts on a loop.              | 🛠️ In dev |
-| `tsera doctor [--fix]` | Diagnoses inconsistencies and can safely fix known scenarios.                      | 🛠️ In dev |
-| `tsera update`         | Updates the installed binary and syncs CLI dependencies.                           | 🛠️ In dev |
+| Command             | Purpose                                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `tsera init <name>` | Scaffold the `app-minimal` template, generate `.tsera` state, and prepare a ready-to-commit project. |
+| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change.         |
+| `tsera doctor`      | Rebuild the dependency graph, detect drifts, and optionally auto-fix safe issues.                    |
+| `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                   |
 
-Each command supports an interactive mode (`TUI`) and machine-oriented mode (`--json`). Detailed
-option specifications will be added once the implementation stabilizes.
+Key options to remember:
+
+- `tsera init` — `--no-install` to skip dependency installs, `--json` for machine-readable progress.
+- `tsera dev` — `--json` for NDJSON logs, `--strict` to exit with code `2` when drift remains,
+  `--plan-only` or `--once` for scripted runs.
+- `tsera doctor` — `--fix` for safe remediation, `--strict` to gate CI, `--json` for diagnostics.
+- `tsera update` — `--channel` (`stable`/`beta`/`canary`), `--binary` to force compiled releases,
+  `--json` to stream progress.
+
+All commands offer an interactive TUI by default. The detailed behaviour, exit codes, and example
+outputs are documented in the [CLI command reference](./docs/CLI_REFERENCE.md).
 
 ## Repository structure
 
