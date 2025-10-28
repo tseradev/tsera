@@ -12,18 +12,18 @@ the tool and highlights what to expect from the continuous coherence (CC) loop.
    deno --version
    ```
 2. Clone the repository or download a release bundle when available.
-3. (Optional) Install the CLI globally so `tsera` is available in your shell. Pass the repository
-   config so the installed command retains the import map:
+3. (Optional) Install the CLI globally so `tsera` is available in your shell. Pass both the
+   repository config and import map so the installed command retains the aliases:
    ```bash
-   deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
+   deno install --global --config deno.jsonc --import-map import_map.json -A -f --name tsera src/cli/main.ts
    ```
    > During development you can replace `tsera` with `deno run -A src/cli/main.ts`. On Deno v2 the
    > `--global` flag is mandatory whenever you pass permission flags (`-A`, `--allow-*`). Without it
-   > the installer exits with `the following required arguments were not provided: --global`. Deno
-   > will also warn that `discovered config file will be ignored` if you skip `--config deno.jsonc`;
-   > in that case the installed binary cannot resolve `tsera/*` imports. Re-run the installation
-   > with `--config deno.jsonc` (or alternatively `--import-map import_map.json`) to keep the CLI
-   > working.
+   > the installer exits with `the following required arguments were not provided: --global`. Deno 2
+   > also ignores the `importMap` setting from `deno.jsonc` during `deno install`; skipping either
+   > `--config deno.jsonc` or `--import-map import_map.json` causes the installed binary to fail
+   > with `Import ... not a dependency`. Even when both flags are provided Deno prints a warning
+   > about the ignored `importMap` entry—this is expected and safe to ignore.
 
 ## 2. Create your first project
 

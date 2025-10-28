@@ -46,5 +46,9 @@ export function createRouter(
   root.command("doctor", createDoctorCommand(handlers.doctor));
   root.command("update", createUpdateCommand(handlers.update));
 
+  root.action(() => {
+    root.showHelp();
+  });
+
   return root;
 }
