@@ -14,9 +14,12 @@ the tool and highlights what to expect from the continuous coherence (CC) loop.
 2. Clone the repository or download a release bundle when available.
 3. (Optional) Install the CLI globally so `tsera` is available in your shell:
    ```bash
-   deno install -A -f --name tsera src/cli/main.ts
+   deno install --global -A -f --name tsera src/cli/main.ts
    ```
-   > During development you can replace `tsera` with `deno run -A src/cli/main.ts`.
+   > During development you can replace `tsera` with `deno run -A src/cli/main.ts`. On Deno v2 the
+   > `--global` flag is mandatory whenever you pass permission flags (`-A`, `--allow-*`). Without it
+   > the installer exits with `the following required arguments were not
+   > provided: --global`.
 
 ## 2. Create your first project
 
