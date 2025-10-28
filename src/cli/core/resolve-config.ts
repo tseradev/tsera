@@ -1,18 +1,6 @@
-import { resolve } from "../../shared/path.ts";
+import { join } from "../../shared/path.ts";
 import type { ResolvedTseraConfig, TseraConfig } from "../contracts/types.ts";
 import { resolveProject } from "./project.ts";
-
-function pathToFileUrl(path: string): URL {
-  let absolute = resolve(path);
-  if (Deno.build.os === "windows") {
-    absolute = absolute.replace(/\\/g, "/");
-    if (!absolute.startsWith("/")) {
-      absolute = `/${absolute}`;
-    }
-    return new URL(`file://${absolute}`);
-  }
-  return new URL(`file://${absolute}`);
-}
 
 function assertBoolean(value: unknown, field: string): asserts value is boolean {
   if (typeof value !== "boolean") {
@@ -129,13 +117,8 @@ function validateConfig(config: TseraConfig): void {
 
 export async function resolveConfig(startDir: string): Promise<ResolvedTseraConfig> {
   const project = await resolveProject(startDir);
-  const fileUrl = pathToFileUrl(project.configPath);
-  const cacheBust = `t=${Date.now()}`;
-  const importUrl = fileUrl.search.length > 0
-    ? `${fileUrl.href}&${cacheBust}`
-    : `${fileUrl.href}?${cacheBust}`;
-
-  const mod = await import(importUrl);
+  const bundled = await bundleConfigModule(project.configPath);
+  const mod = await import(bundled);
   const config: unknown = mod.default ?? mod.config ?? mod.CONFIG;
   if (!config) {
     throw new Error(`No configuration exported by ${project.configPath}`);
@@ -147,4 +130,50 @@ export async function resolveConfig(startDir: string): Promise<ResolvedTseraConf
     configPath: project.configPath,
     config: config as TseraConfig,
   };
+}
+
+async function bundleConfigModule(configPath: string): Promise<string> {
+  const source = await Deno.readTextFile(configPath);
+  const sanitized = stripTypeImports(source);
+  const withSourceUrl = `${sanitized}\n//# sourceURL=${pathToFileUrl(configPath).href}`;
+  const encoded = toBase64(withSourceUrl);
+  return `data:application/typescript;base64,${encoded}`;
+}
+
+function stripTypeImports(source: string): string {
+  return source.replace(/^\s*import\s+type\s+[^;]+;\s*\n?/gm, "");
+}
+
+function pathToFileUrl(path: string): URL {
+  let absolute = join(Deno.cwd(), path);
+  if (isAbsolutePath(path)) {
+    absolute = path;
+  }
+
+  if (Deno.build.os === "windows") {
+    absolute = absolute.replace(/\\/g, "/");
+    if (!absolute.startsWith("/")) {
+      absolute = `/${absolute}`;
+    }
+    return new URL(`file://${absolute}`);
+  }
+
+  const normalised = absolute.replace(/\\/g, "/");
+  return new URL(`file://${normalised}`);
+}
+
+function isAbsolutePath(path: string): boolean {
+  if (path.startsWith("/")) {
+    return true;
+  }
+  return /^[A-Za-z]:[\\/]/.test(path);
+}
+
+function toBase64(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
 }

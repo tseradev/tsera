@@ -86,6 +86,27 @@ in CI/CD environments. Add `--strict` to turn drifts into exit code `2` (ideal f
    - `drizzle/<timestamp>_update_user.sql` — migration reflecting the new column.
    - `docs/User.md` — refreshed documentation.
    - `tests/User.test.ts` — smoke test covering the schema.
+3. Start the example API and the Fresh frontend in other terminals to confirm runtime behaviour:
+   ```bash
+   deno task dev
+   deno task dev:web
+   curl http://localhost:8000/health
+   ```
+   The `/health` response looks like:
+   ```json
+   { "status": "ok", "timestamp": "2024-01-01T00:00:00.000Z" }
+   ```
+   Visit `http://localhost:8001/` to see the Fresh starter page that explains the default flow.
+4. Execute the bundled tests (the template ships a `tests/health.test.ts` plus the generated schema
+   smoke tests):
+   ```bash
+   deno task test
+   ```
+5. The `deps/hono.ts` helper bundled with the template attempts to import the official
+   [`hono`](https://hono.dev/) package from `npm`. If the dependency cannot be downloaded (offline
+   development, restrictive CI) it silently falls back to a lightweight router that covers the demo
+   use case. Once you have network access run `deno add npm:hono@4` inside the generated project to
+   pin the real framework.
    - `openapi.json` and `*.schema.ts` — updated schemas with the new field.
 
 ## 5. Interpret JSON output

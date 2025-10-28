@@ -305,40 +305,37 @@ function toPascalCase(value: string): string {
 }
 
 function generateConfigFile(_projectName: string): string {
-  const envVar = "TSERA_DATABASE_URL";
-  const sqliteFile = "data/tsera.sqlite";
-
-  const template = `// TSera configuration (full profile with comments).
-import type { TseraConfig } from "tsera/cli/contracts/types.ts";
+  const template = `// deno-lint-ignore-file no-unversioned-import
+// tsera.config.ts — full profile (toggle true/false as needed)
+import type { TseraConfig } from "jsr:@tsera/core";
 
 const config: TseraConfig = {
-  // Toggle generated artifacts controlled by "tsera dev".
-  openapi: true,
-  docs: true,
-  tests: true,
-  telemetry: false,
-  // Folder storing generated schemas, manifests, and OpenAPI files.
+  // GENERATION
+  openapi: true, // Generate openapi.json
+  docs: true, // Markdown docs + Swagger UI
+  tests: true, // Auto-generated smoke tests
+  telemetry: false, // Anonymous DX telemetry
+
+  // OUTPUT
   outDir: ".tsera",
-  // Source folders scanned for entities (add files or globs as needed).
   paths: {
-    entities: ["domain"],
-    // routes: ["routes/**/*.ts"],
+    entities: ["./domain/**/*.entity.ts"],
+    routes: ["./app/**/*.route.ts"],
   },
+
+  // DATABASE
   db: {
-    // Choose between "postgres", "mysql", or "sqlite".
-    dialect: "postgres",
-    // Environment variable supplying the connection URL.
-    urlEnv: "${envVar}",
-    ssl: "prefer",
-    // Example SQLite configuration:
-    // dialect: "sqlite",
-    // file: "${sqliteFile}",
+    dialect: "postgres", // "postgres"|"mysql"|"sqlite"
+    urlEnv: "DATABASE_URL", // Environment variable name
+    ssl: "require", // Postgres: "disable"|"prefer"|"require"
+    // file: "./data/app.db", // Required when dialect = "sqlite"
   },
+
+  // DEPLOYMENT
   deploy: {
-    // Deployment target handled by "tsera update".
-    target: "deno_deploy",
-    entry: "main.ts",
-    envFile: ".env.deploy",
+    target: "deno_deploy", // "deno_deploy"|"cloudflare"|"node_pm2"
+    entry: "./main.ts", // Application entry point
+    envFile: ".env", // Local env file
   },
 };
 

@@ -10,15 +10,15 @@ const baseConfig: TseraConfig = {
   tests: true,
   telemetry: false,
   outDir: ".tsera",
-  paths: { entities: ["domain"] },
+  paths: { entities: ["./domain/**/*.entity.ts"] },
   db: {
     dialect: "postgres",
     urlEnv: "DATABASE_URL",
-    ssl: "prefer",
+    ssl: "require",
   },
   deploy: {
     target: "deno_deploy",
-    entry: "main.ts",
+    entry: "./main.ts",
   },
 };
 

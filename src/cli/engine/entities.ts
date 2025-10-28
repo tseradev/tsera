@@ -130,6 +130,14 @@ async function gatherEntityPaths(
   const collected: string[] = [];
 
   for (const entry of config.paths.entities) {
+    if (isGlobPattern(entry)) {
+      const matches = await expandEntityGlob(projectDir, entry);
+      for (const match of matches) {
+        collected.push(match);
+      }
+      continue;
+    }
+
     const absolute = join(projectDir, entry);
     let stat: Deno.FileInfo;
     try {
@@ -157,6 +165,30 @@ async function gatherEntityPaths(
   }
 
   return dedupePreserveOrder(collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1)));
+}
+
+async function expandEntityGlob(projectDir: string, pattern: string): Promise<string[]> {
+  const normalizedPattern = normalizeGlobPattern(pattern);
+  const regex = globToRegExp(normalizedPattern);
+  const rootDir = determineGlobRoot(projectDir, normalizedPattern);
+  const rootExists = await pathExists(rootDir);
+  if (!rootExists) {
+    throw new Error(`Configured entity glob ${pattern} references a missing directory.`);
+  }
+
+  const matches: string[] = [];
+  await walkForGlob(rootDir, (absolutePath) => {
+    const relative = normalizeGlobCandidate(toProjectRelative(projectDir, absolutePath));
+    if (regex.test(relative)) {
+      matches.push(relative);
+    }
+  });
+
+  if (matches.length === 0) {
+    throw new Error(`Configured entity glob ${pattern} did not match any files.`);
+  }
+
+  return matches;
 }
 
 async function walkEntities(
@@ -191,6 +223,126 @@ function dedupePreserveOrder(values: string[]): string[] {
     result.push(normalised);
   }
   return result;
+}
+
+function isGlobPattern(value: string): boolean {
+  return /[*?\[]/.test(value);
+}
+
+function normalizeGlobPattern(pattern: string): string {
+  const replaced = pattern.replace(/\\/g, "/");
+  const trimmed = replaced.startsWith("./") ? replaced.slice(2) : replaced;
+  return trimmed.replace(/^\/+/, "");
+}
+
+function normalizeGlobCandidate(candidate: string): string {
+  const replaced = candidate.replace(/\\/g, "/");
+  if (replaced === "./" || replaced === ".") {
+    return "";
+  }
+  return replaced.startsWith("./") ? replaced.slice(2) : replaced;
+}
+
+function globToRegExp(pattern: string): RegExp {
+  let regex = "^";
+  for (let index = 0; index < pattern.length; index++) {
+    const char = pattern[index];
+    if (char === "*") {
+      if (pattern[index + 1] === "*") {
+        const next = pattern[index + 2];
+        if (next === "/") {
+          regex += "(?:.*\/)?";
+          index += 2;
+        } else {
+          regex += ".*";
+          index++;
+        }
+      } else {
+        regex += "[^/]*";
+      }
+      continue;
+    }
+    if (char === "?") {
+      regex += "[^/]";
+      continue;
+    }
+    if (char === ".") {
+      regex += "\\.";
+      continue;
+    }
+    if (char === "/") {
+      regex += "/";
+      continue;
+    }
+    if (/[+|()^$\[\]{}]/.test(char)) {
+      regex += `\\${char}`;
+      continue;
+    }
+    regex += char;
+  }
+  regex += "$";
+  return new RegExp(regex);
+}
+
+function determineGlobRoot(projectDir: string, pattern: string): string {
+  const wildcardIndex = pattern.search(/[*?]/);
+  if (wildcardIndex === -1) {
+    return join(projectDir, pattern);
+  }
+  const slashIndex = pattern.lastIndexOf("/", wildcardIndex);
+  if (slashIndex === -1) {
+    return projectDir;
+  }
+  const base = pattern.slice(0, slashIndex);
+  return join(projectDir, base);
+}
+
+async function walkForGlob(
+  root: string,
+  onFile: (absolutePath: string) => Promise<void> | void,
+): Promise<void> {
+  let stat: Deno.FileInfo;
+  try {
+    stat = await Deno.stat(root);
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return;
+    }
+    throw error;
+  }
+
+  if (stat.isFile) {
+    await onFile(root);
+    return;
+  }
+
+  if (!stat.isDirectory) {
+    return;
+  }
+
+  for await (const entry of Deno.readDir(root)) {
+    const entryPath = join(root, entry.name);
+    if (entry.isDirectory) {
+      await walkForGlob(entryPath, onFile);
+      continue;
+    }
+    if (!entry.isFile) {
+      continue;
+    }
+    await onFile(entryPath);
+  }
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 async function loadEntityDefinitions(path: string): Promise<EntityDef[]> {

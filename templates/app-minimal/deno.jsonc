@@ -6,6 +6,7 @@
   },
   "tasks": {
     "dev": "deno run -A main.ts",
+    "dev:web": "deno run -A web/main.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test --fail-fast"

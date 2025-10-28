@@ -61,12 +61,31 @@ cd demo
 ls
 # (optional) run `tree -L 2` if the tree command is available
 
-# 3. Start the continuous coherence loop
+# 3. Start the continuous coherence loop once to generate artifacts
 tsera dev --once
 
 # 4. Keep the watcher active during development
 tsera dev
+
+# 5. Launch the demo API and the Fresh frontend in separate terminals
+deno task dev
+deno task dev:web
+
+# 6. Hit the health route (responds with `{ "status": "ok" }`)
+curl http://localhost:8000/health
+
+# 7. Open the Fresh starter page for guidance
+# (replace `open` by `xdg-open` on Linux if needed)
+open http://localhost:8001/
+
+# 7. Run the bundled smoke tests (health route + generated schemas)
+deno task test
 ```
+
+> The template ships with `deps/hono.ts`, a thin loader that attempts to import `npm:hono@4`. If the
+> network is unavailable it falls back to a minimal router so tests continue to run offline. Once
+> you are ready to depend on the full framework, execute `deno add npm:hono@4` inside the generated
+> project to pin the official package.
 
 When `tsera init` completes you will find:
 

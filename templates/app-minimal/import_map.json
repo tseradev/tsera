@@ -4,6 +4,6 @@
     "@fresh/": "jsr:@fresh/",
     "@preact/": "jsr:@preact/",
     "tsera/": "jsr:tsera/",
-    "hono": "jsr:@hono/hono"
+    "jsr:@tsera/core": "./tsera-core.ts"
   }
 }

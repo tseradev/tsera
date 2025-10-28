@@ -1,11 +1,12 @@
-# Fresh placeholder
+# Fresh minimal app
 
-This folder is ready to host a Fresh interface.
+This folder contains a working Fresh example wired to the Hono API.
 
-## Next steps
+## Start the SSR server
 
-- Move or adapt the generated routes under `routes/`.
-- Connect components to TSera entities (through the Hono API or direct access depending on your
-  needs).
+```bash
+deno run -A web/main.ts
+```
 
-`.gitkeep` files keep the default structure intact.
+The `routes/index.tsx` page shows how to display guidance and share types with the backend. Update
+this component or add new routes to build your interface.

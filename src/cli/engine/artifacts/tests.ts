@@ -3,7 +3,8 @@ import { posixPath } from "../../../shared/path.ts";
 import type { TColumn } from "tsera/core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
-const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
+const { dirname: posixDirname, join: posixJoin, relative: posixRelative } =
+  posixPath;
 
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
@@ -13,12 +14,18 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
     "schemas",
     `${entity.name}.schema.ts`,
   );
-  const importPath = normaliseImport(posixRelative(posixDirname(testPath), schemaPath));
+  const importPath = normaliseImport(
+    posixRelative(posixDirname(testPath), schemaPath),
+  );
   const objectLiteral = buildSampleObject(entity.columns);
   const keys = Object.keys(entity.columns).sort();
 
+  const assertsImport = normaliseImport(
+    posixRelative(posixDirname(testPath), posixJoin("testing", "asserts.ts")),
+  );
+
   const lines: string[] = [
-    'import { assertEquals } from "tsera/testing/asserts.ts";',
+    `import { assertEquals } from "${assertsImport}";`,
     `import { ${entity.name}Schema } from "${importPath}";`,
     "",
     `Deno.test("${entity.name} schema valide un exemple minimal", () => {`,
@@ -72,7 +79,9 @@ function sampleValue(column: TColumn): string {
   return samplePrimitive(column.type);
 }
 
-function samplePrimitive(type: TColumn["type"] extends infer T ? T : never): string {
+function samplePrimitive(
+  type: TColumn["type"] extends infer T ? T : never,
+): string {
   if (typeof type === "object" && type !== null && "arrayOf" in type) {
     const value = samplePrimitive(type.arrayOf);
     return `[${value}]`;
