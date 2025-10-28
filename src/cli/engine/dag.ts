@@ -122,7 +122,7 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
   for (const edge of edges) {
     if (!nodes.has(edge.from) || !nodes.has(edge.to)) {
       throw new Error(
-        `Une arête référence un nœud inconnu dans le graphe: ${edge.from} -> ${edge.to}.`,
+        `An edge references an unknown node in the graph: ${edge.from} -> ${edge.to}.`,
       );
     }
     incoming.set(edge.to, (incoming.get(edge.to) ?? 0) + 1);
@@ -160,7 +160,7 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
   }
 
   if (result.length !== nodes.size) {
-    throw new Error("Le graphe des artefacts contient un cycle.");
+    throw new Error("The artifact graph contains a cycle.");
   }
 
   return result;

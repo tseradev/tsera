@@ -14,7 +14,7 @@ function createExitCollector() {
   return { codes, exit };
 }
 
-Deno.test("doctor signale un plan nécessaire avec code de sortie", async () => {
+Deno.test("doctor reports a pending plan with exit code", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "doctor-app");
@@ -30,8 +30,8 @@ Deno.test("doctor signale un plan nécessaire avec code de sortie", async () => 
     const entityPath = join(projectDir, "domain", "User.entity.ts");
     const original = await Deno.readTextFile(entityPath);
     const updated = original.replace(
-      "Nom d'affichage facultatif.",
-      "Nom d'affichage facultatif (doctor test).",
+      "Optional display name.",
+      "Optional display name (doctor test).",
     );
     await Deno.writeTextFile(entityPath, updated);
 
@@ -56,7 +56,7 @@ Deno.test("doctor signale un plan nécessaire avec code de sortie", async () => 
   }
 });
 
-Deno.test("doctor --fix applique les changements et laisse un état propre", async () => {
+Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "doctor-fix");

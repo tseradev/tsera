@@ -21,7 +21,7 @@ function assertEquals<T>(actual: T, expected: T): void {
   }
 }
 
-Deno.test("router transmet les options globales aux sous-commandes", async () => {
+Deno.test("router forwards global options to subcommands", async () => {
   let received: InitCommandContext | undefined;
 
   const router = createRouter(TEST_METADATA, {
@@ -33,7 +33,7 @@ Deno.test("router transmet les options globales aux sous-commandes", async () =>
   await router.parse(["--json", "--strict", "init", "demo", "--template", "custom"]);
 
   if (!received) {
-    throw new Error("Le handler init n'a pas été invoqué.");
+    throw new Error("The init handler was not invoked.");
   }
 
   assertEquals(received.directory, "demo");
@@ -41,7 +41,7 @@ Deno.test("router transmet les options globales aux sous-commandes", async () =>
   assertEquals(received.global, { json: true, strict: true });
 });
 
-Deno.test("router mappe les options de dev", async () => {
+Deno.test("router maps dev options", async () => {
   let received: DevCommandContext | undefined;
 
   const router = createRouter(TEST_METADATA, {
@@ -53,7 +53,7 @@ Deno.test("router mappe les options de dev", async () => {
   await router.parse(["dev", "./project", "--no-watch", "--plan-only", "--apply"]);
 
   if (!received) {
-    throw new Error("Le handler dev n'a pas été invoqué.");
+    throw new Error("The dev handler was not invoked.");
   }
 
   assertEquals(received.projectDir, "./project");
@@ -63,7 +63,7 @@ Deno.test("router mappe les options de dev", async () => {
   assertEquals(received.global, { json: false, strict: false });
 });
 
-Deno.test("update valide le canal et expose les options", async () => {
+Deno.test("update validates the channel and exposes options", async () => {
   let received: UpdateCommandContext | undefined;
 
   const router = createRouter(TEST_METADATA, {
@@ -75,7 +75,7 @@ Deno.test("update valide le canal et expose les options", async () => {
   await router.parse(["update", "--channel", "beta", "--binary"]);
 
   if (!received) {
-    throw new Error("Le handler update n'a pas été invoqué.");
+    throw new Error("The update handler was not invoked.");
   }
 
   assertEquals(received.channel, "beta");

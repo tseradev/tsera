@@ -60,7 +60,7 @@ export function createDefaultInitHandler(
     await ensureDirectoryReady(targetDir, context.force);
 
     if (!(await pathExists(templateDir))) {
-      throw new Error(`Template inconnu: ${context.template}`);
+      throw new Error(`Unknown template: ${context.template}`);
     }
 
     const copy = await copyTemplateDirectory(templateDir, targetDir, { force: context.force });
@@ -108,8 +108,8 @@ export function createDefaultInitHandler(
     await writeEngineState(targetDir, nextState);
 
     if (!context.global.json) {
-      logger.info("Projet initialisé", { directory: targetDir });
-      logger.info("Conseil", {
+      logger.info("Project initialized", { directory: targetDir });
+      logger.info("Tip", {
         next: 'git init && git add -A && git commit -m "feat: boot tsera"',
       });
     }
@@ -126,11 +126,11 @@ export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
 ): Command<InitCommandOptions> {
   return new Command<InitCommandOptions>()
-    .description("Initialiser un nouveau projet TSera.")
+    .description("Initialize a new TSera project.")
     .arguments("[directory]")
-    .option("--template <name:string>", "Nom du template à utiliser.", { default: "app-minimal" })
-    .option("-f, --force", "Écraser les fichiers existants.", { default: false })
-    .option("-y, --yes", "Répondre oui aux questions interactives.", { default: false })
+    .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
+    .option("-f, --force", "Overwrite existing files.", { default: false })
+    .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
     .action(async (options, directory = ".") => {
       const { json, strict, template, force, yes } = options;
       await handler({
@@ -147,10 +147,10 @@ async function ensureDirectoryReady(path: string, force: boolean): Promise<void>
   if (await pathExists(path)) {
     const stat = await Deno.stat(path);
     if (!stat.isDirectory) {
-      throw new Error(`Le chemin ${path} existe déjà et n'est pas un dossier.`);
+      throw new Error(`The path ${path} already exists and is not a directory.`);
     }
     if (!force && await directoryHasEntries(path)) {
-      throw new Error(`Le dossier ${path} n'est pas vide. Utilisez --force pour continuer.`);
+      throw new Error(`The directory ${path} is not empty. Use --force to continue.`);
     }
     return;
   }
@@ -244,7 +244,7 @@ async function ensureWritable(path: string, force: boolean, label: string): Prom
   if (force) {
     return;
   }
-  throw new Error(`${label} existe déjà. Utilisez --force pour le régénérer.`);
+  throw new Error(`${label} already exists. Use --force to regenerate it.`);
 }
 
 async function writeIfMissing(path: string, content: string, force: boolean): Promise<void> {
@@ -305,39 +305,39 @@ function generateConfigFile(projectName: string): string {
   const slug = deriveSlug(projectName);
   const dbName = slug.replace(/-/g, "_");
 
-  const template = `// Configuration TSera (profil full avec commentaires).
+  const template = `// TSera configuration (full profile with comments).
 import type { TseraConfig } from "tsera/cli/contracts/types.ts";
 
 const config: TseraConfig = {
-  // Nom lisible du projet (utilisé dans les artefacts et la documentation).
+  // Human-friendly project name (used in artifacts and documentation).
   projectName: "${projectName}",
-  // Racine du projet. Laisser "." sauf cas très avancés.
+  // Project root directory. Keep "." except for advanced setups.
   rootDir: ".",
-  // Dossier contenant les entités TSera (fichiers *.entity.ts).
+  // Folder containing TSera entities (files *.entity.ts).
   entitiesDir: "domain",
-  // Dossier des artefacts générés (schémas, docs, openapi, tests...).
+  // Folder for generated artifacts (schemas, docs, openapi, tests...).
   artifactsDir: ".tsera",
-  // Optionnel : liste explicite d'entités à charger au lieu du scan récursif.
+  // Optional: explicit list of entities to load instead of the recursive scan.
   // entities: ["domain/User.entity.ts"],
   db: {
-    // Dialecte cible pour les migrations Drizzle (postgres | sqlite).
+    // Target dialect for Drizzle migrations (postgres | sqlite).
     dialect: "postgres",
-    // Chaîne de connexion utilisée par les tests et le runtime local.
+    // Connection string used by tests and the local runtime.
     connectionString: "postgres://localhost/${dbName}",
-    // Dossier des migrations générées.
+    // Folder storing generated migrations.
     migrationsDir: "drizzle",
-    // Dossier des schémas Drizzle (généré automatiquement).
+    // Folder for Drizzle schemas (generated automatically).
     schemaDir: "drizzle/schema",
   },
   deploy: [
     {
-      // Cible de déploiement principale (ex. Deno Deploy).
+      // Main deployment target (e.g. Deno Deploy).
       name: "production",
       kind: "deno-deploy",
       envFile: ".env.deploy",
     },
     {
-      // Exemple de cible custom pilotée par script shell.
+      // Example of a custom target driven by a shell script.
       name: "on-premise",
       kind: "custom-script",
       script: "scripts/deploy.sh",
@@ -354,7 +354,7 @@ export default config;
 
 function fromFileUrlSafe(url: URL): string {
   if (url.protocol !== "file:") {
-    throw new TypeError(`URL de fichier attendue, reçu ${url.protocol}`);
+    throw new TypeError(`Expected a file URL, received ${url.protocol}`);
   }
 
   let path = decodeURIComponent(url.pathname);

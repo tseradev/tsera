@@ -105,7 +105,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         const message = error instanceof Error ? error.message : String(error);
         logger.event("error", { message });
         if (!context.global.json) {
-          logger.error("cycle:échec", { message });
+          logger.error("cycle:failure", { message });
         }
         if (!isWatchMode) {
           throw error instanceof Error ? error : new Error(message);
@@ -120,7 +120,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         queue = queue
           .then(() => executeCycle("watch", paths))
           .catch(() => {
-            // Les erreurs sont déjà journalisées par executeCycle.
+            // Errors are already logged by executeCycle.
           });
         return queue;
       }, { debounceMs: WATCH_DEBOUNCE_MS });
@@ -143,12 +143,12 @@ export function createDevCommand(
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
 ): Command<DevCommandOptions> {
   return new Command<DevCommandOptions>()
-    .description("Planifier et appliquer les artefacts TSera en mode développement.")
+    .description("Plan and apply TSera artifacts in development mode.")
     .arguments("[projectDir]")
-    .option("--watch", "Active le watcher de fichiers.", { default: true, negatable: true })
-    .option("--once", "Exécuter un cycle unique plan/apply.", { default: false })
-    .option("--plan-only", "Ne calculer que le plan sans appliquer.", { default: false })
-    .option("--apply", "Forcer l'application même si le plan est vide.", { default: false })
+    .option("--watch", "Enable the file watcher.", { default: true, negatable: true })
+    .option("--once", "Run a single plan/apply cycle.", { default: false })
+    .option("--plan-only", "Compute the plan without applying it.", { default: false })
+    .option("--apply", "Force apply even if the plan is empty.", { default: false })
     .action(async (options, projectDir = ".") => {
       const { json, strict, watch, once, planOnly, apply } = options;
       await handler({

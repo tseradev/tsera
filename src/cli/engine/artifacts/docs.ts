@@ -7,14 +7,14 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   const lines: string[] = [
     `# ${entity.name}`,
     "",
-    "| Propriété | Type | Optionnel | Nullable | Défaut |",
+    "| Property | Type | Optional | Nullable | Default |",
     "| --- | --- | --- | --- | --- |",
   ];
 
   for (const [name, column] of Object.entries(entity.columns)) {
     const type = columnType(column);
-    const optional = column.optional ? "oui" : "non";
-    const nullable = column.nullable ? "oui" : "non";
+    const optional = column.optional ? "yes" : "no";
+    const nullable = column.nullable ? "yes" : "no";
     const defaultValue = column.default !== undefined ? formatDefault(column.default) : "—";
     lines.push(`| ${name} | ${type} | ${optional} | ${nullable} | ${defaultValue} |`);
   }
@@ -22,7 +22,7 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   if (entity.doc) {
     lines.push(
       "",
-      entity.doc === true ? `Documentation automatique pour ${entity.name}.` : String(entity.doc),
+      entity.doc === true ? `Automatic documentation for ${entity.name}.` : String(entity.doc),
     );
   }
 

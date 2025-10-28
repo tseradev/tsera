@@ -46,7 +46,7 @@ const entityV2 = defineEntity({
   test: "smoke",
 });
 
-Deno.test("planDag calcule create/update/delete", async () => {
+Deno.test("planDag computes create/update/delete summaries", async () => {
   const artifactsV1 = [
     ...(await buildZodArtifacts({ entity: entityV1, config })),
     ...(await buildOpenAPIArtifacts({ entity: entityV1, config })),
