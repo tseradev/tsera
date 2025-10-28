@@ -76,3 +76,34 @@ Deno.test("update with --binary executes deno compile", async () => {
     await Deno.remove(tempDir, { recursive: true });
   }
 });
+
+Deno.test("update install uses the global flag", async () => {
+  const calls: CallRecord[] = [];
+  const handler = createDefaultUpdateHandler({
+    runner: createRunner(calls),
+    writer: NOOP_WRITER,
+    cliVersion: "1.0.0",
+  });
+
+  await handler({
+    channel: "stable",
+    binary: false,
+    dryRun: false,
+    global: { json: false, strict: false },
+  });
+
+  assertEquals(calls.length, 2);
+  assertEquals(calls[0], { command: "deno", args: ["--version"] });
+  assertEquals(calls[1], {
+    command: "deno",
+    args: [
+      "install",
+      "--global",
+      "-A",
+      "-f",
+      "--name",
+      "tsera",
+      "jsr:tsera/cli/main.ts@latest",
+    ],
+  });
+});
