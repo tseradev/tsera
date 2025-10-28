@@ -20,18 +20,43 @@ type ActualZodToOpenAPIModule = {
 
 type Fallback = typeof FallbackModule;
 
+function isActualModule(value: unknown): value is ActualZodToOpenAPIModule {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return typeof record.extendZodWithOpenApi === "function"
+    && typeof record.OpenAPIGenerator === "function";
+}
+
+function resolveActualModule(mod: unknown): ActualZodToOpenAPIModule | null {
+  if (isActualModule(mod)) {
+    return mod;
+  }
+  if (mod && typeof mod === "object" && "default" in mod) {
+    const candidate = (mod as { default?: unknown }).default;
+    if (isActualModule(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 let actualModule: ActualZodToOpenAPIModule | null = null;
 let fallbackModule: Fallback | null = null;
 
 try {
   const mod = await import("npm:@asteasolutions/zod-to-openapi@6.2.0");
-  (mod as ActualZodToOpenAPIModule).extendZodWithOpenApi(z);
-  actualModule = mod as ActualZodToOpenAPIModule;
+  const candidate = resolveActualModule(mod);
+  if (candidate) {
+    candidate.extendZodWithOpenApi(z);
+    actualModule = candidate;
+  }
 } catch {
-  fallbackModule = await import("../deps/polyfills/zod-to-openapi.ts");
+  // Ignore and fall back to the polyfill below.
 }
 
-if (!actualModule && !fallbackModule) {
+if (!actualModule) {
   fallbackModule = await import("../deps/polyfills/zod-to-openapi.ts");
 }
 
