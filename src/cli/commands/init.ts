@@ -60,7 +60,7 @@ export function createDefaultInitHandler(
     await ensureDirectoryReady(targetDir, context.force);
 
     if (!(await pathExists(templateDir))) {
-      throw new Error(`Template inconnu: ${context.template}`);
+      throw new Error(`Unknown template: ${context.template}`);
     }
 
     const copy = await copyTemplateDirectory(templateDir, targetDir, { force: context.force });
@@ -109,7 +109,7 @@ export function createDefaultInitHandler(
 
     if (!context.global.json) {
       logger.info("Project initialized", { directory: targetDir });
-      logger.info("Conseil", {
+      logger.info("Tip", {
         next: 'git init && git add -A && git commit -m "feat: boot tsera"',
       });
     }
@@ -126,7 +126,7 @@ export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
 ): Command<InitCommandOptions> {
   return new Command<InitCommandOptions>()
-    .description("Initialiser un nouveau projet TSera.")
+    .description("Initialize a new TSera project.")
     .arguments("[directory]")
     .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
     .option("-f, --force", "Overwrite existing files.", { default: false })
@@ -150,7 +150,7 @@ async function ensureDirectoryReady(path: string, force: boolean): Promise<void>
       throw new Error(`The path ${path} already exists and is not a directory.`);
     }
     if (!force && await directoryHasEntries(path)) {
-      throw new Error(`Le dossier ${path} n'est pas vide. Utilisez --force pour continuer.`);
+      throw new Error(`The directory ${path} is not empty. Use --force to continue.`);
     }
     return;
   }

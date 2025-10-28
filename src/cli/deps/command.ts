@@ -182,7 +182,7 @@ export class Command<TOptions = Record<string, unknown>> {
     if (subcommandName) {
       const sub = this.subcommands.get(subcommandName);
       if (!sub) {
-        throw new Error(`Sous-commande inconnue: ${subcommandName}`);
+        throw new Error(`Unknown subcommand: ${subcommandName}`);
       }
       await sub.execute(rest, globalValues);
       return;
@@ -190,13 +190,13 @@ export class Command<TOptions = Record<string, unknown>> {
 
     if (!this.actionHandler) {
       if (this.subcommands.size > 0) {
-        throw new Error("Aucune sous-commande fournie.");
+        throw new Error("No subcommand provided.");
       }
       return;
     }
 
     if (this.argumentSpec?.required && positionals.length === 0) {
-      throw new Error(`Argument obligatoire manquant: ${this.argumentSpec.name}`);
+      throw new Error(`Missing required argument: ${this.argumentSpec.name}`);
     }
 
     const options = { ...globalValues, ...localValues } as unknown as TOptions;

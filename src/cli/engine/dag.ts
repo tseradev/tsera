@@ -160,7 +160,7 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
   }
 
   if (result.length !== nodes.size) {
-    throw new Error("Le graphe des artefacts contient un cycle.");
+    throw new Error("The artifact graph contains a cycle.");
   }
 
   return result;
