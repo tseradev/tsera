@@ -1,12 +1,12 @@
-import type { Hono } from "hono";
+import type { HonoInstance, RouteContext } from "../deps/hono.ts";
 
 export interface HealthResponse {
   status: "ok";
   timestamp: string;
 }
 
-export default function registerHealthRoutes(app: Hono) {
-  app.get("/health", (ctx) => {
+export default function registerHealthRoutes(app: HonoInstance) {
+  app.get("/health", (ctx: RouteContext) => {
     const payload: HealthResponse = {
       status: "ok",
       timestamp: new Date().toISOString(),

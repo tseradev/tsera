@@ -3,7 +3,6 @@
     "@std/": "jsr:@std/",
     "@fresh/": "jsr:@fresh/",
     "@preact/": "jsr:@preact/",
-    "tsera/": "jsr:tsera/",
-    "hono": "jsr:@hono/hono"
+    "tsera/": "jsr:tsera/"
   }
 }
