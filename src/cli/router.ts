@@ -4,6 +4,43 @@ import { createDoctorCommand, type DoctorCommandHandler } from "./commands/docto
 import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update.ts";
 import type { CliMetadata } from "./main.ts";
+import { applyModernHelp, type ModernHelpCommand } from "./core/help.ts";
+
+const CLI_NAME = "tsera";
+const CLI_TAGLINE = "Continuous coherence engine for entities.";
+const CLI_USAGE = "<command> [options]";
+
+const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
+  { label: "--json", description: "Stream machine-readable NDJSON events." },
+  { label: "--strict", description: "Treat inconsistencies as fatal (exit code 2)." },
+  { label: "-h, --help", description: "Show this help message." },
+  { label: "-V, --version", description: "Display the CLI version." },
+];
+
+const COMMAND_HELP: ModernHelpCommand[] = [
+  {
+    label: "init [directory]",
+    description: "Scaffold a TSera project from a template and bootstrap artifacts.",
+  },
+  {
+    label: "dev",
+    description: "Watch entities, plan changes, and apply generated artifacts in-place.",
+  },
+  {
+    label: "doctor",
+    description: "Inspect project coherence, highlight issues, and offer safe fixes.",
+  },
+  {
+    label: "update",
+    description: "Upgrade the TSera CLI via deno install or compiled binaries.",
+  },
+];
+
+const CLI_EXAMPLES = [
+  "tsera init demo-app --template app-minimal",
+  "tsera dev --json",
+  "tsera doctor --strict",
+];
 
 /** Global options shared across CLI commands. */
 export interface GlobalCLIOptions extends Record<string, unknown> {
@@ -31,7 +68,7 @@ export function createRouter(
   handlers: RouterHandlers = {},
 ): CommandType<GlobalCLIOptions> {
   const root = new Command<GlobalCLIOptions>()
-    .name("tsera")
+    .name(CLI_NAME)
     .version(metadata.version)
     .description("TSera CLI — continuous coherence engine for entities.")
     .globalOption("--json", "Enable machine-friendly NDJSON output.", {
@@ -48,6 +85,16 @@ export function createRouter(
 
   root.action(() => {
     root.showHelp();
+  });
+
+  applyModernHelp(root, {
+    cliName: CLI_NAME,
+    version: metadata.version,
+    tagline: CLI_TAGLINE,
+    usage: CLI_USAGE,
+    commands: COMMAND_HELP,
+    globalOptions: GLOBAL_OPTION_HELP,
+    examples: CLI_EXAMPLES,
   });
 
   return root;
