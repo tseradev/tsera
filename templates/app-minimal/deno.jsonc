@@ -5,8 +5,9 @@
     "strict": true
   },
   "tasks": {
-    "dev": "deno run -A main.ts",
-    "dev:web": "deno run -A web/main.ts",
+    "dev": "deno run -A dev.ts",
+    "dev:api": "deno run -A --watch=app,domain,main.ts main.ts",
+    "dev:web": "deno run -A --watch=web web/main.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test --fail-fast"

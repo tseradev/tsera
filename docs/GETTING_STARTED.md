@@ -86,17 +86,18 @@ in CI/CD environments. Add `--strict` to turn drifts into exit code `2` (ideal f
    - `drizzle/<timestamp>_update_user.sql` — migration reflecting the new column.
    - `docs/User.md` — refreshed documentation.
    - `tests/User.test.ts` — smoke test covering the schema.
-3. Start the example API and the Fresh frontend in other terminals to confirm runtime behaviour:
+3. Start the example API and the Fresh frontend with a single command, then probe the health route:
    ```bash
    deno task dev
-   deno task dev:web
    curl http://localhost:8000/health
    ```
    The `/health` response looks like:
    ```json
    { "status": "ok", "timestamp": "2024-01-01T00:00:00.000Z" }
    ```
-   Visit `http://localhost:8001/` to see the Fresh starter page that explains the default flow.
+   Visit `http://localhost:8001/` to see the Fresh starter page that explains the default flow. Logs
+   are prefixed with `[api]` and `[web]` to show which watcher produced the output. You can still
+   run `deno task dev:api` or `deno task dev:web` if you prefer to boot only one side.
 4. Execute the bundled tests (the template ships a `tests/health.test.ts` plus the generated schema
    smoke tests):
    ```bash

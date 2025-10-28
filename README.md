@@ -67,9 +67,8 @@ tsera dev --once
 # 4. Keep the watcher active during development
 tsera dev
 
-# 5. Launch the demo API and the Fresh frontend in separate terminals
+# 5. Launch the demo API and the Fresh frontend (one command)
 deno task dev
-deno task dev:web
 
 # 6. Hit the health route (responds with `{ "status": "ok" }`)
 curl http://localhost:8000/health
@@ -81,6 +80,10 @@ open http://localhost:8001/
 # 7. Run the bundled smoke tests (health route + generated schemas)
 deno task test
 ```
+
+> `deno task dev` now starts the Hono API and the Fresh SSR server together. Logs are prefixed with
+> `[api]` and `[web]` so you can tell which watcher produced each line. Run `deno task dev:api` or
+> `deno task dev:web` if you only need one side.
 
 > The template ships with `deps/hono.ts`, a thin loader that attempts to import `npm:hono@4`. If the
 > network is unavailable it falls back to a minimal router so tests continue to run offline. Once

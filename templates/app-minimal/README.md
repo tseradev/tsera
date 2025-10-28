@@ -14,24 +14,23 @@ This is the template shipped with `tsera init`. It includes:
 # Generate artifacts (Zod, OpenAPI, migrations, docs, tests)
 tsera dev --once
 
-# Start the Hono API at http://localhost:8000
+# Start the Hono API (http://localhost:8000) and Fresh (http://localhost:8001)
 deno task dev
-
-# In another terminal: start Fresh at http://localhost:8001
-deno task dev:web
 
 # Check the health route
 curl http://localhost:8000/health
 ```
 
 The Fresh page in `web/routes/index.tsx` lists the next steps to connect the UI with the backend.
+Log lines are prefixed with `[api]` and `[web]` so you know which watcher produced each message.
+When you only need one side, use `deno task dev:api` or `deno task dev:web` directly.
 
 ## Config & import map
 
-- `tsera.config.ts` exposes every engine option. The template also registers a
-  `jsr:@tsera/core` alias in `import_map.json` pointing to `tsera-core.ts`, a local contract that
-  keeps the project compiling until the official package is published. Replace the alias with the
-  real dependency as soon as it becomes available.
+- `tsera.config.ts` exposes every engine option. The template also registers a `jsr:@tsera/core`
+  alias in `import_map.json` pointing to `tsera-core.ts`, a local contract that keeps the project
+  compiling until the official package is published. Replace the alias with the real dependency as
+  soon as it becomes available.
 - Other aliases (`tsera/`, `@fresh/`, `@preact/`, `@std/`) are already configured for Deno.
 
 ## Next steps
