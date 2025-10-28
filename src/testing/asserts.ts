@@ -10,6 +10,31 @@ export function assertEquals<T>(actual: T, expected: T, message = "Values are no
   }
 }
 
+export async function assertRejects(
+  fn: () => Promise<unknown>,
+  message?: string | RegExp,
+): Promise<unknown> {
+  try {
+    await fn();
+  } catch (error) {
+    if (message) {
+      const actualMessage = error instanceof Error ? error.message : String(error);
+      if (typeof message === "string") {
+        if (!actualMessage.includes(message)) {
+          throw new Error(
+            `Expected error message to include ${message}, received ${actualMessage}`,
+          );
+        }
+      } else if (!message.test(actualMessage)) {
+        throw new Error(`Expected error message to match ${message}, received ${actualMessage}`);
+      }
+    }
+    return error;
+  }
+
+  throw new Error("Expected function to reject but it resolved successfully.");
+}
+
 function deepEqual(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) {
     return true;

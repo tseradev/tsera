@@ -112,11 +112,21 @@ function buildArtifactId(artifact: ArtifactDescriptor, entityName: string): stri
 
 function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode[] {
   const incoming = new Map<string, number>();
+  const outgoing = new Map<string, string[]>();
+
   for (const id of nodes.keys()) {
     incoming.set(id, 0);
+    outgoing.set(id, []);
   }
+
   for (const edge of edges) {
+    if (!nodes.has(edge.from) || !nodes.has(edge.to)) {
+      throw new Error(
+        `Une arête référence un nœud inconnu dans le graphe: ${edge.from} -> ${edge.to}.`,
+      );
+    }
     incoming.set(edge.to, (incoming.get(edge.to) ?? 0) + 1);
+    outgoing.get(edge.from)!.push(edge.to);
   }
 
   const queue: string[] = [];
@@ -127,21 +137,24 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
   }
 
   const result: DagNode[] = [];
-  while (queue.length > 0) {
-    const id = queue.shift()!;
+  for (let index = 0; index < queue.length; index++) {
+    const id = queue[index];
     const node = nodes.get(id);
     if (!node) {
       continue;
     }
     result.push(node);
 
-    for (const edge of edges) {
-      if (edge.from === id) {
-        const nextCount = (incoming.get(edge.to) ?? 0) - 1;
-        incoming.set(edge.to, nextCount);
-        if (nextCount === 0) {
-          queue.push(edge.to);
-        }
+    const neighbours = outgoing.get(id);
+    if (!neighbours) {
+      continue;
+    }
+
+    for (const neighbour of neighbours) {
+      const nextCount = (incoming.get(neighbour) ?? 0) - 1;
+      incoming.set(neighbour, nextCount);
+      if (nextCount === 0) {
+        queue.push(neighbour);
       }
     }
   }
