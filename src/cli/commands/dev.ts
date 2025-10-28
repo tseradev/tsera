@@ -1,5 +1,5 @@
 import { dirname } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
+import { Command, type CommandType } from "../deps/command.ts";
 import { createLogger } from "../core/log.ts";
 import { resolveConfig } from "../core/resolve-config.ts";
 import { applyPlan } from "../engine/applier.ts";
@@ -150,7 +150,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 export function createDevCommand(
   metadata: CliMetadata,
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
-): Command<DevCommandOptions> {
+): CommandType<DevCommandOptions> {
   return new Command<DevCommandOptions>()
     .description("Plan and apply TSera artifacts in development mode.")
     .arguments("[projectDir]")

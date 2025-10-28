@@ -1,4 +1,4 @@
-import { Command } from "./deps/command.ts";
+import { Command, type CommandType } from "./deps/command.ts";
 import { createDevCommand, type DevCommandHandler } from "./commands/dev.ts";
 import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor.ts";
 import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
@@ -29,17 +29,15 @@ export interface RouterHandlers {
 export function createRouter(
   metadata: CliMetadata,
   handlers: RouterHandlers = {},
-): Command<GlobalCLIOptions> {
+): CommandType<GlobalCLIOptions> {
   const root = new Command<GlobalCLIOptions>()
     .name("tsera")
     .version(metadata.version)
     .description("TSera CLI — continuous coherence engine for entities.")
-    .option("--json", "Enable machine-friendly NDJSON output.", {
-      global: true,
+    .globalOption("--json", "Enable machine-friendly NDJSON output.", {
       default: false,
     })
-    .option("--strict", "Convert inconsistencies into exit code 2.", {
-      global: true,
+    .globalOption("--strict", "Convert inconsistencies into exit code 2.", {
       default: false,
     });
 

@@ -2,6 +2,9 @@
   "imports": {
     "tsera/": "./src/",
     "tsera/core/": "./src/core/",
-    "tsera/cli/": "./src/cli/"
+    "tsera/cli/": "./src/cli/",
+    "zod": "jsr:@zod@1",
+    "zod-to-openapi": "npm:@asteasolutions/zod-to-openapi@6.2.0",
+    "drizzle-orm/": "npm:drizzle-orm@0.30.10/"
   }
 }
