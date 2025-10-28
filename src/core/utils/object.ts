@@ -1,3 +1,10 @@
+/**
+ * Recursively freezes an object and all nested properties, returning an immutable
+ * representation of the supplied value. Primitive values are returned unchanged.
+ *
+ * @param value - Object or primitive to freeze.
+ * @returns A deeply frozen version of the provided value.
+ */
 export function deepFreeze<T>(value: T): Readonly<T> {
   if (value === null) {
     return value as Readonly<T>;

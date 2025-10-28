@@ -12,12 +12,14 @@ import { planDag } from "../engine/planner.ts";
 import { readEngineState, writeDagState, writeEngineState } from "../engine/state.ts";
 import type { GlobalCLIOptions } from "../router.ts";
 
+/** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
   template: string;
   force: boolean;
   yes: boolean;
 }
 
+/** Context passed to init command handlers. */
 export interface InitCommandContext {
   directory: string;
   template: string;
@@ -26,6 +28,7 @@ export interface InitCommandContext {
   global: GlobalCLIOptions;
 }
 
+/** Function signature for init command implementations. */
 export type InitCommandHandler = (context: InitCommandContext) => Promise<void> | void;
 
 interface InitHandlerDependencies {
@@ -39,10 +42,14 @@ interface CopyResult {
   skipped: string[];
 }
 
+/** Resolves the default templates directory from the current module location. */
 function defaultTemplatesRoot(): string {
   return fromFileUrlSafe(new URL("../../../templates", import.meta.url));
 }
 
+/**
+ * Creates the default {@code init} command handler responsible for scaffolding projects.
+ */
 export function createDefaultInitHandler(
   dependencies: InitHandlerDependencies = {},
 ): InitCommandHandler {
@@ -122,6 +129,9 @@ export function createDefaultInitHandler(
   };
 }
 
+/**
+ * Constructs the Cliffy command definition for {@code tsera init}.
+ */
 export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
 ): Command<InitCommandOptions> {

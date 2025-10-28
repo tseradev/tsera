@@ -1,16 +1,30 @@
+/**
+ * Error thrown when schema validation fails.
+ */
 export class SchemaError extends Error {
   override name = "SchemaError";
 }
 
+/** Successful result of a safeParse operation. */
 export type SafeParseSuccess<T> = { success: true; data: T };
+/** Failed result of a safeParse operation. */
 export type SafeParseFailure = { success: false; error: Error };
+/** Union representing the outcome of {@link BaseSchema.safeParse}. */
 export type SafeParseReturnType<T> = SafeParseSuccess<T> | SafeParseFailure;
 
+/**
+ * Minimal schema abstraction inspired by Zod, providing parsing and composition helpers.
+ */
 export abstract class BaseSchema<T> {
   description?: string;
 
+  /** Parses an unknown value, returning the inferred type or throwing on failure. */
   abstract parse(value: unknown): T;
 
+  /**
+   * Attempts to parse the value, capturing thrown errors to return a discriminated union
+   * result instead of raising exceptions.
+   */
   safeParse(value: unknown): SafeParseReturnType<T> {
     try {
       return { success: true, data: this.parse(value) };
@@ -22,23 +36,28 @@ export abstract class BaseSchema<T> {
     }
   }
 
+  /** Returns a schema that allows {@code undefined} values. */
   optional(): BaseSchema<T | undefined> {
     return new OptionalSchema(this);
   }
 
+  /** Returns a schema that allows {@code null} values. */
   nullable(): BaseSchema<T | null> {
     return new NullableSchema(this);
   }
 
+  /** Assigns a default value when parsing {@code undefined}. */
   default(value: T): BaseSchema<T> {
     return new DefaultSchema(this, value);
   }
 
+  /** Associates a description with the schema for documentation purposes. */
   describe(text: string): this {
     this.description = text;
     return this;
   }
 
+  /** Adds a refinement predicate executed after the inner schema successfully parses. */
   refine(predicate: (data: T) => boolean, options: { message: string }): BaseSchema<T> {
     return new RefinementSchema(this, predicate, options.message);
   }
@@ -251,10 +270,13 @@ class RecordSchema<T> extends BaseSchema<Record<string, T>> {
   }
 }
 
+/** Mapping of keys to schemas used to build an {@link ObjectSchema}. */
 export type Shape = Record<string, BaseSchema<unknown>>;
 
+/** Utility type extracting the inferred output from a schema. */
 export type Infer<T extends BaseSchema<unknown>> = T extends BaseSchema<infer O> ? O : never;
 
+/** Schema representing an object with a predefined shape. */
 export class ObjectSchema<S extends Shape> extends BaseSchema<{ [K in keyof S]: Infer<S[K]> }> {
   private readonly strictMode: boolean;
 
@@ -263,6 +285,7 @@ export class ObjectSchema<S extends Shape> extends BaseSchema<{ [K in keyof S]: 
     this.strictMode = strictMode;
   }
 
+  /** Parses the supplied value, ensuring it matches the configured shape. */
   override parse(value: unknown): { [K in keyof S]: Infer<S[K]> } {
     if (!isPlainObject(value)) {
       throw new SchemaError("Expected object");
@@ -286,18 +309,26 @@ export class ObjectSchema<S extends Shape> extends BaseSchema<{ [K in keyof S]: 
     return result as { [K in keyof S]: Infer<S[K]> };
   }
 
+  /** Returns a new {@link ObjectSchema} that rejects unknown keys. */
   strict(): ObjectSchema<S> {
     return new ObjectSchema(this.shape, true);
   }
 }
 
+/** Checks whether the supplied value is a non-null object without array semantics. */
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/** Alias mirroring Zod's {@code ZodTypeAny}. */
 export type ZodTypeAny = BaseSchema<unknown>;
+/** Alias mirroring Zod's {@code ZodObject}. */
 export type ZodObject<S extends Shape> = ObjectSchema<S>;
 
+/**
+ * Minimal subset of the Zod API used within TSera, exposing constructors for primitive
+ * schemas, literals, enums, unions, arrays, objects, and records.
+ */
 export const z = {
   string: () => new StringSchema(),
   number: () => new NumberSchema(),

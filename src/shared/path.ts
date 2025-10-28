@@ -1,10 +1,16 @@
 const OS_SEP = Deno.build.os === "windows" ? "\\" : "/";
 
+/**
+ * Replaces mixed path separators with the separator preferred by the target platform.
+ */
 function normalizeSeparator(path: string, sep: string): string {
   const pattern = sep === "\\" ? /[\\/]+/g : /[\/]+/g;
   return path.replace(pattern, sep);
 }
 
+/**
+ * Splits a path into segments, removing duplicate separators and empty tokens.
+ */
 function splitSegments(path: string, sep: string): string[] {
   path = normalizeSeparator(path, sep);
   const parts = path.split(sep);
@@ -14,6 +20,9 @@ function splitSegments(path: string, sep: string): string[] {
   return parts.filter((part) => part.length > 0);
 }
 
+/**
+ * Determines whether a path is absolute for the current platform.
+ */
 function isAbsolute(path: string): boolean {
   if (path.length === 0) {
     return false;
@@ -27,6 +36,9 @@ function isAbsolute(path: string): boolean {
   return /^[A-Za-z]:[\\/]/.test(path);
 }
 
+/**
+ * Normalises path segments, removing {@code .} entries and resolving {@code ..} when possible.
+ */
 function normalizeSegments(segments: string[], absolute: boolean): string[] {
   const result: string[] = [];
   for (const segment of segments) {
@@ -48,6 +60,9 @@ function normalizeSegments(segments: string[], absolute: boolean): string[] {
   return result;
 }
 
+/**
+ * Reassembles normalised path segments into a string using the provided separator.
+ */
 function formatPath(segments: string[], absolute: boolean, sep: string): string {
   const joined = segments.join(sep);
   if (!absolute) {
@@ -69,6 +84,9 @@ function formatPath(segments: string[], absolute: boolean, sep: string): string 
   return `${sep}${joined}`;
 }
 
+/**
+ * Joins multiple path segments, resolving relative markers and absolute overrides.
+ */
 export function join(...segments: string[]): string {
   if (segments.length === 0) {
     return ".";
@@ -96,6 +114,9 @@ export function join(...segments: string[]): string {
   return formatPath(normalized, absolute, OS_SEP);
 }
 
+/**
+ * Returns the directory portion of a path, mimicking {@code path.dirname} semantics.
+ */
 export function dirname(path: string): string {
   path = normalizeSeparator(path, OS_SEP);
   if (path === OS_SEP) {
@@ -109,6 +130,9 @@ export function dirname(path: string): string {
   return formatPath(segments, isAbsolute(path), OS_SEP);
 }
 
+/**
+ * Resolves a path against the current working directory when it is not already absolute.
+ */
 export function resolve(path: string): string {
   if (isAbsolute(path)) {
     return join(path);
@@ -116,14 +140,17 @@ export function resolve(path: string): string {
   return join(Deno.cwd(), path);
 }
 
+/** POSIX-specific join helper exposed via {@link posixPath}. */
 function posixJoin(...segments: string[]): string {
   return joinWithSep("/", ...segments);
 }
 
+/** POSIX-specific dirname helper exposed via {@link posixPath}. */
 function posixDirname(path: string): string {
   return dirnameWithSep("/", path);
 }
 
+/** POSIX relative path implementation. */
 function posixRelative(from: string, to: string): string {
   const fromNorm = joinWithSep("/", from);
   const toNorm = joinWithSep("/", to);
@@ -139,6 +166,7 @@ function posixRelative(from: string, to: string): string {
   return [...upwards, ...toSegs].join("/") || ".";
 }
 
+/** Generalised join that accepts an explicit separator. */
 function joinWithSep(sep: string, ...segments: string[]): string {
   let absolute = false;
   let collected: string[] = [];
@@ -158,6 +186,7 @@ function joinWithSep(sep: string, ...segments: string[]): string {
   return formatPath(normalized, absolute, sep);
 }
 
+/** Generalised dirname that accepts an explicit separator. */
 function dirnameWithSep(sep: string, path: string): string {
   path = normalizeSeparator(path, sep);
   if (path === sep) {
@@ -171,6 +200,7 @@ function dirnameWithSep(sep: string, path: string): string {
   return formatPath(segments, path.startsWith(sep), sep);
 }
 
+/** POSIX-flavoured path helpers mirroring Node's {@code path.posix}. */
 export const posixPath = {
   join: posixJoin,
   dirname: posixDirname,

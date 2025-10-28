@@ -10,17 +10,20 @@ import { planDag } from "../engine/planner.ts";
 import { readEngineState, writeDagState, writeEngineState } from "../engine/state.ts";
 import type { GlobalCLIOptions } from "../router.ts";
 
+/** CLI options accepted by the {@code doctor} command. */
 interface DoctorCommandOptions extends GlobalCLIOptions {
   cwd: string;
   fix: boolean;
 }
 
+/** Context object passed to doctor command handlers. */
 export interface DoctorCommandContext {
   cwd: string;
   fix: boolean;
   global: GlobalCLIOptions;
 }
 
+/** Function signature for doctor command implementations. */
 export type DoctorCommandHandler = (context: DoctorCommandContext) => Promise<void> | void;
 
 interface DoctorHandlerDependencies {
@@ -29,6 +32,9 @@ interface DoctorHandlerDependencies {
   exit?: (code: number) => never;
 }
 
+/**
+ * Creates the default doctor command handler which diagnoses and optionally fixes artifacts.
+ */
 export function createDefaultDoctorHandler(
   dependencies: DoctorHandlerDependencies = {},
 ): DoctorCommandHandler {
@@ -118,6 +124,9 @@ export function createDefaultDoctorHandler(
   };
 }
 
+/**
+ * Constructs the Cliffy command definition for {@code tsera doctor}.
+ */
 export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
 ): Command<DoctorCommandOptions> {
