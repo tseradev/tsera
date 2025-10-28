@@ -2,18 +2,23 @@ import { join } from "../../../shared/path.ts";
 import { assertEquals } from "tsera/testing/asserts.ts";
 import { defineEntity } from "tsera/core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
-import { buildEntityArtifacts, discoverEntities } from "../entities.ts";
+import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "../entities.ts";
 
 const baseConfig: TseraConfig = {
-  projectName: "Demo",
-  rootDir: ".",
-  entitiesDir: "domain",
-  artifactsDir: ".tsera",
+  openapi: true,
+  docs: true,
+  tests: true,
+  telemetry: false,
+  outDir: ".tsera",
+  paths: { entities: ["domain"] },
   db: {
     dialect: "postgres",
-    connectionString: "postgres://localhost/demo",
-    migrationsDir: "drizzle",
-    schemaDir: "drizzle/schema",
+    urlEnv: "DATABASE_URL",
+    ssl: "prefer",
+  },
+  deploy: {
+    target: "deno_deploy",
+    entry: "main.ts",
   },
 };
 
@@ -34,7 +39,10 @@ Deno.test("discoverEntities loads the paths defined in configuration", async () 
       ].join("\n"),
     );
 
-    const config: TseraConfig = { ...baseConfig, entities: ["domain/Example.entity.ts"] };
+    const config: TseraConfig = {
+      ...baseConfig,
+      paths: { entities: ["domain/Example.entity.ts"] },
+    };
     const discovered = await discoverEntities(tempDir, config);
 
     assertEquals(discovered.length, 1);
@@ -99,21 +107,18 @@ Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
   const artifacts = await buildEntityArtifacts(entity, baseConfig);
   assertEquals(artifacts.map((artifact) => artifact.kind), [
     "schema",
-    "openapi",
     "migration",
     "doc",
     "test",
   ]);
 
   const schemaId = `schema:invoice:${artifacts[0].path}`;
-  const openapiId = `openapi:invoice:${artifacts[1].path}`;
-  const migrationId = `migration:invoice:${artifacts[2].path}`;
-  const docId = `doc:invoice:${artifacts[3].path}`;
+  const migrationId = `migration:invoice:${artifacts[1].path}`;
+  const docId = `doc:invoice:${artifacts[2].path}`;
 
   assertEquals(artifacts[1].dependsOn, [schemaId]);
-  assertEquals(artifacts[2].dependsOn, [openapiId]);
-  assertEquals(artifacts[3].dependsOn, [migrationId]);
-  assertEquals(artifacts[4].dependsOn, [docId]);
+  assertEquals(artifacts[2].dependsOn, [migrationId]);
+  assertEquals(artifacts[3].dependsOn, [docId]);
 });
 
 Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
@@ -130,6 +135,31 @@ Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
   const artifacts = await buildEntityArtifacts(entity, baseConfig);
   assertEquals(artifacts.map((artifact) => artifact.kind), [
     "schema",
-    "openapi",
   ]);
+});
+
+Deno.test("prepareDagInputs adds an aggregated OpenAPI artifact", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const entityPath = join(tempDir, "domain", "User.entity.ts");
+    await Deno.mkdir(join(tempDir, "domain"), { recursive: true });
+    await Deno.writeTextFile(
+      entityPath,
+      [
+        'import { defineEntity } from "tsera/core/entity.ts";',
+        "export default defineEntity({",
+        '  name: "User",',
+        '  columns: { id: { type: "string" } },',
+        "  doc: true,",
+        "});",
+      ].join("\n"),
+    );
+
+    const inputs = await prepareDagInputs(tempDir, baseConfig);
+    assertEquals(inputs.length, 1);
+    const kinds = inputs[0].artifacts.map((artifact) => artifact.kind);
+    assertEquals(kinds.includes("openapi"), true);
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
 });

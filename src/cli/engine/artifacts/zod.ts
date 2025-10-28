@@ -6,7 +6,7 @@ const IMPORT_LINE = 'import { z } from "zod";';
 
 export const buildZodArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
-  const path = join(config.artifactsDir, "schemas", `${entity.name}.schema.ts`);
+  const path = join(config.outDir, "schemas", `${entity.name}.schema.ts`);
   const lines: string[] = [IMPORT_LINE, "", `export const ${entity.name}Schema = z.object({`];
 
   const columnEntries = Object.entries(entity.columns);

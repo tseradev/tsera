@@ -3,7 +3,7 @@ import { isArrayColumnType } from "./entity.ts";
 import { pascalToSnakeCase } from "./utils/strings.ts";
 
 /** Supported SQL dialect identifiers for DDL generation. */
-type Dialect = "postgres" | "sqlite";
+type Dialect = "postgres" | "sqlite" | "mysql";
 
 /**
  * Generates a CREATE TABLE statement for the provided entity when {@link EntitySpec.table}
@@ -60,7 +60,13 @@ function formatColumn(name: string, column: TColumn, dialect: Dialect): string {
  */
 function mapColumnType(column: TColumn, dialect: Dialect): string {
   if (isArrayColumnType(column.type)) {
-    return dialect === "postgres" ? "JSONB" : "TEXT";
+    if (dialect === "postgres") {
+      return "JSONB";
+    }
+    if (dialect === "mysql") {
+      return "JSON";
+    }
+    return "TEXT";
   }
 
   return mapPrimitiveType(column.type, dialect);
@@ -76,15 +82,39 @@ function mapColumnType(column: TColumn, dialect: Dialect): string {
 function mapPrimitiveType(type: TPrimitive, dialect: Dialect): string {
   switch (type) {
     case "string":
-      return dialect === "postgres" ? "TEXT" : "TEXT";
+      if (dialect === "mysql") {
+        return "TEXT";
+      }
+      return "TEXT";
     case "number":
+      if (dialect === "mysql") {
+        return "INT";
+      }
       return "INTEGER";
     case "boolean":
-      return dialect === "postgres" ? "BOOLEAN" : "INTEGER";
+      if (dialect === "postgres") {
+        return "BOOLEAN";
+      }
+      if (dialect === "mysql") {
+        return "TINYINT(1)";
+      }
+      return "INTEGER";
     case "date":
-      return dialect === "postgres" ? "TIMESTAMP" : "TEXT";
+      if (dialect === "postgres") {
+        return "TIMESTAMP";
+      }
+      if (dialect === "mysql") {
+        return "DATETIME";
+      }
+      return "TEXT";
     case "json":
-      return dialect === "postgres" ? "JSONB" : "TEXT";
+      if (dialect === "postgres") {
+        return "JSONB";
+      }
+      if (dialect === "mysql") {
+        return "JSON";
+      }
+      return "TEXT";
     default: {
       const exhaustiveCheck: never = type;
       throw new Error(`Unsupported primitive type: ${exhaustiveCheck}`);
@@ -124,7 +154,13 @@ function formatDefault(column: TColumn, value: unknown, dialect: Dialect): strin
       if (typeof value !== "boolean") {
         throw new TypeError("Default value for boolean column must be a boolean");
       }
-      return dialect === "postgres" ? (value ? "TRUE" : "FALSE") : value ? "1" : "0";
+      if (dialect === "postgres") {
+        return value ? "TRUE" : "FALSE";
+      }
+      if (dialect === "mysql") {
+        return value ? "TRUE" : "FALSE";
+      }
+      return value ? "1" : "0";
     case "date":
       if (value instanceof Date) {
         return `'${value.toISOString()}'`;
@@ -154,7 +190,13 @@ function formatJsonDefault(value: unknown, dialect: Dialect): string {
   }
 
   const escaped = escapeSqlString(jsonValue);
-  return dialect === "postgres" ? `'${escaped}'::jsonb` : `'${escaped}'`;
+  if (dialect === "postgres") {
+    return `'${escaped}'::jsonb`;
+  }
+  if (dialect === "mysql") {
+    return `CAST('${escaped}' AS JSON)`;
+  }
+  return `'${escaped}'`;
 }
 
 /**

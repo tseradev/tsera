@@ -9,7 +9,7 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
   const testPath = posixJoin("tests", `${entity.name}.test.ts`);
   const schemaPath = posixJoin(
-    normalise(config.artifactsDir),
+    normalise(config.outDir),
     "schemas",
     `${entity.name}.schema.ts`,
   );

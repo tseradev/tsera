@@ -3,21 +3,26 @@ import { defineEntity } from "tsera/core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 import { createDag } from "../dag.ts";
 import { buildZodArtifacts } from "../artifacts/zod.ts";
-import { buildOpenAPIArtifacts } from "../artifacts/openapi.ts";
+import { buildProjectOpenAPIArtifact } from "../artifacts/openapi.ts";
 import { buildDrizzleArtifacts } from "../artifacts/drizzle.ts";
 import { buildDocsArtifacts } from "../artifacts/docs.ts";
 import { buildTestArtifacts } from "../artifacts/tests.ts";
 
 const baseConfig: TseraConfig = {
-  projectName: "Demo",
-  rootDir: ".",
-  entitiesDir: "domain",
-  artifactsDir: ".tsera",
+  openapi: true,
+  docs: true,
+  tests: true,
+  telemetry: false,
+  outDir: ".tsera",
+  paths: { entities: ["domain"] },
   db: {
     dialect: "postgres",
-    connectionString: "postgres://localhost/demo",
-    migrationsDir: "drizzle",
-    schemaDir: "drizzle/schema",
+    urlEnv: "DATABASE_URL",
+    ssl: "prefer",
+  },
+  deploy: {
+    target: "deno_deploy",
+    entry: "main.ts",
   },
 };
 
@@ -37,11 +42,14 @@ const userEntity = defineEntity({
 Deno.test("createDag links artifacts to the entity", async () => {
   const artifacts = [
     ...(await buildZodArtifacts({ entity: userEntity, config: baseConfig })),
-    ...(await buildOpenAPIArtifacts({ entity: userEntity, config: baseConfig })),
     ...(await buildDrizzleArtifacts({ entity: userEntity, config: baseConfig })),
     ...(await buildDocsArtifacts({ entity: userEntity, config: baseConfig })),
     ...(await buildTestArtifacts({ entity: userEntity, config: baseConfig })),
   ];
+  const openapiArtifact = buildProjectOpenAPIArtifact([userEntity], baseConfig);
+  if (openapiArtifact) {
+    artifacts.push(openapiArtifact);
+  }
 
   const dag = await createDag([
     {
@@ -78,7 +86,7 @@ Deno.test("createDag reports unknown dependencies", async () => {
       artifacts: [
         {
           kind: "schema",
-          path: ".tsera/User.schema.ts",
+          path: ".tsera/schemas/User.schema.ts",
           content: "export const schema = {};",
           dependsOn: ["schema:user:missing"],
         },

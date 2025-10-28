@@ -6,9 +6,9 @@ import type { TseraConfig } from "../contracts/types.ts";
 import type { ArtifactDescriptor, DagEntityInput } from "./dag.ts";
 import { buildDocsArtifacts } from "./artifacts/docs.ts";
 import { buildDrizzleArtifacts } from "./artifacts/drizzle.ts";
-import { buildOpenAPIArtifacts } from "./artifacts/openapi.ts";
 import { buildTestArtifacts } from "./artifacts/tests.ts";
 import { buildZodArtifacts } from "./artifacts/zod.ts";
+import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";
 
 type ModuleNamespace = Record<string, unknown>;
 
@@ -33,6 +33,14 @@ export async function prepareDagInputs(
       sourcePath: item.sourcePath,
       artifacts,
     });
+  }
+
+  const openapiArtifact = buildProjectOpenAPIArtifact(
+    discovered.map((item) => item.entity),
+    config,
+  );
+  if (openapiArtifact && inputs.length > 0) {
+    inputs[0].artifacts.push(openapiArtifact);
   }
 
   return inputs;
@@ -99,17 +107,16 @@ export async function buildEntityArtifacts(
   };
 
   pushStage(await buildZodArtifacts(context));
-  pushStage(await buildOpenAPIArtifacts(context));
 
   if (entity.table) {
     pushStage(await buildDrizzleArtifacts(context));
   }
 
-  if (entity.doc) {
+  if (config.docs && entity.doc) {
     pushStage(await buildDocsArtifacts(context));
   }
 
-  if (entity.test === "smoke") {
+  if (config.tests && entity.test === "smoke") {
     pushStage(await buildTestArtifacts(context));
   }
 
@@ -120,36 +127,36 @@ async function gatherEntityPaths(
   projectDir: string,
   config: TseraConfig,
 ): Promise<string[]> {
-  if (config.entities && config.entities.length > 0) {
-    const resolved = config.entities.map((path) => {
-      const absolute = join(projectDir, path);
-      return toProjectRelative(projectDir, absolute);
-    });
-    return dedupePreserveOrder(resolved);
-  }
-
-  const entitiesRoot = join(projectDir, config.entitiesDir);
   const collected: string[] = [];
 
-  try {
-    const stat = await Deno.stat(entitiesRoot);
+  for (const entry of config.paths.entities) {
+    const absolute = join(projectDir, entry);
+    let stat: Deno.FileInfo;
+    try {
+      stat = await Deno.stat(absolute);
+    } catch (error) {
+      if (error instanceof Deno.errors.NotFound) {
+        throw new Error(`Configured entity path ${entry} does not exist.`);
+      }
+      throw error;
+    }
+
+    if (stat.isFile) {
+      collected.push(toProjectRelative(projectDir, absolute));
+      continue;
+    }
+
     if (!stat.isDirectory) {
-      throw new Error(`The entities directory ${config.entitiesDir} is not a folder.`);
+      throw new Error(`Configured entity path ${entry} must be a file or directory.`);
     }
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return [];
-    }
-    throw error;
+
+    await walkEntities(absolute, (absolutePath) => {
+      const relative = toProjectRelative(projectDir, absolutePath);
+      collected.push(relative);
+    });
   }
 
-  await walkEntities(entitiesRoot, (absolutePath) => {
-    const relative = toProjectRelative(projectDir, absolutePath);
-    collected.push(relative);
-  });
-
-  collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1));
-  return collected;
+  return dedupePreserveOrder(collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1)));
 }
 
 async function walkEntities(
