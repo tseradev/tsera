@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "tsera/testing/asserts.ts";
+import { assert, assertEquals, assertRejects } from "tsera/testing/asserts.ts";
 import { defineEntity } from "tsera/core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 import { createDag } from "../dag.ts";
@@ -68,4 +68,26 @@ Deno.test("createDag relie les artefacts à l'entité", async () => {
   assertEquals(first.kind, "entity");
   const edgesFromEntity = dag.edges.filter((edge) => edge.from === first.id);
   assertEquals(edgesFromEntity.length, artifacts.length);
+});
+
+Deno.test("createDag signale les dépendances inconnues", async () => {
+  const dagPromise = createDag([
+    {
+      entity: userEntity,
+      sourcePath: "domain/User.entity.ts",
+      artifacts: [
+        {
+          kind: "schema",
+          path: ".tsera/User.schema.ts",
+          content: "export const schema = {};",
+          dependsOn: ["schema:user:missing"],
+        },
+      ],
+    },
+  ], { cliVersion: "0.1.0" });
+
+  await assertRejects(
+    () => dagPromise,
+    "Une arête référence un nœud inconnu dans le graphe",
+  );
 });
