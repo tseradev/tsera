@@ -34,12 +34,10 @@ export function createRouter(
     .name("tsera")
     .version(metadata.version)
     .description("TSera CLI — continuous coherence engine for entities.")
-    .option("--json", "Enable machine-friendly NDJSON output.", {
-      global: true,
+    .globalOption("--json", "Enable machine-friendly NDJSON output.", {
       default: false,
     })
-    .option("--strict", "Convert inconsistencies into exit code 2.", {
-      global: true,
+    .globalOption("--strict", "Convert inconsistencies into exit code 2.", {
       default: false,
     });
 

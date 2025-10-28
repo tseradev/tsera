@@ -99,6 +99,14 @@ export class Command<TOptions = Record<string, unknown>> {
     return this;
   }
 
+  globalOption<TValue = unknown>(
+    spec: string,
+    description: string,
+    config: OptionConfig<TValue> = {},
+  ): this {
+    return this.option(spec, description, { ...config, global: true });
+  }
+
   command<TChildOptions>(name: string, command: Command<TChildOptions>): this {
     this.subcommands.set(name, command as Command<unknown>);
     return this;
