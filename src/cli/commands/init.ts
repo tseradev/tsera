@@ -304,20 +304,9 @@ function toPascalCase(value: string): string {
   return parts.length > 0 ? parts.join("") : value;
 }
 
-function deriveSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "tsera";
-}
-
-function toEnvVar(value: string): string {
-  return value.replace(/[^A-Z0-9]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "") || "TSERA";
-}
-
-function generateConfigFile(projectName: string): string {
-  const slug = deriveSlug(projectName);
-  const envVar = `${toEnvVar(slug.toUpperCase())}_DATABASE_URL`;
+function generateConfigFile(_projectName: string): string {
+  const envVar = "TSERA_DATABASE_URL";
+  const sqliteFile = "data/tsera.sqlite";
 
   const template = `// TSera configuration (full profile with comments).
 import type { TseraConfig } from "tsera/cli/contracts/types.ts";
@@ -343,7 +332,7 @@ const config: TseraConfig = {
     ssl: "prefer",
     // Example SQLite configuration:
     // dialect: "sqlite",
-    // file: "data/${slug}.sqlite",
+    // file: "${sqliteFile}",
   },
   deploy: {
     // Deployment target handled by "tsera update".
