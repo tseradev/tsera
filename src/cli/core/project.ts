@@ -39,7 +39,7 @@ export interface ProjectResolution {
 export async function resolveProject(startDir: string): Promise<ProjectResolution> {
   const configPath = await findConfigPath(startDir);
   if (!configPath) {
-    throw new Error(`Impossible de trouver tsera.config.ts à partir de ${startDir}`);
+    throw new Error(`Unable to find tsera.config.ts from ${startDir}`);
   }
 
   return {

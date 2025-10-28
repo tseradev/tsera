@@ -56,7 +56,7 @@ export function createDefaultDoctorHandler(
     if (!plan.summary.changed) {
       logger.event("doctor:clean", { entities: dagInputs.length });
       if (!context.global.json) {
-        logger.info("Aucune incohérence détectée", { entities: dagInputs.length });
+        logger.info("No inconsistencies detected", { entities: dagInputs.length });
       }
       return;
     }
@@ -69,7 +69,7 @@ export function createDefaultDoctorHandler(
     });
 
     if (!context.global.json) {
-      logger.warn("Des artefacts doivent être régénérés", {
+      logger.warn("Artifacts need to be regenerated", {
         create: plan.summary.create,
         update: plan.summary.update,
         delete: plan.summary.delete,
@@ -95,7 +95,7 @@ export function createDefaultDoctorHandler(
       if (followUp.summary.changed) {
         logger.event("doctor:pending", { summary: followUp.summary });
         if (!context.global.json) {
-          logger.warn("Certaines incohérences persistent", { summary: followUp.summary });
+          logger.warn("Some inconsistencies remain", { summary: followUp.summary });
         }
         const exitCode = context.global.strict ? 2 : 1;
         exitFn(exitCode);
@@ -103,14 +103,14 @@ export function createDefaultDoctorHandler(
 
       logger.event("doctor:fixed", { steps: plan.summary.total });
       if (!context.global.json) {
-        logger.info("Incohérences corrigées", { steps: plan.summary.total });
+        logger.info("Inconsistencies fixed", { steps: plan.summary.total });
       }
       return;
     }
 
     if (!context.global.json) {
-      logger.info("Exécuter", { next: "tsera doctor --fix" });
-      logger.info("Ou", { next: "tsera dev --apply" });
+      logger.info("Run", { next: "tsera doctor --fix" });
+      logger.info("Or", { next: "tsera dev --apply" });
     }
 
     const exitCode = context.global.strict ? 2 : 1;
@@ -122,9 +122,9 @@ export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
 ): Command<DoctorCommandOptions> {
   return new Command<DoctorCommandOptions>()
-    .description("Vérifier la cohérence du projet et proposer des corrections sûres.")
-    .option("--cwd <path:string>", "Chemin du projet à diagnostiquer.", { default: "." })
-    .option("--fix", "Appliquer automatiquement les corrections sûres.", { default: false })
+    .description("Check project coherence and suggest safe fixes.")
+    .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
+    .option("--fix", "Automatically apply safe corrections.", { default: false })
     .action(async (options) => {
       const { json, strict, cwd, fix } = options;
       await handler({

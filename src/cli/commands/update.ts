@@ -68,7 +68,7 @@ export function createDefaultUpdateHandler(
 
     const versionInfo = await runner("deno", ["--version"]);
     if (!versionInfo.success) {
-      throw new Error(`Impossible de déterminer la version de Deno (code ${versionInfo.code}).`);
+      throw new Error(`Unable to determine the Deno version (code ${versionInfo.code}).`);
     }
 
     const denoVersion = parseDenoVersion(versionInfo.stdout);
@@ -84,14 +84,14 @@ export function createDefaultUpdateHandler(
     if (context.dryRun) {
       logger.event("update:dry-run", { command: "deno", args });
       if (!context.global.json) {
-        logger.info("Commande suggérée", { command: `deno ${args.join(" ")}` });
+        logger.info("Suggested command", { command: `deno ${args.join(" ")}` });
       }
     } else {
       const result = await runner("deno", args);
       if (!result.success) {
         const detail = result.stderr.trim() || result.stdout.trim();
         throw new Error(
-          `La commande deno ${args.join(" ")} a échoué (code ${result.code}).${
+          `The deno ${args.join(" ")} command failed (code ${result.code}).${
             detail ? ` ${detail}` : ""
           }`,
         );
@@ -106,7 +106,7 @@ export function createDefaultUpdateHandler(
     const migrationSteps = ["tsera doctor --fix", "tsera dev --apply"];
     logger.event("update:migration", { steps: migrationSteps });
     if (!context.global.json) {
-      logger.info("Étapes post-mise-à-jour", { next: migrationSteps.join(" && ") });
+      logger.info("Post-update steps", { next: migrationSteps.join(" && ") });
     }
   };
 }
@@ -115,18 +115,18 @@ export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
 ): Command<UpdateCommandOptions> {
   return new Command<UpdateCommandOptions>()
-    .description("Mettre à jour le CLI TSera via deno install ou binaire compilé.")
-    .option("--channel <channel:string>", "Canal de release (stable|beta|canary).", {
+    .description("Update the TSera CLI via deno install or a compiled binary.")
+    .option("--channel <channel:string>", "Release channel (stable|beta|canary).", {
       default: "stable",
       value: (value): "stable" | "beta" | "canary" => {
         if (value !== "stable" && value !== "beta" && value !== "canary") {
-          throw new Error(`Canal inconnu: ${value}`);
+          throw new Error(`Unknown channel: ${value}`);
         }
         return value;
       },
     })
-    .option("--binary", "Installer le binaire compilé au lieu de deno install.", { default: false })
-    .option("--dry-run", "Afficher les étapes sans appliquer.", { default: false })
+    .option("--binary", "Install the compiled binary instead of deno install.", { default: false })
+    .option("--dry-run", "Show the steps without applying them.", { default: false })
     .action(async (options) => {
       const { json, strict, channel, binary, dryRun } = options;
       await handler({
@@ -153,7 +153,7 @@ function buildDenoArgs(context: UpdateCommandContext, specifier: string): string
 function parseDenoVersion(stdout: string): string {
   const match = stdout.match(/deno\s+([0-9]+(?:\.[0-9]+)*)/i);
   if (!match) {
-    throw new Error("Impossible d'extraire la version de Deno.");
+    throw new Error("Unable to parse the Deno version.");
   }
   return match[1];
 }

@@ -1,139 +1,136 @@
 # TSera
 
-> Full TypeScript · Unification · Simplicité · Automatisation · Cohérence Continue (CC)
+> Full TypeScript · Unification · Simplicity · Automation · Continuous Coherence (CC)
 
-TSera est un moteur CLI et un noyau d'entités pour les projets Deno v2 qui promettent **cohérence
-continue** et **livraison automatique** des artefacts (schemas Zod, OpenAPI, migrations Drizzle,
-docs, tests) à partir d'un modèle unique. L'objectif est de fournir un outillage Deno-first où
-chaque entité décrite reste alignée avec l'application, de la phase `plan` jusqu'à l'`apply` final.
+TSera is a CLI engine and entity core for Deno v2 projects that delivers **continuous coherence**
+and **automated artifacts** (Zod schemas, OpenAPI definitions, Drizzle migrations, docs, tests) from
+a single source of truth. The goal is to provide Deno-first tooling where every declared entity
+stays aligned with the application from the `plan` phase to the final `apply`.
 
-## Promesse produit
+## Product promise
 
-1. **Une source unique** (`defineEntity`) décrit le domaine métier.
-2. **Un moteur CLI** traduit ce modèle en artefacts prêts à l'emploi (API, migrations, docs, tests).
-3. **Une cohérence continue** maintient ces artefacts synchronisés sans effort manuel.
+1. **A single source** (`defineEntity`) describes the domain model.
+2. **A CLI engine** turns that model into ready-to-use artifacts (API, migrations, docs, tests).
+3. **Continuous coherence** keeps those artifacts synchronized without manual effort.
 
-TSera vise à réduire le temps entre une idée d'entité et sa disponibilité dans le code, la base de
-données et la documentation partagée avec l'équipe.
+TSera aims to shrink the time between an entity idea and its availability across code, database, and
+team-facing documentation.
 
-## Stack actuelle
+## Current stack
 
-- **Deno v2** (ESM strict, tâches via `deno.jsonc`).
-- **Cliffy** pour le CLI modulaire (`init`, `dev`, `doctor`, `update`).
-- **Zod**, **zod-to-openapi** et **Drizzle** pour projeter les entités.
-- **TS-Morph** pour piloter la génération TypeScript.
-- **Templates** Hono/Fresh pour bootstraper un projet `app-minimal`.
+- **Deno v2** (strict ESM, tasks managed via `deno.jsonc`).
+- **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `update`).
+- **Zod**, **zod-to-openapi**, and **Drizzle** to project entities.
+- **TS-Morph** to drive TypeScript generation.
+- **Hono/Fresh templates** to bootstrap the `app-minimal` project.
 
 ## Quick start
 
 ```bash
-# 1. Vérifier/formatter le dépôt
- deno task fmt
-# 2. Lancer le linting strict
- deno task lint
-# 3. Exécuter la suite de tests
- deno task test
+# 1. Format the repository
+deno task fmt
+# 2. Run strict linting
+deno task lint
+# 3. Execute the test suite
+deno task test
 ```
 
-Une fois le noyau CLI disponible, les commandes suivantes permettront d'explorer le workflow complet
-:
+Once the CLI core is ready, the following commands will showcase the end-to-end workflow:
 
 ```bash
-# Initialiser un nouveau projet
- deno run -A src/cli/main.ts init my-app
-# Regénérer les artefacts avec surveillance continue
- deno run -A src/cli/main.ts dev
+# Initialize a new project
+deno run -A src/cli/main.ts init my-app
+# Regenerate artifacts with continuous watching
+deno run -A src/cli/main.ts dev
 ```
 
 ## Documentation
 
-- [Guide architecture détaillé](./docs/ARCHITECTURE.md)
-- [Landing communauté & ressources](./docs/README.md)
-- [Playbook communication & assets](./docs/COMMUNICATION.md)
+- [Detailed architecture guide](./docs/ARCHITECTURE.md)
+- [Community landing & resources](./docs/README.md)
+- [Communication playbook & assets](./docs/COMMUNICATION.md)
 
 ## Release & distribution
 
-Les releases officielles suivent la stratégie suivante :
+Official releases follow this sequence:
 
-1. Créer un tag `vX.Y.Z` et pousser vers le dépôt distant.
-2. Lancer la compilation multi-plateforme :
+1. Create a `vX.Y.Z` tag and push it to the remote repository.
+2. Run the multi-platform compilation:
    ```bash
    deno compile -A --output dist/tsera src/cli/main.ts
    ```
-3. Publier les binaires dans la release GitHub.
-4. (Optionnel) Publier le module JSR :
+3. Publish the binaries on the GitHub release.
+4. (Optional) Publish the JSR module:
    ```bash
    deno publish
    ```
 
-Un script automatisé sera ajouté pour empaqueter et publier simultanément les binaires (Linux,
-macOS, Windows) et, si activé, pousser le package `jsr:tsera`.
+An automated script will eventually package and publish binaries (Linux, macOS, Windows) and, when
+enabled, push the `jsr:tsera` package.
 
-### Préparer un tag stable
+### Preparing a stable tag
 
-Avant chaque release :
+Before every release:
 
-1. Vérifier la cohérence locale :
+1. Validate local coherence:
    ```bash
    deno task fmt && deno task lint && deno task test
    ```
-2. Réaliser un cycle `dev` dans un projet d'exemple généré via `tsera init demo`.
-3. Mettre à jour les numéros de version dans `deno.jsonc`, `src/cli/main.ts` et la documentation.
-4. Rédiger un changelog synthétique (section `## Release vX.Y.Z` dans `docs/COMMUNICATION.md`).
-5. Préparer les assets de communication textuels (script de thread, messages prêts à publier) et
-   planifier la capture visuelle à venir.
+2. Run a full `dev` cycle in an example project generated with `tsera init demo`.
+3. Update version numbers in `deno.jsonc`, `src/cli/main.ts`, and the documentation.
+4. Draft a concise changelog (section `## Release vX.Y.Z` in `docs/COMMUNICATION.md`).
+5. Prepare communication assets (thread script, ready-to-post messages) and plan the upcoming visual
+   capture.
 
-Une fois ces vérifications effectuées, créer le tag `vX.Y.Z` et suivre la procédure ci-dessus.
+After completing these checks, create the `vX.Y.Z` tag and follow the release procedure above.
 
-## Workflow cohérence continue
+## Continuous coherence workflow
 
-1. **Observation** — `watch.ts` agrège les changements sur les entités et la config.
-2. **Planification** — `planner.ts` calcule les steps (`create`, `update`, `delete`, `noop`).
-3. **Application** — `applier.ts` écrit les artefacts avec `safeWrite` et met à jour `.tsera/`.
-4. **Rapport** — les sorties `--json` décrivent le statut (`coherence: ok/drift/error`).
+1. **Observe** — `watch.ts` aggregates changes on entities and the configuration.
+2. **Plan** — `planner.ts` computes the steps (`create`, `update`, `delete`, `noop`).
+3. **Apply** — `applier.ts` writes artifacts with `safeWrite` and updates `.tsera/`.
+4. **Report** — `--json` outputs describe the status (`coherence: ok/drift/error`).
 
-Le cycle peut être exécuté manuellement (commande `plan/apply`) ou automatiquement via `tsera dev`.
+The cycle can run manually (`plan/apply`) or automatically through `tsera dev`.
 
-## Commandes CLI (aperçu)
+## CLI commands (preview)
 
-| Commande               | Description rapide                                                             | Statut      |
-| ---------------------- | ------------------------------------------------------------------------------ | ----------- |
-| `tsera init <name>`    | Génère `tsera.config.ts`, le template `app-minimal` et la structure `.tsera/`. | 🛠️ En cours |
-| `tsera dev [--json]`   | Observe les entités, calcule le plan et applique les artefacts en boucle.      | 🛠️ En cours |
-| `tsera doctor [--fix]` | Diagnostique les incohérences, peut réparer automatiquement les cas sûrs.      | 🛠️ En cours |
-| `tsera update`         | Met à jour le binaire installé et synchronise les dépendances CLI.             | 🛠️ En cours |
+| Command                | Quick description                                                                  | Status    |
+| ---------------------- | ---------------------------------------------------------------------------------- | --------- |
+| `tsera init <name>`    | Generates `tsera.config.ts`, the `app-minimal` template, and the `.tsera/` layout. | 🛠️ In dev |
+| `tsera dev [--json]`   | Watches entities, computes the plan, and applies artifacts on a loop.              | 🛠️ In dev |
+| `tsera doctor [--fix]` | Diagnoses inconsistencies and can safely fix known scenarios.                      | 🛠️ In dev |
+| `tsera update`         | Updates the installed binary and syncs CLI dependencies.                           | 🛠️ In dev |
 
-Chaque commande est conçue pour fonctionner en mode interactif (`TUI`) ou machine (`--json`). La
-spécification détaillée des options sera ajoutée une fois l'implémentation stabilisée.
+Each command supports an interactive mode (`TUI`) and machine-oriented mode (`--json`). Detailed
+option specifications will be added once the implementation stabilizes.
 
-## Structure du dépôt
+## Repository structure
 
 ```text
 .
-├─ src/               # Noyau TypeScript (entités, CLI Cliffy, moteur plan/apply)
-├─ templates/         # Projets d'exemple générés par `tsera init`
-├─ docs/              # Documentation technique, communication et releases
-├─ scripts/           # Automations (E2E, release, utilitaires)
-├─ deno.jsonc         # Configuration Deno tasks et lint/formatter
-└─ import_map.json    # Alias d'import pour le développement local
+├─ src/               # TypeScript core (entities, Cliffy CLI, plan/apply engine)
+├─ templates/         # Example projects generated by `tsera init`
+├─ docs/              # Technical documentation, communication notes, release material
+├─ scripts/           # Automation (E2E, release, utilities)
+├─ deno.jsonc         # Deno task configuration and lint/formatter rules
+└─ import_map.json    # Local development import aliases
 ```
 
-## Contribuer
+## Contributing
 
-1. Forker le dépôt et créer une branche `feat/...` ou `docs/...`.
-2. Implémenter la modification en respectant les contraintes décrites dans
-   [`AGENTS.md`](./AGENTS.md).
-3. Lancer la suite de vérifications locales (`deno task fmt`, `deno task lint`, `deno task test`).
-4. Ouvrir une PR avec un titre `[scope] Description concise` et un résumé clair.
-5. Documenter toute modification de contrat (CLI, artefacts, config) dans les fichiers pertinents.
+1. Fork the repository and create a `feat/...` or `docs/...` branch.
+2. Implement the change while following the constraints listed in [`AGENTS.md`](./AGENTS.md).
+3. Run the local checks (`deno task fmt`, `deno task lint`, `deno task test`).
+4. Open a PR with a `[scope] Concise description` title and a clear summary.
 
-Pour toute discussion ou proposition, utiliser les issues GitHub ou contacter l'équipe via les
-canaux listés dans `docs/COMMUNICATION.md`.
+For any discussion or proposal, open an issue or reach out via the channels listed in
+`docs/COMMUNICATION.md`.
 
-## Roadmap immédiate
+## Immediate roadmap
 
-1. Finaliser l'implémentation de `defineEntity` et des helpers Zod/OpenAPI/Drizzle.
-2. Stabiliser le moteur CLI et les commandes Cliffy.
-3. Fournir le template `app-minimal` complet avec ses artefacts générés.
-4. Mettre en place la CI 3 OS (fmt, lint, test, compile) et le pipeline release.
-5. Publier un premier binaire expérimental pour retours utilisateurs.
+1. Finalize `defineEntity` and the Zod/OpenAPI/Drizzle helpers.
+2. Stabilize the Cliffy CLI with the `init`, `dev`, `doctor`, `update` commands.
+3. Ship the complete `app-minimal` template with generated artifacts.
+4. Enable the E2E flow (`scripts/e2e.ts`).
+5. Publish an experimental binary for early feedback.

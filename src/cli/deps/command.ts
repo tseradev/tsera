@@ -79,7 +79,7 @@ export class Command<TOptions = Record<string, unknown>> {
     }
 
     if (!longName) {
-      throw new Error(`Option invalide: ${spec}`);
+      throw new Error(`Invalid option: ${spec}`);
     }
 
     const expectsValue = /<.+>/.test(spec);
@@ -214,14 +214,14 @@ export class Command<TOptions = Record<string, unknown>> {
     const name = negated ? arg.slice(5) : arg.slice(2).split("=")[0];
     const option = this.options.find((opt) => opt.flagName === name);
     if (!option) {
-      throw new Error(`Option inconnue: --${name}`);
+      throw new Error(`Unknown option: --${name}`);
     }
 
     const target = option.global ? globalValues : localValues;
 
     if (negated) {
       if (!option.negatable) {
-        throw new Error(`Option non négatable: --${name}`);
+        throw new Error(`Non-negatable option: --${name}`);
       }
       target[option.propertyName] = false;
       return index + 1;
@@ -235,7 +235,7 @@ export class Command<TOptions = Record<string, unknown>> {
       } else {
         value = args[index + 1];
         if (value === undefined) {
-          throw new Error(`Valeur manquante pour --${name}`);
+          throw new Error(`Missing value for --${name}`);
         }
         index += 1;
       }
@@ -257,7 +257,7 @@ export class Command<TOptions = Record<string, unknown>> {
     const name = arg.replace(/^-+/, "");
     const option = this.options.find((opt) => opt.shortName === name);
     if (!option) {
-      throw new Error(`Option inconnue: -${name}`);
+      throw new Error(`Unknown option: -${name}`);
     }
 
     const target = option.global ? globalValues : localValues;

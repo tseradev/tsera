@@ -2,7 +2,7 @@ import { join } from "../../../shared/path.ts";
 import { assert, assertEquals } from "tsera/testing/asserts.ts";
 import { readJsonFile, removeFileIfExists, safeWrite, writeJsonFile } from "../fsx.ts";
 
-Deno.test("safeWrite crée un nouveau fichier quand il n'existe pas", async () => {
+Deno.test("safeWrite creates a new file when it does not exist", async () => {
   const dir = await Deno.makeTempDir();
   const path = join(dir, "file.txt");
 
@@ -13,7 +13,7 @@ Deno.test("safeWrite crée un nouveau fichier quand il n'existe pas", async () =
   assertEquals(content, "hello");
 });
 
-Deno.test("safeWrite n'écrit pas lorsque le contenu est identique", async () => {
+Deno.test("safeWrite skips writing when content matches", async () => {
   const dir = await Deno.makeTempDir();
   const path = join(dir, "file.txt");
   await safeWrite(path, "hello");
@@ -23,18 +23,18 @@ Deno.test("safeWrite n'écrit pas lorsque le contenu est identique", async () =>
   assertEquals(result.written, false);
 });
 
-Deno.test("safeWrite écrase lorsque le contenu diffère", async () => {
+Deno.test("safeWrite overwrites when content differs", async () => {
   const dir = await Deno.makeTempDir();
   const path = join(dir, "file.txt");
   await safeWrite(path, "hello");
 
-  const result = await safeWrite(path, "bonjour");
+  const result = await safeWrite(path, "updated");
   assert(result.changed);
   const content = await Deno.readTextFile(path);
-  assertEquals(content, "bonjour");
+  assertEquals(content, "updated");
 });
 
-Deno.test("removeFileIfExists supprime un fichier et renvoie true", async () => {
+Deno.test("removeFileIfExists deletes a file and returns true", async () => {
   const dir = await Deno.makeTempDir();
   const path = join(dir, "file.txt");
   await safeWrite(path, "hello");
@@ -44,7 +44,7 @@ Deno.test("removeFileIfExists supprime un fichier et renvoie true", async () => 
   assertEquals(await removeFileIfExists(path), false);
 });
 
-Deno.test("writeJsonFile trie les clés et peut être relu", async () => {
+Deno.test("writeJsonFile sorts keys and can be read back", async () => {
   const dir = await Deno.makeTempDir();
   const path = join(dir, "data.json");
   const payload = { b: 2, a: 1 };

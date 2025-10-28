@@ -89,6 +89,6 @@ function samplePrimitive(type: TColumn["type"] extends infer T ? T : never): str
     case "json":
       return "{}";
     default:
-      throw new Error(`Type de colonne non supporté: ${String(type)}`);
+      throw new Error(`Unsupported column type: ${String(type)}`);
   }
 }

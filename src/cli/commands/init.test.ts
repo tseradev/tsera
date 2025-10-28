@@ -9,7 +9,7 @@ async function readGoldenFile(name: string): Promise<string> {
   return await Deno.readTextFile(url);
 }
 
-Deno.test("init génère le squelette complet et le manifeste", async () => {
+Deno.test("init generates the full skeleton and manifest", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "demo-app");

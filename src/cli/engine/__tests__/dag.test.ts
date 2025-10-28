@@ -34,7 +34,7 @@ const userEntity = defineEntity({
   test: "smoke",
 });
 
-Deno.test("createDag relie les artefacts à l'entité", async () => {
+Deno.test("createDag links artifacts to the entity", async () => {
   const artifacts = [
     ...(await buildZodArtifacts({ entity: userEntity, config: baseConfig })),
     ...(await buildOpenAPIArtifacts({ entity: userEntity, config: baseConfig })),
@@ -60,7 +60,7 @@ Deno.test("createDag relie les artefacts à l'entité", async () => {
   for (const artifact of artifacts) {
     const nodeId = `${artifact.kind}:user:${artifact.path}`;
     const node = dag.nodes.get(nodeId);
-    assert(node, `nœud absent pour ${nodeId}`);
+    assert(node, `missing node for ${nodeId}`);
     assertEquals(node.mode, "output");
   }
 
@@ -70,7 +70,7 @@ Deno.test("createDag relie les artefacts à l'entité", async () => {
   assertEquals(edgesFromEntity.length, artifacts.length);
 });
 
-Deno.test("createDag signale les dépendances inconnues", async () => {
+Deno.test("createDag reports unknown dependencies", async () => {
   const dagPromise = createDag([
     {
       entity: userEntity,
@@ -88,6 +88,6 @@ Deno.test("createDag signale les dépendances inconnues", async () => {
 
   await assertRejects(
     () => dagPromise,
-    "Une arête référence un nœud inconnu dans le graphe",
+    "An edge references an unknown node in the graph",
   );
 });

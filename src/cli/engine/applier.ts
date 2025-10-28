@@ -59,7 +59,7 @@ async function handleWriteStep(
   }
   const content = step.node.content;
   if (content === undefined) {
-    throw new Error(`Le nœud ${step.node.id} ne possède pas de contenu à écrire.`);
+    throw new Error(`Node ${step.node.id} does not provide content to write.`);
   }
 
   const absolute = join(options.projectDir, targetPath);
@@ -78,7 +78,7 @@ async function handleDeleteStep(
 ): Promise<void> {
   const path = step.node.targetPath ?? step.previous?.targetPath;
   if (!path) {
-    throw new Error(`Impossible de supprimer le nœud ${step.node.id} sans chemin associé.`);
+    throw new Error(`Cannot delete node ${step.node.id} without an associated path.`);
   }
 
   const absolute = join(options.projectDir, path);

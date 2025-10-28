@@ -49,7 +49,7 @@ export async function discoverEntities(
     const absolutePath = join(projectDir, relativePath);
     const definitions = await loadEntityDefinitions(absolutePath);
     if (definitions.length === 0) {
-      throw new Error(`Aucune entité exportée par ${relativePath}`);
+      throw new Error(`No entity exported by ${relativePath}`);
     }
     for (const entity of definitions) {
       discovered.push({
@@ -134,7 +134,7 @@ async function gatherEntityPaths(
   try {
     const stat = await Deno.stat(entitiesRoot);
     if (!stat.isDirectory) {
-      throw new Error(`Le dossier des entités ${config.entitiesDir} n'est pas un répertoire.`);
+      throw new Error(`The entities directory ${config.entitiesDir} is not a folder.`);
     }
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
