@@ -11,6 +11,7 @@ import { watchProject } from "../engine/watch.ts";
 import type { CliMetadata } from "../main.ts";
 import type { GlobalCLIOptions } from "../router.ts";
 
+/** CLI options accepted by the {@code dev} command. */
 interface DevCommandOptions extends GlobalCLIOptions {
   watch: boolean;
   once: boolean;
@@ -18,6 +19,7 @@ interface DevCommandOptions extends GlobalCLIOptions {
   apply: boolean;
 }
 
+/** Context object passed to dev command handlers. */
 export interface DevCommandContext {
   projectDir: string;
   watch: boolean;
@@ -27,10 +29,14 @@ export interface DevCommandContext {
   global: GlobalCLIOptions;
 }
 
+/** Function signature for dev command implementations. */
 export type DevCommandHandler = (context: DevCommandContext) => Promise<void> | void;
 
 const WATCH_DEBOUNCE_MS = 150;
 
+/**
+ * Creates the default dev command handler that orchestrates planning and applying the DAG.
+ */
 function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
   return async (context) => {
     const logger = createLogger({ json: context.global.json });
@@ -138,6 +144,9 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
   };
 }
 
+/**
+ * Constructs the Cliffy command definition for {@code tsera dev}.
+ */
 export function createDevCommand(
   metadata: CliMetadata,
   handler: DevCommandHandler = createDefaultDevHandler(metadata),

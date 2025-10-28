@@ -1,6 +1,9 @@
 #!/usr/bin/env -S deno run -A
 import { createRouter } from "./router.ts";
 
+/**
+ * Metadata passed to the CLI entrypoint, primarily containing the published version.
+ */
 export interface CliMetadata {
   version: string;
 }
@@ -9,6 +12,12 @@ const DEFAULT_METADATA: CliMetadata = {
   version: "0.0.0-dev",
 };
 
+/**
+ * CLI entrypoint that constructs the command router and executes parsing logic.
+ *
+ * @param args - Command-line arguments, defaulting to {@link Deno.args}.
+ * @param metadata - CLI metadata controlling version reporting.
+ */
 export async function main(
   args: string[] = Deno.args,
   metadata: CliMetadata = DEFAULT_METADATA,

@@ -4,12 +4,14 @@ import { createLogger } from "../core/log.ts";
 import { determineCliVersion } from "../core/version.ts";
 import type { GlobalCLIOptions } from "../router.ts";
 
+/** CLI options accepted by the {@code update} command. */
 interface UpdateCommandOptions extends GlobalCLIOptions {
   channel: "stable" | "beta" | "canary";
   binary: boolean;
   dryRun: boolean;
 }
 
+/** Context object passed to update command handlers. */
 export interface UpdateCommandContext {
   channel: "stable" | "beta" | "canary";
   binary: boolean;
@@ -17,6 +19,7 @@ export interface UpdateCommandContext {
   global: GlobalCLIOptions;
 }
 
+/** Function signature for update command implementations. */
 export type UpdateCommandHandler = (context: UpdateCommandContext) => Promise<void> | void;
 
 interface CommandExecutionResult {
@@ -36,6 +39,7 @@ interface UpdateHandlerDependencies {
 
 const TEXT_DECODER = new TextDecoder();
 
+/** Executes a subprocess and captures stdout/stderr for use in update operations. */
 function defaultRunner(command: string, args: string[]): Promise<CommandExecutionResult> {
   const denoCommand = new Deno.Command(command, {
     args,
@@ -50,6 +54,9 @@ function defaultRunner(command: string, args: string[]): Promise<CommandExecutio
   }));
 }
 
+/**
+ * Creates the default update command handler which delegates to {@code deno install/compile}.
+ */
 export function createDefaultUpdateHandler(
   dependencies: UpdateHandlerDependencies = {},
 ): UpdateCommandHandler {
@@ -111,6 +118,9 @@ export function createDefaultUpdateHandler(
   };
 }
 
+/**
+ * Constructs the Cliffy command definition for {@code tsera update}.
+ */
 export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
 ): Command<UpdateCommandOptions> {

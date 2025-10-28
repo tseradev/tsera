@@ -2,8 +2,18 @@ import type { EntityDef, TColumn, TPrimitive } from "./entity.ts";
 import { isArrayColumnType } from "./entity.ts";
 import { pascalToSnakeCase } from "./utils/strings.ts";
 
+/** Supported SQL dialect identifiers for DDL generation. */
 type Dialect = "postgres" | "sqlite";
 
+/**
+ * Generates a CREATE TABLE statement for the provided entity when {@link EntitySpec.table}
+ * is enabled. When the entity does not target a table, a comment describing the omission
+ * is returned instead.
+ *
+ * @param entity - Validated entity definition to transform into SQL.
+ * @param dialect - SQL dialect influencing type and default mapping (defaults to Postgres).
+ * @returns SQL string representing the entity.
+ */
 export function entityToDDL(entity: EntityDef, dialect: Dialect = "postgres"): string {
   if (!entity.table) {
     return `-- Entity ${entity.name} is not mapped to a table.`;
@@ -17,6 +27,14 @@ export function entityToDDL(entity: EntityDef, dialect: Dialect = "postgres"): s
   return `CREATE TABLE IF NOT EXISTS "${tableName}" (\n${columnDefinitions}\n);`;
 }
 
+/**
+ * Formats an individual column definition for inclusion in the CREATE TABLE statement.
+ *
+ * @param name - Column name as declared on the entity.
+ * @param column - Column configuration describing type and constraints.
+ * @param dialect - SQL dialect controlling generated syntax.
+ * @returns A single column definition string.
+ */
 function formatColumn(name: string, column: TColumn, dialect: Dialect): string {
   const columnName = `  "${name}"`;
   const sqlType = mapColumnType(column, dialect);
@@ -33,6 +51,13 @@ function formatColumn(name: string, column: TColumn, dialect: Dialect): string {
   return [columnName, sqlType, ...constraints].join(" ").trimEnd();
 }
 
+/**
+ * Resolves the SQL type for a column, delegating to array or primitive mappings.
+ *
+ * @param column - Column definition to translate.
+ * @param dialect - SQL dialect controlling the mapping.
+ * @returns Dialect-specific SQL type.
+ */
 function mapColumnType(column: TColumn, dialect: Dialect): string {
   if (isArrayColumnType(column.type)) {
     return dialect === "postgres" ? "JSONB" : "TEXT";
@@ -41,6 +66,13 @@ function mapColumnType(column: TColumn, dialect: Dialect): string {
   return mapPrimitiveType(column.type, dialect);
 }
 
+/**
+ * Maps a primitive column type to its SQL representation for the requested dialect.
+ *
+ * @param type - Primitive column type to convert.
+ * @param dialect - SQL dialect controlling the conversion.
+ * @returns SQL type string suitable for the dialect.
+ */
 function mapPrimitiveType(type: TPrimitive, dialect: Dialect): string {
   switch (type) {
     case "string":
@@ -60,6 +92,14 @@ function mapPrimitiveType(type: TPrimitive, dialect: Dialect): string {
   }
 }
 
+/**
+ * Produces a SQL fragment describing the default value for a column.
+ *
+ * @param column - Column definition containing the type metadata.
+ * @param value - Default value assigned to the column.
+ * @param dialect - SQL dialect controlling formatting decisions.
+ * @returns SQL literal representing the default value.
+ */
 function formatDefault(column: TColumn, value: unknown, dialect: Dialect): string {
   if (value === null) {
     return "NULL";
@@ -100,6 +140,13 @@ function formatDefault(column: TColumn, value: unknown, dialect: Dialect): strin
   }
 }
 
+/**
+ * Serialises JSON values for use as SQL defaults, optionally applying dialect casting.
+ *
+ * @param value - Value to serialise as JSON.
+ * @param dialect - SQL dialect controlling casting behaviour.
+ * @returns SQL literal representing the JSON default value.
+ */
 function formatJsonDefault(value: unknown, dialect: Dialect): string {
   const jsonValue = JSON.stringify(value);
   if (jsonValue === undefined) {
@@ -110,6 +157,12 @@ function formatJsonDefault(value: unknown, dialect: Dialect): string {
   return dialect === "postgres" ? `'${escaped}'::jsonb` : `'${escaped}'`;
 }
 
+/**
+ * Escapes single quotes to create SQL-safe string literals.
+ *
+ * @param value - Raw string value.
+ * @returns Escaped string ready for embedding in SQL.
+ */
 function escapeSqlString(value: string): string {
   return value.replaceAll("'", "''");
 }

@@ -5,11 +5,13 @@ import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update.ts";
 import type { CliMetadata } from "./main.ts";
 
+/** Global options shared across CLI commands. */
 export interface GlobalCLIOptions extends Record<string, unknown> {
   json: boolean;
   strict: boolean;
 }
 
+/** Optional hooks used to override command implementations in tests. */
 export interface RouterHandlers {
   init?: InitCommandHandler;
   dev?: DevCommandHandler;
@@ -17,6 +19,13 @@ export interface RouterHandlers {
   update?: UpdateCommandHandler;
 }
 
+/**
+ * Constructs the root Cliffy command with all TSera subcommands attached.
+ *
+ * @param metadata - CLI metadata, primarily providing the version string.
+ * @param handlers - Optional overrides for individual command handlers.
+ * @returns A configured Cliffy {@link Command} ready for parsing.
+ */
 export function createRouter(
   metadata: CliMetadata,
   handlers: RouterHandlers = {},
