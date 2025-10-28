@@ -34,7 +34,12 @@ Deno.test("init génère le squelette complet et le manifeste", async () => {
     const openapiPath = join(projectDir, ".tsera", "openapi", "User.json");
     const openapiDocument = await Deno.readTextFile(openapiPath);
     const expectedOpenapi = await readGoldenFile("User.openapi.json");
-    assertEquals(openapiDocument, expectedOpenapi);
+
+    // Compare parsed JSON to ignore platform-specific newline differences while
+    // still validating the structure and values of the generated document.
+    const openapiObject = JSON.parse(openapiDocument);
+    const expectedOpenapiObject = JSON.parse(expectedOpenapi);
+    assertEquals(openapiObject, expectedOpenapiObject);
 
     const manifestText = await Deno.readTextFile(join(projectDir, ".tsera", "manifest.json"));
     const manifest = JSON.parse(manifestText) as { snapshots?: Record<string, unknown> };
