@@ -35,19 +35,21 @@ team-facing documentation.
 ### Install the CLI locally
 
 From the repository root you can install the CLI globally with `deno install` (Deno v2 now requires
-the `--global` flag when permission options such as `-A` are provided). Include the repository
-config so the bundled command keeps the import map:
+the `--global` flag when permission options such as `-A` are provided). Include both the repository
+config and the import map so the bundled command keeps the `tsera/*` aliases:
 
 ```bash
-deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
+deno install --global --config deno.jsonc --import-map import_map.json -A -f --name tsera src/cli/main.ts
 ```
 
 This makes a `tsera` executable available in your shell (the command can also be run directly with
 `deno run -A src/cli/main.ts ...` during development).
 
-> ℹ️ If you omit `--config deno.jsonc`, Deno prints `discovered config file will be ignored` and the
-> installed binary later fails to resolve `tsera/*` imports. Re-run the installation with the config
-> flag (or use `--import-map import_map.json`) to silence the warning and keep the CLI functional.
+> ℹ️ Deno 2 currently ignores the `importMap` setting from `deno.jsonc` during `deno install`. If
+> you skip either `--config deno.jsonc` or `--import-map import_map.json`, the installed binary
+> cannot resolve `tsera/*` imports and exits with `Import ... not a dependency`. Even with both
+> flags Deno prints a warning about the ignored `importMap` entry—this is expected and can be safely
+> ignored.
 
 ### Hello world walkthrough
 

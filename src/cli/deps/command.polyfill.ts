@@ -8,6 +8,8 @@ type OptionDefinition = {
   defaultValue: unknown;
   global: boolean;
   negatable: boolean;
+  description: string;
+  displayName: string;
   valueParser?: OptionValueParser;
 };
 
@@ -34,16 +36,22 @@ export class Command<TOptions = Record<string, unknown>> {
   private actionHandler?: ActionHandler<TOptions>;
   private argumentSpec?: ArgumentSpec;
   private shouldThrow = false;
+  private commandName = "command";
+  private commandDescription = "";
+  private commandVersion?: string;
 
   name(_value: string): this {
+    this.commandName = _value.trim() || this.commandName;
     return this;
   }
 
   description(_value: string): this {
+    this.commandDescription = _value.trim();
     return this;
   }
 
   version(_value: string): this {
+    this.commandVersion = _value.trim();
     return this;
   }
 
@@ -93,6 +101,8 @@ export class Command<TOptions = Record<string, unknown>> {
       defaultValue: config.default,
       global: Boolean(config.global),
       negatable: Boolean(config.negatable),
+      description: _description.trim(),
+      displayName: spec.trim(),
       valueParser: config.value,
     });
 
@@ -108,6 +118,7 @@ export class Command<TOptions = Record<string, unknown>> {
   }
 
   command<TChildOptions>(name: string, command: Command<TChildOptions>): this {
+    command.name(name);
     this.subcommands.set(name, command as Command<unknown>);
     return this;
   }
@@ -120,6 +131,69 @@ export class Command<TOptions = Record<string, unknown>> {
   throwErrors(): this {
     this.shouldThrow = true;
     return this;
+  }
+
+  showHelp(): void {
+    const lines: string[] = [];
+    const usage: string[] = [this.commandName || "command"];
+
+    if (this.subcommands.size > 0) {
+      usage.push("<command>");
+    }
+
+    if (this.argumentSpec) {
+      const arg = this.argumentSpec.required
+        ? `<${this.argumentSpec.name}>`
+        : `[${this.argumentSpec.name}]`;
+      usage.push(arg);
+    }
+
+    lines.push(`Usage: ${usage.join(" ")}`.trim());
+
+    if (this.commandDescription) {
+      lines.push("", this.commandDescription);
+    }
+
+    if (this.commandVersion) {
+      lines.push("", `Version: ${this.commandVersion}`);
+    }
+
+    if (this.options.length > 0) {
+      lines.push("", "Options:");
+      const formatted = this.options.map((option) => {
+        const label = option.displayName || `--${option.flagName}`;
+        const description = option.description ? option.description : "";
+        return { label, description };
+      });
+      const maxLabelLength = formatted.reduce(
+        (length, entry) => Math.max(length, entry.label.length),
+        0,
+      );
+
+      for (const entry of formatted) {
+        const padded = entry.label.padEnd(maxLabelLength + 2, " ");
+        lines.push(`  ${padded}${entry.description}`.trimEnd());
+      }
+    }
+
+    if (this.subcommands.size > 0) {
+      lines.push("", "Commands:");
+      const entries = Array.from(this.subcommands.entries()).map(([name, command]) => ({
+        name,
+        description: command.commandDescription,
+      }));
+      const longest = entries.reduce(
+        (length, entry) => Math.max(length, entry.name.length),
+        0,
+      );
+      for (const entry of entries) {
+        const padded = entry.name.padEnd(longest + 2, " ");
+        const description = entry.description ?? "";
+        lines.push(`  ${padded}${description}`.trimEnd());
+      }
+    }
+
+    console.log(lines.join("\n"));
   }
 
   async parse(args: string[]): Promise<void> {
@@ -163,6 +237,11 @@ export class Command<TOptions = Record<string, unknown>> {
         break;
       }
 
+      if (arg === "--help" || arg === "-h") {
+        this.showHelp();
+        return;
+      }
+
       if (arg.startsWith("--")) {
         const consumed = this.handleLongOption(arg, args, index, globalValues, localValues);
         index = consumed;
@@ -198,7 +277,8 @@ export class Command<TOptions = Record<string, unknown>> {
 
     if (!this.actionHandler) {
       if (this.subcommands.size > 0) {
-        throw new Error("No subcommand provided.");
+        this.showHelp();
+        return;
       }
       return;
     }
