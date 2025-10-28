@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  DENO_NO_PROMPT: "1"
+
+jobs:
+  build:
+    name: Build binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Compile CLI
+        run: deno task compile
+
+      - name: Prepare artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            mv dist/tsera.exe "release/tsera-${{ matrix.os }}.exe"
+          else
+            mv dist/tsera "release/tsera-${{ matrix.os }}"
+            chmod +x "release/tsera-${{ matrix.os }}"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsera-${{ matrix.os }}
+          path: release/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    env:
+      JSR_TOKEN: ${{ secrets.JSR_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Publish to JSR (optional)
+        if: env.JSR_TOKEN != ''
+        run: deno publish
+
+      - name: Download compiled artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*
