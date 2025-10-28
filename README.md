@@ -45,11 +45,10 @@ deno install --global --config deno.jsonc --import-map import_map.json -A -f --n
 This makes a `tsera` executable available in your shell (the command can also be run directly with
 `deno run -A src/cli/main.ts ...` during development).
 
-> ℹ️ Deno 2 currently ignores the `importMap` setting from `deno.jsonc` during `deno install`. If
-> you skip either `--config deno.jsonc` or `--import-map import_map.json`, the installed binary
-> cannot resolve `tsera/*` imports and exits with `Import ... not a dependency`. Even with both
-> flags Deno prints a warning about the ignored `importMap` entry—this is expected and can be safely
-> ignored.
+> ℹ️ Deno 2 currently ignores import maps declared inside configuration files during `deno install`.
+> The repository config therefore omits that entry, and the installation command must include the
+> explicit `--import-map import_map.json` flag so the installed binary can resolve the `tsera/*`
+> aliases.
 
 ### Hello world walkthrough
 

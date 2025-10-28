@@ -1,8 +1,11 @@
 {
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
-  "importMap": "./import_map.json",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "tsera/*": ["./src/*"]
+    }
   },
   "fmt": {
     "useTabs": false,
@@ -17,9 +20,9 @@
   "tasks": {
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "test": "deno test -A --fail-fast",
-    "e2e": "deno run -A scripts/e2e.ts",
-    "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
+    "test": "deno test -A --fail-fast --import-map import_map.json",
+    "e2e": "deno run -A --import-map import_map.json scripts/e2e.ts",
+    "compile": "deno compile -A --import-map import_map.json --output dist/tsera src/cli/main.ts",
     "publish": "deno publish"
   }
 }
