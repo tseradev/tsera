@@ -82,3 +82,37 @@ Deno.test("update validates the channel and exposes options", async () => {
   assertEquals(received.binary, true);
   assertEquals(received.dryRun, false);
 });
+
+Deno.test("router shows modern help layout", () => {
+  const router = createRouter(TEST_METADATA);
+  const captured: string[] = [];
+  const originalLog = console.log;
+
+  console.log = (...args: unknown[]) => {
+    captured.push(args.map((value) => String(value)).join(" "));
+  };
+
+  try {
+    router.showHelp();
+  } finally {
+    console.log = originalLog;
+  }
+
+  const output = captured.join("\n");
+
+  if (!output.includes("USAGE")) {
+    throw new Error("Help output is missing the USAGE section.");
+  }
+
+  if (!output.includes("GLOBAL OPTIONS")) {
+    throw new Error("Help output is missing the GLOBAL OPTIONS section.");
+  }
+
+  if (!output.includes("COMMANDS")) {
+    throw new Error("Help output is missing the COMMANDS section.");
+  }
+
+  if (!output.includes("init [directory]")) {
+    throw new Error("Help output is missing the init command description.");
+  }
+});
