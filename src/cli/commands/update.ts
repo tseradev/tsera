@@ -1,5 +1,5 @@
 import { join } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
+import { Command, type CommandType } from "../deps/command.ts";
 import { createLogger } from "../core/log.ts";
 import { determineCliVersion } from "../core/version.ts";
 import type { GlobalCLIOptions } from "../router.ts";
@@ -123,7 +123,7 @@ export function createDefaultUpdateHandler(
  */
 export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
-): Command<UpdateCommandOptions> {
+): CommandType<UpdateCommandOptions> {
   return new Command<UpdateCommandOptions>()
     .description("Update the TSera CLI via deno install or a compiled binary.")
     .option("--channel <channel:string>", "Release channel (stable|beta|canary).", {

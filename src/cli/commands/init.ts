@@ -1,6 +1,6 @@
 import { dirname, join, resolve } from "../../shared/path.ts";
 import { normalizeNewlines } from "../../shared/newline.ts";
-import { Command } from "../deps/command.ts";
+import { Command, type CommandType } from "../deps/command.ts";
 import { createLogger } from "../core/log.ts";
 import { safeWrite } from "../core/fsx.ts";
 import { resolveConfig } from "../core/resolve-config.ts";
@@ -134,7 +134,7 @@ export function createDefaultInitHandler(
  */
 export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
-): Command<InitCommandOptions> {
+): CommandType<InitCommandOptions> {
   return new Command<InitCommandOptions>()
     .description("Initialize a new TSera project.")
     .arguments("[directory]")

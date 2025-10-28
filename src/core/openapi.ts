@@ -1,130 +1,68 @@
-import type { EntityDef, TColumn, TPrimitive } from "./entity.ts";
-import { isArrayColumnType } from "./entity.ts";
+import type { EntityDef } from "./entity.ts";
 import { entityToZod } from "./schema.ts";
+import { z } from "./utils/zod.ts";
 
-export interface OpenAPIDocumentOptions {
-  title: string;
-  version: string;
-  description?: string;
+import type * as FallbackModule from "../deps/polyfills/zod-to-openapi.ts";
+
+export type {
+  OpenAPIDocumentOptions,
+  OpenAPIObject,
+  SchemaObject,
+} from "../deps/polyfills/zod-to-openapi.ts";
+
+type ActualZodToOpenAPIModule = {
+  extendZodWithOpenApi: (zMod: unknown) => void;
+  OpenAPIGenerator: new (
+    schemas: { ref: string; schema: unknown }[],
+    version?: string,
+  ) => { generateDocument: (base: unknown) => unknown };
+};
+
+type Fallback = typeof FallbackModule;
+
+let actualModule: ActualZodToOpenAPIModule | null = null;
+let fallbackModule: Fallback | null = null;
+
+try {
+  const mod = await import("npm:@asteasolutions/zod-to-openapi@6.2.0");
+  (mod as ActualZodToOpenAPIModule).extendZodWithOpenApi(z);
+  actualModule = mod as ActualZodToOpenAPIModule;
+} catch {
+  fallbackModule = await import("../deps/polyfills/zod-to-openapi.ts");
 }
 
-export interface SchemaObject {
-  type?: string | string[];
-  description?: string;
-  properties?: Record<string, SchemaObject>;
-  required?: string[];
-  nullable?: boolean;
-  default?: unknown;
-  items?: SchemaObject;
-  format?: string;
-  additionalProperties?: boolean;
-}
-
-export interface OpenAPIObject {
-  openapi: string;
-  info: {
-    title: string;
-    version: string;
-    description?: string;
-  };
-  paths: Record<string, unknown>;
-  components: {
-    schemas: Record<string, SchemaObject>;
-  };
-}
-
-function primitiveToSchema(type: TPrimitive): SchemaObject {
-  switch (type) {
-    case "string":
-      return { type: "string" };
-    case "number":
-      return { type: "number" };
-    case "boolean":
-      return { type: "boolean" };
-    case "date":
-      return { type: "string", format: "date-time" };
-    case "json":
-      return {
-        type: [
-          "object",
-          "array",
-          "string",
-          "number",
-          "boolean",
-          "null",
-        ],
-      };
-    default: {
-      const exhaustiveCheck: never = type;
-      throw new Error(`Unsupported primitive type: ${exhaustiveCheck}`);
-    }
-  }
-}
-
-function columnToSchema(column: TColumn): SchemaObject {
-  const base = isArrayColumnType(column.type)
-    ? {
-      type: "array" as const,
-      items: primitiveToSchema(column.type.arrayOf),
-    }
-    : primitiveToSchema(column.type);
-
-  const schema: SchemaObject = { ...base };
-
-  if (column.description) {
-    schema.description = column.description;
-  }
-  if (column.nullable) {
-    schema.nullable = true;
-  }
-  if (column.default !== undefined) {
-    schema.default = column.default;
-  }
-  if (!isArrayColumnType(column.type) && column.type === "json") {
-    schema.additionalProperties = true;
-  }
-
-  return schema;
-}
-
-function entityToSchema(entity: EntityDef): SchemaObject {
-  const zodSchema = entityToZod(entity);
-  const properties: Record<string, SchemaObject> = {};
-  const required: string[] = [];
-
-  for (const [name, column] of Object.entries(entity.columns)) {
-    properties[name] = columnToSchema(column);
-    if (!column.optional) {
-      required.push(name);
-    }
-  }
-
-  const schema: SchemaObject = {
-    type: "object",
-    properties,
-  };
-
-  if (required.length > 0) {
-    schema.required = required;
-  }
-
-  if (zodSchema.description ?? entity.doc) {
-    schema.description = zodSchema.description ?? `${entity.name} entity`;
-  }
-
-  return schema;
+if (!actualModule && !fallbackModule) {
+  fallbackModule = await import("../deps/polyfills/zod-to-openapi.ts");
 }
 
 export function generateOpenAPIDocument(
   entities: readonly EntityDef[],
-  options: OpenAPIDocumentOptions,
-): OpenAPIObject {
-  const schemas: Record<string, SchemaObject> = {};
-  for (const entity of entities) {
-    schemas[entity.name] = entityToSchema(entity);
+  options: FallbackModule.OpenAPIDocumentOptions,
+): FallbackModule.OpenAPIObject {
+  if (actualModule) {
+    return generateWithActual(entities, options, actualModule) as FallbackModule.OpenAPIObject;
   }
+  return fallbackModule!.generateOpenAPIDocument(entities, options);
+}
 
-  return {
+function generateWithActual(
+  entities: readonly EntityDef[],
+  options: FallbackModule.OpenAPIDocumentOptions,
+  mod: ActualZodToOpenAPIModule,
+): unknown {
+  const schemas = entities.map((entity) => {
+    const zodSchema = entityToZod(entity);
+    const schemaWithOpenApi = zodSchema as unknown as {
+      openapi?: (config: { refId: string }) => unknown;
+    };
+    const extended = typeof schemaWithOpenApi.openapi === "function"
+      ? schemaWithOpenApi.openapi({ refId: entity.name })
+      : zodSchema;
+    return { ref: entity.name, schema: extended };
+  });
+
+  const generator = new mod.OpenAPIGenerator(schemas, "3.1.0");
+  const document = generator.generateDocument({
     openapi: "3.1.0",
     info: {
       title: options.title,
@@ -132,6 +70,8 @@ export function generateOpenAPIDocument(
       description: options.description,
     },
     paths: {},
-    components: { schemas },
-  };
+    components: { schemas: {} },
+  });
+
+  return document;
 }

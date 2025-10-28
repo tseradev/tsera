@@ -1,5 +1,5 @@
 import { resolve } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
+import { Command, type CommandType } from "../deps/command.ts";
 import { createLogger } from "../core/log.ts";
 import { resolveConfig } from "../core/resolve-config.ts";
 import { determineCliVersion } from "../core/version.ts";
@@ -129,7 +129,7 @@ export function createDefaultDoctorHandler(
  */
 export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
-): Command<DoctorCommandOptions> {
+): CommandType<DoctorCommandOptions> {
   return new Command<DoctorCommandOptions>()
     .description("Check project coherence and suggest safe fixes.")
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
