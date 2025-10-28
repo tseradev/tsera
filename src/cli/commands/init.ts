@@ -304,56 +304,42 @@ function toPascalCase(value: string): string {
   return parts.length > 0 ? parts.join("") : value;
 }
 
-function deriveSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "tsera";
-}
-
-function generateConfigFile(projectName: string): string {
-  const slug = deriveSlug(projectName);
-  const dbName = slug.replace(/-/g, "_");
+function generateConfigFile(_projectName: string): string {
+  const envVar = "TSERA_DATABASE_URL";
+  const sqliteFile = "data/tsera.sqlite";
 
   const template = `// TSera configuration (full profile with comments).
 import type { TseraConfig } from "tsera/cli/contracts/types.ts";
 
 const config: TseraConfig = {
-  // Human-friendly project name (used in artifacts and documentation).
-  projectName: "${projectName}",
-  // Project root directory. Keep "." except for advanced setups.
-  rootDir: ".",
-  // Folder containing TSera entities (files *.entity.ts).
-  entitiesDir: "domain",
-  // Folder for generated artifacts (schemas, docs, openapi, tests...).
-  artifactsDir: ".tsera",
-  // Optional: explicit list of entities to load instead of the recursive scan.
-  // entities: ["domain/User.entity.ts"],
-  db: {
-    // Target dialect for Drizzle migrations (postgres | sqlite).
-    dialect: "postgres",
-    // Connection string used by tests and the local runtime.
-    connectionString: "postgres://localhost/${dbName}",
-    // Folder storing generated migrations.
-    migrationsDir: "drizzle",
-    // Folder for Drizzle schemas (generated automatically).
-    schemaDir: "drizzle/schema",
+  // Toggle generated artifacts controlled by "tsera dev".
+  openapi: true,
+  docs: true,
+  tests: true,
+  telemetry: false,
+  // Folder storing generated schemas, manifests, and OpenAPI files.
+  outDir: ".tsera",
+  // Source folders scanned for entities (add files or globs as needed).
+  paths: {
+    entities: ["domain"],
+    // routes: ["routes/**/*.ts"],
   },
-  deploy: [
-    {
-      // Main deployment target (e.g. Deno Deploy).
-      name: "production",
-      kind: "deno-deploy",
-      envFile: ".env.deploy",
-    },
-    {
-      // Example of a custom target driven by a shell script.
-      name: "on-premise",
-      kind: "custom-script",
-      script: "scripts/deploy.sh",
-      envFile: ".env.production",
-    },
-  ],
+  db: {
+    // Choose between "postgres", "mysql", or "sqlite".
+    dialect: "postgres",
+    // Environment variable supplying the connection URL.
+    urlEnv: "${envVar}",
+    ssl: "prefer",
+    // Example SQLite configuration:
+    // dialect: "sqlite",
+    // file: "${sqliteFile}",
+  },
+  deploy: {
+    // Deployment target handled by "tsera update".
+    target: "deno_deploy",
+    entry: "main.ts",
+    envFile: ".env.deploy",
+  },
 };
 
 export default config;

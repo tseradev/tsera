@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "./helpers/asserts.ts";
-import { defineEntity, entityToOpenAPI } from "../index.ts";
+import { defineEntity, generateOpenAPIDocument } from "../index.ts";
 
 const commentEntity = defineEntity({
   name: "Comment",
@@ -12,8 +12,8 @@ const commentEntity = defineEntity({
   doc: true,
 });
 
-Deno.test("entityToOpenAPI generates a document containing the entity schema", () => {
-  const document = entityToOpenAPI(commentEntity, {
+Deno.test("generateOpenAPIDocument aggregates schemas for all entities", () => {
+  const document = generateOpenAPIDocument([commentEntity], {
     title: "Comment API",
     version: "1.0.0",
   });

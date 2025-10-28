@@ -72,5 +72,9 @@ export function entityToZod(entity: EntityDef): ZodObject<Record<string, ZodType
     shape[name] = columnToSchema(column);
   }
 
-  return z.object(shape).strict();
+  let schema = z.object(shape).strict();
+  if (entity.doc) {
+    schema = schema.describe(`${entity.name} entity`);
+  }
+  return schema;
 }

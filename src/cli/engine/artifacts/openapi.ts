@@ -1,24 +1,9 @@
 import { join } from "../../../shared/path.ts";
-import { entityToOpenAPI } from "tsera/core/openapi.ts";
-import type { ArtifactBuilder } from "./types.ts";
-
-export const buildOpenAPIArtifacts: ArtifactBuilder = (context) => {
-  const { entity, config } = context;
-  const document = entityToOpenAPI(entity, {
-    title: `${config.projectName} API`,
-    version: "1.0.0",
-  });
-  const json = JSON.stringify(sortObject(document), null, 2) + "\n";
-  const path = join(config.artifactsDir, "openapi", `${entity.name}.json`);
-
-  return [{
-    kind: "openapi",
-    path,
-    content: json,
-    label: `${entity.name} OpenAPI`,
-    data: { entity: entity.name },
-  }];
-};
+import { generateOpenAPIDocument } from "tsera/core/openapi.ts";
+import type { EntityDef } from "tsera/core/entity.ts";
+import { pascalToSnakeCase } from "tsera/core/utils/strings.ts";
+import type { ArtifactDescriptor } from "../dag.ts";
+import type { TseraConfig } from "../../contracts/types.ts";
 
 function sortObject<T>(value: T): T {
   if (Array.isArray(value)) {
@@ -34,4 +19,41 @@ function sortObject<T>(value: T): T {
     return result as unknown as T;
   }
   return value;
+}
+
+function buildDependencies(entities: readonly EntityDef[], outDir: string): string[] {
+  const dependencies: string[] = [];
+  for (const entity of entities) {
+    const slug = pascalToSnakeCase(entity.name);
+    const schemaPath = join(outDir, "schemas", `${entity.name}.schema.ts`);
+    dependencies.push(`schema:${slug}:${schemaPath}`);
+  }
+  return dependencies;
+}
+
+export function buildProjectOpenAPIArtifact(
+  entities: readonly EntityDef[],
+  config: TseraConfig,
+): ArtifactDescriptor | null {
+  if (!config.openapi) {
+    return null;
+  }
+
+  const document = generateOpenAPIDocument(entities, {
+    title: "TSera API",
+    version: "1.0.0",
+  });
+  const sorted = sortObject(document);
+  const content = JSON.stringify(sorted, null, 2) + "\n";
+  const path = join(config.outDir, "openapi.json");
+  const dependsOn = buildDependencies(entities, config.outDir);
+
+  return {
+    kind: "openapi",
+    path,
+    content,
+    label: "Project OpenAPI",
+    data: { entities: entities.map((entity) => entity.name) },
+    dependsOn: dependsOn.length > 0 ? dependsOn : undefined,
+  };
 }

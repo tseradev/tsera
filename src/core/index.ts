@@ -8,5 +8,5 @@ export {
   type TPrimitive,
 } from "./entity.ts";
 export { entityToDDL } from "./drizzle.ts";
-export { entityToOpenAPI, type OpenAPIOptions } from "./openapi.ts";
+export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
 export { entityToZod } from "./schema.ts";
