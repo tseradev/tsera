@@ -34,14 +34,20 @@ team-facing documentation.
 
 ### Install the CLI locally
 
-From the repository root you can install the CLI globally with `deno install`:
+From the repository root you can install the CLI globally with `deno install` (Deno v2 now requires
+the `--global` flag when permission options such as `-A` are provided). Include the repository
+config so the bundled command keeps the import map:
 
 ```bash
-deno install -A -f --name tsera src/cli/main.ts
+deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
 ```
 
 This makes a `tsera` executable available in your shell (the command can also be run directly with
 `deno run -A src/cli/main.ts ...` during development).
+
+> ℹ️ If you omit `--config deno.jsonc`, Deno prints `discovered config file will be ignored` and the
+> installed binary later fails to resolve `tsera/*` imports. Re-run the installation with the config
+> flag (or use `--import-map import_map.json`) to silence the warning and keep the CLI functional.
 
 ### Hello world walkthrough
 
