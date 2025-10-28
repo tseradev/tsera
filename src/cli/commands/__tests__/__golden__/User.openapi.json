@@ -6,29 +6,29 @@
         "properties": {
           "createdAt": {
             "default": "1970-01-01T00:00:00.000Z",
-            "description": "Horodatage ISO de création.",
+            "description": "ISO creation timestamp.",
             "format": "date-time",
             "type": "string"
           },
           "displayName": {
-            "description": "Nom d'affichage facultatif.",
+            "description": "Optional display name.",
             "type": "string"
           },
           "email": {
-            "description": "Adresse courriel unique de l'utilisateur.",
+            "description": "User email address, expected to be unique.",
             "type": "string"
           },
           "id": {
-            "description": "Identifiant unique généré côté client ou par TSera.",
+            "description": "Unique identifier generated on the client or by TSera.",
             "type": "string"
           },
           "isActive": {
             "default": true,
-            "description": "Statut d'activation logique.",
+            "description": "Logical activation flag.",
             "type": "boolean"
           },
           "settings": {
-            "description": "Tableau d'objets de configuration JSON.",
+            "description": "Array of JSON configuration objects.",
             "items": {
               "type": "object"
             },

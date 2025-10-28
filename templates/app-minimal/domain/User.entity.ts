@@ -8,31 +8,31 @@ export const UserEntity = defineEntity({
   columns: {
     id: {
       type: "string",
-      description: "Identifiant unique généré côté client ou par TSera.",
+      description: "Unique identifier generated on the client or by TSera.",
     },
     email: {
       type: "string",
-      description: "Adresse courriel unique de l'utilisateur.",
+      description: "User email address, expected to be unique.",
     },
     displayName: {
       type: "string",
       optional: true,
-      description: "Nom d'affichage facultatif.",
+      description: "Optional display name.",
     },
     isActive: {
       type: "boolean",
       default: true,
-      description: "Statut d'activation logique.",
+      description: "Logical activation flag.",
     },
     createdAt: {
       type: "date",
       default: "1970-01-01T00:00:00.000Z",
-      description: "Horodatage ISO de création.",
+      description: "ISO creation timestamp.",
     },
     settings: {
       type: { arrayOf: "json" },
       optional: true,
-      description: "Tableau d'objets de configuration JSON.",
+      description: "Array of JSON configuration objects.",
     },
   },
 });

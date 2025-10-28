@@ -1,16 +1,15 @@
-# Documentation TSera (placeholder)
+# TSera documentation (placeholder)
 
-Ce dossier rassemble les guides publics du projet TSera. La documentation détaillera progressivement
-la vision, les workflows CLI et les artefacts générés (entités, schémas, migrations, docs, tests).
-Les sections ci-dessous servent de structure initiale à compléter au fur et à mesure des itérations.
+This folder gathers TSera's public guides. The documentation will progressively detail the vision,
+CLI workflows, and generated artifacts (entities, schemas, migrations, docs, tests). The sections
+below are an initial structure that will be filled iteratively.
 
-## Guides à venir
+## Upcoming guides
 
-1. **Prise en main** : installation du binaire ou du module JSR, configuration projet et premières
-   commandes.
-2. **Entités & Cohérence Continue** : conception des entités avec `defineEntity`, génération des
-   schémas et synchronisation des artefacts.
-3. **Templates** : utilisation et personnalisation de `templates/app-minimal`.
+1. **Getting started**: install the binary or the JSR module, configure a project, and run the first
+   commands.
+2. **Entities & Continuous Coherence**: design entities with `defineEntity`, generate schemas, and
+   keep artifacts synchronized.
+3. **Templates**: use and customize `templates/app-minimal`.
 
-Chaque guide s'appuiera sur des exemples reproductibles et sur les tâches Deno décrites dans
-`deno.jsonc`.
+Each guide will rely on reproducible examples and the Deno tasks described in `deno.jsonc`.

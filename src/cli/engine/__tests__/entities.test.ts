@@ -17,7 +17,7 @@ const baseConfig: TseraConfig = {
   },
 };
 
-Deno.test("discoverEntities charge les chemins définis dans la configuration", async () => {
+Deno.test("discoverEntities loads the paths defined in configuration", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const entityDir = join(tempDir, "domain");
@@ -45,7 +45,7 @@ Deno.test("discoverEntities charge les chemins définis dans la configuration", 
   }
 });
 
-Deno.test("discoverEntities détecte les entités par convention", async () => {
+Deno.test("discoverEntities detects convention-based entities", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const firstPath = join(tempDir, "domain", "User.entity.ts");
@@ -84,7 +84,7 @@ Deno.test("discoverEntities détecte les entités par convention", async () => {
   }
 });
 
-Deno.test("buildEntityArtifacts respecte la chaîne de dépendances", async () => {
+Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
   const entity = defineEntity({
     name: "Invoice",
     table: true,
@@ -116,7 +116,7 @@ Deno.test("buildEntityArtifacts respecte la chaîne de dépendances", async () =
   assertEquals(artifacts[4].dependsOn, [docId]);
 });
 
-Deno.test("buildEntityArtifacts omet les artefacts optionnels", async () => {
+Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
   const entity = defineEntity({
     name: "Profile",
     table: false,

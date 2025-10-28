@@ -24,7 +24,7 @@ function createRunner(records: CallRecord[]): (command: string, args: string[]) 
   };
 }
 
-Deno.test("update en mode dry-run ne déclenche que la vérification de version", async () => {
+Deno.test("update in dry-run only triggers the version check", async () => {
   const calls: CallRecord[] = [];
   const handler = createDefaultUpdateHandler({
     runner: createRunner(calls),
@@ -43,7 +43,7 @@ Deno.test("update en mode dry-run ne déclenche que la vérification de version"
   assertEquals(calls[0], { command: "deno", args: ["--version"] });
 });
 
-Deno.test("update avec --binary exécute deno compile", async () => {
+Deno.test("update with --binary executes deno compile", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   const previousCwd = Deno.cwd();
   try {

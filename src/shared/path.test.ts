@@ -2,12 +2,12 @@ import { join } from "./path.ts";
 import { assertEquals } from "../testing/asserts.ts";
 
 if (Deno.build.os === "windows") {
-  Deno.test("join conserve le préfixe de lecteur Windows", () => {
+  Deno.test("join preserves the Windows drive prefix", () => {
     const result = join("D:\\workspace", "project", "file.txt");
     assertEquals(result, "D:\\workspace\\project\\file.txt");
   });
 
-  Deno.test("join normalise le dossier racine Windows", () => {
+  Deno.test("join keeps the Windows root directory normalized", () => {
     const root = "C:\\";
     const result = join(root);
     assertEquals(result, root);

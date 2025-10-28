@@ -24,12 +24,12 @@ export function createRouter(
   const root = new Command<GlobalCLIOptions>()
     .name("tsera")
     .version(metadata.version)
-    .description("CLI TSera — moteur de cohérence continue pour les entités.")
-    .option("--json", "Active la sortie NDJSON machine.", {
+    .description("TSera CLI — continuous coherence engine for entities.")
+    .option("--json", "Enable machine-friendly NDJSON output.", {
       global: true,
       default: false,
     })
-    .option("--strict", "Convertit les incohérences en code de sortie 2.", {
+    .option("--strict", "Convert inconsistencies into exit code 2.", {
       global: true,
       default: false,
     });

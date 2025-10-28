@@ -1,14 +1,14 @@
-# Architecture TSera
+# TSera architecture
 
-Cette note décrit l'agencement interne du moteur TSera, le graphe de dépendances (DAG) qui orchestre
-la génération d'artefacts et la manière dont la Cohérence Continue (CC) est garantie via les flux
-`plan` et `apply`.
+This note describes the internal layout of the TSera engine, the dependency graph (DAG)
+orchestrating artifact generation, and how Continuous Coherence (CC) is guaranteed through the
+`plan` and `apply` flows.
 
-## Vue d'ensemble
+## Overview
 
-TSera repose sur un modèle unique : les **entités**. Chaque entité est transformée en plusieurs
-artefacts (schemas Zod, documents OpenAPI, migrations SQL, docs Markdown, tests smoke). Le moteur
-CLI observe le projet et maintient un état cohérent dans `.tsera/` grâce à un DAG déterministe.
+TSera relies on a single model: **entities**. Each entity becomes multiple artifacts (Zod schemas,
+OpenAPI documents, SQL migrations, Markdown docs, smoke tests). The CLI engine watches the project
+and maintains a coherent state in `.tsera/` via a deterministic DAG.
 
 ```
      ┌─────────────┐
@@ -29,113 +29,104 @@ CLI observe le projet et maintient un état cohérent dans `.tsera/` grâce à u
 └────────────┘ └────────────┘
 ```
 
-Chaque nœud produit un artefact et stocke son hash (contenu + options + version CLI) dans
-`.tsera/graph.json`. Le manifest `.tsera/manifest.json` référence les fichiers générés pour
-permettre des diff stables.
+Each node produces an artifact and stores its hash (content + options + CLI version) in
+`.tsera/graph.json`. The `.tsera/manifest.json` file references generated outputs to keep diffs
+stable.
 
-## Cohérence Continue (CC)
+## Continuous Coherence (CC)
 
-La CC est le principe central de TSera : **chaque modification d'entité doit être propagée
-automatiquement**. Pour y parvenir :
+CC is TSera's core principle: **every entity change must propagate automatically**. To achieve it:
 
-1. **Observation** : `watch.ts` écoute les fichiers pertinents (entités, config, templates) et
-   regroupe les changements.
-2. **Planification** : `planner.ts` compare les hashes actuels avec l'état précédent et calcule une
-   liste de `steps` (`create`, `update`, `delete`, `noop`).
-3. **Appliance** : `applier.ts` exécute ces steps avec `safeWrite` afin d'écrire uniquement si un
-   diff est détecté, assurant des commits propres.
-4. **Rapports** : les sorties `--json` permettent de détecter les incohérences dans des pipelines
-   automatisés (`coherence` events, exit code 2 en mode `--strict`).
+1. **Observe**: `watch.ts` listens to relevant files (entities, config, templates) and groups
+   changes.
+2. **Plan**: `planner.ts` compares current hashes with the previous state and computes a list of
+   steps (`create`, `update`, `delete`, `noop`).
+3. **Apply**: `applier.ts` executes those steps with `safeWrite` so files are only written when a
+   diff is detected, ensuring clean commits.
+4. **Report**: `--json` outputs surface incoherences in automated pipelines (`coherence` events,
+   exit code 2 in `--strict` mode).
 
-Ce cycle garantit que les artefacts générés, les migrations et les tests sont toujours alignés avec
-la source de vérité.
+This cycle keeps generated artifacts, migrations, and tests aligned with the source of truth.
 
-## Flux `plan` et `apply`
+## `plan` and `apply` flows
 
-Le moteur CLI expose deux phases bien distinctes, même si elles peuvent être enchaînées
-automatiquement par `dev` :
+The CLI engine exposes two distinct phases, even if `dev` can chain them automatically:
 
 1. **Plan**
-   - Reconstruit le DAG et calcule les changements requis.
-   - Fournit un résumé (`plan:summary`) qui liste pour chaque entité les artefacts affectés.
-   - Peut s'exécuter en mode `--json` pour inspection programmatique (CI, dashboards).
+   - Rebuilds the DAG and computes the required changes.
+   - Provides a summary (`plan:summary`) listing affected artifacts per entity.
+   - Supports `--json` mode for programmatic inspection (CI, dashboards).
 2. **Apply**
-   - Exécute les steps issus du plan courant.
-   - Écrit les fichiers (`*.schema.ts`, `openapi.json`, migrations `drizzle/`, docs/tests) via
+   - Executes the steps computed by the current plan.
+   - Writes files (`*.schema.ts`, `openapi.json`, `drizzle/` migrations, docs/tests) through
      `safeWrite`.
-   - Met à jour `.tsera/graph.json` et `.tsera/manifest.json`.
+   - Updates `.tsera/graph.json` and `.tsera/manifest.json`.
 
-Ces deux flux sont orchestrés par `engine/dag.ts`, `engine/hash.ts`, `engine/planner.ts` et
-`engine/applier.ts`. Lorsqu'une commande `dev` est lancée, elle enchaîne les étapes suivantes :
+These flows are orchestrated by `engine/dag.ts`, `engine/hash.ts`, `engine/planner.ts`, and
+`engine/applier.ts`. When `dev` runs, it performs the following sequence:
 
-1. `watch:start` (initialisation du watcher).
-2. `plan:start` → `plan:summary` (calcul des steps).
-3. `apply:step` (application de chaque step) → `apply:done`.
-4. `coherence` (statut final : `ok`, `drift`, `error`).
+1. `watch:start` (watcher initialization).
+2. `plan:start` → `plan:summary` (step computation).
+3. `apply:step` (apply each step) → `apply:done`.
+4. `coherence` (final status: `ok`, `drift`, `error`).
 
-## Gestion des flux multiples
+## Handling multiple flows
 
-- **`init`** : bootstrappe un projet et génère un `tsera.config.ts` complet. Aucun plan/apply n'est
-  exécuté, mais la structure `.tsera/` est préparée.
-- **`dev`** : exécute en boucle le duo `plan/apply`. Idéal pour la CC.
-- **`doctor`** : inspecte les incohérences. Avec `--fix`, il déclenche `plan/apply` ciblé sur les
-  nœuds identifiés.
-- **`update`** : gère la mise à jour du binaire et des dépendances (`deno install`, `deno compile`).
+- **`init`**: bootstraps a project and generates a full `tsera.config.ts`. No plan/apply is
+  executed, but the `.tsera/` structure is prepared.
+- **`dev`**: loops through the `plan/apply` duo. Ideal for CC.
+- **`doctor`**: inspects incoherences. With `--fix`, it triggers a targeted `plan/apply` for the
+  identified nodes.
+- **`update`**: manages binary and dependency updates (`deno install`, `deno compile`).
 
-## État persistant
+## Persistent state
 
-- `.tsera/graph.json` : représentation du DAG, des hashes par nœud et des dépendances.
-- `.tsera/manifest.json` : inventaire des fichiers générés (chemins, date de mise à jour, hash
-  disque).
-- `drizzle/` : migrations SQL générées avec timestamps stabilisés.
-- `docs/` : documentation dérivée des entités (synchronisée).
+- `.tsera/graph.json`: DAG representation, node hashes, and dependencies.
+- `.tsera/manifest.json`: inventory of generated files (paths, updated timestamps, disk hash).
+- `drizzle/`: generated SQL migrations with stable timestamps.
+- `docs/`: synchronized documentation derived from entities.
 
-Ces éléments permettent de redémarrer un cycle `dev` sans perdre l'historique des artefacts.
+These elements allow restarting a `dev` cycle without losing artifact history.
 
-## Définition des entités
+## Entity definition
 
-- Les entités sont décrites via `defineEntity` (`src/core/entity.ts`).
-- Chaque entité possède un nom PascalCase, un drapeau `table` (pour migrations) et un dictionnaire
-  de colonnes (`TColumn`).
-- Les helpers `schema.ts`, `openapi.ts` et `drizzle.ts` transforment ce modèle en artefacts typed.
-- Une entité peut activer la génération de documentation (`doc: true`) ou d'un test smoke
-  (`test: "smoke"`).
+- Entities are described through `defineEntity` (`src/core/entity.ts`).
+- Each entity has a PascalCase name, a `table` flag (for migrations), and a column dictionary
+  (`TColumn`).
+- Helpers `schema.ts`, `openapi.ts`, and `drizzle.ts` turn the model into typed artifacts.
+- An entity can enable documentation generation (`doc: true`) or a smoke test (`test: "smoke"`).
 
-Le template `templates/app-minimal/domain/User.entity.ts` illustre la structure attendue. Pendant
-les prochaines itérations, des contraintes supplémentaires (relations, index) seront ajoutées en
-restant rétro-compatibles.
+The `templates/app-minimal/domain/User.entity.ts` file illustrates the expected structure. Future
+iterations will add extra constraints (relationships, indexes) while staying backward compatible.
 
-## Configuration projet (`tsera.config.ts`)
+## Project configuration (`tsera.config.ts`)
 
-Le fichier `tsera.config.ts` généré par `tsera init` regroupe :
+The `tsera.config.ts` file generated by `tsera init` aggregates:
 
-1. Les entités enregistrées et leur chemin disque.
-2. Les paramètres de sortie (`docsDir`, `migrationsDir`, `testsDir`).
-3. Les politiques de Cohérence Continue (ex. `requireValidationSchema`).
+1. Registered entities and their disk paths.
+2. Output parameters (`docsDir`, `migrationsDir`, `testsDir`).
+3. Continuous Coherence policies (e.g. `requireValidationSchema`).
 
-`src/cli/core/resolve-config.ts` valide ce fichier à l'aide de Zod et produit une structure interne
-consommée par le moteur. Toute modification de configuration déclenche un recalcul complet du DAG
-pour garantir l'alignement.
+`src/cli/core/resolve-config.ts` validates this file with Zod and produces an internal structure
+consumed by the engine. Any configuration change triggers a full DAG rebuild to guarantee alignment.
 
-## Gestion des erreurs et cohérence
+## Error handling and coherence
 
-- **Validation** : les erreurs Zod sont agrégées et remontées via `plan:summary` avec un
+- **Validation**: Zod errors are aggregated and surfaced through `plan:summary` with
   `status:
   "error"`.
-- **Drift** : lorsqu'un fichier généré est modifié manuellement, son hash diverge et `coherence`
-  devient `drift`. En mode `--strict`, le CLI retourne `exit code 2`.
-- **Crash safety** : `applier.ts` écrit les fichiers dans un dossier temporaire puis les déplace
-  atomiquement pour éviter les artefacts partiels.
+- **Drift**: when a generated file is edited manually, its hash diverges and `coherence` becomes
+  `drift`. In `--strict` mode, the CLI returns exit code 2.
+- **Crash safety**: `applier.ts` writes files to a temporary directory before moving them atomically
+  to avoid partial artifacts.
 
-Le manifeste `.tsera/manifest.json` conserve les métadonnées nécessaires pour comparer l'état disque
-et l'état calculé.
+`.tsera/manifest.json` stores the metadata needed to compare disk state and computed state.
 
-## Interfaces CLI & modes d'exécution
+## CLI interfaces & execution modes
 
-- **TUI** (par défaut) : affiche les étapes en temps réel, les hashes et un résumé final.
-- **Mode JSON** (`--json`) : chaque étape émet une ligne NDJSON, parfaite pour des scripts CI/CD.
-- **Strict mode** (`--strict`) : n'autorise aucun drift persistant ; utile pour gatekeeper.
+- **TUI** (default): displays steps, hashes, and a summary in real time.
+- **JSON mode** (`--json`): every stage emits an NDJSON line, perfect for CI/CD scripts.
+- **Strict mode** (`--strict`): blocks persistent drift; useful as a gatekeeper.
 
-Les commandes `plan`/`apply` seront exposées directement dans des versions futures pour faciliter
-les pipelines personnalisés. D'ici là, `tsera dev --json` reste le mode recommandé pour
-l'intégration continue.
+Future versions will expose `plan`/`apply` commands directly to ease custom pipelines. Until then,
+`tsera dev --json` remains the recommended mode for continuous integration.

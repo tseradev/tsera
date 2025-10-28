@@ -16,13 +16,13 @@ function pathToFileUrl(path: string): URL {
 
 function assertString(value: unknown, field: string): asserts value is string {
   if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Champ ${field} manquant ou invalide dans la configuration TSera.`);
+    throw new Error(`Field ${field} is missing or invalid in the TSera configuration.`);
   }
 }
 
 function assertDbConfig(value: unknown): asserts value is TseraConfig["db"] {
   if (!value || typeof value !== "object") {
-    throw new Error("Configuration base de données invalide.");
+    throw new Error("Invalid database configuration.");
   }
   const db = value as Record<string, unknown>;
   assertString(db.dialect, "db.dialect");
@@ -36,11 +36,11 @@ function assertOptionalEntitiesList(value: unknown): void {
     return;
   }
   if (!Array.isArray(value)) {
-    throw new Error("Le champ entities doit être un tableau de chemins.");
+    throw new Error("The entities field must be an array of paths.");
   }
   for (const [index, item] of value.entries()) {
     if (typeof item !== "string" || item.length === 0) {
-      throw new Error(`Chemin d'entité invalide à l'index ${index} dans entities.`);
+      throw new Error(`Invalid entity path at index ${index} in entities.`);
     }
   }
 }
@@ -66,7 +66,7 @@ export async function resolveConfig(startDir: string): Promise<ResolvedTseraConf
   const mod = await import(importUrl);
   const config: unknown = mod.default ?? mod.config ?? mod.CONFIG;
   if (!config) {
-    throw new Error(`Aucune configuration exportée par ${project.configPath}`);
+    throw new Error(`No configuration exported by ${project.configPath}`);
   }
 
   validateConfig(config as TseraConfig);

@@ -1,11 +1,11 @@
-# Fresh (optionnel)
+# Fresh placeholder
 
-Ce dossier est prêt à accueillir une interface Fresh.
+This folder is ready to host a Fresh interface.
 
-## TODO
+## Next steps
 
-- Initialiser Fresh : `deno run -A -r jsr:@fresh/init .`
-- Déplacer/adapter les routes générées dans `routes/`.
-- Brancher les composants sur les entités TSera (via API Hono ou accès direct selon vos besoins).
+- Move or adapt the generated routes under `routes/`.
+- Connect components to TSera entities (through the Hono API or direct access depending on your
+  needs).
 
-Des fichiers `.gitkeep` maintiennent la structure par défaut.
+`.gitkeep` files keep the default structure intact.
