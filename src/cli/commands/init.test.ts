@@ -1,8 +1,13 @@
 import { join } from "../../shared/path.ts";
 import { createDefaultInitHandler } from "./init.ts";
-import { assert } from "../../testing/asserts.ts";
+import { assert, assertEquals } from "../../testing/asserts.ts";
 
 const NOOP_WRITER = () => {};
+
+async function readGoldenFile(name: string): Promise<string> {
+  const url = new URL(`./__tests__/__golden__/${name}`, import.meta.url);
+  return await Deno.readTextFile(url);
+}
 
 Deno.test("init génère le squelette complet et le manifeste", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
@@ -20,11 +25,16 @@ Deno.test("init génère le squelette complet et le manifeste", async () => {
 
     const configPath = join(projectDir, "tsera.config.ts");
     const config = await Deno.readTextFile(configPath);
-    assert(config.includes('projectName: "DemoApp"'));
-    assert(config.includes("deploy: ["));
+    const expectedConfig = await readGoldenFile("tsera.config.ts");
+    assertEquals(config, expectedConfig);
 
     const gitignore = await Deno.readTextFile(join(projectDir, ".gitignore"));
     assert(gitignore.includes(".tsera/"));
+
+    const openapiPath = join(projectDir, ".tsera", "openapi", "User.json");
+    const openapiDocument = await Deno.readTextFile(openapiPath);
+    const expectedOpenapi = await readGoldenFile("User.openapi.json");
+    assertEquals(openapiDocument, expectedOpenapi);
 
     const manifestText = await Deno.readTextFile(join(projectDir, ".tsera", "manifest.json"));
     const manifest = JSON.parse(manifestText) as { snapshots?: Record<string, unknown> };
