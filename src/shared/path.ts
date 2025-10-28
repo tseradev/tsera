@@ -50,10 +50,23 @@ function normalizeSegments(segments: string[], absolute: boolean): string[] {
 
 function formatPath(segments: string[], absolute: boolean, sep: string): string {
   const joined = segments.join(sep);
-  if (absolute) {
-    return `${sep}${joined}`;
+  if (!absolute) {
+    return joined.length === 0 ? "." : joined;
   }
-  return joined.length === 0 ? "." : joined;
+
+  if (segments.length === 0) {
+    return sep;
+  }
+
+  if (sep === "\\" && /^[A-Za-z]:$/.test(segments[0])) {
+    if (segments.length === 1) {
+      return `${segments[0]}${sep}`;
+    }
+    const rest = segments.slice(1).join(sep);
+    return `${segments[0]}${sep}${rest}`;
+  }
+
+  return `${sep}${joined}`;
 }
 
 export function join(...segments: string[]): string {

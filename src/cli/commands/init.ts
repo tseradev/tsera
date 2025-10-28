@@ -1,4 +1,5 @@
 import { dirname, join, resolve } from "../../shared/path.ts";
+import { normalizeNewlines } from "../../shared/newline.ts";
 import { Command } from "../deps/command.ts";
 import { createLogger } from "../core/log.ts";
 import { safeWrite } from "../core/fsx.ts";
@@ -250,11 +251,11 @@ async function writeIfMissing(path: string, content: string, force: boolean): Pr
   if (await pathExists(path) && !force) {
     return;
   }
-  await safeWrite(path, content);
+  await safeWrite(path, normalizeNewlines(content));
 }
 
 function buildGitignore(): string {
-  return [
+  const content = [
     "# TSera",
     ".tsera/",
     "drizzle/",
@@ -265,6 +266,7 @@ function buildGitignore(): string {
     "coverage/",
     "*.log",
   ].join("\n") + "\n";
+  return normalizeNewlines(content);
 }
 
 function deriveProjectName(path: string): string {
@@ -303,7 +305,7 @@ function generateConfigFile(projectName: string): string {
   const slug = deriveSlug(projectName);
   const dbName = slug.replace(/-/g, "_");
 
-  return `// Configuration TSera (profil full avec commentaires).
+  const template = `// Configuration TSera (profil full avec commentaires).
 import type { TseraConfig } from "tsera/cli/contracts/types.ts";
 
 const config: TseraConfig = {
@@ -346,6 +348,8 @@ const config: TseraConfig = {
 
 export default config;
 `;
+
+  return normalizeNewlines(template);
 }
 
 function fromFileUrlSafe(url: URL): string {
