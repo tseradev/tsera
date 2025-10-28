@@ -157,7 +157,7 @@ function buildDenoArgs(context: UpdateCommandContext, specifier: string): string
   if (context.binary) {
     return ["compile", "-A", "--output", "dist/tsera", specifier];
   }
-  return ["install", "-A", "-f", "--name", "tsera", specifier];
+  return ["install", "--global", "-A", "-f", "--name", "tsera", specifier];
 }
 
 function parseDenoVersion(stdout: string): string {
