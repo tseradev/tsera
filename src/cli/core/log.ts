@@ -1,14 +1,15 @@
-type Colorizer = (text: string) => string;
-
-const bold = createModifier("\x1b[1m", "\x1b[22m");
-const dim = createModifier("\x1b[2m", "\x1b[22m");
-const cyan = createModifier("\x1b[36m", "\x1b[39m");
-const green = createModifier("\x1b[32m", "\x1b[39m");
-const magenta = createModifier("\x1b[35m", "\x1b[39m");
-const red = createModifier("\x1b[31m", "\x1b[39m");
-const yellow = createModifier("\x1b[33m", "\x1b[39m");
-const blue = createModifier("\x1b[34m", "\x1b[39m");
-const gray = createModifier("\x1b[90m", "\x1b[39m");
+import {
+  blue,
+  bold,
+  type Colorizer,
+  cyan,
+  dim,
+  gray,
+  green,
+  magenta,
+  red,
+  yellow,
+} from "./colors.ts";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -170,8 +171,4 @@ function humanizeSegment(segment: string): string {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ") ||
     segment;
-}
-
-function createModifier(open: string, close: string): Colorizer {
-  return (text: string) => (Deno.noColor ? text : `${open}${text}${close}`);
 }
