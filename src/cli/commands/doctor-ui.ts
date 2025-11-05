@@ -145,7 +145,8 @@ export class DoctorConsole extends BaseConsole {
   beginFix(total: number): void {
     const label = formatCount(total, "action");
     this.#spinner.update(
-      `${magenta("Doctor")} ${dim("•")} ${yellow("Auto-fix in progress")}${dim(" │ ")}${gray(label)
+      `${magenta("Doctor")} ${dim("•")} ${yellow("Auto-fix in progress")}${dim(" │ ")}${
+        gray(label)
       }`,
     );
     if (total === 0) {

@@ -131,7 +131,7 @@ export function createDefaultDoctorHandler(
         } else {
           human?.reportPending(followUp.summary);
         }
-        const exitCode = context.global.strict ? 2 : 1;
+        const exitCode = 1;
         exitFn(exitCode);
       }
 
@@ -167,11 +167,11 @@ export function createDoctorCommand(
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
     .option("--fix", "Automatically apply safe corrections.", { default: false })
     .action(async (options) => {
-      const { json, strict, cwd, fix } = options;
+      const { json, cwd, fix } = options;
       await handler({
         cwd,
         fix,
-        global: { json, strict },
+        global: { json },
       });
     });
 }

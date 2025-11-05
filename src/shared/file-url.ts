@@ -18,5 +18,3 @@ export function fromFileUrl(url: URL): string {
   }
   return path;
 }
-
-

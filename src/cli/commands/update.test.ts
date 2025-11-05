@@ -2,7 +2,7 @@ import { join } from "../../shared/path.ts";
 import { createDefaultUpdateHandler } from "./update.ts";
 import { assert, assertEquals } from "../../testing/asserts.ts";
 
-const NOOP_WRITER = () => {};
+const NOOP_WRITER = () => { };
 
 interface CallRecord {
   command: string;
@@ -36,7 +36,7 @@ Deno.test("update in dry-run only triggers the version check", async () => {
     channel: "beta",
     binary: false,
     dryRun: true,
-    global: { json: false, strict: false },
+    global: { json: false },
   });
 
   assertEquals(calls.length, 1);
@@ -59,7 +59,7 @@ Deno.test("update with --binary executes deno compile", async () => {
       channel: "canary",
       binary: true,
       dryRun: false,
-      global: { json: false, strict: false },
+      global: { json: false },
     });
 
     assertEquals(calls.length, 2);
@@ -89,7 +89,7 @@ Deno.test("update install uses the global flag", async () => {
     channel: "stable",
     binary: false,
     dryRun: false,
-    global: { json: false, strict: false },
+    global: { json: false },
   });
 
   assertEquals(calls.length, 2);

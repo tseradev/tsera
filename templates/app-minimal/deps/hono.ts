@@ -48,9 +48,7 @@ class FallbackHono implements HonoLike {
     if (input instanceof Request) {
       return await this.fetch(input);
     }
-    const url = typeof input === "string"
-      ? new URL(input, "http://localhost")
-      : new URL(input);
+    const url = typeof input === "string" ? new URL(input, "http://localhost") : new URL(input);
     return await this.fetch(new Request(url, init));
   };
 

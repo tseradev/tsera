@@ -2,10 +2,10 @@ import { join } from "../../shared/path.ts";
 import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "../../testing/asserts.ts";
 
-const NOOP_WRITER = () => {};
+const NOOP_WRITER = () => { };
 
 async function readGoldenFile(name: string): Promise<string> {
-  const url = new URL(`./__tests__/__golden__/${name}`, import.meta.url);
+  const url = new URL(`./__golden__/${name}`, import.meta.url);
   return await Deno.readTextFile(url);
 }
 
@@ -20,7 +20,7 @@ Deno.test("init generates the full skeleton and manifest", async () => {
       template: "app-minimal",
       force: false,
       yes: true,
-      global: { json: false, strict: false },
+      global: { json: false },
     });
 
     const configPath = join(projectDir, "tsera.config.ts");

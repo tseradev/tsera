@@ -25,8 +25,8 @@ function isActualModule(value: unknown): value is ActualZodToOpenAPIModule {
     return false;
   }
   const record = value as Record<string, unknown>;
-  return typeof record.extendZodWithOpenApi === "function"
-    && typeof record.OpenAPIGenerator === "function";
+  return typeof record.extendZodWithOpenApi === "function" &&
+    typeof record.OpenAPIGenerator === "function";
 }
 
 function resolveActualModule(mod: unknown): ActualZodToOpenAPIModule | null {

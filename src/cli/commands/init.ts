@@ -184,13 +184,13 @@ export function createInitCommand(
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
     .action(async (options, directory = ".") => {
-      const { json, strict, template, force, yes } = options;
+      const { json, template, force, yes } = options;
       await handler({
         directory,
         template,
         force,
         yes,
-        global: { json, strict },
+        global: { json },
       });
     });
 }

@@ -12,7 +12,6 @@ const CLI_USAGE = "<command> [options]";
 
 const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
   { label: "--json", description: "Stream machine-readable NDJSON events." },
-  { label: "--strict", description: "Treat inconsistencies as fatal (exit code 2)." },
   { label: "-h, --help", description: "Show this help message." },
   { label: "-V, --version", description: "Display the CLI version." },
 ];
@@ -39,24 +38,12 @@ const COMMAND_HELP: ModernHelpCommand[] = [
 const CLI_EXAMPLES = [
   "tsera init demo-app --template app-minimal",
   "tsera dev --json",
-  "tsera doctor --strict",
+  "tsera doctor --fix",
 ];
-
-/**
- * Injects global DX flags into a subcommand so they work before or after the command name.
- */
-function withGlobalOptions<TOptions extends GlobalCLIOptions>(
-  command: CommandType<TOptions>,
-): CommandType<TOptions> {
-  return command
-    .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false })
-    .globalOption("--strict", "Convert inconsistencies into exit code 2.", { default: false });
-}
 
 /** Global options shared across CLI commands. */
 export interface GlobalCLIOptions extends Record<string, unknown> {
   json: boolean;
-  strict: boolean;
 }
 
 /** Optional hooks used to override command implementations in tests. */
@@ -82,17 +69,16 @@ export function createRouter(
     .name(CLI_NAME)
     .version(metadata.version)
     .description("TSera CLI — continuous coherence engine for entities.")
-    .globalOption("--json", "Enable machine-friendly NDJSON output.", {
-      default: false,
-    })
-    .globalOption("--strict", "Convert inconsistencies into exit code 2.", {
-      default: false,
-    });
+    .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
 
-  root.command("init", withGlobalOptions(createInitCommand(handlers.init)));
-  root.command("dev", withGlobalOptions(createDevCommand(metadata, handlers.dev)));
-  root.command("doctor", withGlobalOptions(createDoctorCommand(handlers.doctor)));
-  root.command("update", withGlobalOptions(createUpdateCommand(handlers.update)));
+  const withGlobalOpts = <T extends GlobalCLIOptions>(cmd: CommandType<T>) =>
+    cmd
+      .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
+
+  root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
+  root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));
+  root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
+  root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
 
   root.action(() => {
     root.showHelp();

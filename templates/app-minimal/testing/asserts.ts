@@ -14,9 +14,7 @@ export function assertEquals<T>(
 ): void {
   if (!deepEqual(actual, expected)) {
     throw new Error(
-      `${message}: expected ${stringify(expected)}, received ${
-        stringify(actual)
-      }`,
+      `${message}: expected ${stringify(expected)}, received ${stringify(actual)}`,
     );
   }
 }
@@ -40,9 +38,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
     if (entriesA.length !== entriesB.length) {
       return false;
     }
-    return entriesA.every(([key, value]) =>
-      deepEqual(value, (b as Record<string, unknown>)[key])
-    );
+    return entriesA.every(([key, value]) => deepEqual(value, (b as Record<string, unknown>)[key]));
   }
   return false;
 }

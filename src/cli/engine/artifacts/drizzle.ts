@@ -1,6 +1,6 @@
 import { join } from "../../../shared/path.ts";
-import { entityToDDL } from "tsera/core/drizzle.ts";
-import { pascalToSnakeCase } from "tsera/core/utils/strings.ts";
+import { entityToDDL } from "../../../core/drizzle.ts";
+import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import { hashValue } from "../hash.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
@@ -11,12 +11,10 @@ function deriveDeterministicTimestamp(hash: string): string {
   const hours = parseInt(hash.slice(8, 10), 16) % 24;
   const minutes = parseInt(hash.slice(10, 12), 16) % 60;
   const micros = parseInt(hash.slice(12, 18), 16) % 1_000_000;
-  return `${year.toString().padStart(4, "0")}${month.toString().padStart(2, "0")}${
-    day.toString().padStart(2, "0")
-  }${
-    hours
+  return `${year.toString().padStart(4, "0")}${month.toString().padStart(2, "0")}${day.toString().padStart(2, "0")
+    }${hours
       .toString().padStart(2, "0")
-  }${minutes.toString().padStart(2, "0")}_${micros.toString().padStart(6, "0")}`;
+    }${minutes.toString().padStart(2, "0")}_${micros.toString().padStart(6, "0")}`;
 }
 
 async function nextMigrationFile(entityName: string, ddl: string): Promise<string> {

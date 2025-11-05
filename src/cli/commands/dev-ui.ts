@@ -79,7 +79,8 @@ export class DevConsole extends BaseConsole {
    */
   watchStart(_root: string, debounce: number): void {
     this.write(
-      `${magenta("Dev")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│")} ${gray(`watching (${debounce}ms debounce)`)
+      `${magenta("Dev")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│")} ${
+        gray(`watching (${debounce}ms debounce)`)
       }`,
     );
     this.writeLast(gray("Waiting for file changes…"));
@@ -97,7 +98,8 @@ export class DevConsole extends BaseConsole {
     } else if (paths.length > 0) {
       const fileCount = formatCount(paths.length, "file");
       this.#spinner.start(
-        `${magenta("Dev")} ${dim("•")} ${yellow("Change detected")} ${dim("│")} ${gray(`${fileCount} modified`)
+        `${magenta("Dev")} ${dim("•")} ${yellow("Change detected")} ${dim("│")} ${
+          gray(`${fileCount} modified`)
         }`,
       );
     } else {
@@ -113,7 +115,8 @@ export class DevConsole extends BaseConsole {
   planSummary(summary: PlanSummary): void {
     if (!summary.changed) {
       this.#spinner.update(
-        `${magenta("Dev")} ${dim("•")} ${green("No changes needed")} ${dim("│")} ${gray("artifacts are current")
+        `${magenta("Dev")} ${dim("•")} ${green("No changes needed")} ${dim("│")} ${
+          gray("artifacts are current")
         }`,
       );
     } else {
@@ -134,7 +137,8 @@ export class DevConsole extends BaseConsole {
     if (changed) {
       const label = formatCount(steps, "artifact");
       this.#spinner.update(
-        `${magenta("Dev")} ${dim("•")} ${green("Artifacts updated")} ${dim("│")} ${gray(`${label} regenerated`)
+        `${magenta("Dev")} ${dim("•")} ${green("Artifacts updated")} ${dim("│")} ${
+          gray(`${label} regenerated`)
         }`,
       );
     }

@@ -1,7 +1,7 @@
 import { join } from "../../../shared/path.ts";
-import { generateOpenAPIDocument } from "tsera/core/openapi.ts";
-import type { EntityDef } from "tsera/core/entity.ts";
-import { pascalToSnakeCase } from "tsera/core/utils/strings.ts";
+import { generateOpenAPIDocument } from "../../../core/openapi.ts";
+import type { EntityDef } from "../../../core/entity.ts";
+import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 

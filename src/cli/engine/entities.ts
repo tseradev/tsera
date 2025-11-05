@@ -1,7 +1,7 @@
 import { join } from "../../shared/path.ts";
 import { posixPath } from "../../shared/path.ts";
-import type { EntityDef } from "tsera/core/entity.ts";
-import { pascalToSnakeCase } from "tsera/core/utils/strings.ts";
+import type { EntityDef } from "../../core/entity.ts";
+import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import type { TseraConfig } from "../contracts/types.ts";
 import type { ArtifactDescriptor, DagEntityInput } from "./dag.ts";
 import { buildDocsArtifacts } from "./artifacts/docs.ts";

@@ -1,5 +1,5 @@
 import { join } from "../../../shared/path.ts";
-import type { TColumn } from "tsera/core/entity.ts";
+import type { TColumn } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
 export const buildDocsArtifacts: ArtifactBuilder = (context) => {

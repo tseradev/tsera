@@ -1,21 +1,29 @@
 # AGENTS — Guide pour TSera (Deno v2 + Cliffy)
 
-> **But** : ¨Plan **actionnable** pour créer et livrer **tout TSera côté OSS** dans **un seul dépôt**.
+> **But** : ¨Plan **actionnable** pour créer et livrer **tout TSera côté OSS** dans **un seul
+> dépôt**.
 >
-> **Scope** : Cible **Deno v2**, **full TypeScript**, publication binaire via `deno compile` et (optionnel) module JSR unique.
+> **Scope** : Cible **Deno v2**, **full TypeScript**, publication binaire via `deno compile` et
+> (optionnel) module JSR unique.
 >
-> **Valeurs** : *Full TypeScript · Unification · Simplicité · Automatisation · Cohérence Continue (CC)*.
+> **Valeurs** : _Full TypeScript · Unification · Simplicité · Automatisation · Cohérence Continue
+> (CC)_.
 
 ---
 
 ## 0) TL;DR (ordre recommandé)
 
-1. **Structure repo + tasks + CI** → 2) **Noyau “entités”** (`defineEntity` + helpers Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Template app-minimal** → 5) **Tests (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
-* Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
-* `init` génère **toujours** `tsera.config.ts` **complet** (profil *full* + commentaires) et le squelette `templates/app-minimal`.
-* `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI (zod-to-openapi), migrations Drizzle, docs, tests smoke, `.tsera/graph.json`, `.tsera/manifest.json`.
-* `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
-* **Dépendances autorisées** seulement: Deno std, Cliffy, Zod, TS‑Morph, zod‑to‑openapi, Drizzle.
+1. **Structure repo + tasks + CI** → 2) **Noyau “entités”** (`defineEntity` + helpers
+   Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Template app-minimal** → 5) **Tests
+   (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
+
+- Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
+- `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et le
+  squelette `templates/app-minimal`.
+- `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI (zod-to-openapi), migrations Drizzle,
+  docs, tests smoke, `.tsera/graph.json`, `.tsera/manifest.json`.
+- `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
+- **Dépendances autorisées** seulement: Deno std, Cliffy, Zod, TS‑Morph, zod‑to‑openapi, Drizzle.
 
 ---
 
@@ -63,17 +71,20 @@
   AGENTS.md              # ce fichier
 ```
 
-> **Note** : les imports en dev pointent `import_map.json` vers `./src/**`. Pour la publication JSR (facultative), nommer le module `tsera` et exposer `./src/core/index.ts` + binaire CLI.
+> **Note** : les imports en dev pointent `import_map.json` vers `./src/**`. Pour la publication JSR
+> (facultative), nommer le module `tsera` et exposer `./src/core/index.ts` + binaire CLI.
 
 ---
 
 ## 2) Contraintes non négociables
 
-* **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm**.
-* Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/fmt/colors`, `@std/flags`, `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **zod‑to‑openapi**, **Drizzle**.
-* **Pas de MCP**. **Pas d’HTTP** dans le CLI.
-* **Écritures bornées** : `.tsera/`, `drizzle/`, `docs/`, tests générés. `safeWrite` only (écrit si diff).
-* Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptifs**.
+- **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm**.
+- Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/fmt/colors`, `@std/flags`,
+  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **zod‑to‑openapi**, **Drizzle**.
+- **Pas de MCP**. **Pas d’HTTP** dans le CLI.
+- **Écritures bornées** : `.tsera/`, `drizzle/`, `docs/`, tests générés. `safeWrite` only (écrit si
+  diff).
+- Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptifs**.
 
 ---
 
@@ -81,7 +92,7 @@
 
 ```ts
 // src/core/entity.ts
-export type TPrimitive = "string"|"number"|"boolean"|"date"|"json";
+export type TPrimitive = "string" | "number" | "boolean" | "date" | "json";
 export type TColumn = {
   type: TPrimitive | { arrayOf: TPrimitive };
   optional?: boolean;
@@ -90,21 +101,23 @@ export type TColumn = {
   description?: string;
 };
 export interface EntitySpec {
-  name: string;                 // PascalCase unique
-  table?: boolean;              // si true → migrations
+  name: string; // PascalCase unique
+  table?: boolean; // si true → migrations
   columns: Record<string, TColumn>;
-  doc?: boolean;                // docs markdown
-  test?: "smoke" | false;      // test minimal
+  doc?: boolean; // docs markdown
+  test?: "smoke" | false; // test minimal
 }
 export type EntityDef = Readonly<EntitySpec> & { __brand: "TSeraEntity" };
-export function defineEntity(spec: EntitySpec): EntityDef { /* zod runtime + freeze */ }
+export function defineEntity(spec: EntitySpec): EntityDef {/* zod runtime + freeze */}
 ```
 
 **Helpers**
 
-* `src/core/schema.ts` : `entityToZod(entity): z.ZodObject<...>`
-* `src/core/openapi.ts` : `zodToOpenAPI(zod, { title, version })`
-* `src/core/drizzle.ts` : `entityToDDL(entity, dialect)` → SQL `CREATE TABLE` / `ALTER` minimal (MVP mapping : `string→TEXT/VARCHAR`, `number→INTEGER`, `boolean→BOOLEAN`, `date→TIMESTAMP`, `json/array→JSONB`/PG par défaut).
+- `src/core/schema.ts` : `entityToZod(entity): z.ZodObject<...>`
+- `src/core/openapi.ts` : `zodToOpenAPI(zod, { title, version })`
+- `src/core/drizzle.ts` : `entityToDDL(entity, dialect)` → SQL `CREATE TABLE` / `ALTER` minimal (MVP
+  mapping : `string→TEXT/VARCHAR`, `number→INTEGER`, `boolean→BOOLEAN`, `date→TIMESTAMP`,
+  `json/array→JSONB`/PG par défaut).
 
 **Exemple usage (template)**
 
@@ -130,22 +143,33 @@ export default defineEntity({
 
 ### 4.1 Commandes
 
-* `tsera init <name>` : copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil *full* commenté).
-* `tsera dev [--json] [--strict]` : **watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent.
-* `tsera doctor [--fix]` : vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). `--fix` applique des corrections sûres.
-* `tsera update` : met à jour l’outil (install vs binaire `deno compile`).
+- `tsera init <name>` : copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`,
+  **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
+- `tsera dev [--json] [--strict]` : **watch** (`Deno.watchFs`) sur entités/config ; calcule **plan
+  (diff)** → **apply** idempotent.
+- `tsera doctor [--fix]` : vérifications (Deno v2, FS, entités importables, DB/env, format
+  artefacts). `--fix` applique des corrections sûres.
+- `tsera update` : met à jour l’outil (install vs binaire `deno compile`).
 
 ### 4.2 Config obligatoire (toujours générée par `init`)
 
 ```ts
 // src/cli/contracts/types.ts
 export type DbConfig =
-  | { dialect: "postgres"; urlEnv: string; ssl?: "disable"|"prefer"|"require"; file?: undefined }
-  | { dialect: "mysql";    urlEnv: string; ssl?: boolean; file?: undefined }
-  | { dialect: "sqlite";   urlEnv?: string; file: string; ssl?: undefined };
+  | {
+    dialect: "postgres";
+    urlEnv: string;
+    ssl?: "disable" | "prefer" | "require";
+    file?: undefined;
+  }
+  | { dialect: "mysql"; urlEnv: string; ssl?: boolean; file?: undefined }
+  | { dialect: "sqlite"; urlEnv?: string; file: string; ssl?: undefined };
 export type DeployTarget = "deno_deploy" | "cloudflare" | "node_pm2";
 export interface TseraConfig {
-  openapi: boolean; docs: boolean; tests: boolean; telemetry: boolean;
+  openapi: boolean;
+  docs: boolean;
+  tests: boolean;
+  telemetry: boolean;
   outDir: string;
   paths: { entities: string[]; routes?: string[] };
   db: DbConfig;
@@ -153,52 +177,57 @@ export interface TseraConfig {
 }
 ```
 
-**Gabarit `tsera.config.ts`** : profil *full* + commentaires 1‑ligne (identique au brief du projet).
+**Gabarit `tsera.config.ts`** : profil _full_ + commentaires 1‑ligne (identique au brief du projet).
 
 ### 4.3 Moteur interne
 
-* **DAG** (`src/cli/engine/dag.ts`) : nœuds `entity`, `schema`, `openapi`, `migration`, `test`, `doc` ; edges dérivées.
-* **Hash** (`engine/hash.ts`) : SHA‑256(contenu + options + version CLI).
-* **Planner** (`engine/planner.ts`) : compare hash courant vs state précédent → `steps[]` (`create|update|delete|noop`) + `summary`.
-* **Applier** (`engine/applier.ts`) : applique steps ; `safeWrite` (écrit **uniquement si diff**), ordre stable.
-* **Watch** (`engine/watch.ts`) : `Deno.watchFs` + debounce (≈150 ms), ignore `.tsera/**`.
-* **State** (`engine/state.ts`) : `.tsera/graph.json` & `.tsera/manifest.json`.
+- **DAG** (`src/cli/engine/dag.ts`) : nœuds `entity`, `schema`, `openapi`, `migration`, `test`,
+  `doc` ; edges dérivées.
+- **Hash** (`engine/hash.ts`) : SHA‑256(contenu + options + version CLI).
+- **Planner** (`engine/planner.ts`) : compare hash courant vs state précédent → `steps[]`
+  (`create|update|delete|noop`) + `summary`.
+- **Applier** (`engine/applier.ts`) : applique steps ; `safeWrite` (écrit **uniquement si diff**),
+  ordre stable.
+- **Watch** (`engine/watch.ts`) : `Deno.watchFs` + debounce (≈150 ms), ignore `.tsera/**`.
+- **State** (`engine/state.ts`) : `.tsera/graph.json` & `.tsera/manifest.json`.
 
 ### 4.4 Artefacts générés
 
-* **Zod** → `*.schema.ts` (miroir entités, sous‑ensemble MVP).
-* **OpenAPI** → `openapi.json` (via zod‑to‑openapi ; tags/paths minimaux si `routes` présents).
-* **Migrations** → `drizzle/YYYYMMDDHHMM_ssssss_desc.sql`.
-* **Tests smoke** → parse Zod + snapshot minimal.
-* **Docs** → Markdown synthétique par entité (props/types/exemples).
+- **Zod** → `*.schema.ts` (miroir entités, sous‑ensemble MVP).
+- **OpenAPI** → `openapi.json` (via zod‑to‑openapi ; tags/paths minimaux si `routes` présents).
+- **Migrations** → `drizzle/YYYYMMDDHHMM_ssssss_desc.sql`.
+- **Tests smoke** → parse Zod + snapshot minimal.
+- **Docs** → Markdown synthétique par entité (props/types/exemples).
 
 ### 4.5 Sortie machine & modes
 
-* `--json` : NDJSON (`watch:start`, `plan:start`, `plan:summary`, `apply:step`, `apply:done`, `coherence`, `error`).
-* `--strict` : incohérences persistantes ⇒ **exit code 2**.
+- `--json` : NDJSON (`watch:start`, `plan:start`, `plan:summary`, `apply:step`, `apply:done`,
+  `coherence`, `error`).
+- `--strict` : incohérences persistantes ⇒ **exit code 2**.
 
 ### 4.6 Packaging
 
-* **Binaire** via `deno compile` pour 3 OS (upload en Release).
-* **JSR (optionnel)** : exposer `src/core/index.ts` + binaire CLI ; nom unique `tsera`.
+- **Binaire** via `deno compile` pour 3 OS (upload en Release).
+- **JSR (optionnel)** : exposer `src/core/index.ts` + binaire CLI ; nom unique `tsera`.
 
 ---
 
 ## 5) Template app‑minimal
 
-* Projet Deno minimal avec **Hono** (`/health`), une entité `User`, `tsera.config.ts` complet, `deno.jsonc`, `import_map.json`, README court.
-* Dossier `web/` (Fresh) optionnel au MVP.
+- Projet Deno minimal avec **Hono** (`/health`), une entité `User`, `tsera.config.ts` complet,
+  `deno.jsonc`, `import_map.json`, README court.
+- Dossier `web/` (Fresh) optionnel au MVP.
 
 ---
 
 ## 6) Dev environment tips (Deno‑first)
 
-* **Exiger Deno v2** (`deno --version`) ; MAJ : `deno upgrade`.
-* **ESM only**, TS `strict`; zéro `any` implicite.
-* **JSR imports** (`jsr:@std/...`) ; en dev, utiliser `import_map.json`.
-* **Run CLI** : `deno run -A src/cli/main.ts --help`.
-* **Cache/lock** : `deno cache --lock=deno.lock --lock-write src/cli/main.ts`.
-* **Non‑interactif CI** : `DENO_NO_PROMPT=1`.
+- **Exiger Deno v2** (`deno --version`) ; MAJ : `deno upgrade`.
+- **ESM only**, TS `strict`; zéro `any` implicite.
+- **JSR imports** (`jsr:@std/...`) ; en dev, utiliser `import_map.json`.
+- **Run CLI** : `deno run -A src/cli/main.ts --help`.
+- **Cache/lock** : `deno cache --lock=deno.lock --lock-write src/cli/main.ts`.
+- **Non‑interactif CI** : `DENO_NO_PROMPT=1`.
 
 ---
 
@@ -221,38 +250,40 @@ export interface TseraConfig {
 
 ## 8) Tests & Qualité
 
-* **Unit** : noyau (defineEntity + helpers), CLI (resolve-config, DAG hash/diff, parser Cliffy).
-* **Golden** : snapshot exact du `tsera.config.ts` généré + `openapi.json` trié.
-* **E2E** : `scripts/e2e.ts` :
+- **Unit** : noyau (defineEntity + helpers), CLI (resolve-config, DAG hash/diff, parser Cliffy).
+- **Golden** : snapshot exact du `tsera.config.ts` généré + `openapi.json` trié.
+- **E2E** : `scripts/e2e.ts` :
 
   1. crée un tmp dir → `tsera init demo` → `cd demo` → `tsera dev --json` (1 cycle),
   2. vérifie artefacts (`.tsera/openapi.json`, `drizzle/**`, docs, tests),
   3. modifie `User.entity.ts` → attend regen → vérifie **plan**/**apply**.
-* **Lint/format** : `deno lint` + `deno fmt`; JSON stable.
+- **Lint/format** : `deno lint` + `deno fmt`; JSON stable.
 
 ---
 
 ## 9) CI/CD (GitHub Actions)
 
-* **ci.yml** : jobs `fmt`, `lint`, `test`, `compile` (ubuntu/macos/windows).
-* **release.yml** : sur tag `v*` : compile binaires et upload; (optionnel) `deno publish` du module `tsera`.
+- **ci.yml** : jobs `fmt`, `lint`, `test`, `compile` (ubuntu/macos/windows).
+- **release.yml** : sur tag `v*` : compile binaires et upload; (optionnel) `deno publish` du module
+  `tsera`.
 
 ---
 
 ## 10) PR & Conventions
 
-* **Commits** : Conventional Commits (`feat(cli): …`, `feat(core): …`, `fix(applier): …`, `test(e2e): …`).
-* **PR title** : `[cli]` / `[core]` / `[repo]` + titre.
-* **Avant merge** : `deno task fmt && deno task lint && deno task test` ; E2E vert.
-* **Docs** : si changement de contrat (flags CLI, artefacts) → maj `README.md`, `AGENTS.md`, tests.
+- **Commits** : Conventional Commits (`feat(cli): …`, `feat(core): …`, `fix(applier): …`,
+  `test(e2e): …`).
+- **PR title** : `[cli]` / `[core]` / `[repo]` + titre.
+- **Avant merge** : `deno task fmt && deno task lint && deno task test` ; E2E vert.
+- **Docs** : si changement de contrat (flags CLI, artefacts) → maj `README.md`, `AGENTS.md`, tests.
 
 ---
 
 ## 11) Sécurité & DX
 
-* Pas d’I/O hors racine projet; watcher ignore `.tsera/**`.
-* Masquer les secrets issus de `.env` dans les logs.
-* Messages **courts**, **actionnables** (verbe à l’infinitif + résultat). Pas de prompts bloquants.
+- Pas d’I/O hors racine projet; watcher ignore `.tsera/**`.
+- Masquer les secrets issus de `.env` dans les logs.
+- Messages **courts**, **actionnables** (verbe à l’infinitif + résultat). Pas de prompts bloquants.
 
 ---
 
@@ -269,9 +300,10 @@ export interface TseraConfig {
 
 ## 13) Definition of Done
 
-* [ ] **Structure** repo conforme + tasks + CI opérationnelle.
-* [ ] **Noyau** entités + helpers (zod/openapi/drizzle) testés et prêts à l’usage.
-* [ ] **CLI** : 4 commandes stables; `init` écrit `tsera.config.ts` *full*; `dev` maintient les artefacts; `doctor --fix` et `update` OK.
-* [ ] **Template** app‑minimal fonctionnel; `tsera dev` régénère bien.
-* [ ] **Tests** unit + golden + e2e verts en CI 3 OS.
-* [ ] **Release** : tags → binaires (et JSR optionnel); README à jour.
+- [ ] **Structure** repo conforme + tasks + CI opérationnelle.
+- [ ] **Noyau** entités + helpers (zod/openapi/drizzle) testés et prêts à l’usage.
+- [ ] **CLI** : 4 commandes stables; `init` écrit `tsera.config.ts` _full_; `dev` maintient les
+      artefacts; `doctor --fix` et `update` OK.
+- [ ] **Template** app‑minimal fonctionnel; `tsera dev` régénère bien.
+- [ ] **Tests** unit + golden + e2e verts en CI 3 OS.
+- [ ] **Release** : tags → binaires (et JSR optionnel); README à jour.

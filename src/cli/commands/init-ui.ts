@@ -103,7 +103,8 @@ export class InitConsole extends BaseConsole {
    */
   start(): void {
     this.write(
-      `${magenta("Init")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│ using template ")}${gray(this.#template)
+      `${magenta("Init")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│ using template ")}${
+        gray(this.#template)
       }`,
     );
     this.writeLast(gray("Preparing project folder…"));

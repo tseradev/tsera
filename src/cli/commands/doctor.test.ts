@@ -3,7 +3,7 @@ import { createDefaultInitHandler } from "./init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
 import { assertEquals } from "../../testing/asserts.ts";
 
-const NOOP_WRITER = () => {};
+const NOOP_WRITER = () => { };
 
 function createExitCollector() {
   const codes: number[] = [];
@@ -24,7 +24,7 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
       template: "app-minimal",
       force: false,
       yes: true,
-      global: { json: false, strict: false },
+      global: { json: false },
     });
 
     const entityPath = join(projectDir, "domain", "User.entity.ts");
@@ -66,7 +66,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       template: "app-minimal",
       force: false,
       yes: true,
-      global: { json: false, strict: false },
+      global: { json: false },
     });
 
     const entityPath = join(projectDir, "domain", "User.entity.ts");

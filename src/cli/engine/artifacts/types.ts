@@ -1,4 +1,4 @@
-import type { EntityDef } from "tsera/core/entity.ts";
+import type { EntityDef } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 

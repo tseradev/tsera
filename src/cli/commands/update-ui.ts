@@ -91,7 +91,8 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("Update")} ${dim("•")} ${cyan(`${method}${channelLabel}`)} ${dim("│")} ${gray(`current: ${this.#currentVersion}`)
+      `${magenta("Update")} ${dim("•")} ${cyan(`${method}${channelLabel}`)} ${dim("│")} ${
+        gray(`current: ${this.#currentVersion}`)
       }`,
     );
   }
@@ -103,7 +104,8 @@ export class UpdateConsole extends BaseConsole {
    */
   denoVersionChecked(version: string): void {
     this.#spinner.update(
-      `${magenta("Update")} ${dim("•")} ${gray("Deno version checked")} ${dim("│")} ${cyan(`v${version}`)
+      `${magenta("Update")} ${dim("•")} ${gray("Deno version checked")} ${dim("│")} ${
+        cyan(`v${version}`)
       }`,
     );
   }

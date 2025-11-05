@@ -103,10 +103,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     const executeCycle = async (reason: string, paths: string[] = []): Promise<void> => {
       try {
-        const result = await runCycle(reason, paths);
-        if (context.global.strict && result.pending) {
-          Deno.exit(2);
-        }
+        await runCycle(reason, paths);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logger.event("error", { message });
@@ -159,14 +156,14 @@ export function createDevCommand(
     .option("--plan-only", "Compute the plan without applying it.", { default: false })
     .option("--apply", "Force apply even if the plan is empty.", { default: false })
     .action(async (options, projectDir = ".") => {
-      const { json, strict, watch, once, planOnly, apply } = options;
+      const { json, watch, once, planOnly, apply } = options;
       await handler({
         projectDir,
         watch,
         once,
         planOnly,
         apply,
-        global: { json, strict },
+        global: { json },
       });
     });
 }

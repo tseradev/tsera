@@ -138,12 +138,12 @@ export function createUpdateCommand(
     .option("--binary", "Install the compiled binary instead of deno install.", { default: false })
     .option("--dry-run", "Show the steps without applying them.", { default: false })
     .action(async (options) => {
-      const { json, strict, channel, binary, dryRun } = options;
+      const { json, channel, binary, dryRun } = options;
       await handler({
         channel,
         binary,
         dryRun,
-        global: { json, strict },
+        global: { json },
       });
     });
 }
