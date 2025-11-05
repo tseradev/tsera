@@ -143,13 +143,53 @@ export default defineEntity({
 
 ### 4.1 Commandes
 
-- `tsera init <name>` : copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`,
-  **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
-- `tsera dev [--json] [--strict]` : **watch** (`Deno.watchFs`) sur entités/config ; calcule **plan
-  (diff)** → **apply** idempotent.
-- `tsera doctor [--fix]` : vérifications (Deno v2, FS, entités importables, DB/env, format
-  artefacts). `--fix` applique des corrections sûres.
-- `tsera update` : met à jour l’outil (install vs binaire `deno compile`).
+#### Options globales (toutes les commandes)
+
+- `--json` : Active la sortie NDJSON pour l'intégration automatisée
+- `-h, --help` : Affiche l'aide de la commande
+- `-V, --version` : Affiche la version du CLI
+
+#### `tsera` (sans argument)
+
+Affiche le help global avec la liste des commandes disponibles.
+
+#### `tsera init [directory]`
+
+Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
+
+**Options :**
+- `[directory]` : Répertoire cible (défaut: `.`)
+- `--template <name>` : Template à utiliser (défaut: `app-minimal`)
+- `-f, --force` : Écrase les fichiers existants
+- `-y, --yes` : Répond automatiquement "oui" aux prompts (mode non-interactif)
+
+#### `tsera dev [projectDir]`
+
+**Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent.
+
+**Options :**
+- `[projectDir]` : Répertoire du projet (défaut: `.`)
+- `--no-watch` : Désactive le file watcher (activé par défaut)
+- `--once` : Exécute un seul cycle plan/apply (mode CI/CD)
+- `--plan-only` : Calcule le plan sans appliquer (mode dry-run)
+- `--apply` : Force l'application même si le plan est vide
+
+#### `tsera doctor [--cwd <path>]`
+
+Vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). Détecte les incohérences.
+
+**Options :**
+- `--cwd <path>` : Répertoire du projet à diagnostiquer (défaut: `.`)
+- `--fix` : Applique automatiquement les corrections sûres (régénère les artefacts)
+
+#### `tsera update`
+
+Met à jour l'outil (install vs binaire `deno compile`).
+
+**Options :**
+- `--channel <channel>` : Canal de release (`stable`|`beta`|`canary`, défaut: `stable`)
+- `--binary` : Installe le binaire compilé au lieu de `deno install`
+- `--dry-run` : Affiche les étapes sans les appliquer
 
 ### 4.2 Config obligatoire (toujours générée par `init`)
 
@@ -203,7 +243,6 @@ export interface TseraConfig {
 
 - `--json` : NDJSON (`watch:start`, `plan:start`, `plan:summary`, `apply:step`, `apply:done`,
   `coherence`, `error`).
-- `--strict` : incohérences persistantes ⇒ **exit code 2**.
 
 ### 4.6 Packaging
 
@@ -217,6 +256,7 @@ export interface TseraConfig {
 - Projet Deno minimal avec **Hono** (`/health`), une entité `User`, `tsera.config.ts` complet,
   `deno.jsonc`, `import_map.json`, README court.
 - Dossier `web/` (Fresh) optionnel au MVP.
+- Page racine affichant le component Fresh
 
 ---
 

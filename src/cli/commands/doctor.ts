@@ -1,5 +1,5 @@
 import { resolve } from "../../shared/path.ts";
-import { Command, type CommandType } from "../deps/command.ts";
+import { Command } from "../deps/command.ts";
 import { createLogger } from "../lib/log.ts";
 import { resolveConfig } from "../lib/resolve-config.ts";
 import { determineCliVersion } from "../lib/version.ts";
@@ -15,6 +15,13 @@ import { DoctorConsole } from "./doctor-ui.ts";
 interface DoctorCommandOptions extends GlobalCLIOptions {
   cwd: string;
   fix: boolean;
+}
+
+/** Options passed to the doctor action handler by Cliffy. */
+interface DoctorActionOptions {
+  json?: boolean;
+  cwd?: string;
+  fix?: boolean;
 }
 
 /** Context object passed to doctor command handlers. */
@@ -161,13 +168,13 @@ export function createDefaultDoctorHandler(
  */
 export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
-): CommandType<DoctorCommandOptions> {
-  return new Command<DoctorCommandOptions>()
+) {
+  return new Command()
     .description("Check project coherence and suggest safe fixes.")
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
     .option("--fix", "Automatically apply safe corrections.", { default: false })
-    .action(async (options) => {
-      const { json, cwd, fix } = options;
+    .action(async (options: DoctorActionOptions) => {
+      const { json = false, cwd = ".", fix = false } = options;
       await handler({
         cwd,
         fix,

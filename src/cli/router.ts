@@ -1,10 +1,13 @@
-import { Command, type CommandType } from "./deps/command.ts";
+import { Command } from "./deps/command.ts";
 import { createDevCommand, type DevCommandHandler } from "./commands/dev.ts";
 import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor.ts";
 import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update.ts";
 import type { CliMetadata } from "./main.ts";
 import { applyModernHelp, type ModernHelpCommand } from "./lib/help.ts";
+
+/** A subcommand instance returned by command factories. */
+type SubCommand = ReturnType<typeof Command.prototype.globalOption>;
 
 const CLI_NAME = "tsera";
 const CLI_TAGLINE = "Continuous coherence engine for entities.";
@@ -64,16 +67,15 @@ export interface RouterHandlers {
 export function createRouter(
   metadata: CliMetadata,
   handlers: RouterHandlers = {},
-): CommandType<GlobalCLIOptions> {
-  const root = new Command<GlobalCLIOptions>()
+) {
+  const root = new Command()
     .name(CLI_NAME)
     .version(metadata.version)
     .description("TSera CLI — continuous coherence engine for entities.")
     .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
 
-  const withGlobalOpts = <T extends GlobalCLIOptions>(cmd: CommandType<T>) =>
-    cmd
-      .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
+  const withGlobalOpts = (cmd: SubCommand): SubCommand =>
+    cmd.globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
 
   root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));

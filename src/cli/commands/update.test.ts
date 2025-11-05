@@ -2,7 +2,7 @@ import { join } from "../../shared/path.ts";
 import { createDefaultUpdateHandler } from "./update.ts";
 import { assert, assertEquals } from "../../testing/asserts.ts";
 
-const NOOP_WRITER = () => { };
+const NOOP_WRITER = () => {};
 
 interface CallRecord {
   command: string;

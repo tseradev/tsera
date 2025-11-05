@@ -1,5 +1,5 @@
 import { join } from "../../shared/path.ts";
-import { Command, type CommandType } from "../deps/command.ts";
+import { Command } from "../deps/command.ts";
 import { createLogger } from "../lib/log.ts";
 import { ensureDir } from "../lib/fsx.ts";
 import { determineCliVersion } from "../lib/version.ts";
@@ -10,6 +10,14 @@ interface UpdateCommandOptions extends GlobalCLIOptions {
   channel: "stable" | "beta" | "canary";
   binary: boolean;
   dryRun: boolean;
+}
+
+/** Options passed to the update action handler by Cliffy. */
+interface UpdateActionOptions {
+  json?: boolean;
+  channel?: "stable" | "beta" | "canary";
+  binary?: boolean;
+  dryRun?: boolean;
 }
 
 /** Context object passed to update command handlers. */
@@ -123,8 +131,8 @@ export function createDefaultUpdateHandler(
  */
 export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
-): CommandType<UpdateCommandOptions> {
-  return new Command<UpdateCommandOptions>()
+) {
+  return new Command()
     .description("Update the TSera CLI via deno install or a compiled binary.")
     .option("--channel <channel:string>", "Release channel (stable|beta|canary).", {
       default: "stable",
@@ -137,8 +145,8 @@ export function createUpdateCommand(
     })
     .option("--binary", "Install the compiled binary instead of deno install.", { default: false })
     .option("--dry-run", "Show the steps without applying them.", { default: false })
-    .action(async (options) => {
-      const { json, channel, binary, dryRun } = options;
+    .action(async (options: UpdateActionOptions) => {
+      const { json = false, channel = "stable", binary = false, dryRun = false } = options;
       await handler({
         channel,
         binary,

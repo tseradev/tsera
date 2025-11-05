@@ -1,7 +1,7 @@
 import { join, resolve } from "../../shared/path.ts";
 import { normalizeNewlines } from "../../shared/newline.ts";
 import { fromFileUrl } from "../../shared/file-url.ts";
-import { Command, type CommandType } from "../deps/command.ts";
+import { Command } from "../deps/command.ts";
 import { createLogger } from "../lib/log.ts";
 import { pathExists, safeWrite } from "../lib/fsx.ts";
 import { resolveConfig } from "../lib/resolve-config.ts";
@@ -22,6 +22,14 @@ interface InitCommandOptions extends GlobalCLIOptions {
   template: string;
   force: boolean;
   yes: boolean;
+}
+
+/** Options passed to the init action handler by Cliffy. */
+interface InitActionOptions {
+  json?: boolean;
+  template?: string;
+  force?: boolean;
+  yes?: boolean;
 }
 
 /** Context passed to init command handlers. */
@@ -176,15 +184,15 @@ export function createDefaultInitHandler(
  */
 export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
-): CommandType<InitCommandOptions> {
-  return new Command<InitCommandOptions>()
+) {
+  return new Command()
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
     .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
-    .action(async (options, directory = ".") => {
-      const { json, template, force, yes } = options;
+    .action(async (options: InitActionOptions, directory = ".") => {
+      const { json = false, template = "app-minimal", force = false, yes = false } = options;
       await handler({
         directory,
         template,

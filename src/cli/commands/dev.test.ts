@@ -127,8 +127,24 @@ Deno.test("dev command defaults once to false", async () => {
   assertEquals(received.once, true);
 });
 
+Deno.test("dev command handles --no-watch flag", async () => {
+  let received: DevCommandContext | undefined;
+
+  const command = createDevCommand(TEST_METADATA, (context) => {
+    received = context;
+  });
+
+  await command.parse(["--once", "--no-watch"]);
+
+  if (!received) {
+    throw new Error("The dev handler was not invoked.");
+  }
+
+  assertEquals(received.watch, false);
+});
+
 Deno.test("dev command shows help", () => {
-  const command = createDevCommand(TEST_METADATA, () => {});
+  const command = createDevCommand(TEST_METADATA, () => { });
   const captured: string[] = [];
   const originalLog = console.log;
 
@@ -144,7 +160,7 @@ Deno.test("dev command shows help", () => {
 
   const output = captured.join("\n");
   assertStringIncludes(output, "Plan and apply TSera artifacts in development mode");
-  assertStringIncludes(output, "--watch");
+  assertStringIncludes(output, "--no-watch");
   assertStringIncludes(output, "--once");
   assertStringIncludes(output, "--plan-only");
   assertStringIncludes(output, "--apply");

@@ -1,5 +1,5 @@
 import { dirname } from "../../shared/path.ts";
-import { Command, type CommandType } from "../deps/command.ts";
+import { Command } from "../deps/command.ts";
 import { createLogger } from "../lib/log.ts";
 import { resolveConfig } from "../lib/resolve-config.ts";
 import { applyPlan } from "../engine/applier.ts";
@@ -17,6 +17,15 @@ interface DevCommandOptions extends GlobalCLIOptions {
   once: boolean;
   planOnly: boolean;
   apply: boolean;
+}
+
+/** Options passed to the dev action handler by Cliffy. */
+interface DevActionOptions {
+  json?: boolean;
+  watch?: boolean;
+  once?: boolean;
+  planOnly?: boolean;
+  apply?: boolean;
 }
 
 /** Context object passed to dev command handlers. */
@@ -147,19 +156,19 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 export function createDevCommand(
   metadata: CliMetadata,
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
-): CommandType<DevCommandOptions> {
-  return new Command<DevCommandOptions>()
+) {
+  return new Command()
     .description("Plan and apply TSera artifacts in development mode.")
     .arguments("[projectDir]")
-    .option("--watch", "Enable the file watcher.", { default: true, negatable: true })
+    .option("--no-watch", "Disable the file watcher (enabled by default).")
     .option("--once", "Run a single plan/apply cycle.", { default: false })
     .option("--plan-only", "Compute the plan without applying it.", { default: false })
     .option("--apply", "Force apply even if the plan is empty.", { default: false })
-    .action(async (options, projectDir = ".") => {
-      const { json, watch, once, planOnly, apply } = options;
+    .action(async (options: DevActionOptions, projectDir = ".") => {
+      const { json = false, watch, once = false, planOnly = false, apply = false } = options;
       await handler({
         projectDir,
-        watch,
+        watch: watch !== false, // watch is false only when --no-watch is explicitly used
         once,
         planOnly,
         apply,
