@@ -42,6 +42,17 @@ const CLI_EXAMPLES = [
   "tsera doctor --strict",
 ];
 
+/**
+ * Injects global DX flags into a subcommand so they work before or after the command name.
+ */
+function withGlobalOptions<TOptions extends GlobalCLIOptions>(
+  command: CommandType<TOptions>,
+): CommandType<TOptions> {
+  return command
+    .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false })
+    .globalOption("--strict", "Convert inconsistencies into exit code 2.", { default: false });
+}
+
 /** Global options shared across CLI commands. */
 export interface GlobalCLIOptions extends Record<string, unknown> {
   json: boolean;
@@ -78,10 +89,10 @@ export function createRouter(
       default: false,
     });
 
-  root.command("init", createInitCommand(handlers.init));
-  root.command("dev", createDevCommand(metadata, handlers.dev));
-  root.command("doctor", createDoctorCommand(handlers.doctor));
-  root.command("update", createUpdateCommand(handlers.update));
+  root.command("init", withGlobalOptions(createInitCommand(handlers.init)));
+  root.command("dev", withGlobalOptions(createDevCommand(metadata, handlers.dev)));
+  root.command("doctor", withGlobalOptions(createDoctorCommand(handlers.doctor)));
+  root.command("update", withGlobalOptions(createUpdateCommand(handlers.update)));
 
   root.action(() => {
     root.showHelp();

@@ -1,130 +1,137 @@
-# CLI command reference
+# CLI quick reference
 
-This reference expands on the four core commands available in the TSera CLI. Each section covers the
-signature, relevant options, outputs, and recommended scenarios.
+TSera ships four commands that cover the full DX loop: initialize, develop, audit, and upgrade. The
+goal is to keep every workflow one flag away from the default behaviour.
 
-## Conventions
+## Modern help at a glance
 
-- Commands default to the interactive TUI. Add `--json` to receive newline-delimited JSON suitable
-  for automation.
-- Options are kebab-case and can be combined (for example `tsera dev --json --strict`).
-- Exit codes: `0` = success, `1` = generic error, `2` = incoherence detected in `--strict` mode.
+Running `tsera` without arguments prints the opinionated help layout rendered by `applyModernHelp`:
 
-## `tsera init <project-name>`
+```text
+TSERA · Continuous coherence engine for entities.
+Version 0.0.0-dev
 
-Scaffold a new project using the `app-minimal` template.
+USAGE
+  tsera <command> [options]
+
+GLOBAL OPTIONS
+  --json        Stream machine-readable NDJSON events.
+  --strict      Treat inconsistencies as fatal (exit code 2).
+  -h, --help    Show this help message.
+  -V, --version Display the CLI version.
+
+COMMANDS
+  init [directory]  Scaffold a TSera project from a template and bootstrap artifacts.
+  dev               Watch entities, plan changes, and apply generated artifacts in-place.
+  doctor            Inspect project coherence, highlight issues, and offer safe fixes.
+  update            Upgrade the TSera CLI via deno install or compiled binaries.
+
+EXAMPLES
+  $ tsera init demo-app --template app-minimal
+  $ tsera dev --json
+  $ tsera doctor --strict
+```
+
+### Global conventions
+
+- Every command opts into the interactive TUI by default. Add `--json` for automation-friendly
+  NDJSON.
+- Add `--strict` to make pending work fail fast with exit code `2` (useful in CI).
+- Exit codes: `0` success · `1` generic error · `2` pending work detected with `--strict`.
+
+## Command cheatsheet
+
+| Command      | Default behaviour                                         | One-liner tweak                                                  |
+| ------------ | --------------------------------------------------------- | ---------------------------------------------------------------- |
+| `init [dir]` | Copy `app-minimal`, generate config, bootstrap coherence. | `--template <name>` to pick another kit.                         |
+| `dev`        | Watch files, plan/apply, stream a concise summary.        | `--once` for CI, `--plan-only` to preview                        |
+| `doctor`     | Rebuild everything from scratch to surface drifts.        | `--fix` to auto-apply safe remediations.                         |
+| `update`     | Upgrade via `deno install` using the `stable` channel.    | `--binary` for compiled builds, `--dry-run` to inspect commands. |
+
+## `tsera init`
+
+Fastest way to bootstrap a TSera-ready project.
 
 ```bash
 tsera init my-app
 ```
 
-### Key behaviours
+**Defaults you get automatically**
 
-- Copies the template into `<project-name>/`.
-- Generates `tsera.config.ts` with inline documentation and the `full` profile enabled.
-- Initializes `.tsera/graph.json` and `.tsera/manifest.json` by running an initial plan/apply cycle.
-- Produces a `.gitignore` that excludes build artefacts.
+- Template files copied into `my-app/` (uses `app-minimal`).
+- `tsera.config.ts` generated with inline documentation and the `full` profile.
+- `.tsera/graph.json` and `.tsera/manifest.json` produced after the first plan/apply.
+- `.gitignore` augmented with TSera artefacts.
 
-### Options
+**Flags when you need them**
 
-| Option         | Description                                                                        |
-| -------------- | ---------------------------------------------------------------------------------- |
-| `--json`       | Emit NDJSON events (`init:start`, `init:write`, `init:done`).                      |
-| `--no-install` | Skip dependency installation (useful when running from source or in offline mode). |
-| `--strict`     | Treat recoverable warnings (e.g. missing permissions) as errors.                   |
-
-### Typical usage
-
-Use `init` whenever you onboard a new service or reproduce a clean environment for end-to-end tests.
-Combine with `--json` when scripting the creation of sandboxes.
+- `--template <name>` – swap the starter (defaults to `app-minimal`).
+- `-f, --force` – overwrite existing files in a non-empty directory.
+- `-y, --yes` – skip confirmation prompts (perfect for scripts).
 
 ## `tsera dev`
 
-Run the continuous coherence loop (watch → plan → apply → report).
+Keep coherence tight while editing entities.
 
 ```bash
-tsera dev                # start the watcher
+tsera dev
 ```
 
-### Key behaviours
+**What happens**
 
-- Observes entity and configuration files, debouncing quick edits.
-- Computes a minimal plan (create/update/delete/noop) based on cached hashes.
-- Applies the plan using `safeWrite`, only touching files that changed.
-- Outputs a coherence summary after each cycle.
+- Watches configs and entities (debounced) then regenerates only what changed.
+- Plans create/update/delete/noop steps using cached hashes.
+- Applies results through `safeWrite`, keeping diffs clean.
+- Emits `plan:*`, `apply:*`, and `coherence` events to the logger.
 
-### Options
+**Minimal flags for control**
 
-| Option        | Description                                                                   |
-| ------------- | ----------------------------------------------------------------------------- |
-| `--json`      | Switch to NDJSON output for CI pipelines.                                     |
-| `--strict`    | Exit with code `2` when incoherence remains after applying changes.           |
-| `--plan-only` | Print the next plan and exit without applying it.                             |
-| `--once`      | Run a single plan/apply cycle and exit.                                       |
-| `--apply`     | Force the apply phase even if nothing changed (useful after manual cleanups). |
-
-### Typical usage
-
-Keep `tsera dev` running while working on entities. Use `--once` in hooks or CI steps where you want
-to verify coherence deterministically. Pair `--plan-only` with `--json` to preview upcoming changes.
+- `--once` – run a single cycle (great for CI hooks).
+- `--plan-only` – inspect the next plan without applying.
+- `--apply` – force the apply stage even when the plan is empty (post-cleanup helper).
+- `--watch/--no-watch` – toggle the watcher (watching is on by default).
 
 ## `tsera doctor`
 
-Audit the project for drifts and optionally apply safe fixes.
+Deep audit with optional automatic healing.
 
 ```bash
 tsera doctor
 ```
 
-### Key behaviours
+**What you get**
 
-- Rebuilds the dependency graph from scratch without relying on the cached `.tsera` state.
-- Highlights missing, outdated, or orphaned artefacts.
-- Suggests remediation steps and, when safe, can fix them automatically.
+- Full graph rebuild without touching cached `.tsera` state.
+- Drift detection across generated artefacts.
+- Prescriptive log output pointing to issues.
 
-### Options
+**Single flag when you want fixes**
 
-| Option     | Description                                                           |
-| ---------- | --------------------------------------------------------------------- |
-| `--json`   | Emit machine-readable diagnostics (`doctor:issue`, `doctor:summary`). |
-| `--fix`    | Apply safe fixes (re-run generators for drifted nodes).               |
-| `--strict` | Exit with code `2` when issues remain after the run.                  |
+- `--fix` – regenerate artefacts that TSera can safely repair.
 
-### Typical usage
-
-Run `tsera doctor --strict` in CI to block merges when coherence breaks. Pair `--fix` with
-interactive runs to repair typical drifts before committing.
+Combine with `--strict` to make CI fail when any drift remains.
 
 ## `tsera update`
 
-Upgrade the CLI installation or download the latest binary release.
+Stay on the latest CLI release.
 
 ```bash
-tsera update --channel=stable
+tsera update
 ```
 
-### Key behaviours
+**Default flow**
 
-- Fetches metadata from the chosen release channel.
-- Either installs via `deno install` (default) or downloads binaries produced by `deno compile`.
-- Provides post-update hints (rerun `doctor`, check release notes).
+- Detects the current Deno version.
+- Runs `deno install` against the `stable` channel.
+- Suggests post-upgrade follow-ups (`doctor`, `dev --apply`).
 
-### Options
+**Optional switches**
 
-| Option             | Description                                                           |
-| ------------------ | --------------------------------------------------------------------- |
-| `--channel <name>` | Select `stable`, `beta`, or `canary`.                                 |
-| `--binary`         | Force the binary download flow instead of `deno install`.             |
-| `--json`           | Emit progress as NDJSON events (`update:download`, `update:install`). |
-| `--strict`         | Fail if the version check detects a downgrade or missing artifacts.   |
-
-### Typical usage
-
-Use `update` after new releases. Automate checks in CI/CD to ensure your environments run the same
-version. Combine with `--json` to log progress or integrate into dashboards.
+- `--channel <stable|beta|canary>` – pick a release track.
+- `--binary` – download the compiled executable into `dist/tsera`.
+- `--dry-run` – print the underlying `deno` command without executing it.
 
 ---
 
-For deeper insight into how these commands orchestrate the DAG, refer to the
-[architecture guide](./ARCHITECTURE.md) and explore the task-driven workflows in
-[RECIPES.md](./RECIPES.md).
+For more context on the coherence engine and generated artefacts, visit the
+[architecture guide](./ARCHITECTURE.md) and the workflow [recipes](./RECIPES.md).

@@ -1,6 +1,7 @@
 import { createRouter } from "./router.ts";
 import type { CliMetadata } from "./main.ts";
 import type { DevCommandContext } from "./commands/dev.ts";
+import type { DoctorCommandContext } from "./commands/doctor.ts";
 import type { InitCommandContext } from "./commands/init.ts";
 import type { UpdateCommandContext } from "./commands/update.ts";
 
@@ -38,6 +39,24 @@ Deno.test("router forwards global options to subcommands", async () => {
 
   assertEquals(received.directory, "demo");
   assertEquals(received.template, "custom");
+  assertEquals(received.global, { json: true, strict: true });
+});
+
+Deno.test("router accepts global flags after the command name", async () => {
+  let received: DoctorCommandContext | undefined;
+
+  const router = createRouter(TEST_METADATA, {
+    doctor: (context) => {
+      received = context;
+    },
+  });
+
+  await router.parse(["doctor", "--strict", "--json"]);
+
+  if (!received) {
+    throw new Error("The doctor handler was not invoked.");
+  }
+
   assertEquals(received.global, { json: true, strict: true });
 });
 
