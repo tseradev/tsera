@@ -191,66 +191,62 @@ class DoctorConsole {
   }
 
   start(): void {
-    const mode = this.#fixEnabled ? `${green("auto-fix activé")}` : `${gray("analyse")}`;
+    const mode = this.#fixEnabled ? `${green("auto-fix enabled")}` : `${gray("analysis mode")}`;
     this.#spinner.start(
       `${magenta("Doctor")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│")} ${mode}`,
     );
   }
 
   planReady(summary: PlanSummary, entities: number): void {
-    const checks = summary.total === 1 ? "contrôle" : "contrôles";
+    const checks = summary.total === 1 ? "check" : "checks";
     const caption = `${bold(String(summary.total))} ${checks}`;
     this.#spinner.update(
       `${magenta("Doctor")} ${dim("•")} ${caption} ${dim("│")} ${
-        gray(`${entities} entité${plural(entities)}`)
+        gray(`${entities} ${entities === 1 ? "entity" : "entities"}`)
       }`,
     );
   }
 
   allClear(entities: number): void {
-    const label = entities === 1 ? "entité vérifiée" : "entités vérifiées";
+    const label = entities === 1 ? "entity verified" : "entities verified";
     this.#spinner.succeed(
-      `${green("Tout est parfait")}${dim(" • ")} ${gray(`${entities} ${label}`)}`,
+      `${green("All checks passed")}${dim(" • ")} ${gray(`${entities} ${label}`)}`,
     );
-    this.#writer(`${dim("└─")} ${gray("Le projet est cohérent. Aucun correctif nécessaire.")}`);
+    this.#writer(`${dim("└─")} ${gray("The project is coherent. No fixes required.")}`);
   }
 
   reportIssues(summary: PlanSummary): void {
     const actions: string[] = [];
     if (summary.create > 0) {
       actions.push(
-        `${green("+" + summary.create)} ${gray(summary.create === 1 ? "création" : "créations")}`,
+        `${green("+" + summary.create)} ${gray(summary.create === 1 ? "creation" : "creations")}`,
       );
     }
     if (summary.update > 0) {
       actions.push(
-        `${yellow("⇄" + summary.update)} ${
-          gray(summary.update === 1 ? "mise à jour" : "mises à jour")
-        }`,
+        `${yellow("⇄" + summary.update)} ${gray(summary.update === 1 ? "update" : "updates")}`,
       );
     }
     if (summary.delete > 0) {
       actions.push(
-        `${magenta("−" + summary.delete)} ${
-          gray(summary.delete === 1 ? "suppression" : "suppressions")
-        }`,
+        `${magenta("−" + summary.delete)} ${gray(summary.delete === 1 ? "deletion" : "deletions")}`,
       );
     }
     const headline = actions.length > 0
       ? actions.join(`${dim("  •  ")}`)
-      : gray("Comparaison effectuée");
-    this.#spinner.warn(`${yellow("Des correctifs sont requis")}${dim(" • ")} ${headline}`);
+      : gray("Comparison complete");
+    this.#spinner.warn(`${yellow("Fixes required")}${dim(" • ")} ${headline}`);
   }
 
   beginFix(total: number): void {
     const label = total === 1 ? "action" : "actions";
     this.#spinner.update(
-      `${magenta("Doctor")} ${dim("•")} ${yellow("Auto-réparation en cours")}${dim(" │ ")}${
+      `${magenta("Doctor")} ${dim("•")} ${yellow("Auto-fix in progress")}${dim(" │ ")}${
         gray(`${total} ${label}`)
       }`,
     );
     if (total === 0) {
-      this.#writer(`${dim("└─")} ${gray("Analyse des incohérences restantes…")}`);
+      this.#writer(`${dim("└─")} ${gray("Analyzing remaining inconsistencies…")}`);
     }
   }
 
@@ -258,45 +254,43 @@ class DoctorConsole {
     this.#completed += 1;
     const label = formatActionLabel(kind);
     const progress = total > 0 ? `${this.#completed}/${total}` : `${this.#completed}`;
-    const target = path ? cyan(path) : gray("(calcul interne)");
+    const target = path ? cyan(path) : gray("(internal computation)");
     this.#spinner.update(
-      `${yellow("Auto-réparation")}${dim(" • ")} ${progress}${dim(" │ ")}${label}${
-        dim(" → ")
-      }${target}`,
+      `${yellow("Auto-fix")}${dim(" • ")} ${progress}${dim(" │ ")}${label}${dim(" → ")}${target}`,
     );
   }
 
   completeFix(applied: number): void {
-    const label = applied === 1 ? "correctif" : "correctifs";
+    const label = applied === 1 ? "fix" : "fixes";
     this.#spinner.succeed(
-      `${green("Synchronisation terminée")}${dim(" • ")} ${gray(`${applied} ${label} appliqués`)}`,
+      `${green("Sync complete")}${dim(" • ")} ${gray(`${applied} ${label} applied`)}`,
     );
-    this.#writer(`${dim("└─")} ${gray("Vous êtes prêt à continuer.")}`);
+    this.#writer(`${dim("└─")} ${gray("You are ready to continue.")}`);
   }
 
   reportPending(summary: PlanSummary): void {
     const remaining = summary.create + summary.update + summary.delete;
     const label = remaining === 1 ? "action" : "actions";
     this.#spinner.fail(
-      `${yellow("Il reste des incohérences")}${dim(" • ")} ${
-        gray(`${remaining} ${label} à traiter`)
+      `${yellow("Inconsistencies remain")}${dim(" • ")} ${
+        gray(`${remaining} ${label} to address`)
       }`,
     );
-    this.#writer(`${dim("└─")} ${gray("Relancez la commande pour finaliser la réparation.")}`);
+    this.#writer(`${dim("└─")} ${gray("Run the command again to finish repairing.")}`);
   }
 
   suggestNextSteps(): void {
     this.#spinner.warn(
-      `${yellow("Aucune réparation effectuée")}${dim(" • ")} ${gray("mode lecture seule")}`,
+      `${yellow("No fixes applied")}${dim(" • ")} ${gray("read-only mode")}`,
     );
     this.#writer(
-      `${dim("└─")} ${gray("Lancez ")}${cyan("tsera doctor --fix")}${
-        gray(" pour corriger automatiquement.")
+      `${dim("└─")} ${gray("Run ")}${cyan("tsera doctor --fix")}${
+        gray(" to correct issues automatically.")
       }`,
     );
     this.#writer(
-      `${dim("└─")} ${gray("Ou ")}${cyan("tsera dev --apply")}${
-        gray(" pour forcer une régénération complète.")
+      `${dim("└─")} ${gray("Or ")}${cyan("tsera dev --apply")}${
+        gray(" to force a full regeneration.")
       }`,
     );
   }
@@ -412,18 +406,14 @@ function formatProjectLabel(projectDir: string): string {
   return segments[segments.length - 1] ?? projectDir;
 }
 
-function plural(quantity: number): string {
-  return quantity > 1 ? "s" : "";
-}
-
 function formatActionLabel(kind: string): string {
   switch (kind) {
     case "create":
-      return green("création");
+      return green("creation");
     case "update":
-      return yellow("mise à jour");
+      return yellow("update");
     case "delete":
-      return magenta("suppression");
+      return magenta("deletion");
     default:
       return gray(kind);
   }
