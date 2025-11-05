@@ -134,4 +134,8 @@ Deno.test("router shows modern help layout", () => {
   if (!output.includes("init [directory]")) {
     throw new Error("Help output is missing the init command description.");
   }
+
+  if (!output.includes("› --json")) {
+    throw new Error("Help output is missing the styled option bullet.");
+  }
 });
