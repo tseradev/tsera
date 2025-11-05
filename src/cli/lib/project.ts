@@ -1,16 +1,5 @@
 import { dirname, join, resolve } from "../../shared/path.ts";
-
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await Deno.stat(path);
-    return true;
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return false;
-    }
-    throw error;
-  }
-}
+import { pathExists } from "./fsx.ts";
 
 export async function findConfigPath(startDir: string): Promise<string | null> {
   let current = resolve(startDir);

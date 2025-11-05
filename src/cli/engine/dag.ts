@@ -1,5 +1,5 @@
-import type { EntityDef } from "tsera/core/entity.ts";
-import { pascalToSnakeCase } from "tsera/core/utils/strings.ts";
+import type { EntityDef } from "../../core/entity.ts";
+import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import { hashValue } from "./hash.ts";
 
 export type DagNodeKind = "entity" | "schema" | "openapi" | "migration" | "test" | "doc";

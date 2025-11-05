@@ -9,7 +9,8 @@ export interface SafeWriteResult {
   path: string;
 }
 
-async function ensureDir(path: string): Promise<void> {
+/** Ensures a directory exists, creating it if necessary. */
+export async function ensureDir(path: string): Promise<void> {
   try {
     await Deno.mkdir(path, { recursive: true });
   } catch (error) {
@@ -18,6 +19,27 @@ async function ensureDir(path: string): Promise<void> {
     }
     throw error;
   }
+}
+
+/** Checks if a path exists on the filesystem. */
+export async function pathExists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/** Checks if a directory has any entries (files or subdirectories). */
+export async function directoryHasEntries(path: string): Promise<boolean> {
+  for await (const _ of Deno.readDir(path)) {
+    return true;
+  }
+  return false;
 }
 
 function toUint8(value: string | Uint8Array): Uint8Array {

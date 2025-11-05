@@ -24,6 +24,23 @@ export function assertEquals<T>(actual: T, expected: T, message = "Values are no
 }
 
 /**
+ * Asserts that a string includes a substring.
+ *
+ * @param actual - The actual string value.
+ * @param expected - The substring that should be present.
+ * @param message - Optional message appended to the thrown error.
+ */
+export function assertStringIncludes(
+  actual: string,
+  expected: string,
+  message = "String does not include expected substring",
+): void {
+  if (!actual.includes(expected)) {
+    throw new Error(`${message}: expected "${actual}" to include "${expected}"`);
+  }
+}
+
+/**
  * Asserts that the supplied async function rejects and optionally inspects the error message.
  *
  * @param fn - Function expected to reject.

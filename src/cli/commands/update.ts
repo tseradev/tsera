@@ -1,7 +1,8 @@
 import { join } from "../../shared/path.ts";
 import { Command, type CommandType } from "../deps/command.ts";
-import { createLogger } from "../core/log.ts";
-import { determineCliVersion } from "../core/version.ts";
+import { createLogger } from "../lib/log.ts";
+import { ensureDir } from "../lib/fsx.ts";
+import { determineCliVersion } from "../lib/version.ts";
 import type { GlobalCLIOptions } from "../router.ts";
 
 /** CLI options accepted by the {@code update} command. */
@@ -98,8 +99,7 @@ export function createDefaultUpdateHandler(
       if (!result.success) {
         const detail = result.stderr.trim() || result.stdout.trim();
         throw new Error(
-          `The deno ${args.join(" ")} command failed (code ${result.code}).${
-            detail ? ` ${detail}` : ""
+          `The deno ${args.join(" ")} command failed (code ${result.code}).${detail ? ` ${detail}` : ""
           }`,
         );
       }
@@ -166,15 +166,4 @@ function parseDenoVersion(stdout: string): string {
     throw new Error("Unable to parse the Deno version.");
   }
   return match[1];
-}
-
-async function ensureDir(path: string): Promise<void> {
-  try {
-    await Deno.mkdir(path, { recursive: true });
-  } catch (error) {
-    if (error instanceof Deno.errors.AlreadyExists) {
-      return;
-    }
-    throw error;
-  }
 }

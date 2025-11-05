@@ -9,7 +9,7 @@ import {
   magenta,
   red,
   yellow,
-} from "./colors.ts";
+} from "../ui/colors.ts";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 

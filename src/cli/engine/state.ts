@@ -1,7 +1,7 @@
 import { join } from "../../shared/path.ts";
 import type { Dag, DagEdge, DagNode } from "./dag.ts";
 import { serialiseDag } from "./dag.ts";
-import { readJsonFile, writeJsonFile } from "../core/fsx.ts";
+import { readJsonFile, writeJsonFile } from "../lib/fsx.ts";
 
 export interface SnapshotRecord {
   id: string;

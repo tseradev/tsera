@@ -1,7 +1,7 @@
 import { dirname } from "../../shared/path.ts";
 import { Command, type CommandType } from "../deps/command.ts";
-import { createLogger } from "../core/log.ts";
-import { resolveConfig } from "../core/resolve-config.ts";
+import { createLogger } from "../lib/log.ts";
+import { resolveConfig } from "../lib/resolve-config.ts";
 import { applyPlan } from "../engine/applier.ts";
 import { createDag } from "../engine/dag.ts";
 import { prepareDagInputs } from "../engine/entities.ts";
@@ -134,7 +134,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       try {
         await executeCycle("initial");
         await queue;
-        await new Promise<void>(() => {});
+        await new Promise<void>(() => { });
       } finally {
         controller.close();
       }

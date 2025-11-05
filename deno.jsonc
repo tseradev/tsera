@@ -1,11 +1,7 @@
 {
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
   "compilerOptions": {
-    "strict": true,
-    "baseUrl": ".",
-    "paths": {
-      "tsera/*": ["./src/*"]
-    }
+    "strict": true
   },
   "fmt": {
     "useTabs": false,
@@ -14,7 +10,9 @@
   },
   "lint": {
     "rules": {
-      "tags": ["recommended"]
+      "tags": [
+        "recommended"
+      ]
     }
   },
   "tasks": {

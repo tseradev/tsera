@@ -4,7 +4,7 @@ import { createDoctorCommand, type DoctorCommandHandler } from "./commands/docto
 import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update.ts";
 import type { CliMetadata } from "./main.ts";
-import { applyModernHelp, type ModernHelpCommand } from "./core/help.ts";
+import { applyModernHelp, type ModernHelpCommand } from "./lib/help.ts";
 
 const CLI_NAME = "tsera";
 const CLI_TAGLINE = "Continuous coherence engine for entities.";

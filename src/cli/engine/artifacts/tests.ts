@@ -3,8 +3,7 @@ import { posixPath } from "../../../shared/path.ts";
 import type { TColumn } from "tsera/core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
-const { dirname: posixDirname, join: posixJoin, relative: posixRelative } =
-  posixPath;
+const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
 
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;

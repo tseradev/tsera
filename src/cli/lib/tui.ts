@@ -26,7 +26,7 @@ export function createTui(logger: Logger): Tui {
       logger.info(`step:${action}`, { id, kind, target });
     },
     summary: (message) => {
-      logger.info("plan:summary", message as Record<string, unknown>);
+      logger.info("plan:summary", { ...message });
     },
   };
 }

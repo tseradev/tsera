@@ -104,7 +104,7 @@ function renderModernHelp(config: ModernHelpConfig): string {
   const width = clampWidth(detectPreferredWidth() ?? DEFAULT_MAX_WIDTH);
   const lines: string[] = [];
 
-  const divider = palette.accent("═".repeat(width));
+  const divider = palette.accent("═".repeat(60));
   lines.push(divider);
   lines.push(palette.strong(`${config.cliName.toUpperCase()} • ${config.tagline}`));
   lines.push(palette.subtle(`Version ${config.version}`));

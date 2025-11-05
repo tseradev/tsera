@@ -1,5 +1,5 @@
 import { join } from "../../shared/path.ts";
-import { removeFileIfExists, safeWrite } from "../core/fsx.ts";
+import { removeFileIfExists, safeWrite } from "../lib/fsx.ts";
 import type { PlanResult, PlanStep } from "./planner.ts";
 import type { EngineState } from "./state.ts";
 import { applySnapshots } from "./state.ts";
