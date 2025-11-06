@@ -3,6 +3,7 @@
     "@std/": "jsr:@std/",
     "@fresh/": "jsr:@fresh/",
     "@preact/": "jsr:@preact/",
-    "tsera/": "jsr:tsera/"
+    "tsera/": "jsr:tsera/",
+    "zod": "npm:zod@^3.23.8"
   }
 }

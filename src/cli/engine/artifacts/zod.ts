@@ -41,7 +41,7 @@ function columnToZodExpression(column: TColumn): string {
     expression += ".optional()";
   }
   if (column.default !== undefined) {
-    expression += `.default(${toTsLiteral(column.default)})`;
+    expression += `.default(${toTsLiteral(column.default, column.type)})`;
   }
 
   return expression;
@@ -74,11 +74,15 @@ function primitiveToZod(type: TColumn["type"] extends infer T ? T : never): stri
   }
 }
 
-function toTsLiteral(value: unknown): string {
+function toTsLiteral(value: unknown, columnType: TColumn["type"]): string {
   if (value instanceof Date) {
     return `new Date(${JSON.stringify(value.toISOString())})`;
   }
   if (typeof value === "string") {
+    // If column type is "date" and value looks like an ISO date string, convert it
+    if (columnType === "date" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(value)) {
+      return `new Date(${JSON.stringify(value)})`;
+    }
     return JSON.stringify(value);
   }
   if (typeof value === "number" || typeof value === "boolean") {
