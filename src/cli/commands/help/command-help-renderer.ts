@@ -11,6 +11,7 @@ import { clampWidth, detectTerminalWidth } from "../../ui/terminal.ts";
 import { StringBuilder } from "../../ui/text-utils.ts";
 import { formatExamples, formatTwoColumn } from "./formatters.ts";
 import type { ModernHelpCommand } from "./types.ts";
+import type { Palette } from "../../ui/palette.ts";
 
 /**
  * Configuration for rendering command-specific help.
@@ -27,7 +28,7 @@ export interface CommandHelpConfig {
   /** Example commands */
   examples: string[];
   /** Optional theme override */
-  theme?: "default" | "dark" | "light";
+  theme?: Partial<Palette>;
 }
 
 /**

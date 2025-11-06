@@ -6,7 +6,6 @@
  *
  * @module
  */
-
 import { join } from "../../../shared/path.ts";
 import { bold, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
 import { BaseConsole } from "../../ui/console.ts";
@@ -227,9 +226,9 @@ export class InitConsole extends BaseConsole {
     this.writeMiddle(recap);
     this.write("");
     this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
-    this.writeMiddle(`${dim("→")} ${cyan(`cd ${this.#projectDir}`)}`);
+    this.writeMiddle(`${dim("→")} ${cyan(`cd ${this.#projectLabel}`)}`);
     this.writeMiddle(`${dim("→")} ${cyan('git init && git add -A && git commit -m "feat: boot tsera"')}`);
-    this.writeMiddle(`${dim("→")} ${cyan("tsera dev --watch")}`);
+    this.writeMiddle(`${dim("→")} ${cyan("tsera dev")}`);
     this.write("");
   }
 

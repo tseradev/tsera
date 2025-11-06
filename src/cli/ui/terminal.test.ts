@@ -3,16 +3,16 @@ import { clampWidth, detectTerminalWidth } from "./terminal.ts";
 
 Deno.test("clampWidth constrains values within bounds", () => {
   assertEquals(clampWidth(100), 100);
-  assertEquals(clampWidth(40), 60); // Below min (60)
-  assertEquals(clampWidth(200), 120); // Above max (120)
+  assertEquals(clampWidth(40), 64); // Below min (64)
+  assertEquals(clampWidth(200), 100); // Above max (100)
   assertEquals(clampWidth(80), 80); // Within range
 });
 
 Deno.test("clampWidth handles edge cases", () => {
-  assertEquals(clampWidth(60), 60); // Exactly min
-  assertEquals(clampWidth(120), 120); // Exactly max
-  assertEquals(clampWidth(0), 60); // Zero becomes min
-  assertEquals(clampWidth(-10), 60); // Negative becomes min
+  assertEquals(clampWidth(64), 64); // Exactly min
+  assertEquals(clampWidth(100), 100); // Exactly max
+  assertEquals(clampWidth(0), 84); // Zero becomes default
+  assertEquals(clampWidth(-10), 84); // Negative becomes default
 });
 
 Deno.test("detectTerminalWidth returns number or undefined", () => {

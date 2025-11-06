@@ -1,4 +1,5 @@
 import { join } from "../../../shared/path.ts";
+import { normalizeNewlines } from "../../../shared/newline.ts";
 import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "../../../testing/asserts.ts";
 
@@ -24,8 +25,8 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     });
 
     const configPath = join(projectDir, "tsera.config.ts");
-    const config = await Deno.readTextFile(configPath);
-    const expectedConfig = await readGoldenFile("tsera.config.ts");
+    const config = normalizeNewlines(await Deno.readTextFile(configPath), "\n");
+    const expectedConfig = normalizeNewlines(await readGoldenFile("tsera.config.ts"), "\n");
     assertEquals(config, expectedConfig);
 
     const gitignore = await Deno.readTextFile(join(projectDir, ".gitignore"));

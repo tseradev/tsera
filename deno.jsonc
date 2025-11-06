@@ -15,6 +15,11 @@
       ]
     }
   },
+  "test": {
+    "exclude": [
+      "demo/**"
+    ]
+  },
   "tasks": {
     "fmt": "deno fmt",
     "lint": "deno lint",
