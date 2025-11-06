@@ -37,6 +37,12 @@ function sortValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => sortValue(item));
   }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
   if (value && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>)
       .sort(([a], [b]) => a.localeCompare(b));
@@ -45,12 +51,6 @@ function sortValue(value: unknown): unknown {
       result[key] = sortValue(val);
     }
     return result;
-  }
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-  if (typeof value === "bigint") {
-    return value.toString();
   }
   return value;
 }

@@ -1,4 +1,4 @@
-import { join, resolve } from "../../../shared/path.ts";
+import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { fromFileUrl } from "../../../shared/file-url.ts";
 import { Command } from "../../deps/command.ts";
@@ -57,6 +57,78 @@ function defaultTemplatesRoot(): string {
 }
 
 /**
+ * Patches the import_map.json in the target directory to use local TSera sources
+ * instead of JSR. This is necessary during development and testing since the
+ * package doesn't exist in JSR yet.
+ */
+async function patchImportMapForLocalDevelopment(
+  targetDir: string,
+  templatesRoot: string,
+): Promise<void> {
+  const importMapPath = join(targetDir, "import_map.json");
+  
+  // Check if import_map.json exists
+  if (!(await pathExists(importMapPath))) {
+    return;
+  }
+
+  // Read the existing import_map.json
+  const content = await Deno.readTextFile(importMapPath);
+  let importMap: { imports?: Record<string, string> };
+  
+  try {
+    importMap = JSON.parse(content);
+  } catch {
+    // If parsing fails, skip patching
+    return;
+  }
+
+  if (!importMap.imports) {
+    return;
+  }
+
+  // Calculate the path from target directory to the TSera src directory
+  // templatesRoot is .../templates, so go up one level to get the repo root, then src/
+  const repoRoot = dirname(templatesRoot);
+  const srcDir = join(repoRoot, "src");
+  
+  // Calculate relative path from target to src (using POSIX paths for Deno imports)
+  // Normalize both paths to use forward slashes first
+  const normalizedTarget = targetDir.replace(/\\/g, "/");
+  const normalizedSrc = srcDir.replace(/\\/g, "/");
+  let relativePath = posixPath.relative(normalizedTarget, normalizedSrc);
+  
+  // Ensure the path ends with a slash and starts with ./ or ../
+  if (!relativePath.startsWith(".")) {
+    relativePath = `./${relativePath}`;
+  }
+  if (!relativePath.endsWith("/")) {
+    relativePath = `${relativePath}/`;
+  }
+
+  // Replace the JSR import with local path
+  if (importMap.imports["tsera/"]) {
+    importMap.imports["tsera/"] = relativePath;
+  }
+
+  // Write back with sorted keys for consistency
+  const sortedImports = Object.keys(importMap.imports)
+    .sort()
+    .reduce((acc: Record<string, string>, key) => {
+      acc[key] = importMap.imports![key];
+      return acc;
+    }, {});
+
+  const updatedContent = JSON.stringify(
+    { ...importMap, imports: sortedImports },
+    null,
+    2,
+  ) + "\n";
+
+  await safeWrite(importMapPath, normalizeNewlines(updatedContent));
+}
+
+/**
  * Creates the default {@code init} command handler responsible for scaffolding projects.
  */
 export function createDefaultInitHandler(
@@ -88,6 +160,10 @@ export function createDefaultInitHandler(
     }
 
     const copy = await copyTemplateDirectory(templateDir, targetDir, { force: context.force });
+    
+    // Patch import_map.json to use local sources instead of JSR (for development/testing)
+    await patchImportMapForLocalDevelopment(targetDir, templatesRoot);
+    
     if (jsonMode) {
       logger.event("init:copy", { files: copy.files.length, skipped: copy.skipped.length });
     } else {

@@ -79,14 +79,17 @@ export function watchProject(
 }
 
 function shouldIgnore(path: string, ignores: (string | RegExp)[]): boolean {
+  // Normalise les chemins Windows pour utiliser des forward slashes
+  const normalizedPath = path.replace(/\\/g, "/");
+  
   for (const pattern of ignores) {
     if (typeof pattern === "string") {
-      if (path.includes(pattern)) {
+      if (normalizedPath.includes(pattern)) {
         return true;
       }
       continue;
     }
-    if (pattern.test(path)) {
+    if (pattern.test(normalizedPath)) {
       return true;
     }
   }
