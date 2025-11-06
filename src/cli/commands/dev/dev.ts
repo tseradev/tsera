@@ -1,15 +1,15 @@
-import { dirname } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
-import { createLogger } from "../lib/log.ts";
-import { resolveConfig } from "../lib/resolve-config.ts";
-import { applyPlan } from "../engine/applier.ts";
-import { createDag } from "../engine/dag.ts";
-import { prepareDagInputs } from "../engine/entities.ts";
-import { planDag } from "../engine/planner.ts";
-import { readEngineState, writeDagState, writeEngineState } from "../engine/state.ts";
-import { watchProject } from "../engine/watch.ts";
-import type { CliMetadata } from "../main.ts";
-import type { GlobalCLIOptions } from "../router.ts";
+import { dirname } from "../../../shared/path.ts";
+import { Command } from "../../deps/command.ts";
+import { createLogger } from "../../utils/log.ts";
+import { resolveConfig } from "../../utils/resolve-config.ts";
+import { applyPlan } from "../../engine/applier.ts";
+import { createDag } from "../../engine/dag.ts";
+import { prepareDagInputs } from "../../engine/entities.ts";
+import { planDag } from "../../engine/planner.ts";
+import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
+import { watchProject } from "../../engine/watch.ts";
+import type { CliMetadata } from "../../main.ts";
+import type { GlobalCLIOptions } from "../../router.ts";
 
 /** CLI options accepted by the {@code dev} command. */
 interface DevCommandOptions extends GlobalCLIOptions {
@@ -140,7 +140,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       try {
         await executeCycle("initial");
         await queue;
-        await new Promise<void>(() => { });
+        await new Promise<void>(() => {});
       } finally {
         controller.close();
       }

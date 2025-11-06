@@ -1,16 +1,21 @@
 import { Command } from "./deps/command.ts";
-import { createDevCommand, type DevCommandHandler } from "./commands/dev.ts";
-import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor.ts";
-import { createInitCommand, type InitCommandHandler } from "./commands/init.ts";
-import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update.ts";
+import { createDevCommand, type DevCommandHandler } from "./commands/dev/dev.ts";
+import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor/doctor.ts";
+import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
+import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
+import {
+  applyModernHelp,
+  createHelpCommand,
+  type HelpCommandHandler,
+  type ModernHelpCommand,
+} from "./commands/help/help.ts";
 import type { CliMetadata } from "./main.ts";
-import { applyModernHelp, type ModernHelpCommand } from "./lib/help.ts";
 
 /** A subcommand instance returned by command factories. */
 type SubCommand = ReturnType<typeof Command.prototype.globalOption>;
 
-const CLI_NAME = "tsera";
-const CLI_TAGLINE = "Continuous coherence engine for entities.";
+const CLI_NAME = "TSera";
+const CLI_TAGLINE = "The next era of fullstack TypeScript starts here.";
 const CLI_USAGE = "<command> [options]";
 
 const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
@@ -36,6 +41,10 @@ const COMMAND_HELP: ModernHelpCommand[] = [
     label: "update",
     description: "Upgrade the TSera CLI via deno install or compiled binaries.",
   },
+  {
+    label: "help [command]",
+    description: "Display help information for TSera CLI commands.",
+  },
 ];
 
 const CLI_EXAMPLES = [
@@ -55,6 +64,7 @@ export interface RouterHandlers {
   dev?: DevCommandHandler;
   doctor?: DoctorCommandHandler;
   update?: UpdateCommandHandler;
+  help?: HelpCommandHandler;
 }
 
 /**
@@ -71,7 +81,7 @@ export function createRouter(
   const root = new Command()
     .name(CLI_NAME)
     .version(metadata.version)
-    .description("TSera CLI — continuous coherence engine for entities.")
+    .description("TSera CLI — The next era of fullstack TypeScript starts here.")
     .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
 
   const withGlobalOpts = (cmd: SubCommand): SubCommand =>
@@ -81,10 +91,7 @@ export function createRouter(
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));
   root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
-
-  root.action(() => {
-    root.showHelp();
-  });
+  root.command("help", withGlobalOpts(createHelpCommand(handlers.help)));
 
   applyModernHelp(root, {
     cliName: CLI_NAME,

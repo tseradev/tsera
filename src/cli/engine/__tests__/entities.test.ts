@@ -1,6 +1,6 @@
 import { join } from "../../../shared/path.ts";
-import { assertEquals } from "tsera/testing/asserts.ts";
-import { defineEntity } from "tsera/core/entity.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { defineEntity } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "../entities.ts";
 

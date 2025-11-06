@@ -1,5 +1,5 @@
-import { assertEquals } from "tsera/testing/asserts.ts";
-import { defineEntity } from "tsera/core/entity.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { defineEntity } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 import { buildDocsArtifacts } from "../artifacts/docs.ts";
 import { buildDrizzleArtifacts } from "../artifacts/drizzle.ts";

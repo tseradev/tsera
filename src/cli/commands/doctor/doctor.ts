@@ -1,14 +1,14 @@
-import { resolve } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
-import { createLogger } from "../lib/log.ts";
-import { resolveConfig } from "../lib/resolve-config.ts";
-import { determineCliVersion } from "../lib/version.ts";
-import { applyPlan } from "../engine/applier.ts";
-import { createDag } from "../engine/dag.ts";
-import { prepareDagInputs } from "../engine/entities.ts";
-import { planDag } from "../engine/planner.ts";
-import { readEngineState, writeDagState, writeEngineState } from "../engine/state.ts";
-import type { GlobalCLIOptions } from "../router.ts";
+import { resolve } from "../../../shared/path.ts";
+import { Command } from "../../deps/command.ts";
+import { createLogger } from "../../utils/log.ts";
+import { resolveConfig } from "../../utils/resolve-config.ts";
+import { determineCliVersion } from "../../utils/version.ts";
+import { applyPlan } from "../../engine/applier.ts";
+import { createDag } from "../../engine/dag.ts";
+import { prepareDagInputs } from "../../engine/entities.ts";
+import { planDag } from "../../engine/planner.ts";
+import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
+import type { GlobalCLIOptions } from "../../router.ts";
 import { DoctorConsole } from "./doctor-ui.ts";
 
 /** CLI options accepted by the {@code doctor} command. */

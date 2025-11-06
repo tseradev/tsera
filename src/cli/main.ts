@@ -26,6 +26,12 @@ export async function main(
   router.throwErrors();
 
   try {
+    // When no arguments are provided, show help by default
+    if (args.length === 0) {
+      router.showHelp();
+      return;
+    }
+
     await router.parse(args);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

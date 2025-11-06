@@ -1,7 +1,7 @@
-import { join } from "../../shared/path.ts";
-import { createDefaultInitHandler } from "./init.ts";
+import { join } from "../../../shared/path.ts";
+import { createDefaultInitHandler } from "../init/init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
-import { assertEquals } from "../../testing/asserts.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
 
 const NOOP_WRITER = () => {};
 

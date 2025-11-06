@@ -1,9 +1,9 @@
 import { createRouter } from "./router.ts";
 import type { CliMetadata } from "./main.ts";
-import type { DevCommandContext } from "./commands/dev.ts";
-import type { DoctorCommandContext } from "./commands/doctor.ts";
-import type { InitCommandContext } from "./commands/init.ts";
-// import type { UpdateCommandContext } from "./commands/update.ts"; // TODO: Restore when update test is fixed
+import type { DevCommandContext } from "./commands/dev/dev.ts";
+import type { DoctorCommandContext } from "./commands/doctor/doctor.ts";
+import type { InitCommandContext } from "./commands/init/init.ts";
+// import type { UpdateCommandContext } from "./commands/update/update.ts"; // TODO: Restore when update test is fixed
 
 const TEST_METADATA: CliMetadata = { version: "test" };
 
@@ -136,7 +136,33 @@ Deno.test("router shows modern help layout", () => {
     throw new Error("Help output is missing the init command description.");
   }
 
-  if (!output.includes("› --json")) {
+  if (!output.includes("▸ --json")) {
     throw new Error("Help output is missing the styled option bullet.");
+  }
+});
+
+Deno.test("main shows help when no arguments are provided", async () => {
+  const { main } = await import("./main.ts");
+  const captured: string[] = [];
+  const originalLog = console.log;
+
+  console.log = (...args: unknown[]) => {
+    captured.push(args.map((value) => String(value)).join(" "));
+  };
+
+  try {
+    await main([], TEST_METADATA);
+  } finally {
+    console.log = originalLog;
+  }
+
+  const output = captured.join("\n");
+
+  if (!output.includes("USAGE")) {
+    throw new Error("Help output is missing when no arguments are provided.");
+  }
+
+  if (!output.includes("COMMANDS")) {
+    throw new Error("Commands section is missing when no arguments are provided.");
   }
 });

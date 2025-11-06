@@ -1,17 +1,17 @@
-import { join, resolve } from "../../shared/path.ts";
-import { normalizeNewlines } from "../../shared/newline.ts";
-import { fromFileUrl } from "../../shared/file-url.ts";
-import { Command } from "../deps/command.ts";
-import { createLogger } from "../lib/log.ts";
-import { pathExists, safeWrite } from "../lib/fsx.ts";
-import { resolveConfig } from "../lib/resolve-config.ts";
-import { determineCliVersion } from "../lib/version.ts";
-import { applyPlan } from "../engine/applier.ts";
-import { createDag } from "../engine/dag.ts";
-import { prepareDagInputs } from "../engine/entities.ts";
-import { planDag } from "../engine/planner.ts";
-import { readEngineState, writeDagState, writeEngineState } from "../engine/state.ts";
-import type { GlobalCLIOptions } from "../router.ts";
+import { join, resolve } from "../../../shared/path.ts";
+import { normalizeNewlines } from "../../../shared/newline.ts";
+import { fromFileUrl } from "../../../shared/file-url.ts";
+import { Command } from "../../deps/command.ts";
+import { createLogger } from "../../utils/log.ts";
+import { pathExists, safeWrite } from "../../utils/fsx.ts";
+import { resolveConfig } from "../../utils/resolve-config.ts";
+import { determineCliVersion } from "../../utils/version.ts";
+import { applyPlan } from "../../engine/applier.ts";
+import { createDag } from "../../engine/dag.ts";
+import { prepareDagInputs } from "../../engine/entities.ts";
+import { planDag } from "../../engine/planner.ts";
+import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
+import type { GlobalCLIOptions } from "../../router.ts";
 import { InitConsole } from "./init-ui.ts";
 import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/file-ops.ts";
 import { copyTemplateDirectory } from "./utils/template-copy.ts";
@@ -52,7 +52,7 @@ interface InitHandlerDependencies {
 
 /** Resolves the default templates directory from the current module location. */
 function defaultTemplatesRoot(): string {
-  return fromFileUrl(new URL("../../../templates", import.meta.url));
+  return fromFileUrl(new URL("../../../../templates", import.meta.url));
 }
 
 /**

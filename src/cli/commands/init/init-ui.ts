@@ -7,9 +7,9 @@
  * @module
  */
 
-import { join } from "../../shared/path.ts";
-import { bold, cyan, dim, gray, green, magenta, yellow } from "../ui/colors.ts";
-import { BaseConsole } from "../ui/console.ts";
+import { join } from "../../../shared/path.ts";
+import { bold, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
+import { BaseConsole } from "../../ui/console.ts";
 import {
   formatActionLabel,
   formatActionSummary,
@@ -18,8 +18,8 @@ import {
   formatRelativePath,
   type PlanSummary,
   sanitizeProjectDir,
-} from "../ui/formatters.ts";
-import type { PlanStepKind } from "../engine/planner.ts";
+} from "../../ui/formatters.ts";
+import type { PlanStepKind } from "../../engine/planner.ts";
 
 /**
  * Options for creating an InitConsole instance.

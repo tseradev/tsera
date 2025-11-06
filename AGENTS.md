@@ -155,9 +155,11 @@ Affiche le help global avec la liste des commandes disponibles.
 
 #### `tsera init [directory]`
 
-Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
+Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **écrit**
+`tsera.config.ts` **complet** (profil _full_ commenté).
 
 **Options :**
+
 - `[directory]` : Répertoire cible (défaut: `.`)
 - `--template <name>` : Template à utiliser (défaut: `app-minimal`)
 - `-f, --force` : Écrase les fichiers existants
@@ -168,6 +170,7 @@ Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **
 **Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent.
 
 **Options :**
+
 - `[projectDir]` : Répertoire du projet (défaut: `.`)
 - `--no-watch` : Désactive le file watcher (activé par défaut)
 - `--once` : Exécute un seul cycle plan/apply (mode CI/CD)
@@ -176,9 +179,11 @@ Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **
 
 #### `tsera doctor [--cwd <path>]`
 
-Vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). Détecte les incohérences.
+Vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). Détecte les
+incohérences.
 
 **Options :**
+
 - `--cwd <path>` : Répertoire du projet à diagnostiquer (défaut: `.`)
 - `--fix` : Applique automatiquement les corrections sûres (régénère les artefacts)
 
@@ -187,6 +192,7 @@ Vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). D�
 Met à jour l'outil (install vs binaire `deno compile`).
 
 **Options :**
+
 - `--channel <channel>` : Canal de release (`stable`|`beta`|`canary`, défaut: `stable`)
 - `--binary` : Installe le binaire compilé au lieu de `deno install`
 - `--dry-run` : Affiche les étapes sans les appliquer

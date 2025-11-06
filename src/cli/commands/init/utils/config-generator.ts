@@ -1,4 +1,4 @@
-import { normalizeNewlines } from "../../../shared/newline.ts";
+import { normalizeNewlines } from "../../../../shared/newline.ts";
 
 /**
  * Generates the default tsera.config.ts file content.

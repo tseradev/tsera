@@ -1,9 +1,9 @@
-import { join } from "../../shared/path.ts";
-import { Command } from "../deps/command.ts";
-import { createLogger } from "../lib/log.ts";
-import { ensureDir } from "../lib/fsx.ts";
-import { determineCliVersion } from "../lib/version.ts";
-import type { GlobalCLIOptions } from "../router.ts";
+import { join } from "../../../shared/path.ts";
+import { Command } from "../../deps/command.ts";
+import { createLogger } from "../../utils/log.ts";
+import { ensureDir } from "../../utils/fsx.ts";
+import { determineCliVersion } from "../../utils/version.ts";
+import type { GlobalCLIOptions } from "../../router.ts";
 
 /** CLI options accepted by the {@code update} command. */
 interface UpdateCommandOptions extends GlobalCLIOptions {
@@ -107,7 +107,8 @@ export function createDefaultUpdateHandler(
       if (!result.success) {
         const detail = result.stderr.trim() || result.stdout.trim();
         throw new Error(
-          `The deno ${args.join(" ")} command failed (code ${result.code}).${detail ? ` ${detail}` : ""
+          `The deno ${args.join(" ")} command failed (code ${result.code}).${
+            detail ? ` ${detail}` : ""
           }`,
         );
       }

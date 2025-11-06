@@ -144,6 +144,74 @@ export const blue = createModifier("\x1b[34m", "\x1b[39m");
 export const gray = createModifier("\x1b[90m", "\x1b[39m");
 
 /**
+ * Colors text in bright cyan.
+ *
+ * @param text - Text to color
+ * @returns Bright cyan-colored text or plain text if colors are disabled
+ *
+ * @example
+ * ```typescript
+ * console.log(brightCyan("Highlight")); // Displays in bright cyan
+ * ```
+ */
+export const brightCyan = createModifier("\x1b[96m", "\x1b[39m");
+
+/**
+ * Colors text in bright white.
+ *
+ * @param text - Text to color
+ * @returns Bright white-colored text or plain text if colors are disabled
+ *
+ * @example
+ * ```typescript
+ * console.log(brightWhite("Emphasis")); // Displays in bright white
+ * ```
+ */
+export const brightWhite = createModifier("\x1b[97m", "\x1b[39m");
+
+/**
+ * Colors text in bright green.
+ *
+ * @param text - Text to color
+ * @returns Bright green-colored text or plain text if colors are disabled
+ *
+ * @example
+ * ```typescript
+ * console.log(brightGreen("Success!")); // Displays in bright green
+ * ```
+ */
+export const brightGreen = createModifier("\x1b[92m", "\x1b[39m");
+
+/**
+ * Colors text in bright blue.
+ *
+ * @param text - Text to color
+ * @returns Bright blue-colored text or plain text if colors are disabled
+ *
+ * @example
+ * ```typescript
+ * console.log(brightBlue("Info")); // Displays in bright blue
+ * ```
+ */
+export const brightBlue = createModifier("\x1b[94m", "\x1b[39m");
+
+/**
+ * Colors text in bright magenta.
+ *
+ * **Reserved for code examples in help output.** This color is specifically
+ * intended for displaying example commands and code snippets in the CLI help system.
+ *
+ * @param text - Text to color
+ * @returns Bright magenta-colored text or plain text if colors are disabled
+ *
+ * @example
+ * ```typescript
+ * console.log(brightMagenta("tsera init my-app")); // Displays in bright magenta
+ * ```
+ */
+export const brightMagenta = createModifier("\x1b[95m", "\x1b[39m");
+
+/**
  * Creates a text colorization/styling function with ANSI escape codes.
  *
  * This factory function respects the {@link Deno.noColor} setting. When colors

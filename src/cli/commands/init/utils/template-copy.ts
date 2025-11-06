@@ -1,5 +1,5 @@
-import { dirname, join } from "../../../shared/path.ts";
-import { ensureDir, pathExists, safeWrite } from "../../lib/fsx.ts";
+import { dirname, join } from "../../../../shared/path.ts";
+import { ensureDir, pathExists, safeWrite } from "../../../utils/fsx.ts";
 
 export interface CopyResult {
   files: string[];

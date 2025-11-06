@@ -1,5 +1,5 @@
-import { normalizeNewlines } from "../../../shared/newline.ts";
-import { directoryHasEntries, pathExists, safeWrite } from "../../lib/fsx.ts";
+import { normalizeNewlines } from "../../../../shared/newline.ts";
+import { directoryHasEntries, pathExists, safeWrite } from "../../../utils/fsx.ts";
 
 /**
  * Ensures a directory is ready for use, creating it if necessary.
