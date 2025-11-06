@@ -103,11 +103,10 @@ export class InitConsole extends BaseConsole {
    */
   start(): void {
     this.write(
-      `${magenta("Init")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│ using template ")}${
-        gray(this.#template)
-      }`,
+      `${magenta("◆")} ${bold("Init")} ${dim("│")} ${cyan(this.#projectLabel)}`,
     );
-    this.writeLast(gray("Preparing project folder…"));
+    this.writeMiddle(`${dim("→")} ${gray(`Using template: ${this.#template}`)}`);
+    this.writeLast(`${dim("→")} ${gray("Preparing project folder…")}`);
   }
 
   /**
@@ -121,7 +120,7 @@ export class InitConsole extends BaseConsole {
     const skippedInfo = skipped > 0
       ? `${dim(" • ")}${gray(formatCount(skipped, "file skipped", "files skipped"))}`
       : "";
-    this.writeMiddle(`${green(copiedLabel)}${skippedInfo}`);
+    this.writeMiddle(`${green("✓")} ${copiedLabel}${skippedInfo}`);
   }
 
   /**
@@ -131,7 +130,7 @@ export class InitConsole extends BaseConsole {
    */
   configReady(path: string): void {
     this.writeMiddle(
-      `${green("Configuration ready")}${dim(" • ")}${gray(this.#relative(path))}`,
+      `${green("✓")} Configuration ready ${dim("→")} ${gray(this.#relative(path))}`,
     );
   }
 
@@ -144,10 +143,10 @@ export class InitConsole extends BaseConsole {
   gitignoreReady(path: string, created: boolean): void {
     if (created) {
       this.writeMiddle(
-        `${green("Added .gitignore")}${dim(" • ")}${gray(this.#relative(path))}`,
+        `${green("✓")} Added .gitignore ${dim("→")} ${gray(this.#relative(path))}`,
       );
     } else {
-      this.writeMiddle(gray("Existing .gitignore kept as-is"));
+      this.writeMiddle(`${dim("·")} ${gray("Existing .gitignore kept as-is")}`);
     }
   }
 
@@ -159,12 +158,14 @@ export class InitConsole extends BaseConsole {
    */
   planReady(summary: PlanSummary, entities: number): void {
     const entityInfo = formatCount(entities, "entity", "entities") + " detected";
+    this.write("");
+    this.writeMiddle(`${magenta("◆")} ${bold("Artifacts")} ${dim("│")} ${gray(entityInfo)}`);
     if (summary.changed) {
       this.writeMiddle(
-        `${yellow("Generating project assets")}${dim(" • ")}${gray(entityInfo)}`,
+        `${dim("→")} ${yellow("Generating project assets…")}`,
       );
     } else {
-      this.writeMiddle(`${green("Artifacts already in sync")}${dim(" • ")}${gray(entityInfo)}`);
+      this.writeMiddle(`${green("✓")} ${gray("Artifacts already in sync")}`);
     }
   }
 
@@ -176,7 +177,7 @@ export class InitConsole extends BaseConsole {
   applyStart(summary: PlanSummary): void {
     this.#hadChanges = true;
     const actions = formatActionSummary(summary);
-    this.writeMiddle(`${yellow("Writing generated files")}${dim(" • ")}${gray(actions)}`);
+    this.writeMiddle(`${dim("→")} ${yellow("Writing generated files")} ${dim("│")} ${gray(actions)}`);
   }
 
   /**
@@ -192,7 +193,7 @@ export class InitConsole extends BaseConsole {
     }
     const label = formatActionLabel(kind);
     const location = path ? cyan(this.#relative(join(this.#projectDir, path))) : gray("internal");
-    this.writeSubItem(`${label}${dim(" → ")}${location}`);
+    this.writeSubItem(`  ${label} ${dim("→")} ${location}`);
   }
 
   /**
@@ -202,14 +203,14 @@ export class InitConsole extends BaseConsole {
    */
   applyComplete(summary: PlanSummary): void {
     const actions = formatActionSummary(summary);
-    this.writeMiddle(`${green("Artifacts updated")}${dim(" • ")}${gray(actions)}`);
+    this.writeMiddle(`${green("✓")} Artifacts updated ${dim("│")} ${gray(actions)}`);
   }
 
   /**
    * Reports that no artifacts required regeneration.
    */
   alreadySynced(): void {
-    this.writeMiddle(gray("Everything was already up to date"));
+    this.writeMiddle(`${dim("·")} ${gray("Everything was already up to date")}`);
   }
 
   /**
@@ -218,15 +219,18 @@ export class InitConsole extends BaseConsole {
    * Displays success message and suggests next commands to run.
    */
   complete(): void {
-    this.write(`${green("✔")} ${bold("Project ready!")}`);
+    this.write("");
+    this.write(`${green("✓")} ${bold("Project ready!")}`);
     const recap = this.#hadChanges
       ? gray("Generated project assets for you.")
       : gray("Project files were already current.");
     this.writeMiddle(recap);
-    this.writeLast(gray("Next steps:"));
-    this.writeBullet(cyan(`cd ${this.#projectDir}`));
-    this.writeBullet(cyan('git init && git add -A && git commit -m "feat: boot tsera"'));
-    this.writeBullet(cyan("tsera dev --watch"));
+    this.write("");
+    this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
+    this.writeMiddle(`${dim("→")} ${cyan(`cd ${this.#projectDir}`)}`);
+    this.writeMiddle(`${dim("→")} ${cyan('git init && git add -A && git commit -m "feat: boot tsera"')}`);
+    this.writeMiddle(`${dim("→")} ${cyan("tsera dev --watch")}`);
+    this.write("");
   }
 
   /**

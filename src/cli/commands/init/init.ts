@@ -16,6 +16,7 @@ import { InitConsole } from "./init-ui.ts";
 import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/file-ops.ts";
 import { copyTemplateDirectory } from "./utils/template-copy.ts";
 import { generateConfigFile } from "./utils/config-generator.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -185,7 +186,7 @@ export function createDefaultInitHandler(
 export function createInitCommand(
   handler: InitCommandHandler = createDefaultInitHandler(),
 ) {
-  return new Command()
+  const command = new Command()
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
     .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
@@ -201,6 +202,52 @@ export function createInitCommand(
         global: { json },
       });
     });
+
+  // Apply modern help rendering
+  const originalShowHelp = command.showHelp.bind(command);
+  command.showHelp = () => {
+    try {
+      console.log(
+        renderCommandHelp({
+          commandName: "init",
+          description: "Scaffold a TSera project from a template and bootstrap artifacts.",
+          usage: "[directory]",
+          options: [
+            {
+              label: "[directory]",
+              description: "Target directory for the new project (default: current directory)",
+            },
+            {
+              label: "--template <name>",
+              description: "Template to use (default: app-minimal)",
+            },
+            {
+              label: "-f, --force",
+              description: "Overwrite existing files",
+            },
+            {
+              label: "-y, --yes",
+              description: "Answer yes to all prompts (non-interactive mode)",
+            },
+            {
+              label: "--json",
+              description: "Output machine-readable NDJSON events",
+            },
+          ],
+          examples: [
+            "tsera init",
+            "tsera init my-app",
+            "tsera init my-app --template app-minimal",
+            "tsera init --force --yes",
+          ],
+        }),
+      );
+    } catch {
+      originalShowHelp();
+    }
+  };
+
+  return command;
 }
 
 function buildGitignore(): string {

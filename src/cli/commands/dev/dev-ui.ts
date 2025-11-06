@@ -79,11 +79,10 @@ export class DevConsole extends BaseConsole {
    */
   watchStart(_root: string, debounce: number): void {
     this.write(
-      `${magenta("Dev")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│")} ${
-        gray(`watching (${debounce}ms debounce)`)
-      }`,
+      `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${cyan(this.#projectLabel)}`,
     );
-    this.writeLast(gray("Waiting for file changes…"));
+    this.writeMiddle(`${dim("→")} ${gray(`Watching for changes (${debounce}ms debounce)`)}`);
+    this.writeLast(`${dim("→")} ${gray("Waiting for file changes…")}`);
   }
 
   /**
@@ -94,16 +93,16 @@ export class DevConsole extends BaseConsole {
    */
   cycleStart(reason: string, paths: string[]): void {
     if (reason === "initial") {
-      this.#spinner.start(`${magenta("Dev")} ${dim("•")} ${gray("Initial coherence check…")}`);
+      this.#spinner.start(`${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Initial coherence check…")}`);
     } else if (paths.length > 0) {
       const fileCount = formatCount(paths.length, "file");
       this.#spinner.start(
-        `${magenta("Dev")} ${dim("•")} ${yellow("Change detected")} ${dim("│")} ${
+        `${magenta("◆")} ${bold("Change detected")} ${dim("│")} ${
           gray(`${fileCount} modified`)
         }`,
       );
     } else {
-      this.#spinner.start(`${magenta("Dev")} ${dim("•")} ${gray("Checking coherence…")}`);
+      this.#spinner.start(`${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Checking coherence…")}`);
     }
   }
 
@@ -115,14 +114,14 @@ export class DevConsole extends BaseConsole {
   planSummary(summary: PlanSummary): void {
     if (!summary.changed) {
       this.#spinner.update(
-        `${magenta("Dev")} ${dim("•")} ${green("No changes needed")} ${dim("│")} ${
+        `${green("✓")} ${bold("No changes needed")} ${dim("│")} ${
           gray("artifacts are current")
         }`,
       );
     } else {
       const actions = formatActionSummaryWithSymbols(summary);
       this.#spinner.update(
-        `${magenta("Dev")} ${dim("•")} ${yellow("Applying changes")} ${dim("│")} ${actions}`,
+        `${dim("→")} ${yellow("Applying changes")} ${dim("│")} ${actions}`,
       );
     }
   }
@@ -137,7 +136,7 @@ export class DevConsole extends BaseConsole {
     if (changed) {
       const label = formatCount(steps, "artifact");
       this.#spinner.update(
-        `${magenta("Dev")} ${dim("•")} ${green("Artifacts updated")} ${dim("│")} ${
+        `${green("✓")} ${bold("Artifacts updated")} ${dim("│")} ${
           gray(`${label} regenerated`)
         }`,
       );
@@ -154,11 +153,11 @@ export class DevConsole extends BaseConsole {
     const entityInfo = formatCount(entities, "entity", "entities");
     if (status === "clean") {
       this.#spinner.succeed(
-        `${green("Coherent")} ${dim("•")} ${gray(`${entityInfo} verified`)}`,
+        `${green("✓")} ${bold("Coherent")} ${dim("│")} ${gray(`${entityInfo} verified`)}`,
       );
     } else {
       this.#spinner.warn(
-        `${yellow("Pending")} ${dim("•")} ${gray(`${entityInfo} need attention`)}`,
+        `${yellow("⚠")} ${bold("Pending")} ${dim("│")} ${gray(`${entityInfo} need attention`)}`,
       );
     }
   }
@@ -169,8 +168,8 @@ export class DevConsole extends BaseConsole {
    * @param message - The error message
    */
   cycleError(message: string): void {
-    this.#spinner.fail(`${magenta("Error")} ${dim("•")} ${gray(message)}`);
-    this.writeLast(yellow("Fix the error and save to retry."));
+    this.#spinner.fail(`${yellow("✕")} ${bold("Error")} ${dim("│")} ${gray(message)}`);
+    this.writeLast(`${dim("→")} ${yellow("Fix the error and save to retry.")}`);
   }
 
   /**

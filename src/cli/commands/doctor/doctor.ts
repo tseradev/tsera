@@ -10,6 +10,7 @@ import { planDag } from "../../engine/planner.ts";
 import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { DoctorConsole } from "./doctor-ui.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code doctor} command. */
 interface DoctorCommandOptions extends GlobalCLIOptions {
@@ -169,7 +170,7 @@ export function createDefaultDoctorHandler(
 export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
 ) {
-  return new Command()
+  const command = new Command()
     .description("Check project coherence and suggest safe fixes.")
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
     .option("--fix", "Automatically apply safe corrections.", { default: false })
@@ -181,4 +182,40 @@ export function createDoctorCommand(
         global: { json },
       });
     });
+
+  // Apply modern help rendering
+  const originalShowHelp = command.showHelp.bind(command);
+  command.showHelp = () => {
+    try {
+      console.log(
+        renderCommandHelp({
+          commandName: "doctor",
+          description: "Inspect project coherence, highlight issues, and offer safe fixes.",
+          options: [
+            {
+              label: "--cwd <path>",
+              description: "Project directory to diagnose (default: current directory)",
+            },
+            {
+              label: "--fix",
+              description: "Automatically apply safe corrections to fix issues",
+            },
+            {
+              label: "--json",
+              description: "Output machine-readable NDJSON events",
+            },
+          ],
+          examples: [
+            "tsera doctor",
+            "tsera doctor --fix",
+            "tsera doctor --cwd ./my-project",
+          ],
+        }),
+      );
+    } catch {
+      originalShowHelp();
+    }
+  };
+
+  return command;
 }

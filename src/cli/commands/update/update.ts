@@ -4,6 +4,7 @@ import { createLogger } from "../../utils/log.ts";
 import { ensureDir } from "../../utils/fsx.ts";
 import { determineCliVersion } from "../../utils/version.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code update} command. */
 interface UpdateCommandOptions extends GlobalCLIOptions {
@@ -107,8 +108,7 @@ export function createDefaultUpdateHandler(
       if (!result.success) {
         const detail = result.stderr.trim() || result.stdout.trim();
         throw new Error(
-          `The deno ${args.join(" ")} command failed (code ${result.code}).${
-            detail ? ` ${detail}` : ""
+          `The deno ${args.join(" ")} command failed (code ${result.code}).${detail ? ` ${detail}` : ""
           }`,
         );
       }
@@ -133,7 +133,7 @@ export function createDefaultUpdateHandler(
 export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
 ) {
-  return new Command()
+  const command = new Command()
     .description("Update the TSera CLI via deno install or a compiled binary.")
     .option("--channel <channel:string>", "Release channel (stable|beta|canary).", {
       default: "stable",
@@ -155,6 +155,46 @@ export function createUpdateCommand(
         global: { json },
       });
     });
+
+  // Apply modern help rendering
+  const originalShowHelp = command.showHelp.bind(command);
+  command.showHelp = () => {
+    try {
+      console.log(
+        renderCommandHelp({
+          commandName: "update",
+          description: "Upgrade the TSera CLI via deno install or compiled binaries.",
+          options: [
+            {
+              label: "--channel <channel>",
+              description: "Release channel: stable, beta, or canary (default: stable)",
+            },
+            {
+              label: "--binary",
+              description: "Install the compiled binary instead of using deno install",
+            },
+            {
+              label: "--dry-run",
+              description: "Show the commands that would be executed without running them",
+            },
+            {
+              label: "--json",
+              description: "Output machine-readable NDJSON events",
+            },
+          ],
+          examples: [
+            "tsera update",
+            "tsera update --binary",
+            "tsera update --channel beta --dry-run",
+          ],
+        }),
+      );
+    } catch {
+      originalShowHelp();
+    }
+  };
+
+  return command;
 }
 
 function buildSpecifier(channel: UpdateCommandContext["channel"]): string {

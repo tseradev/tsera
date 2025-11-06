@@ -96,7 +96,7 @@ export class DoctorConsole extends BaseConsole {
   start(): void {
     const mode = this.#fixEnabled ? `${green("auto-fix enabled")}` : `${gray("analysis mode")}`;
     this.#spinner.start(
-      `${magenta("Doctor")} ${dim("•")} ${cyan(this.#projectLabel)} ${dim("│")} ${mode}`,
+      `${magenta("◆")} ${bold("Doctor")} ${dim("│")} ${cyan(this.#projectLabel)} ${dim("│")} ${mode}`,
     );
   }
 
@@ -110,7 +110,7 @@ export class DoctorConsole extends BaseConsole {
     const checks = formatCount(summary.total ?? 0, "check");
     const entityInfo = gray(formatCount(entities, "entity", "entities"));
     this.#spinner.update(
-      `${magenta("Doctor")} ${dim("•")} ${bold(checks)} ${dim("│")} ${entityInfo}`,
+      `${dim("→")} ${bold(checks)} performed ${dim("│")} ${entityInfo}`,
     );
   }
 
@@ -122,9 +122,9 @@ export class DoctorConsole extends BaseConsole {
   allClear(entities: number): void {
     const label = formatCount(entities, "entity verified", "entities verified");
     this.#spinner.succeed(
-      `${green("All checks passed")}${dim(" • ")} ${gray(label)}`,
+      `${green("✓")} ${bold("All checks passed")} ${dim("│")} ${gray(label)}`,
     );
-    this.writeLast(gray("The project is coherent. No fixes required."));
+    this.writeLast(`${dim("→")} ${gray("The project is coherent. No fixes required.")}`);
   }
 
   /**
@@ -134,7 +134,7 @@ export class DoctorConsole extends BaseConsole {
    */
   reportIssues(summary: PlanSummary): void {
     const headline = formatActionSummaryWithSymbols(summary);
-    this.#spinner.warn(`${yellow("Fixes required")}${dim(" • ")} ${headline}`);
+    this.#spinner.warn(`${yellow("⚠")} ${bold("Fixes required")} ${dim("│")} ${headline}`);
   }
 
   /**
@@ -145,12 +145,10 @@ export class DoctorConsole extends BaseConsole {
   beginFix(total: number): void {
     const label = formatCount(total, "action");
     this.#spinner.update(
-      `${magenta("Doctor")} ${dim("•")} ${yellow("Auto-fix in progress")}${dim(" │ ")}${
-        gray(label)
-      }`,
+      `${dim("→")} ${yellow("Auto-fix in progress")} ${dim("│")} ${gray(label)}`,
     );
     if (total === 0) {
-      this.writeLast(gray("Analyzing remaining inconsistencies…"));
+      this.writeLast(`${dim("→")} ${gray("Analyzing remaining inconsistencies…")}`);
     }
   }
 
@@ -165,9 +163,9 @@ export class DoctorConsole extends BaseConsole {
     this.#completed += 1;
     const label = formatActionLabel(kind as "create" | "update" | "delete" | "noop");
     const progress = total > 0 ? `${this.#completed}/${total}` : `${this.#completed}`;
-    const target = path ? cyan(path) : gray("(internal computation)");
+    const target = path ? cyan(path) : gray("(internal)");
     this.#spinner.update(
-      `${yellow("Auto-fix")}${dim(" • ")} ${progress}${dim(" │ ")}${label}${dim(" → ")}${target}`,
+      `${dim("→")} ${yellow("Auto-fix")} ${dim("│")} ${progress} ${dim("│")} ${label} ${dim("→")} ${target}`,
     );
   }
 
@@ -179,9 +177,9 @@ export class DoctorConsole extends BaseConsole {
   completeFix(applied: number): void {
     const label = formatCount(applied, "fix", "fixes");
     this.#spinner.succeed(
-      `${green("Sync complete")}${dim(" • ")} ${gray(`${label} applied`)}`,
+      `${green("✓")} ${bold("Sync complete")} ${dim("│")} ${gray(`${label} applied`)}`,
     );
-    this.writeLast(gray("You are ready to continue."));
+    this.writeLast(`${dim("→")} ${gray("You are ready to continue.")}`);
   }
 
   /**
@@ -193,9 +191,9 @@ export class DoctorConsole extends BaseConsole {
     const remaining = summary.create + summary.update + summary.delete;
     const label = formatCount(remaining, "action");
     this.#spinner.fail(
-      `${yellow("Inconsistencies remain")}${dim(" • ")} ${gray(`${label} to address`)}`,
+      `${yellow("⚠")} ${bold("Inconsistencies remain")} ${dim("│")} ${gray(`${label} to address`)}`,
     );
-    this.writeLast(gray("Run the command again to finish repairing."));
+    this.writeLast(`${dim("→")} ${gray("Run the command again to finish repairing.")}`);
   }
 
   /**
@@ -205,13 +203,16 @@ export class DoctorConsole extends BaseConsole {
    */
   suggestNextSteps(): void {
     this.#spinner.warn(
-      `${yellow("No fixes applied")}${dim(" • ")} ${gray("read-only mode")}`,
+      `${yellow("⚠")} ${bold("No fixes applied")} ${dim("│")} ${gray("read-only mode")}`,
     );
-    this.writeLast(
-      `${gray("Run ")}${cyan("tsera doctor --fix")}${gray(" to correct issues automatically.")}`,
+    this.write("");
+    this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
+    this.writeMiddle(
+      `${dim("→")} ${gray("Run ")}${cyan("tsera doctor --fix")}${gray(" to correct issues automatically")}`,
     );
-    this.writeLast(
-      `${gray("Or ")}${cyan("tsera dev --apply")}${gray(" to force a full regeneration.")}`,
+    this.writeMiddle(
+      `${dim("→")} ${gray("Or ")}${cyan("tsera dev --apply")}${gray(" to force a full regeneration")}`,
     );
+    this.write("");
   }
 }

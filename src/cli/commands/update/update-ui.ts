@@ -91,7 +91,7 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("Update")} ${dim("•")} ${cyan(`${method}${channelLabel}`)} ${dim("│")} ${
+      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${dim("│")} ${
         gray(`current: ${this.#currentVersion}`)
       }`,
     );
@@ -104,7 +104,7 @@ export class UpdateConsole extends BaseConsole {
    */
   denoVersionChecked(version: string): void {
     this.#spinner.update(
-      `${magenta("Update")} ${dim("•")} ${gray("Deno version checked")} ${dim("│")} ${
+      `${dim("→")} ${gray("Deno version checked")} ${dim("│")} ${
         cyan(`v${version}`)
       }`,
     );
@@ -117,7 +117,7 @@ export class UpdateConsole extends BaseConsole {
    */
   updateInProgress(command: string): void {
     this.#spinner.update(
-      `${magenta("Update")} ${dim("•")} ${yellow("Installing…")} ${dim("│")} ${gray(command)}`,
+      `${dim("→")} ${yellow("Installing…")} ${dim("│")} ${gray(command)}`,
     );
   }
 
@@ -126,7 +126,7 @@ export class UpdateConsole extends BaseConsole {
    */
   updateComplete(): void {
     this.#spinner.succeed(
-      `${green("Update complete")} ${dim("•")} ${gray("TSera CLI updated successfully")}`,
+      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${gray("TSera CLI updated successfully")}`,
     );
   }
 
@@ -137,9 +137,12 @@ export class UpdateConsole extends BaseConsole {
    */
   dryRun(command: string): void {
     this.#spinner.warn(
-      `${yellow("Dry run")} ${dim("•")} ${gray("No changes made")}`,
+      `${yellow("⚠")} ${bold("Dry run")} ${dim("│")} ${gray("No changes made")}`,
     );
-    this.writeLast(`${gray("Would execute:")} ${cyan(command)}`);
+    this.write("");
+    this.writeMiddle(`${magenta("◆")} ${bold("Command Preview")}`);
+    this.writeMiddle(`${dim("→")} ${cyan(command)}`);
+    this.write("");
   }
 
   /**
@@ -148,10 +151,13 @@ export class UpdateConsole extends BaseConsole {
    * @param steps - Array of command strings to run
    */
   showNextSteps(steps: string[]): void {
-    this.writeMiddle(gray("Recommended post-update steps:"));
+    this.write("");
+    this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
+    this.writeMiddle(`${dim("→")} ${gray("Recommended post-update actions:")}`);
     for (const step of steps) {
-      this.writeBullet(cyan(step));
+      this.writeMiddle(`  ${dim("→")} ${cyan(step)}`);
     }
+    this.write("");
   }
 
   /**
@@ -160,7 +166,7 @@ export class UpdateConsole extends BaseConsole {
    * @param message - The error message
    */
   updateError(message: string): void {
-    this.#spinner.fail(`${magenta("Update failed")} ${dim("•")} ${gray(message)}`);
-    this.writeLast(yellow("Check your network connection and try again."));
+    this.#spinner.fail(`${yellow("✕")} ${bold("Update failed")} ${dim("│")} ${gray(message)}`);
+    this.writeLast(`${dim("→")} ${yellow("Check your network connection and try again.")}`);
   }
 }

@@ -10,6 +10,7 @@ import { readEngineState, writeDagState, writeEngineState } from "../../engine/s
 import { watchProject } from "../../engine/watch.ts";
 import type { CliMetadata } from "../../main.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code dev} command. */
 interface DevCommandOptions extends GlobalCLIOptions {
@@ -140,7 +141,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       try {
         await executeCycle("initial");
         await queue;
-        await new Promise<void>(() => {});
+        await new Promise<void>(() => { });
       } finally {
         controller.close();
       }
@@ -157,7 +158,7 @@ export function createDevCommand(
   metadata: CliMetadata,
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
 ) {
-  return new Command()
+  const command = new Command()
     .description("Plan and apply TSera artifacts in development mode.")
     .arguments("[projectDir]")
     .option("--no-watch", "Disable the file watcher (enabled by default).")
@@ -175,4 +176,54 @@ export function createDevCommand(
         global: { json },
       });
     });
+
+  // Apply modern help rendering
+  const originalShowHelp = command.showHelp.bind(command);
+  command.showHelp = () => {
+    try {
+      console.log(
+        renderCommandHelp({
+          commandName: "dev",
+          description: "Watch entities, plan changes, and apply generated artifacts in-place.",
+          usage: "[projectDir]",
+          options: [
+            {
+              label: "[projectDir]",
+              description: "Project directory to watch (default: current directory)",
+            },
+            {
+              label: "--no-watch",
+              description: "Disable the file watcher (enabled by default)",
+            },
+            {
+              label: "--once",
+              description: "Run a single plan/apply cycle and exit",
+            },
+            {
+              label: "--plan-only",
+              description: "Compute the plan without applying changes (dry-run)",
+            },
+            {
+              label: "--apply",
+              description: "Force apply artifacts even if the plan is empty",
+            },
+            {
+              label: "--json",
+              description: "Output machine-readable NDJSON events",
+            },
+          ],
+          examples: [
+            "tsera dev",
+            "tsera dev --once",
+            "tsera dev --plan-only",
+            "tsera dev --json",
+          ],
+        }),
+      );
+    } catch {
+      originalShowHelp();
+    }
+  };
+
+  return command;
 }
