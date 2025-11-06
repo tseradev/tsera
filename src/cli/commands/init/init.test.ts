@@ -10,6 +10,17 @@ async function readGoldenFile(name: string): Promise<string> {
   return await Deno.readTextFile(url);
 }
 
+async function updateImportMapForTests(projectDir: string): Promise<void> {
+  const importMapPath = join(projectDir, "import_map.json");
+  const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
+  const srcPath = join(Deno.cwd(), "src");
+  const normalizedSrcPath = srcPath.replace(/\\/g, "/");
+  importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+  importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+  importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+  await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+}
+
 Deno.test("init generates the full skeleton and manifest", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
@@ -23,6 +34,8 @@ Deno.test("init generates the full skeleton and manifest", async () => {
       yes: true,
       global: { json: false },
     });
+
+    await updateImportMapForTests(projectDir);
 
     const configPath = join(projectDir, "tsera.config.ts");
     const config = normalizeNewlines(await Deno.readTextFile(configPath), "\n");

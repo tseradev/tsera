@@ -91,9 +91,9 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${dim("│")} ${
-        gray(`current: ${this.#currentVersion}`)
-      }`,
+      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${
+        dim("│")
+      } ${gray(`current: ${this.#currentVersion}`)}`,
     );
   }
 
@@ -104,9 +104,7 @@ export class UpdateConsole extends BaseConsole {
    */
   denoVersionChecked(version: string): void {
     this.#spinner.update(
-      `${dim("→")} ${gray("Deno version checked")} ${dim("│")} ${
-        cyan(`v${version}`)
-      }`,
+      `${dim("→")} ${gray("Deno version checked")} ${dim("│")} ${cyan(`v${version}`)}`,
     );
   }
 
@@ -126,7 +124,9 @@ export class UpdateConsole extends BaseConsole {
    */
   updateComplete(): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${gray("TSera CLI updated successfully")}`,
+      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${
+        gray("TSera CLI updated successfully")
+      }`,
     );
   }
 

@@ -176,7 +176,9 @@ export class InitConsole extends BaseConsole {
   applyStart(summary: PlanSummary): void {
     this.#hadChanges = true;
     const actions = formatActionSummary(summary);
-    this.writeMiddle(`${dim("→")} ${yellow("Writing generated files")} ${dim("│")} ${gray(actions)}`);
+    this.writeMiddle(
+      `${dim("→")} ${yellow("Writing generated files")} ${dim("│")} ${gray(actions)}`,
+    );
   }
 
   /**
@@ -227,7 +229,9 @@ export class InitConsole extends BaseConsole {
     this.write("");
     this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
     this.writeMiddle(`${dim("→")} ${cyan(`cd ${this.#projectLabel}`)}`);
-    this.writeMiddle(`${dim("→")} ${cyan('git init && git add -A && git commit -m "feat: boot tsera"')}`);
+    this.writeMiddle(
+      `${dim("→")} ${cyan('git init && git add -A && git commit -m "feat: boot tsera"')}`,
+    );
     this.writeMiddle(`${dim("→")} ${cyan("tsera dev")}`);
     this.write("");
   }

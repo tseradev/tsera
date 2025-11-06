@@ -1,5 +1,5 @@
-import { assertEquals } from "./helpers/asserts.ts";
-import { defineEntity, entityToZod } from "../index.ts";
+import { assertEquals } from "../testing/asserts.ts";
+import { defineEntity, entityToZod } from "./index.ts";
 
 const postEntity = defineEntity({
   name: "Post",

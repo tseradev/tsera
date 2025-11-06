@@ -1,14 +1,14 @@
-import { assertEquals } from "../../../testing/asserts.ts";
-import { defineEntity } from "../../../core/entity.ts";
-import type { TseraConfig } from "../../contracts/types.ts";
-import { buildDocsArtifacts } from "../artifacts/docs.ts";
-import { buildDrizzleArtifacts } from "../artifacts/drizzle.ts";
-import { buildProjectOpenAPIArtifact } from "../artifacts/openapi.ts";
-import { buildTestArtifacts } from "../artifacts/tests.ts";
-import { buildZodArtifacts } from "../artifacts/zod.ts";
-import { createDag } from "../dag.ts";
-import { planDag, type PlanStep } from "../planner.ts";
-import { applySnapshots, createEmptyState } from "../state.ts";
+import { assertEquals } from "../../testing/asserts.ts";
+import { defineEntity } from "../../core/entity.ts";
+import type { TseraConfig } from "../contracts/types.ts";
+import { buildDocsArtifacts } from "./artifacts/docs.ts";
+import { buildDrizzleArtifacts } from "./artifacts/drizzle.ts";
+import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";
+import { buildTestArtifacts } from "./artifacts/tests.ts";
+import { buildZodArtifacts } from "./artifacts/zod.ts";
+import { createDag } from "./dag.ts";
+import { planDag, type PlanStep } from "./planner.ts";
+import { applySnapshots, createEmptyState } from "./state.ts";
 
 const config: TseraConfig = {
   openapi: true,

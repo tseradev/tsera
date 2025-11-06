@@ -96,7 +96,9 @@ export class DoctorConsole extends BaseConsole {
   start(): void {
     const mode = this.#fixEnabled ? `${green("auto-fix enabled")}` : `${gray("analysis mode")}`;
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Doctor")} ${dim("│")} ${cyan(this.#projectLabel)} ${dim("│")} ${mode}`,
+      `${magenta("◆")} ${bold("Doctor")} ${dim("│")} ${cyan(this.#projectLabel)} ${
+        dim("│")
+      } ${mode}`,
     );
   }
 
@@ -165,7 +167,9 @@ export class DoctorConsole extends BaseConsole {
     const progress = total > 0 ? `${this.#completed}/${total}` : `${this.#completed}`;
     const target = path ? cyan(path) : gray("(internal)");
     this.#spinner.update(
-      `${dim("→")} ${yellow("Auto-fix")} ${dim("│")} ${progress} ${dim("│")} ${label} ${dim("→")} ${target}`,
+      `${dim("→")} ${yellow("Auto-fix")} ${dim("│")} ${progress} ${dim("│")} ${label} ${
+        dim("→")
+      } ${target}`,
     );
   }
 
@@ -208,10 +212,14 @@ export class DoctorConsole extends BaseConsole {
     this.write("");
     this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
     this.writeMiddle(
-      `${dim("→")} ${gray("Run ")}${cyan("tsera doctor --fix")}${gray(" to correct issues automatically")}`,
+      `${dim("→")} ${gray("Run ")}${cyan("tsera doctor --fix")}${
+        gray(" to correct issues automatically")
+      }`,
     );
     this.writeMiddle(
-      `${dim("→")} ${gray("Or ")}${cyan("tsera dev --apply")}${gray(" to force a full regeneration")}`,
+      `${dim("→")} ${gray("Or ")}${cyan("tsera dev --apply")}${
+        gray(" to force a full regeneration")
+      }`,
     );
     this.write("");
   }

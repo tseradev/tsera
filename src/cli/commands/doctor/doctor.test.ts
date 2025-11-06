@@ -14,6 +14,17 @@ function createExitCollector() {
   return { codes, exit };
 }
 
+async function updateImportMapForTests(projectDir: string): Promise<void> {
+  const importMapPath = join(projectDir, "import_map.json");
+  const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
+  const srcPath = join(Deno.cwd(), "src");
+  const normalizedSrcPath = srcPath.replace(/\\/g, "/");
+  importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+  importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+  importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+  await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+}
+
 Deno.test("doctor reports a pending plan with exit code", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
@@ -26,6 +37,8 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
       yes: true,
       global: { json: false },
     });
+
+    await updateImportMapForTests(projectDir);
 
     const entityPath = join(projectDir, "domain", "User.entity.ts");
     const original = await Deno.readTextFile(entityPath);
@@ -68,6 +81,8 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       yes: true,
       global: { json: false },
     });
+
+    await updateImportMapForTests(projectDir);
 
     const entityPath = join(projectDir, "domain", "User.entity.ts");
     const original = await Deno.readTextFile(entityPath);

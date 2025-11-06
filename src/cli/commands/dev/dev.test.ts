@@ -159,7 +159,10 @@ Deno.test("dev command shows help", () => {
   }
 
   const output = captured.join("\n");
-  assertStringIncludes(output, "Watch entities, plan changes, and apply generated artifacts in-place.");
+  assertStringIncludes(
+    output,
+    "Watch entities, plan changes, and apply generated artifacts in-place.",
+  );
   assertStringIncludes(output, "--no-watch");
   assertStringIncludes(output, "--once");
   assertStringIncludes(output, "--plan-only");

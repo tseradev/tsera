@@ -103,4 +103,3 @@ function getCommandEmoji(commandName: string): string {
   };
   return emojiMap[commandName] || "⚙️";
 }
-

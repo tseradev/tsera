@@ -55,7 +55,7 @@ export async function discoverEntities(
 
   for (const relativePath of candidates) {
     const absolutePath = join(projectDir, relativePath);
-    const definitions = await loadEntityDefinitions(absolutePath);
+    const definitions = await loadEntityDefinitions(absolutePath, projectDir);
     if (definitions.length === 0) {
       throw new Error(`No entity exported by ${relativePath}`);
     }
@@ -193,10 +193,34 @@ function dedupePreserveOrder(values: string[]): string[] {
   return result;
 }
 
-async function loadEntityDefinitions(path: string): Promise<EntityDef[]> {
+async function loadEntityDefinitions(
+  path: string,
+  projectDir?: string,
+): Promise<EntityDef[]> {
   const url = toImportUrl(path);
-  const mod = await import(url) as ModuleNamespace;
-  return extractEntities(mod);
+  let originalCwd: string | undefined;
+
+  // If projectDir is provided and contains deno.jsonc, change to that directory
+  // so Deno can resolve import maps correctly
+  if (projectDir) {
+    try {
+      const denoConfigPath = join(projectDir, "deno.jsonc");
+      await Deno.stat(denoConfigPath);
+      originalCwd = Deno.cwd();
+      Deno.chdir(projectDir);
+    } catch {
+      // deno.jsonc doesn't exist, continue without changing directory
+    }
+  }
+
+  try {
+    const mod = await import(url) as ModuleNamespace;
+    return extractEntities(mod);
+  } finally {
+    if (originalCwd) {
+      Deno.chdir(originalCwd);
+    }
+  }
 }
 
 function extractEntities(mod: ModuleNamespace): EntityDef[] {
@@ -221,7 +245,7 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
 function isEntityDef(value: unknown): value is EntityDef {
   return Boolean(
     value && typeof value === "object" &&
-      (value as Record<string, unknown>).__brand === "TSeraEntity",
+    (value as Record<string, unknown>).__brand === "TSeraEntity",
   );
 }
 

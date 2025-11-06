@@ -93,16 +93,18 @@ export class DevConsole extends BaseConsole {
    */
   cycleStart(reason: string, paths: string[]): void {
     if (reason === "initial") {
-      this.#spinner.start(`${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Initial coherence check…")}`);
+      this.#spinner.start(
+        `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Initial coherence check…")}`,
+      );
     } else if (paths.length > 0) {
       const fileCount = formatCount(paths.length, "file");
       this.#spinner.start(
-        `${magenta("◆")} ${bold("Change detected")} ${dim("│")} ${
-          gray(`${fileCount} modified`)
-        }`,
+        `${magenta("◆")} ${bold("Change detected")} ${dim("│")} ${gray(`${fileCount} modified`)}`,
       );
     } else {
-      this.#spinner.start(`${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Checking coherence…")}`);
+      this.#spinner.start(
+        `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Checking coherence…")}`,
+      );
     }
   }
 
@@ -114,9 +116,7 @@ export class DevConsole extends BaseConsole {
   planSummary(summary: PlanSummary): void {
     if (!summary.changed) {
       this.#spinner.update(
-        `${green("✓")} ${bold("No changes needed")} ${dim("│")} ${
-          gray("artifacts are current")
-        }`,
+        `${green("✓")} ${bold("No changes needed")} ${dim("│")} ${gray("artifacts are current")}`,
       );
     } else {
       const actions = formatActionSummaryWithSymbols(summary);
@@ -136,9 +136,7 @@ export class DevConsole extends BaseConsole {
     if (changed) {
       const label = formatCount(steps, "artifact");
       this.#spinner.update(
-        `${green("✓")} ${bold("Artifacts updated")} ${dim("│")} ${
-          gray(`${label} regenerated`)
-        }`,
+        `${green("✓")} ${bold("Artifacts updated")} ${dim("│")} ${gray(`${label} regenerated`)}`,
       );
     }
   }

@@ -108,7 +108,8 @@ export function createDefaultUpdateHandler(
       if (!result.success) {
         const detail = result.stderr.trim() || result.stdout.trim();
         throw new Error(
-          `The deno ${args.join(" ")} command failed (code ${result.code}).${detail ? ` ${detail}` : ""
+          `The deno ${args.join(" ")} command failed (code ${result.code}).${
+            detail ? ` ${detail}` : ""
           }`,
         );
       }

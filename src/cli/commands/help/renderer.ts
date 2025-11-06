@@ -104,7 +104,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append(
     "  " + palette.subtle("It keeps your code, schema, tests, and docs continuously coherent.") +
-    "\n",
+      "\n",
   );
   builder.append("\n");
 
@@ -139,7 +139,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append(
     "       " + palette.accent("$") + " " +
-    palette.strong(`${config.cliName} init my-app`) + "\n",
+      palette.strong(`${config.cliName} init my-app`) + "\n",
   );
   builder.append("\n");
   builder.append(
@@ -147,7 +147,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append(
     "       " + palette.accent("$") + " " +
-    palette.strong(`cd my-app && ${config.cliName} dev`) + "\n",
+      palette.strong(`cd my-app && ${config.cliName} dev`) + "\n",
   );
   builder.append("\n");
 
@@ -177,7 +177,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   builder.append("\n");
   builder.append(
     "  " + palette.subtle("Need help? Run: ") +
-    palette.strong(`${config.cliName.toLowerCase()} <command> --help`) + "\n",
+      palette.strong(`${config.cliName.toLowerCase()} <command> --help`) + "\n",
   );
   builder.append("\n");
 

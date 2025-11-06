@@ -1,8 +1,8 @@
-import { join } from "../../../shared/path.ts";
-import { assertEquals } from "../../../testing/asserts.ts";
-import { defineEntity } from "../../../core/entity.ts";
-import type { TseraConfig } from "../../contracts/types.ts";
-import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "../entities.ts";
+import { join } from "../../shared/path.ts";
+import { assertEquals } from "../../testing/asserts.ts";
+import { defineEntity } from "../../core/entity.ts";
+import type { TseraConfig } from "../contracts/types.ts";
+import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "./entities.ts";
 
 const baseConfig: TseraConfig = {
   openapi: true,
@@ -22,9 +22,35 @@ const baseConfig: TseraConfig = {
   },
 };
 
+async function createTestImportMap(projectDir: string): Promise<void> {
+  const srcPath = join(Deno.cwd(), "src");
+  // Normalize path for Windows
+  const normalizedSrcPath = srcPath.replace(/\\/g, "/");
+  const importMap = {
+    imports: {
+      "tsera/": `file://${normalizedSrcPath}/`,
+      "tsera/core/": `file://${normalizedSrcPath}/core/`,
+      "tsera/cli/": `file://${normalizedSrcPath}/cli/`,
+    },
+  };
+  await Deno.writeTextFile(
+    join(projectDir, "import_map.json"),
+    JSON.stringify(importMap, null, 2),
+  );
+  // Create deno.jsonc to reference the import map
+  const denoConfig = {
+    "importMap": "./import_map.json",
+  };
+  await Deno.writeTextFile(
+    join(projectDir, "deno.jsonc"),
+    JSON.stringify(denoConfig, null, 2),
+  );
+}
+
 Deno.test("discoverEntities loads the paths defined in configuration", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
+    await createTestImportMap(tempDir);
     const entityDir = join(tempDir, "domain");
     await Deno.mkdir(entityDir, { recursive: true });
     const entityPath = join(entityDir, "Example.entity.ts");
@@ -56,6 +82,7 @@ Deno.test("discoverEntities loads the paths defined in configuration", async () 
 Deno.test("discoverEntities detects convention-based entities", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
+    await createTestImportMap(tempDir);
     const firstPath = join(tempDir, "domain", "User.entity.ts");
     const secondPath = join(tempDir, "domain", "nested", "Order.entity.ts");
     await Deno.mkdir(join(tempDir, "domain", "nested"), { recursive: true });
@@ -141,6 +168,7 @@ Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
 Deno.test("prepareDagInputs adds an aggregated OpenAPI artifact", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
+    await createTestImportMap(tempDir);
     const entityPath = join(tempDir, "domain", "User.entity.ts");
     await Deno.mkdir(join(tempDir, "domain"), { recursive: true });
     await Deno.writeTextFile(

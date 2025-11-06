@@ -100,6 +100,46 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return false;
 }
 
+/**
+ * Asserts that a function throws an error.
+ *
+ * @param fn - Function expected to throw.
+ * @param ctor - Expected error constructor (defaults to Error).
+ * @param msgIncludes - Optional string that should be included in error message.
+ */
+export function assertThrows(
+  fn: () => unknown,
+  ctor: new (...args: never[]) => Error = Error,
+  msgIncludes?: string,
+): void {
+  let thrownError: Error | undefined;
+  try {
+    fn();
+  } catch (error) {
+    thrownError = error instanceof Error ? error : new Error(String(error));
+  }
+
+  if (!thrownError) {
+    throw new Error("Expected function to throw");
+  }
+
+  if (!(thrownError instanceof ctor)) {
+    const prototype = Object.getPrototypeOf(thrownError);
+    const actualName = typeof prototype?.constructor?.name === "string"
+      ? prototype.constructor.name
+      : "Unknown";
+    throw new Error(
+      `Expected error to be instance of ${ctor.name}, got ${actualName}`,
+    );
+  }
+
+  if (msgIncludes && !thrownError.message.includes(msgIncludes)) {
+    throw new Error(
+      `Expected error message to include "${msgIncludes}", got "${thrownError.message}"`,
+    );
+  }
+}
+
 function stringify(value: unknown): string {
   try {
     return JSON.stringify(value);

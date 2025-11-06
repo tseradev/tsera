@@ -141,7 +141,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       try {
         await executeCycle("initial");
         await queue;
-        await new Promise<void>(() => { });
+        await new Promise<void>(() => {});
       } finally {
         controller.close();
       }
