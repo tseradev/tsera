@@ -1,9 +1,9 @@
 /**
  * OpenAPI document generation from entity definitions.
- * 
+ *
  * This module provides functionality to generate OpenAPI 3.1.0 documents
  * from TSera entity definitions.
- * 
+ *
  * @module
  */
 

@@ -82,9 +82,6 @@ function mapColumnType(column: TColumn, dialect: Dialect): string {
 function mapPrimitiveType(type: TPrimitive, dialect: Dialect): string {
   switch (type) {
     case "string":
-      if (dialect === "mysql") {
-        return "TEXT";
-      }
       return "TEXT";
     case "number":
       if (dialect === "mysql") {

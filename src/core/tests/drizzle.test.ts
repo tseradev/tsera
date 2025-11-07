@@ -1,5 +1,5 @@
-import { assertEquals, assertStringIncludes } from "../testing/asserts.ts";
-import { defineEntity, entityToDDL } from "./index.ts";
+import { assertEquals, assertStringIncludes } from "../../testing/asserts.ts";
+import { defineEntity, entityToDDL } from "../index.ts";
 
 const userEntity = defineEntity({
   name: "UserAccount",

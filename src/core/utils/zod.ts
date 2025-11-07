@@ -1,8 +1,8 @@
 /**
  * Zod schema library utilities for TSera.
- * 
+ *
  * This module provides centralized access to Zod functionality.
- * 
+ *
  * @module
  */
 
@@ -18,8 +18,4 @@ export { z };
  */
 export { ZodError as SchemaError };
 
-export type {
-  ZodError as SchemaErrorType,
-  ZodObject,
-  ZodTypeAny,
-} from "zod";
+export type { ZodError as SchemaErrorType, ZodObject, ZodTypeAny } from "zod";

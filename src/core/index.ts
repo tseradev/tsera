@@ -7,7 +7,7 @@ export {
   type TColumn,
   type TPrimitive,
 } from "./entity.ts";
-export { entityToDDL } from "./drizzle.ts";
+export { type Dialect, entityToDDL } from "./drizzle.ts";
 export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
 export { entityToZod } from "./schema.ts";
 export {

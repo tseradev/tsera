@@ -1,10 +1,10 @@
 /**
  * Type-safe environment variable management for TSera projects.
- * 
+ *
  * This module provides a schema-based approach to defining and validating
  * environment variables, ensuring all required configuration is present
  * before the application starts.
- * 
+ *
  * @module
  */
 
@@ -44,9 +44,11 @@ export interface EnvVarDefinition<T extends EnvVarType = EnvVarType> {
 /**
  * Schema definition mapping variable names to their configurations.
  */
-export type EnvSchema<T extends Record<string, EnvVarDefinition> = Record<string, EnvVarDefinition>> = {
-  [K in keyof T]: T[K];
-};
+export type EnvSchema<
+  T extends Record<string, EnvVarDefinition> = Record<string, EnvVarDefinition>,
+> = {
+    [K in keyof T]: T[K];
+  };
 
 /**
  * Result of environment validation.
@@ -72,10 +74,10 @@ export type TypedEnv<T extends Record<string, EnvVarDefinition>> = {
 
 /**
  * Defines a type-safe environment variable schema.
- * 
+ *
  * @param schema - Environment variable definitions.
  * @returns Validated schema.
- * 
+ *
  * @example
  * ```typescript
  * const envSchema = defineEnvSchema({
@@ -100,11 +102,11 @@ export function defineEnvSchema<T extends Record<string, EnvVarDefinition>>(
 
 /**
  * Validates environment variables against a schema for a specific environment.
- * 
+ *
  * @param schema - Environment schema to validate against.
  * @param environment - Target environment (dev, preprod, prod).
  * @returns Validation result with any errors and parsed values.
- * 
+ *
  * @example
  * ```typescript
  * const result = validateEnv(envSchema, "prod");
@@ -157,11 +159,10 @@ export function validateEnv<T extends Record<string, EnvVarDefinition>>(
       values[key] = parsedValue;
     } catch (error: unknown) {
       // Extract detailed error message from SchemaError or use generic message
-      let errorMessage = `Invalid value for ${key}: expected ${definition.type}, got "${valueToUse}"`;
+      let errorMessage =
+        `Invalid value for ${key}: expected ${definition.type}, got "${valueToUse}"`;
 
-      // @ts-ignore: SchemaError is available at runtime from dynamic import
       if (error instanceof SchemaError) {
-        // @ts-ignore: error.message is available on SchemaError
         errorMessage = `Invalid value for ${key}: ${error.message}`;
       } else if (error instanceof Error) {
         errorMessage = `Invalid value for ${key}: ${error.message}`;
@@ -180,7 +181,7 @@ export function validateEnv<T extends Record<string, EnvVarDefinition>>(
 
 /**
  * Validates and parses a string value as a number.
- * 
+ *
  * @param val - String value to parse.
  * @returns Parsed number.
  * @throws {SchemaError} If parsing fails.
@@ -199,7 +200,7 @@ function parseNumber(val: string): number {
 
 /**
  * Validates and parses a string value as a boolean.
- * 
+ *
  * @param val - String value to parse.
  * @returns Parsed boolean.
  * @throws {SchemaError} If parsing fails.
@@ -216,7 +217,7 @@ function parseBoolean(val: string): boolean {
 
 /**
  * Parses a raw environment variable value to its expected type using Zod validation.
- * 
+ *
  * @param value - Raw string value from environment.
  * @param type - Expected type.
  * @returns Parsed value.
@@ -251,12 +252,12 @@ function parseEnvValue(value: string | undefined, type: EnvVarType): unknown {
 
 /**
  * Creates a type-safe environment accessor from a validated schema.
- * 
+ *
  * @param schema - Environment schema.
  * @param environment - Target environment.
  * @returns Type-safe environment accessor.
  * @throws {Error} If validation fails.
- * 
+ *
  * @example
  * ```typescript
  * const env = createEnv(envSchema, "prod");
@@ -281,12 +282,12 @@ export function createEnv<T extends Record<string, EnvVarDefinition>>(
 
 /**
  * Gets a single environment variable with type checking.
- * 
+ *
  * @param key - Environment variable name.
  * @param type - Expected type.
  * @param defaultValue - Optional default value.
  * @returns Parsed environment variable value.
- * 
+ *
  * @example
  * ```typescript
  * const port = getEnv("PORT", "number", 8000);
@@ -323,4 +324,3 @@ export function getEnv<T extends EnvVarType>(
     : T extends "boolean" ? boolean
     : never;
 }
-
