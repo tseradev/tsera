@@ -313,7 +313,7 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
 function isEntityDef(value: unknown): value is EntityDef {
   return Boolean(
     value && typeof value === "object" &&
-    (value as Record<string, unknown>).__brand === "TSeraEntity",
+      (value as Record<string, unknown>).__brand === "TSeraEntity",
   );
 }
 

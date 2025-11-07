@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   deploy-deno:
@@ -65,4 +65,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

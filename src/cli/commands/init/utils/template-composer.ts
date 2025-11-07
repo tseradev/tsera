@@ -1,10 +1,10 @@
 /**
  * Template composition system for TSera projects.
- * 
+ *
  * This module handles the composition of modular templates, allowing users
  * to enable or disable specific features (Hono, Fresh, Docker, CI, Secrets)
  * through command-line flags.
- * 
+ *
  * @module
  */
 
@@ -13,6 +13,8 @@ import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { exists } from "@std/fs";
 import { walk } from "@std/fs/walk";
 import { ensureDir } from "../../../utils/fsx.ts";
+import type { DbConfig } from "../../../definitions.ts";
+import { generateEnvFiles, generateEnvSchema } from "./env-generator.ts";
 
 /**
  * Strategy for handling file conflicts during composition.
@@ -47,6 +49,8 @@ export interface ComposeOptions {
   enabledModules: string[];
   /** Whether to overwrite existing files. */
   force?: boolean;
+  /** Database configuration (required for env file generation). */
+  dbConfig?: DbConfig;
 }
 
 /**
@@ -90,10 +94,10 @@ const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
 
 /**
  * Composes a TSera project from base template and optional modules.
- * 
+ *
  * @param options - Composition options.
  * @returns Composition result with file statistics.
- * 
+ *
  * @example
  * ```typescript
  * const result = await composeTemplate({
@@ -131,12 +135,17 @@ export async function composeTemplate(
   // Merge special files that need intelligent merging
   await mergeConfigFiles(options, result);
 
+  // Generate environment files if secrets module is enabled
+  if (options.enabledModules.includes("secrets") && options.dbConfig) {
+    await generateEnvironmentFiles(options, result);
+  }
+
   return result;
 }
 
 /**
  * Validates that all module dependencies are satisfied.
- * 
+ *
  * @param enabledModules - List of enabled module names.
  * @throws {Error} If dependencies are not satisfied.
  */
@@ -159,7 +168,7 @@ function validateModuleDependencies(enabledModules: string[]): void {
 
 /**
  * Copies a directory recursively to the target.
- * 
+ *
  * @param source - Source directory.
  * @param target - Target directory.
  * @param result - Composition result to update.
@@ -192,11 +201,11 @@ async function copyDirectory(
 
 /**
  * Merges configuration files that need intelligent merging.
- * 
+ *
  * Currently handles:
  * - deno.jsonc (merge tasks)
  * - import_map.json (merge imports)
- * 
+ *
  * @param options - Composition options.
  * @param result - Composition result to update.
  */
@@ -213,7 +222,7 @@ async function mergeConfigFiles(
 
 /**
  * Merges deno.jsonc files from enabled modules.
- * 
+ *
  * @param options - Composition options.
  * @param result - Composition result to update.
  */
@@ -278,7 +287,7 @@ interface ImportMap {
 
 /**
  * Merges import_map.json files from enabled modules.
- * 
+ *
  * @param options - Composition options.
  * @param result - Composition result to update.
  */
@@ -338,7 +347,7 @@ async function mergeImportMap(
 
 /**
  * Gets the default templates root directory.
- * 
+ *
  * @returns Absolute path to templates directory.
  */
 export function getTemplatesRoot(): string {
@@ -347,10 +356,48 @@ export function getTemplatesRoot(): string {
 
 /**
  * Gets available module names.
- * 
+ *
  * @returns Array of module names.
  */
 export function getAvailableModules(): string[] {
   return Object.keys(MODULE_DEFINITIONS);
 }
 
+/**
+ * Generates environment files (.env.* and env.config.ts) for the secrets module.
+ *
+ * @param options - Composition options.
+ * @param result - Composition result to update.
+ */
+async function generateEnvironmentFiles(
+  options: ComposeOptions,
+  result: ComposedTemplate,
+): Promise<void> {
+  if (!options.dbConfig) return;
+
+  // Create secrets directory
+  const secretsDir = join(options.targetDir, "secrets");
+  await ensureDir(secretsDir);
+
+  // Generate .env files
+  const envFiles = generateEnvFiles({
+    db: options.dbConfig,
+    modules: options.enabledModules,
+  });
+
+  for (const [fileName, content] of Object.entries(envFiles)) {
+    const filePath = join(secretsDir, fileName);
+    await Deno.writeTextFile(filePath, content + "\n");
+    result.copiedFiles.push(`secrets/${fileName}`);
+  }
+
+  // Generate env.config.ts
+  const envConfigContent = generateEnvSchema({
+    db: options.dbConfig,
+    modules: options.enabledModules,
+  });
+
+  const envConfigPath = join(options.targetDir, "env.config.ts");
+  await Deno.writeTextFile(envConfigPath, envConfigContent + "\n");
+  result.copiedFiles.push("env.config.ts");
+}

@@ -83,7 +83,10 @@ Deno.test("E2E: basic init with all modules", async () => {
 
     // Check Fresh module
     assert(await exists(join(projectDir, "web", "main.ts")), "Fresh main.ts missing");
-    assert(await exists(join(projectDir, "web", "islands", "Counter.tsx")), "Counter island missing");
+    assert(
+      await exists(join(projectDir, "web", "islands", "Counter.tsx")),
+      "Counter island missing",
+    );
 
     // Check Docker module
     assert(await exists(join(projectDir, "docker-compose.yml")), "docker-compose.yml missing");
@@ -161,4 +164,3 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     await Deno.remove(workspace, { recursive: true });
   }
 });
-

@@ -163,4 +163,3 @@ Deno.test("buildTestArtifacts - formate correctement le code", async () => {
   assertStringIncludes(content, "    author:");
   assertStringIncludes(content, "  }");
 });
-

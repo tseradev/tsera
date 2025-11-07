@@ -186,4 +186,3 @@ Deno.test("buildProjectOpenAPIArtifact - gère plusieurs entités", () => {
   assertEquals(parsed.components?.schemas?.Post !== undefined, true);
   assertEquals(parsed.components?.schemas?.Comment !== undefined, true);
 });
-

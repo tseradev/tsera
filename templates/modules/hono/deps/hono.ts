@@ -1,9 +1,9 @@
 /**
  * Hono dependency loader with fallback for offline development.
- * 
+ *
  * This module attempts to load Hono from npm. If the network is unavailable,
  * it falls back to a minimal router implementation to keep tests running.
- * 
+ *
  * @module
  */
 
@@ -83,4 +83,3 @@ try {
 }
 
 export { Hono };
-

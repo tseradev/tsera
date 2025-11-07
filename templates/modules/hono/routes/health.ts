@@ -7,4 +7,3 @@ import type { Context, HonoRouter } from "../deps/hono.ts";
 export default function registerHealthRoutes(app: HonoRouter) {
   app.get("/health", (c: Context) => c.json({ status: "ok" }));
 }
-

@@ -1,126 +1,166 @@
-import { assertEquals, assertFalse } from "../testing/asserts.ts";
-import { defineEnvSchema, validateEnv } from "tsera/core/secrets.ts";
+import { assertEquals, assertExists, assertRejects } from "../testing/asserts.ts";
+import { defineEnvSchema, initializeSecrets } from "tsera/core/secrets.ts";
 
-Deno.test("validateEnv - passes with all required variables", () => {
+Deno.test("initializeSecrets - loads variables from .env file", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  const envContent = `
+PORT=3000
+DATABASE_URL=postgresql://localhost:5432/test
+DEBUG=true
+`;
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, envContent);
+
   const schema = defineEnvSchema({
-    TEST_VAR: {
+    PORT: {
+      type: "number",
+      required: true,
+    },
+    DATABASE_URL: {
       type: "string",
       required: true,
     },
-  });
-
-  Deno.env.set("TEST_VAR", "test-value");
-
-  const result = validateEnv(schema, "dev");
-
-  assertEquals(result.valid, true);
-  assertEquals(result.errors.length, 0);
-  assertEquals(result.values.TEST_VAR, "test-value");
-
-  Deno.env.delete("TEST_VAR");
-});
-
-Deno.test("validateEnv - fails with missing required variable", () => {
-  const schema = defineEnvSchema({
-    MISSING_VAR: {
-      type: "string",
-      required: true,
+    DEBUG: {
+      type: "boolean",
+      required: false,
+      default: false,
     },
   });
 
-  const result = validateEnv(schema, "dev");
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+  });
 
-  assertFalse(result.valid);
-  assertEquals(result.errors.length, 1);
-  assertEquals(
-    result.errors[0],
-    "Missing required environment variable: MISSING_VAR",
-  );
+  assertExists(globalThis.tsera);
+  assertEquals(globalThis.tsera.currentEnvironment, "dev");
+  assertEquals(globalThis.tsera.env("PORT"), 3000);
+  assertEquals(globalThis.tsera.env("DATABASE_URL"), "postgresql://localhost:5432/test");
+  assertEquals(globalThis.tsera.env("DEBUG"), true);
+
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("validateEnv - uses default value when variable not set", () => {
+Deno.test("initializeSecrets - uses default values", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  // Empty .env file
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "");
+
   const schema = defineEnvSchema({
-    DEFAULT_VAR: {
+    PORT: {
       type: "number",
       required: false,
-      default: 42,
+      default: 8000,
     },
-  });
-
-  const result = validateEnv(schema, "dev");
-
-  assertEquals(result.valid, true);
-  assertEquals(result.values.DEFAULT_VAR, 42);
-});
-
-Deno.test("validateEnv - parses number correctly", () => {
-  const schema = defineEnvSchema({
-    NUM_VAR: {
-      type: "number",
-      required: true,
-    },
-  });
-
-  Deno.env.set("NUM_VAR", "123");
-
-  const result = validateEnv(schema, "dev");
-
-  assertEquals(result.valid, true);
-  assertEquals(result.values.NUM_VAR, 123);
-
-  Deno.env.delete("NUM_VAR");
-});
-
-Deno.test("validateEnv - parses boolean correctly", () => {
-  const schema = defineEnvSchema({
-    BOOL_VAR: {
+    DEBUG: {
       type: "boolean",
-      required: true,
+      required: false,
+      default: false,
     },
   });
 
-  Deno.env.set("BOOL_VAR", "true");
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+  });
 
-  const result = validateEnv(schema, "dev");
+  assertEquals(globalThis.tsera.env("PORT"), 8000);
+  assertEquals(globalThis.tsera.env("DEBUG"), false);
 
-  assertEquals(result.valid, true);
-  assertEquals(result.values.BOOL_VAR, true);
-
-  Deno.env.delete("BOOL_VAR");
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("validateEnv - respects environment-specific requirements", () => {
+Deno.test("initializeSecrets - throws on missing required variable", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "PORT=3000\n");
+
   const schema = defineEnvSchema({
-    PROD_ONLY: {
-      type: "string",
-      required: { dev: false, preprod: false, prod: true },
-    },
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "string", required: true },
   });
 
-  // Should pass in dev (not required)
-  const devResult = validateEnv(schema, "dev");
-  assertEquals(devResult.valid, true);
+  await assertRejects(
+    async () => {
+      await initializeSecrets(schema, {
+        secretsDir,
+        environment: "dev",
+      });
+    },
+    Error,
+    "Missing required variable",
+  );
 
-  // Should fail in prod (required)
-  const prodResult = validateEnv(schema, "prod");
-  assertFalse(prodResult.valid);
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("validateEnv - filters by environment", () => {
+Deno.test("initializeSecrets - parses types correctly", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  const envContent = `
+STRING_VAR=hello
+NUMBER_VAR=42
+BOOL_TRUE=true
+BOOL_FALSE=false
+`;
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, envContent);
+
   const schema = defineEnvSchema({
-    DEV_ONLY: {
-      type: "string",
-      required: true,
-      environments: ["dev"],
-    },
+    STRING_VAR: { type: "string", required: true },
+    NUMBER_VAR: { type: "number", required: true },
+    BOOL_TRUE: { type: "boolean", required: true },
+    BOOL_FALSE: { type: "boolean", required: true },
   });
 
-  // Should check in dev
-  const devResult = validateEnv(schema, "dev");
-  assertFalse(devResult.valid); // Missing variable
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+  });
 
-  // Should skip in prod
-  const prodResult = validateEnv(schema, "prod");
-  assertEquals(prodResult.valid, true); // Skipped, so valid
+  assertEquals(globalThis.tsera.env("STRING_VAR"), "hello");
+  assertEquals(globalThis.tsera.env("NUMBER_VAR"), 42);
+  assertEquals(globalThis.tsera.env("BOOL_TRUE"), true);
+  assertEquals(globalThis.tsera.env("BOOL_FALSE"), false);
+
+  await Deno.remove(tempDir, { recursive: true });
 });
 
+Deno.test("initializeSecrets - loads different environments", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "PORT=3000\n");
+  await Deno.writeTextFile(`${secretsDir}/.env.prod`, "PORT=8080\n");
+
+  const schema = defineEnvSchema({
+    PORT: { type: "number", required: true },
+  });
+
+  // Test dev environment
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+  });
+  assertEquals(globalThis.tsera.env("PORT"), 3000);
+  assertEquals(globalThis.tsera.currentEnvironment, "dev");
+
+  // Test prod environment
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "prod",
+  });
+  assertEquals(globalThis.tsera.env("PORT"), 8080);
+  assertEquals(globalThis.tsera.currentEnvironment, "prod");
+
+  await Deno.remove(tempDir, { recursive: true });
+});

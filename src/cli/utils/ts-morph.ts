@@ -1,9 +1,9 @@
 /**
  * TS-Morph utilities for code generation in TSera.
- * 
+ *
  * This module provides helper functions to create, manipulate, and save TypeScript
  * files using the TS-Morph AST manipulation library.
- * 
+ *
  * @module
  */
 
@@ -45,10 +45,10 @@ const DEFAULT_MANIPULATION_SETTINGS = {
 
 /**
  * Creates a configured TS-Morph Project instance for TSera code generation.
- * 
+ *
  * @param options - Optional project configuration overrides.
  * @returns A configured Project instance ready for code generation.
- * 
+ *
  * @example
  * ```typescript
  * const project = createTSeraProject();
@@ -84,14 +84,14 @@ export interface FormatAndSaveResult {
 
 /**
  * Formats a TS-Morph source file and writes it to disk using safeWrite.
- * 
+ *
  * This function ensures consistent formatting and only writes when the content
  * differs from the existing file, preventing unnecessary file system operations.
- * 
+ *
  * @param sourceFile - The TS-Morph source file to format and save.
  * @param targetPath - Absolute file system path where the file should be written.
  * @returns Result indicating whether the file was written and changed.
- * 
+ *
  * @example
  * ```typescript
  * const project = createTSeraProject();
@@ -134,29 +134,29 @@ export interface AddImportOptions {
 
 /**
  * Adds an import declaration to a source file with proper formatting.
- * 
+ *
  * This helper simplifies adding import statements to generated TypeScript files,
  * handling both named imports and default imports in a consistent way.
- * 
+ *
  * @param sourceFile - The source file to add the import to.
  * @param moduleSpecifier - The module path to import from (e.g., "zod").
  * @param options - Import options specifying what to import.
- * 
+ *
  * @example
  * ```typescript
  * const sourceFile = project.createSourceFile("example.ts", "");
- * 
+ *
  * // Add named imports
  * addImportDeclaration(sourceFile, "zod", { namedImports: ["z"] });
- * 
+ *
  * // Add default import
- * addImportDeclaration(sourceFile, "./User.entity.ts", { 
- *   defaultImport: "UserEntity" 
+ * addImportDeclaration(sourceFile, "./User.entity.ts", {
+ *   defaultImport: "UserEntity"
  * });
- * 
+ *
  * // Add aliased imports
- * addImportDeclaration(sourceFile, "std/assert", { 
- *   namedImports: { "assertEquals": "assertEquals" } 
+ * addImportDeclaration(sourceFile, "std/assert", {
+ *   namedImports: { "assertEquals": "assertEquals" }
  * });
  * ```
  */
@@ -173,29 +173,29 @@ export function addImportDeclaration(
     namedImports: Array.isArray(namedImports)
       ? namedImports
       : namedImports
-        ? Object.entries(namedImports).map(([name, alias]) => ({
-          name,
-          alias: alias !== name ? alias : undefined,
-        }))
-        : undefined,
+      ? Object.entries(namedImports).map(([name, alias]) => ({
+        name,
+        alias: alias !== name ? alias : undefined,
+      }))
+      : undefined,
     namespaceImport,
   });
 }
 
 /**
  * Creates an in-memory source file with the specified content.
- * 
+ *
  * @param project - The TS-Morph project instance.
  * @param fileName - Name for the in-memory file (used for diagnostics).
  * @param content - Initial content for the file.
  * @returns The created source file.
- * 
+ *
  * @example
  * ```typescript
  * const project = createTSeraProject();
  * const sourceFile = createInMemorySourceFile(
- *   project, 
- *   "example.ts", 
+ *   project,
+ *   "example.ts",
  *   "export const x = 1;"
  * );
  * ```

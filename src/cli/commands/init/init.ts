@@ -1,6 +1,5 @@
 import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
-import { fromFileUrl } from "../../../shared/file-url.ts";
 import { Command } from "@cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { pathExists, safeWrite } from "../../utils/fsx.ts";
@@ -98,7 +97,7 @@ async function patchImportMapForLocalDevelopment(
   templatesRoot: string,
 ): Promise<void> {
   const importMapPath = join(targetDir, "import_map.json");
-  
+
   // Check if import_map.json exists
   if (!(await pathExists(importMapPath))) {
     return;
@@ -107,7 +106,7 @@ async function patchImportMapForLocalDevelopment(
   // Read the existing import_map.json
   const content = await Deno.readTextFile(importMapPath);
   let importMap: { imports?: Record<string, string> };
-  
+
   try {
     importMap = JSON.parse(content);
   } catch {
@@ -123,13 +122,13 @@ async function patchImportMapForLocalDevelopment(
   // templatesRoot is .../templates, so go up one level to get the repo root, then src/
   const repoRoot = dirname(templatesRoot);
   const srcDir = join(repoRoot, "src");
-  
+
   // Calculate relative path from target to src (using POSIX paths for Deno imports)
   // Normalize both paths to use forward slashes first
   const normalizedTarget = targetDir.replace(/\\/g, "/");
   const normalizedSrc = srcDir.replace(/\\/g, "/");
   let relativePath = posixPath.relative(normalizedTarget, normalizedSrc);
-  
+
   // Ensure the path ends with a slash and starts with ./ or ../
   if (!relativePath.startsWith(".")) {
     relativePath = `./${relativePath}`;
@@ -174,13 +173,11 @@ export function createDefaultInitHandler(
     const jsonMode = context.global.json;
     const logger = createLogger({ json: jsonMode, writer });
     const targetDir = resolve(context.directory);
-    const human = jsonMode
-      ? undefined
-      : new InitConsole({ projectDir: targetDir, writer });
+    const human = jsonMode ? undefined : new InitConsole({ projectDir: targetDir, writer });
 
     if (jsonMode) {
-      logger.event("init:start", { 
-        directory: targetDir, 
+      logger.event("init:start", {
+        directory: targetDir,
         modules: context.modules,
       });
     } else {
@@ -200,20 +197,28 @@ export function createDefaultInitHandler(
     // Compose template from base + modules
     const baseDir = join(templatesRoot, "base");
     const modulesDir = join(templatesRoot, "modules");
-    
+
+    // Default database configuration for env file generation
+    const defaultDbConfig = {
+      dialect: "postgres" as const,
+      urlEnv: "DATABASE_URL",
+      ssl: "prefer" as const,
+    };
+
     const composition = await composeTemplate({
       targetDir,
       baseDir,
       modulesDir,
       enabledModules,
       force: context.force,
+      dbConfig: defaultDbConfig,
     });
-    
+
     // Patch import_map.json to use local sources instead of JSR (for development/testing)
     await patchImportMapForLocalDevelopment(targetDir, templatesRoot);
-    
+
     if (jsonMode) {
-      logger.event("init:copy", { 
+      logger.event("init:copy", {
         files: composition.copiedFiles.length,
         merged: composition.mergedFiles.length,
         skipped: composition.skippedFiles.length,
@@ -221,8 +226,8 @@ export function createDefaultInitHandler(
       });
     } else {
       human?.templateReady(
-        composition.copiedFiles.length + composition.mergedFiles.length, 
-        composition.skippedFiles.length
+        composition.copiedFiles.length + composition.mergedFiles.length,
+        composition.skippedFiles.length,
       );
     }
 
@@ -329,9 +334,9 @@ export function createInitCommand(
     .option("--no-ci", "Disable CI/CD workflows.")
     .option("--no-secrets", "Disable type-safe secrets management.")
     .action(async (options: InitActionOptions, directory = ".") => {
-      const { 
-        json = false, 
-        force = false, 
+      const {
+        json = false,
+        force = false,
         yes = false,
         hono = true,
         fresh = true,
@@ -432,6 +437,8 @@ function buildGitignore(): string {
     "node_modules/",
     ".env",
     ".env.*",
+    "secrets/.env*",
+    "!secrets/.env.example",
     "coverage/",
     "*.log",
   ].join("\n") + "\n";

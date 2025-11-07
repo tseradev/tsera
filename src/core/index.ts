@@ -11,14 +11,12 @@ export { type Dialect, entityToDDL } from "./drizzle.ts";
 export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
 export { entityToZod } from "./schema.ts";
 export {
-  createEnv,
   defineEnvSchema,
-  type Environment,
   type EnvSchema,
   type EnvVarDefinition,
   type EnvVarType,
   getEnv,
-  type TypedEnv,
-  validateEnv,
-  type ValidationResult,
+  initializeSecrets,
+  parseEnvFile,
+  type TseraAPI,
 } from "./secrets.ts";

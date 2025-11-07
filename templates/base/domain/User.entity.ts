@@ -38,4 +38,3 @@ export const UserEntity = defineEntity({
 });
 
 export default UserEntity;
-

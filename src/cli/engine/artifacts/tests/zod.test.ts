@@ -158,7 +158,10 @@ Deno.test("buildZodArtifacts - gère les dates par défaut", async () => {
   const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
   const content = artifacts[0].content as string;
 
-  assertStringIncludes(content, 'scheduledAt: z.date().default(new Date("2024-01-01T00:00:00.000Z"))');
+  assertStringIncludes(
+    content,
+    'scheduledAt: z.date().default(new Date("2024-01-01T00:00:00.000Z"))',
+  );
 });
 
 Deno.test("buildZodArtifacts - gère null comme valeur par défaut", async () => {
@@ -195,4 +198,3 @@ Deno.test("buildZodArtifacts - génère du code syntaxiquement valide", async ()
   assertStringIncludes(content, "}).strict()");
   assertStringIncludes(content, "export type ComplexInput = z.infer<typeof ComplexSchema>");
 });
-

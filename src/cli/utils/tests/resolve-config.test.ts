@@ -10,7 +10,7 @@ async function withTempDir<T>(
   try {
     return await fn(dir);
   } finally {
-    await Deno.remove(dir, { recursive: true }).catch(() => { });
+    await Deno.remove(dir, { recursive: true }).catch(() => {});
   }
 }
 
@@ -549,4 +549,3 @@ Deno.test("resolveConfig cache bust with timestamp", async () => {
     assertEquals(result2.config.db.dialect, "sqlite");
   });
 });
-

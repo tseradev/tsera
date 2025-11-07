@@ -14,8 +14,8 @@
 ## 0) TL;DR (ordre recommandé)
 
 1. **Structure repo + tasks + CI** → 2) **Noyau “entités”** (`defineEntity` + helpers
-   Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Templates modulaires (base + modules)** → 5) **Tests
-   (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
+   Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Templates modulaires (base +
+   modules)** → 5) **Tests (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
 
 - Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
 - `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et compose

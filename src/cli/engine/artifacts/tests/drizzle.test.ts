@@ -180,4 +180,3 @@ Deno.test("buildDrizzleArtifacts - chemin dans le dossier drizzle", async () => 
 
   assertStringIncludes(normalizedPath, "drizzle/");
 });
-

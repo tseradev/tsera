@@ -5,4 +5,3 @@ export default {
     target: ["chrome99", "firefox99", "safari15"],
   },
 } satisfies Config;
-

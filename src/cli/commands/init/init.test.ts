@@ -3,7 +3,7 @@ import { normalizeNewlines } from "../../../shared/newline.ts";
 import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "../../../testing/asserts.ts";
 
-const NOOP_WRITER = () => { };
+const NOOP_WRITER = () => {};
 
 async function readGoldenFile(name: string): Promise<string> {
   const url = new URL(`./__golden__/${name}`, import.meta.url);

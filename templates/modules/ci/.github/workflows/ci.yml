@@ -91,4 +91,3 @@ jobs:
             exit 1
           fi
           echo "✅ Project is coherent"
-

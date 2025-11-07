@@ -9,4 +9,3 @@ Deno.test("GET /health returns ok status", async () => {
   assertEquals(res.status, 200);
   assertEquals(body, { status: "ok" });
 });
-

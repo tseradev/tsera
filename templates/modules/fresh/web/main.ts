@@ -1,10 +1,16 @@
 #!/usr/bin/env -S deno run -A --watch=static/,routes/
 
 import { Builder } from "jsr:@fresh/core@2";
-import { type Plugin } from "jsr:@fresh/core@2/plugin";
 
 // Import routes
 import * as home from "./routes/index.tsx";
+
+// Initialize secrets if available
+try {
+  await import("../../lib/env.ts");
+} catch {
+  // Secrets module not enabled, will use Deno.env
+}
 
 const builder = new Builder();
 
@@ -15,9 +21,11 @@ builder.page("/", home);
 const built = builder.build();
 
 if (import.meta.main) {
-  const port = Number(Deno.env.get("PORT") ?? 8000);
+  // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
+  const port = (globalThis.tsera?.env("FRESH_PORT") as number) ??
+    Number(Deno.env.get("PORT") ?? 8000);
   console.log(`Fresh server listening on http://localhost:${port}`);
-  
+
   Deno.serve({
     port,
     onListen: ({ hostname, port }) => {
@@ -27,4 +35,3 @@ if (import.meta.main) {
 }
 
 export default built;
-

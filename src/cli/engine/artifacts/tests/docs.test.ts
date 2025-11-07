@@ -215,4 +215,3 @@ Deno.test("buildDocsArtifacts - gère les colonnes sans valeur par défaut", asy
 
   assertStringIncludes(content, "| name | string | no | no | — |");
 });
-
