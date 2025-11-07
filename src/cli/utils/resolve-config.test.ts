@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert@1.0.13";
 import { join } from "../../shared/path.ts";
 import { resolveConfig } from "./resolve-config.ts";
-import type { TseraConfig } from "../contracts/types.ts";
+import type { TseraConfig } from "../definitions.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,

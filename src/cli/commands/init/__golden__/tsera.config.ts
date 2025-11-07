@@ -1,4 +1,4 @@
-import { TseraConfig } from "tsera/cli/contracts/types.ts";
+import { TseraConfig } from "tsera/cli/definitions.ts";
 
 // TSera configuration (full profile with comments).
 const config: TseraConfig = {

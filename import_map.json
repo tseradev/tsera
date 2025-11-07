@@ -3,9 +3,8 @@
     "tsera/": "./src/",
     "tsera/core/": "./src/core/",
     "tsera/cli/": "./src/cli/",
-    "zod": "jsr:@zod@1",
-    "zod-to-openapi": "npm:@asteasolutions/zod-to-openapi@6.2.0",
-    "drizzle-orm/": "npm:drizzle-orm@0.30.10/",
+    "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
+    "zod": "npm:zod@3",
     "ts-morph": "jsr:@ts-morph/ts-morph@23",
     "@std/fs": "jsr:@std/fs@1",
     "@std/fs/walk": "jsr:@std/fs@1/walk"

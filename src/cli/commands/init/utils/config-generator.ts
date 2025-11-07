@@ -39,7 +39,7 @@ export function generateConfigFile(
   const sourceFile = createInMemorySourceFile(project, "tsera.config.ts");
 
   // Add import for TseraConfig type
-  addImportDeclaration(sourceFile, "tsera/cli/contracts/types.ts", {
+  addImportDeclaration(sourceFile, "tsera/cli/definitions.ts", {
     namedImports: ["TseraConfig"],
   });
 

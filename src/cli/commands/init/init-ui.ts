@@ -26,8 +26,6 @@ import type { PlanStepKind } from "../../engine/planner.ts";
 export interface InitConsoleOptions {
   /** The project directory being initialized */
   projectDir: string;
-  /** The template being used */
-  template: string;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
 }
@@ -42,7 +40,6 @@ export interface InitConsoleOptions {
  * ```typescript
  * const console = new InitConsole({
  *   projectDir: "/path/to/new-project",
- *   template: "base",
  * });
  *
  * console.start();
@@ -63,12 +60,6 @@ export class InitConsole extends BaseConsole {
    * @private
    */
   #projectLabel: string;
-
-  /**
-   * Template name being used.
-   * @private
-   */
-  #template: string;
 
   /**
    * Whether any changes were made during initialization.
@@ -92,19 +83,17 @@ export class InitConsole extends BaseConsole {
     this.#projectDir = sanitizeProjectDir(options.projectDir);
     this.#normalizedDir = this.#projectDir.replace(/\\/g, "/");
     this.#projectLabel = formatProjectLabel(this.#projectDir);
-    this.#template = options.template;
   }
 
   /**
    * Announces the beginning of the scaffolding process.
    *
-   * Displays the project name and template being used.
+   * Displays the project name.
    */
   start(): void {
     this.write(
       `${magenta("◆")} ${bold("Init")} ${dim("│")} ${cyan(this.#projectLabel)}`,
     );
-    this.writeMiddle(`${dim("→")} ${gray(`Using template: ${this.#template}`)}`);
     this.writeLast(`${dim("→")} ${gray("Preparing project folder…")}`);
   }
 

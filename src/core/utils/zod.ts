@@ -1,23 +1,25 @@
-import type * as ZodPolyfill from "../../deps/polyfills/zod.ts";
+/**
+ * Zod schema library utilities for TSera.
+ * 
+ * This module provides centralized access to Zod functionality.
+ * 
+ * @module
+ */
 
-type ZodModule = typeof ZodPolyfill;
-
-let zodModule: ZodModule;
-
-try {
-  zodModule = await import("jsr:@zod@1");
-} catch {
-  zodModule = await import("../../deps/polyfills/zod.ts");
-}
-
-const { z, SchemaError } = zodModule;
+import { z, ZodError } from "zod";
 
 /**
- * Zod schema library instance, resolved from JSR or fallback polyfill.
+ * Zod schema library instance.
  */
-export { SchemaError, z };
+export { z };
+
+/**
+ * Error thrown when schema validation fails.
+ */
+export { ZodError as SchemaError };
+
 export type {
-  SchemaError as SchemaErrorType,
+  ZodError as SchemaErrorType,
   ZodObject,
   ZodTypeAny,
-} from "../../deps/polyfills/zod.ts";
+} from "zod";

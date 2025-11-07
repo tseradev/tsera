@@ -1,5 +1,5 @@
 import { resolve } from "../../shared/path.ts";
-import type { ResolvedTseraConfig, TseraConfig } from "../contracts/types.ts";
+import type { ResolvedTseraConfig, TseraConfig } from "../definitions.ts";
 import { resolveProject } from "./project.ts";
 
 /**

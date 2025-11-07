@@ -1,5 +1,5 @@
 import type { EntityDef } from "../../../core/entity.ts";
-import type { TseraConfig } from "../../contracts/types.ts";
+import type { TseraConfig } from "../../definitions.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 
 /**

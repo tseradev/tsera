@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertRejects } from "../../testing/asserts.ts";
 import { defineEntity } from "../../core/entity.ts";
-import type { TseraConfig } from "../contracts/types.ts";
+import type { TseraConfig } from "../definitions.ts";
 import { createDag } from "./dag.ts";
 import { buildZodArtifacts } from "./artifacts/zod.ts";
 import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";

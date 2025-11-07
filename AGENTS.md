@@ -104,8 +104,10 @@
 - **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm** sauf pour les dépendances non
   disponibles sur JSR (Preact).
 - Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/fmt/colors`, `@std/flags`,
-  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **zod‑to‑openapi**, **Drizzle**, **Hono**,
-  **Fresh** (SSR + islands via JSR), **Preact** (via npm, utilisé par Fresh).
+  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **Hono**, **Fresh** (SSR + islands via JSR),
+  **Preact** (via npm, utilisé par Fresh).
+- **Pas de polyfills**. Les dépendances doivent être utilisées directement. Si une dépendance n'est
+  pas disponible, le code doit échouer de manière explicite (pas de fallback silencieux).
 - **Pas de MCP**. **Pas d'HTTP** dans le CLI.
 - **Écritures bornées** : `.tsera/`, `drizzle/`, `docs/`, tests générés. `safeWrite` only (écrit si
   diff).

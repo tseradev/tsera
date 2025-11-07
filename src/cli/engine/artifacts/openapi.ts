@@ -3,7 +3,7 @@ import { generateOpenAPIDocument } from "../../../core/openapi.ts";
 import type { EntityDef } from "../../../core/entity.ts";
 import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
-import type { TseraConfig } from "../../contracts/types.ts";
+import type { TseraConfig } from "../../definitions.ts";
 
 /**
  * Recursively sorts object keys for deterministic JSON output.

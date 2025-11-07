@@ -6,7 +6,7 @@ import {
   createInMemorySourceFile,
   createTSeraProject,
 } from "../../utils/ts-morph.ts";
-import { VariableDeclarationKind } from "../../../deps/polyfills/ts-morph.ts";
+import { VariableDeclarationKind } from "../../utils/ts-morph.ts";
 
 /**
  * Builds Zod schema artifacts for an entity using TS-Morph for AST-based generation.

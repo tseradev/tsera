@@ -8,7 +8,6 @@
  * @module
  */
 
-// @ts-ignore: SchemaError is exported dynamically at runtime
 import { SchemaError, z } from "./utils/zod.ts";
 
 /**
@@ -189,7 +188,11 @@ export function validateEnv<T extends Record<string, EnvVarDefinition>>(
 function parseNumber(val: string): number {
   const num = Number(val);
   if (isNaN(num)) {
-    throw new SchemaError(`Cannot parse "${val}" as number`);
+    throw new SchemaError([{
+      code: "custom",
+      path: [],
+      message: `Cannot parse "${val}" as number`,
+    }]);
   }
   return num;
 }
@@ -204,9 +207,11 @@ function parseNumber(val: string): number {
 function parseBoolean(val: string): boolean {
   if (val === "true" || val === "1") return true;
   if (val === "false" || val === "0") return false;
-  throw new SchemaError(
-    `Cannot parse "${val}" as boolean (expected "true", "false", "1", or "0")`,
-  );
+  throw new SchemaError([{
+    code: "custom",
+    path: [],
+    message: `Cannot parse "${val}" as boolean (expected "true", "false", "1", or "0")`,
+  }]);
 }
 
 /**
@@ -235,7 +240,11 @@ function parseEnvValue(value: string | undefined, type: EnvVarType): unknown {
       return parseBoolean(validatedString);
     default: {
       const exhaustiveCheck: never = type;
-      throw new SchemaError(`Unsupported type: ${exhaustiveCheck}`);
+      throw new SchemaError([{
+        code: "custom",
+        path: [],
+        message: `Unsupported type: ${exhaustiveCheck}`,
+      }]);
     }
   }
 }

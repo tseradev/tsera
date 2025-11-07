@@ -17,7 +17,7 @@ import {
   QuoteKind,
   ScriptTarget,
   type SourceFile,
-} from "../../deps/polyfills/ts-morph.ts";
+} from "ts-morph";
 import { safeWrite } from "./fsx.ts";
 
 /**
@@ -208,3 +208,23 @@ export function createInMemorySourceFile(
   return project.createSourceFile(fileName, content, { overwrite: true });
 }
 
+/**
+ * Re-exports commonly used TS-Morph types and enums for convenience.
+ */
+export {
+  type CompilerOptions,
+  type FileSystemHost,
+  IndentationText,
+  ModuleKind,
+  ModuleResolutionKind,
+  NewLineKind,
+  Project,
+  type ProjectOptions,
+  QuoteKind,
+  ScriptTarget,
+  type SourceFile,
+  StructureKind,
+  SyntaxKind,
+  VariableDeclarationKind,
+  type Writers,
+} from "ts-morph";

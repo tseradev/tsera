@@ -31,14 +31,15 @@ Deno.test("router forwards global options to subcommands", async () => {
     },
   });
 
-  await router.parse(["--json", "init", "demo", "--template", "custom"]);
+  await router.parse(["--json", "init", "demo", "--force", "--yes"]);
 
   if (!received) {
     throw new Error("The init handler was not invoked.");
   }
 
   assertEquals(received.directory, "demo");
-  assertEquals(received.template, "custom");
+  assertEquals(received.force, true);
+  assertEquals(received.yes, true);
   assertEquals(received.global, { json: true });
 });
 

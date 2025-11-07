@@ -1,5 +1,5 @@
 import { resolve } from "../../../shared/path.ts";
-import { Command } from "../../deps/command.ts";
+import { Command } from "@cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
 import { determineCliVersion } from "../../utils/version.ts";

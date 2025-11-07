@@ -1,7 +1,7 @@
 import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { fromFileUrl } from "../../../shared/file-url.ts";
-import { Command } from "../../deps/command.ts";
+import { Command } from "@cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { pathExists, safeWrite } from "../../utils/fsx.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
@@ -20,7 +20,6 @@ import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
-  template: string;
   force: boolean;
   yes: boolean;
   noHono: boolean;
@@ -33,7 +32,6 @@ interface InitCommandOptions extends GlobalCLIOptions {
 /** Options passed to the init action handler by Cliffy. */
 interface InitActionOptions {
   json?: boolean;
-  template?: string;
   force?: boolean;
   yes?: boolean;
   noHono?: boolean;
@@ -49,8 +47,6 @@ interface InitActionOptions {
 export interface InitCommandContext {
   /** Target directory for project initialization. */
   directory: string;
-  /** Template name to use for scaffolding. */
-  template: string;
   /** Whether to overwrite existing files. */
   force: boolean;
   /** Whether to answer yes to interactive prompts. */
@@ -175,12 +171,11 @@ export function createDefaultInitHandler(
     const targetDir = resolve(context.directory);
     const human = jsonMode
       ? undefined
-      : new InitConsole({ projectDir: targetDir, template: context.template, writer });
+      : new InitConsole({ projectDir: targetDir, writer });
 
     if (jsonMode) {
       logger.event("init:start", { 
         directory: targetDir, 
-        template: context.template,
         modules: context.modules,
       });
     } else {
@@ -321,7 +316,6 @@ export function createInitCommand(
   const command = new Command()
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
-    .option("--template <name:string>", "Template to use (currently ignored, always uses base + modules).", { default: "base" })
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
     .option("--no-hono", "Disable Hono API module.", { default: false })
@@ -332,7 +326,6 @@ export function createInitCommand(
     .action(async (options: InitActionOptions, directory = ".") => {
       const { 
         json = false, 
-        template = "base", 
         force = false, 
         yes = false,
         noHono = false,
@@ -343,7 +336,6 @@ export function createInitCommand(
       } = options;
       await handler({
         directory,
-        template,
         force,
         yes,
         modules: {
@@ -364,16 +356,12 @@ export function createInitCommand(
       console.log(
         renderCommandHelp({
           commandName: "init",
-          description: "Scaffold a TSera project from a template and bootstrap artifacts.",
+          description: "Scaffold a TSera project from base template and selected modules.",
           usage: "[directory]",
           options: [
             {
               label: "[directory]",
               description: "Target directory for the new project (default: current directory)",
-            },
-            {
-              label: "--template <name>",
-              description: "Template to use (currently ignored, always uses base + modules)",
             },
             {
               label: "-f, --force",
