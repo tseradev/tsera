@@ -298,5 +298,5 @@ For any discussion or proposal, open an issue or reach out via the channels list
 1. Finalize `defineEntity` and the Zod/OpenAPI/Drizzle helpers.
 2. Stabilize the Cliffy CLI with the `init`, `dev`, `doctor`, `update` commands.
 3. Ship the complete template system (`base` + modules) with generated artifacts.
-4. Enable the E2E flow (`scripts/e2e.ts`).
+4. Enable the E2E flow (`e2e.test.ts`).
 5. Publish an experimental binary for early feedback.

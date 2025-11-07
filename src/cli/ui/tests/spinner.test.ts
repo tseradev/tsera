@@ -4,8 +4,8 @@
  * @module
  */
 
-import { assertEquals, assertStringIncludes } from "../../testing/asserts.ts";
-import { TerminalSpinner } from "./spinner.ts";
+import { assertEquals, assertStringIncludes } from "../../../testing/asserts.ts";
+import { TerminalSpinner } from "../spinner.ts";
 
 /**
  * Helper to capture output from a spinner instance.

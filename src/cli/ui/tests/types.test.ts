@@ -1,5 +1,5 @@
-import { assertEquals } from "../../testing/asserts.ts";
-import { TreeChars } from "./types.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { TreeChars } from "../types.ts";
 
 Deno.test("TreeChars contains all expected characters", () => {
   assertEquals(typeof TreeChars.VERTICAL, "string");

@@ -8,7 +8,7 @@
  * @module
  */
 
-import { basename, dirname, join, relative } from "../../../../shared/path.ts";
+import { dirname, join, relative } from "../../../../shared/path.ts";
 import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { exists } from "@std/fs";
 import { walk } from "@std/fs/walk";

@@ -1,5 +1,5 @@
-import { assertEquals } from "../../testing/asserts.ts";
-import { bold, cyan, dim, gray, green, magenta, red, yellow } from "./colors.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { bold, cyan, dim, gray, green, magenta, red, yellow } from "../colors.ts";
 
 Deno.test("color functions apply styles", () => {
   // We just test that the functions return strings and include the input

@@ -1,6 +1,6 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert";
-import { join } from "../../shared/path.ts";
-import { findConfigPath, resolveProject } from "./project.ts";
+import { join } from "../../../shared/path.ts";
+import { findConfigPath, resolveProject } from "../project.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,

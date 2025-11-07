@@ -52,10 +52,16 @@ export function centerInBox(text: string, boxWidth: number, palette: Palette): s
  * @param cliName - CLI binary name.
  * @param usage - Usage descriptor following the name.
  * @param palette - Active color palette.
+ * @param indentSize - Number of spaces for indentation (defaults to 2).
  * @returns Single formatted usage line.
  */
-export function formatUsage(cliName: string, usage: string, palette: Palette): string {
-  const indent = " ".repeat(INDENT_SPACES);
+export function formatUsage(
+  cliName: string,
+  usage: string,
+  palette: Palette,
+  indentSize: number = INDENT_SPACES,
+): string {
+  const indent = " ".repeat(indentSize);
   const command = `${cliName} ${usage}`.trim();
   return `${indent}${palette.accent("$")} ${palette.strong(command)}`;
 }

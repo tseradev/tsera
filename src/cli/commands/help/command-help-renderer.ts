@@ -9,7 +9,7 @@
 import { createPalette } from "../../ui/palette.ts";
 import { clampWidth, detectTerminalWidth } from "../../ui/terminal.ts";
 import { StringBuilder } from "../../ui/text-utils.ts";
-import { formatExamples, formatTwoColumn } from "./formatters.ts";
+import { formatExamples, formatTwoColumn, formatUsage } from "./formatters.ts";
 import type { ModernHelpCommand } from "./types.ts";
 import type { Palette } from "../../ui/palette.ts";
 
@@ -54,10 +54,7 @@ export function renderCommandHelp(config: CommandHelpConfig): string {
   // Usage section
   builder.append(palette.accent("  ◆ ") + palette.heading("USAGE") + "\n");
   const usagePart = config.usage ? ` ${config.usage}` : "";
-  builder.append(
-    "    " + palette.accent("$") + " " +
-      palette.strong(`tsera ${config.commandName}${usagePart}`) + "\n",
-  );
+  builder.append(formatUsage(`tsera ${config.commandName}`, usagePart.trim(), palette, 4) + "\n");
   builder.append("\n");
 
   // Options section

@@ -49,19 +49,3 @@ export async function writeIfMissing(
   }
   await safeWrite(path, normalizeNewlines(content));
 }
-
-/**
- * Normalises trailing separators from a project directory path.
- */
-export function sanitizeProjectDir(projectDir: string): string {
-  return projectDir.replace(/[\\/]+$/, "");
-}
-
-/**
- * Derives a concise label from an absolute project directory path.
- * Returns the last segment of the path.
- */
-export function formatProjectLabel(projectDir: string): string {
-  const segments = projectDir.split(/[/\\]+/).filter((part) => part.length > 0);
-  return segments[segments.length - 1] ?? projectDir;
-}

@@ -4,7 +4,7 @@
  * @module
  */
 
-import { assertEquals } from "../../testing/asserts.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
 import {
   formatActionLabel,
   formatActionSummary,
@@ -12,7 +12,7 @@ import {
   formatProjectLabel,
   formatRelativePath,
   sanitizeProjectDir,
-} from "./formatters.ts";
+} from "../formatters.ts";
 
 Deno.test("formatProjectLabel - extracts last path segment", () => {
   assertEquals(formatProjectLabel("/home/user/projects/my-app"), "my-app");

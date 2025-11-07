@@ -1,5 +1,5 @@
-import { assertEquals } from "../../testing/asserts.ts";
-import { clampWidth, detectTerminalWidth } from "./terminal.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { clampWidth, detectTerminalWidth } from "../terminal.ts";
 
 Deno.test("clampWidth constrains values within bounds", () => {
   assertEquals(clampWidth(100), 100);

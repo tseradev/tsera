@@ -1,11 +1,11 @@
 import { assertEquals } from "jsr:@std/assert";
-import { join } from "../../shared/path.ts";
-import { applyPlan } from "./applier.ts";
-import type { ApplyStepResult } from "./applier.ts";
-import type { PlanStep } from "./planner.ts";
-import type { PlanSummary } from "./planner.ts";
-import { createEmptyState } from "./state.ts";
-import type { DagNode } from "./dag.ts";
+import { join } from "../../../shared/path.ts";
+import { applyPlan } from "../applier.ts";
+import type { ApplyStepResult } from "../applier.ts";
+import type { PlanStep } from "../planner.ts";
+import type { PlanSummary } from "../planner.ts";
+import { createEmptyState } from "../state.ts";
+import type { DagNode } from "../dag.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,

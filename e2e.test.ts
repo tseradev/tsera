@@ -1,6 +1,5 @@
-#!/usr/bin/env -S deno run -A
-import { join } from "../src/shared/path.ts";
-import { assert, assertEquals } from "../src/testing/asserts.ts";
+import { join } from "./src/shared/path.ts";
+import { assert } from "./src/testing/asserts.ts";
 
 interface RunCliOptions {
   cwd: string;
@@ -52,8 +51,19 @@ function findEvent(events: LogEvent[], name: string): LogEvent | undefined {
   return events.find((event) => event.event === name || event.message === name);
 }
 
-async function testBasicInit(): Promise<void> {
-  console.log("\n[e2e] Testing basic init with all modules...");
+async function exists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+Deno.test("E2E: basic init with all modules", async () => {
   const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
   const projectDir = join(workspace, "demo-full");
 
@@ -85,15 +95,12 @@ async function testBasicInit(): Promise<void> {
     // Check Secrets module
     assert(await exists(join(projectDir, "env.config.ts")), "env.config.ts missing");
     assert(await exists(join(projectDir, "lib", "env.ts")), "lib/env.ts missing");
-
-    console.log("[e2e] ✓ Basic init test passed");
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }
-}
+});
 
-async function testSelectiveModules(): Promise<void> {
-  console.log("\n[e2e] Testing selective module disabling...");
+Deno.test("E2E: selective module disabling", async () => {
   const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
   const projectDir = join(workspace, "demo-minimal");
 
@@ -119,15 +126,12 @@ async function testSelectiveModules(): Promise<void> {
     assert(!await exists(join(projectDir, "web")), "Fresh should be disabled");
     assert(!await exists(join(projectDir, "docker-compose.yml")), "Docker should be disabled");
     assert(!await exists(join(projectDir, ".github")), "CI should be disabled");
-
-    console.log("[e2e] ✓ Selective modules test passed");
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }
-}
+});
 
-async function testCoherence(): Promise<void> {
-  console.log("\n[e2e] Testing coherence and artifact generation...");
+Deno.test("E2E: coherence and artifact generation", async () => {
   const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
   const projectDir = join(workspace, "demo-coherence");
 
@@ -153,47 +157,8 @@ async function testCoherence(): Promise<void> {
     assert(planSummary, "Missing plan:summary event");
     const summary = planSummary!.context as Record<string, unknown>;
     assert(summary.changed === false, "First cycle should be clean");
-
-    console.log("[e2e] ✓ Coherence test passed");
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }
-}
+});
 
-async function main(): Promise<void> {
-  console.log("=".repeat(60));
-  console.log("TSera E2E Tests");
-  console.log("=".repeat(60));
-
-  try {
-    await testBasicInit();
-    await testSelectiveModules();
-    await testCoherence();
-
-    console.log("\n" + "=".repeat(60));
-    console.log("✅ All E2E tests passed!");
-    console.log("=".repeat(60));
-  } catch (error) {
-    console.error("\n" + "=".repeat(60));
-    console.error("❌ E2E tests failed:");
-    console.error(error);
-    console.error("=".repeat(60));
-    Deno.exit(1);
-  }
-}
-
-async function exists(path: string): Promise<boolean> {
-  try {
-    await Deno.stat(path);
-    return true;
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-if (import.meta.main) {
-  await main();
-}

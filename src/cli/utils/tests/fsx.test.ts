@@ -1,6 +1,6 @@
-import { join } from "../../shared/path.ts";
-import { assert, assertEquals } from "../../testing/asserts.ts";
-import { readJsonFile, removeFileIfExists, safeWrite, writeJsonFile } from "./fsx.ts";
+import { join } from "../../../shared/path.ts";
+import { assert, assertEquals } from "../../../testing/asserts.ts";
+import { readJsonFile, removeFileIfExists, safeWrite, writeJsonFile } from "../fsx.ts";
 
 Deno.test("safeWrite creates a new file when it does not exist", async () => {
   const dir = await Deno.makeTempDir();

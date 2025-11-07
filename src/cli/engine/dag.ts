@@ -170,7 +170,7 @@ export async function createDag(
  * @param entityName - Name of the entity this artifact belongs to.
  * @returns Unique artifact identifier.
  */
-function buildArtifactId(artifact: ArtifactDescriptor, entityName: string): string {
+export function buildArtifactId(artifact: ArtifactDescriptor, entityName: string): string {
   const slug = pascalToSnakeCase(entityName);
   return `${artifact.kind}:${slug}:${artifact.path}`;
 }

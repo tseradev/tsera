@@ -1,5 +1,5 @@
-import { assertEquals } from "../../testing/asserts.ts";
-import { createPalette } from "./palette.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { createPalette } from "../palette.ts";
 
 Deno.test("createPalette returns palette with all methods", () => {
   const palette = createPalette();

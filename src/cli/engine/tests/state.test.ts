@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { join } from "../../shared/path.ts";
+import { join } from "../../../shared/path.ts";
 import {
   applySnapshots,
   createEmptyState,
@@ -10,8 +10,8 @@ import {
   STATE_DIR,
   writeDagState,
   writeEngineState,
-} from "./state.ts";
-import type { DagNode } from "./dag.ts";
+} from "../state.ts";
+import type { DagNode } from "../dag.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,

@@ -34,11 +34,16 @@ interface InitActionOptions {
   json?: boolean;
   force?: boolean;
   yes?: boolean;
-  noHono?: boolean;
-  noFresh?: boolean;
-  noDocker?: boolean;
-  noCi?: boolean;
-  noSecrets?: boolean;
+  /** True if Hono is enabled (default: true unless --no-hono is passed). */
+  hono?: boolean;
+  /** True if Fresh is enabled (default: true unless --no-fresh is passed). */
+  fresh?: boolean;
+  /** True if Docker is enabled (default: true unless --no-docker is passed). */
+  docker?: boolean;
+  /** True if CI is enabled (default: true unless --no-ci is passed). */
+  ci?: boolean;
+  /** True if Secrets is enabled (default: true unless --no-secrets is passed). */
+  secrets?: boolean;
 }
 
 /**
@@ -318,32 +323,32 @@ export function createInitCommand(
     .arguments("[directory]")
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
-    .option("--no-hono", "Disable Hono API module.", { default: false })
-    .option("--no-fresh", "Disable Fresh frontend module.", { default: false })
-    .option("--no-docker", "Disable Docker Compose module.", { default: false })
-    .option("--no-ci", "Disable CI/CD workflows.", { default: false })
-    .option("--no-secrets", "Disable type-safe secrets management.", { default: false })
+    .option("--no-hono", "Disable Hono API module.")
+    .option("--no-fresh", "Disable Fresh frontend module.")
+    .option("--no-docker", "Disable Docker Compose module.")
+    .option("--no-ci", "Disable CI/CD workflows.")
+    .option("--no-secrets", "Disable type-safe secrets management.")
     .action(async (options: InitActionOptions, directory = ".") => {
       const { 
         json = false, 
         force = false, 
         yes = false,
-        noHono = false,
-        noFresh = false,
-        noDocker = false,
-        noCi = false,
-        noSecrets = false,
+        hono = true,
+        fresh = true,
+        docker = true,
+        ci = true,
+        secrets = true,
       } = options;
       await handler({
         directory,
         force,
         yes,
         modules: {
-          hono: !noHono,
-          fresh: !noFresh,
-          docker: !noDocker,
-          ci: !noCi,
-          secrets: !noSecrets,
+          hono,
+          fresh,
+          docker,
+          ci,
+          secrets,
         },
         global: { json },
       });

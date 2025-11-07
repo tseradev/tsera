@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { hashBytes, hashText, hashValue, stableStringify } from "./hash.ts";
+import { hashBytes, hashText, hashValue, stableStringify } from "../hash.ts";
 
 Deno.test("hashBytes - calcule le hash SHA-256 d'un Uint8Array", async () => {
   const bytes = new TextEncoder().encode("hello");

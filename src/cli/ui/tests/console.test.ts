@@ -4,8 +4,8 @@
  * @module
  */
 
-import { assertEquals, assertStringIncludes } from "../../testing/asserts.ts";
-import { BaseConsole } from "./console.ts";
+import { assertEquals, assertStringIncludes } from "../../../testing/asserts.ts";
+import { BaseConsole } from "../console.ts";
 
 /**
  * Helper to capture console output.

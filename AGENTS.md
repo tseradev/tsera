@@ -320,7 +320,7 @@ export interface TseraConfig {
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test -A --fail-fast",
-    "e2e": "deno run -A scripts/e2e.ts",
+    "e2e": "deno test -A e2e.test.ts",
     "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
     "publish": "deno publish" // optionnel si JSR
   }
@@ -333,7 +333,7 @@ export interface TseraConfig {
 
 - **Unit** : noyau (defineEntity + helpers), CLI (resolve-config, DAG hash/diff, parser Cliffy).
 - **Golden** : snapshot exact du `tsera.config.ts` généré + `openapi.json` trié.
-- **E2E** : `scripts/e2e.ts` :
+- **E2E** : `e2e.test.ts` :
 
   1. crée un tmp dir → `tsera init demo` → `cd demo` → `tsera dev --json` (1 cycle),
   2. vérifie artefacts (`.tsera/openapi.json`, `drizzle/**`, docs, tests),

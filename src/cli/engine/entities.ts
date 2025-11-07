@@ -4,6 +4,7 @@ import type { EntityDef } from "../../core/entity.ts";
 import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import type { TseraConfig } from "../definitions.ts";
 import type { ArtifactDescriptor, DagEntityInput } from "./dag.ts";
+import { buildArtifactId } from "./dag.ts";
 import { buildDocsArtifacts } from "./artifacts/docs.ts";
 import { buildDrizzleArtifacts } from "./artifacts/drizzle.ts";
 import { buildTestArtifacts } from "./artifacts/tests.ts";
@@ -121,7 +122,7 @@ export async function buildEntityArtifacts(
     const stageIds: string[] = [];
 
     for (const artifact of artifacts) {
-      const id = buildNodeId(entity.name, artifact);
+      const id = buildArtifactId(artifact, entity.name);
       stageIds.push(id);
       const mergedDependencies = mergeDependencies(artifact.dependsOn, dependencies);
       descriptors.push({
@@ -376,18 +377,6 @@ function toProjectRelative(projectDir: string, absolutePath: string): string {
   const absolute = absolutePath.replace(/\\/g, "/");
   const relative = posixPath.relative(project, absolute);
   return relative.length === 0 ? "." : relative;
-}
-
-/**
- * Builds a unique node identifier for an artifact.
- *
- * @param entityName - Name of the entity.
- * @param artifact - Artifact descriptor.
- * @returns Unique node identifier.
- */
-function buildNodeId(entityName: string, artifact: ArtifactDescriptor): string {
-  const slug = pascalToSnakeCase(entityName);
-  return `${artifact.kind}:${slug}:${artifact.path}`;
 }
 
 /**

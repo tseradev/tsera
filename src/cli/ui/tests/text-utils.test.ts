@@ -1,5 +1,5 @@
-import { assertEquals } from "../../testing/asserts.ts";
-import { StringBuilder, visualWidth, wrapText } from "./text-utils.ts";
+import { assertEquals } from "../../../testing/asserts.ts";
+import { StringBuilder, visualWidth, wrapText } from "../text-utils.ts";
 
 Deno.test("visualWidth counts visible characters", () => {
   assertEquals(visualWidth("hello"), 5);

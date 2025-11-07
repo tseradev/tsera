@@ -1,12 +1,12 @@
-import { assert, assertEquals, assertRejects } from "../../testing/asserts.ts";
-import { defineEntity } from "../../core/entity.ts";
-import type { TseraConfig } from "../definitions.ts";
-import { createDag } from "./dag.ts";
-import { buildZodArtifacts } from "./artifacts/zod.ts";
-import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";
-import { buildDrizzleArtifacts } from "./artifacts/drizzle.ts";
-import { buildDocsArtifacts } from "./artifacts/docs.ts";
-import { buildTestArtifacts } from "./artifacts/tests.ts";
+import { assert, assertEquals, assertRejects } from "../../../testing/asserts.ts";
+import { defineEntity } from "../../../core/entity.ts";
+import type { TseraConfig } from "../../definitions.ts";
+import { createDag } from "../dag.ts";
+import { buildZodArtifacts } from "../artifacts/zod.ts";
+import { buildProjectOpenAPIArtifact } from "../artifacts/openapi.ts";
+import { buildDrizzleArtifacts } from "../artifacts/drizzle.ts";
+import { buildDocsArtifacts } from "../artifacts/docs.ts";
+import { buildTestArtifacts } from "../artifacts/tests.ts";
 
 const baseConfig: TseraConfig = {
   openapi: true,
