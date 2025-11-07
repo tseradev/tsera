@@ -12,13 +12,25 @@ import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";
 
 type ModuleNamespace = Record<string, unknown>;
 
+/**
+ * Represents a discovered entity with its source file path.
+ */
 export interface DiscoveredEntity {
+  /** Validated entity definition. */
   entity: EntityDef;
+  /** Relative path to the source file. */
   sourcePath: string;
 }
 
 const ENTITY_SUFFIX = ".entity.ts";
 
+/**
+ * Prepares DAG inputs by discovering entities and building their artifacts.
+ *
+ * @param projectDir - Project root directory.
+ * @param config - TSera configuration.
+ * @returns Array of DAG entity inputs ready for graph construction.
+ */
 export async function prepareDagInputs(
   projectDir: string,
   config: TseraConfig,
@@ -46,6 +58,14 @@ export async function prepareDagInputs(
   return inputs;
 }
 
+/**
+ * Discovers all entity definitions in the configured paths.
+ *
+ * @param projectDir - Project root directory.
+ * @param config - TSera configuration.
+ * @returns Array of discovered entities sorted by path and name.
+ * @throws {Error} If an entity path doesn't exist or no entities are found.
+ */
 export async function discoverEntities(
   projectDir: string,
   config: TseraConfig,
@@ -78,6 +98,13 @@ export async function discoverEntities(
   return discovered;
 }
 
+/**
+ * Builds all artifacts for a single entity based on configuration.
+ *
+ * @param entity - Entity definition.
+ * @param config - TSera configuration.
+ * @returns Array of artifact descriptors with dependency information.
+ */
 export async function buildEntityArtifacts(
   entity: EntityDef,
   config: TseraConfig,
@@ -123,6 +150,14 @@ export async function buildEntityArtifacts(
   return descriptors;
 }
 
+/**
+ * Gathers all entity file paths from the configured entity paths.
+ *
+ * @param projectDir - Project root directory.
+ * @param config - TSera configuration.
+ * @returns Array of relative paths to entity files.
+ * @throws {Error} If a configured path doesn't exist or is invalid.
+ */
 async function gatherEntityPaths(
   projectDir: string,
   config: TseraConfig,
@@ -159,6 +194,12 @@ async function gatherEntityPaths(
   return dedupePreserveOrder(collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1)));
 }
 
+/**
+ * Recursively walks a directory to find entity files.
+ *
+ * @param directory - Directory to walk.
+ * @param onEntity - Callback invoked for each entity file found.
+ */
 async function walkEntities(
   directory: string,
   onEntity: (absolutePath: string) => Promise<void> | void,
@@ -179,6 +220,12 @@ async function walkEntities(
   }
 }
 
+/**
+ * Removes duplicate paths while preserving order.
+ *
+ * @param values - Array of path strings.
+ * @returns Deduplicated array.
+ */
 function dedupePreserveOrder(values: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -193,6 +240,14 @@ function dedupePreserveOrder(values: string[]): string[] {
   return result;
 }
 
+/**
+ * Loads entity definitions from a TypeScript module file.
+ *
+ * @param path - Absolute path to the entity file.
+ * @param projectDir - Optional project root directory for import resolution.
+ * @returns Array of entity definitions found in the module.
+ * @throws {Error} If no entities are exported by the file.
+ */
 async function loadEntityDefinitions(
   path: string,
   projectDir?: string,
@@ -223,6 +278,12 @@ async function loadEntityDefinitions(
   }
 }
 
+/**
+ * Extracts entity definitions from a module namespace.
+ *
+ * @param mod - Module namespace to inspect.
+ * @returns Array of entity definitions found.
+ */
 function extractEntities(mod: ModuleNamespace): EntityDef[] {
   const entities: EntityDef[] = [];
   const seen = new Set<string>();
@@ -242,6 +303,12 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
   return entities;
 }
 
+/**
+ * Type guard verifying whether a value is a valid entity definition.
+ *
+ * @param value - Value to inspect.
+ * @returns {@code true} if the value is an entity definition; otherwise {@code false}.
+ */
 function isEntityDef(value: unknown): value is EntityDef {
   return Boolean(
     value && typeof value === "object" &&
@@ -249,6 +316,12 @@ function isEntityDef(value: unknown): value is EntityDef {
   );
 }
 
+/**
+ * Converts a file path to a file:// URL for dynamic import.
+ *
+ * @param path - File path to convert.
+ * @returns File URL string with cache-busting query parameter.
+ */
 function toImportUrl(path: string): string {
   let absolute = path;
   if (!isAbsolutePath(absolute)) {
@@ -267,6 +340,12 @@ function toImportUrl(path: string): string {
   return appendCacheBust(new URL(`file://${normalised}`));
 }
 
+/**
+ * Determines whether a path is absolute.
+ *
+ * @param path - Path to check.
+ * @returns {@code true} if the path is absolute; otherwise {@code false}.
+ */
 function isAbsolutePath(path: string): boolean {
   if (path.startsWith("/")) {
     return true;
@@ -274,11 +353,24 @@ function isAbsolutePath(path: string): boolean {
   return /^[A-Za-z]:[\\/]/.test(path);
 }
 
+/**
+ * Appends a cache-busting query parameter to a URL.
+ *
+ * @param url - URL to modify.
+ * @returns URL string with cache-busting parameter.
+ */
 function appendCacheBust(url: URL): string {
   const cacheBust = `t=${Date.now()}`;
   return url.search.length > 0 ? `${url.href}&${cacheBust}` : `${url.href}?${cacheBust}`;
 }
 
+/**
+ * Converts an absolute path to a project-relative path.
+ *
+ * @param projectDir - Project root directory.
+ * @param absolutePath - Absolute path to convert.
+ * @returns Relative path from project root.
+ */
 function toProjectRelative(projectDir: string, absolutePath: string): string {
   const project = projectDir.replace(/\\/g, "/");
   const absolute = absolutePath.replace(/\\/g, "/");
@@ -286,11 +378,25 @@ function toProjectRelative(projectDir: string, absolutePath: string): string {
   return relative.length === 0 ? "." : relative;
 }
 
+/**
+ * Builds a unique node identifier for an artifact.
+ *
+ * @param entityName - Name of the entity.
+ * @param artifact - Artifact descriptor.
+ * @returns Unique node identifier.
+ */
 function buildNodeId(entityName: string, artifact: ArtifactDescriptor): string {
   const slug = pascalToSnakeCase(entityName);
   return `${artifact.kind}:${slug}:${artifact.path}`;
 }
 
+/**
+ * Merges two arrays of dependency identifiers, removing duplicates.
+ *
+ * @param existing - Existing dependencies.
+ * @param previousStage - Dependencies from previous stage.
+ * @returns Merged array of unique dependencies.
+ */
 function mergeDependencies(
   existing: string[] | undefined,
   previousStage: string[],
@@ -305,6 +411,13 @@ function mergeDependencies(
   return Array.from(merged);
 }
 
+/**
+ * Compares two strings for sorting.
+ *
+ * @param a - First string.
+ * @param b - Second string.
+ * @returns Comparison result (-1, 0, or 1).
+ */
 function compareStrings(a: string, b: string): number {
   if (a === b) {
     return 0;

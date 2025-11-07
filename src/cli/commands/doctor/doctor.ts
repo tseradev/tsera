@@ -25,14 +25,21 @@ interface DoctorActionOptions {
   fix?: boolean;
 }
 
-/** Context object passed to doctor command handlers. */
+/**
+ * Context object passed to doctor command handlers.
+ */
 export interface DoctorCommandContext {
+  /** Current working directory to diagnose. */
   cwd: string;
+  /** Whether to automatically apply safe fixes. */
   fix: boolean;
+  /** Global CLI options. */
   global: GlobalCLIOptions;
 }
 
-/** Function signature for doctor command implementations. */
+/**
+ * Function signature for doctor command implementations.
+ */
 export type DoctorCommandHandler = (context: DoctorCommandContext) => Promise<void> | void;
 
 interface DoctorHandlerDependencies {

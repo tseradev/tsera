@@ -5,6 +5,9 @@ import type { ArtifactBuilder } from "./types.ts";
 
 const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
 
+/**
+ * Builds smoke test artifacts for an entity.
+ */
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
   const testPath = posixJoin("tests", `${entity.name}.test.ts`);
@@ -46,6 +49,12 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
   }];
 };
 
+/**
+ * Normalises an import path for use in generated test files.
+ *
+ * @param path - Import path to normalise.
+ * @returns Normalised import path.
+ */
 function normaliseImport(path: string): string {
   const normalised = path.replace(/\\/g, "/");
   if (normalised.startsWith(".")) {
@@ -54,10 +63,22 @@ function normaliseImport(path: string): string {
   return `./${normalised}`;
 }
 
+/**
+ * Normalises a path by converting backslashes to forward slashes.
+ *
+ * @param path - Path to normalise.
+ * @returns Normalised path.
+ */
 function normalise(path: string): string {
   return path.replace(/\\/g, "/");
 }
 
+/**
+ * Builds a TypeScript object literal string from column definitions.
+ *
+ * @param columns - Map of column definitions.
+ * @returns Object literal string.
+ */
 function buildSampleObject(columns: Record<string, TColumn>): string {
   const lines: string[] = ["{"];
   const entries = Object.entries(columns);
@@ -70,6 +91,12 @@ function buildSampleObject(columns: Record<string, TColumn>): string {
   return lines.join("\n");
 }
 
+/**
+ * Generates a sample value string for a column.
+ *
+ * @param column - Column definition.
+ * @returns Sample value string.
+ */
 function sampleValue(column: TColumn): string {
   if (typeof column.type === "object" && "arrayOf" in column.type) {
     const sample = samplePrimitive(column.type.arrayOf);
@@ -78,6 +105,13 @@ function sampleValue(column: TColumn): string {
   return samplePrimitive(column.type);
 }
 
+/**
+ * Generates a sample value string for a primitive type.
+ *
+ * @param type - Primitive or array column type.
+ * @returns Sample value string.
+ * @throws {Error} If the type is not supported.
+ */
 function samplePrimitive(
   type: TColumn["type"] extends infer T ? T : never,
 ): string {

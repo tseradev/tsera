@@ -2,54 +2,112 @@ import type { EntityDef } from "../../core/entity.ts";
 import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import { hashValue } from "./hash.ts";
 
+/**
+ * Types of nodes in the dependency graph.
+ */
 export type DagNodeKind = "entity" | "schema" | "openapi" | "migration" | "test" | "doc";
 
+/**
+ * Node mode indicating whether it's an input (source) or output (generated artifact).
+ */
 export type DagNodeMode = "input" | "output";
 
+/**
+ * Represents a single node in the dependency graph.
+ */
 export interface DagNode {
+  /** Unique identifier for the node. */
   id: string;
+  /** Type of node. */
   kind: DagNodeKind;
+  /** Whether this is an input or output node. */
   mode: DagNodeMode;
+  /** Human-readable label. */
   label: string;
+  /** Content hash for change detection. */
   hash: string;
+  /** Source file path (for input nodes). */
   sourcePath?: string;
+  /** Target file path (for output nodes). */
   targetPath?: string;
+  /** Generated content (for output nodes). */
   content?: string | Uint8Array;
+  /** Additional metadata. */
   data?: Record<string, unknown>;
 }
 
+/**
+ * Represents a dependency edge between two nodes.
+ */
 export interface DagEdge {
+  /** Source node identifier. */
   from: string;
+  /** Target node identifier. */
   to: string;
 }
 
+/**
+ * Complete dependency graph structure.
+ */
 export interface Dag {
+  /** Map of node identifiers to node objects. */
   nodes: Map<string, DagNode>;
+  /** Array of dependency edges. */
   edges: DagEdge[];
+  /** Topologically sorted array of nodes. */
   order: DagNode[];
 }
 
+/**
+ * Types of generated artifacts (excludes entity input nodes).
+ */
 export type DagArtifactKind = Exclude<DagNodeKind, "entity">;
 
+/**
+ * Describes a generated artifact to be included in the dependency graph.
+ */
 export interface ArtifactDescriptor {
+  /** Type of artifact. */
   kind: DagArtifactKind;
+  /** Relative path where the artifact should be written. */
   path: string;
+  /** Content to write. */
   content: string | Uint8Array;
+  /** Optional metadata. */
   data?: Record<string, unknown>;
+  /** Optional human-readable label. */
   label?: string;
+  /** Optional dependencies on other node identifiers. */
   dependsOn?: string[];
 }
 
+/**
+ * Input data for creating a DAG from an entity definition.
+ */
 export interface DagEntityInput {
+  /** Entity definition. */
   entity: EntityDef;
+  /** Source file path of the entity. */
   sourcePath: string;
+  /** Artifacts to generate from this entity. */
   artifacts: ArtifactDescriptor[];
 }
 
+/**
+ * Options for DAG creation.
+ */
 export interface DagOptions {
+  /** CLI version used for hash computation. */
   cliVersion: string;
 }
 
+/**
+ * Creates a dependency graph from entity inputs and their artifacts.
+ *
+ * @param inputs - Array of entity inputs with their artifacts.
+ * @param options - DAG creation options.
+ * @returns A complete dependency graph with topologically sorted nodes.
+ */
 export async function createDag(
   inputs: DagEntityInput[],
   options: DagOptions,
@@ -105,11 +163,26 @@ export async function createDag(
   return { nodes, edges, order };
 }
 
+/**
+ * Builds a unique identifier for an artifact node.
+ *
+ * @param artifact - Artifact descriptor.
+ * @param entityName - Name of the entity this artifact belongs to.
+ * @returns Unique artifact identifier.
+ */
 function buildArtifactId(artifact: ArtifactDescriptor, entityName: string): string {
   const slug = pascalToSnakeCase(entityName);
   return `${artifact.kind}:${slug}:${artifact.path}`;
 }
 
+/**
+ * Performs a topological sort of nodes based on their dependency edges.
+ *
+ * @param nodes - Map of all nodes in the graph.
+ * @param edges - Array of dependency edges.
+ * @returns Topologically sorted array of nodes.
+ * @throws {Error} If the graph contains cycles or references unknown nodes.
+ */
 function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode[] {
   const incoming = new Map<string, number>();
   const outgoing = new Map<string, string[]>();
@@ -166,6 +239,12 @@ function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode
   return result;
 }
 
+/**
+ * Serialises a DAG into a JSON-friendly format with sorted arrays.
+ *
+ * @param dag - Dependency graph to serialise.
+ * @returns Serialised representation with sorted nodes and edges.
+ */
 export function serialiseDag(dag: Dag): { nodes: DagNode[]; edges: DagEdge[] } {
   const nodes = Array.from(dag.nodes.values()).sort((a, b) => a.id.localeCompare(b.id));
   const edges = dag.edges.slice().sort((a, b) => {

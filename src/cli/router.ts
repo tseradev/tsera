@@ -53,12 +53,17 @@ const CLI_EXAMPLES = [
   "tsera doctor --fix",
 ];
 
-/** Global options shared across CLI commands. */
+/**
+ * Global options shared across all CLI commands.
+ */
 export interface GlobalCLIOptions extends Record<string, unknown> {
+  /** Enables machine-readable NDJSON output. */
   json: boolean;
 }
 
-/** Optional hooks used to override command implementations in tests. */
+/**
+ * Optional hooks used to override command implementations in tests.
+ */
 export interface RouterHandlers {
   init?: InitCommandHandler;
   dev?: DevCommandHandler;

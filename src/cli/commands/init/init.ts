@@ -33,16 +33,25 @@ interface InitActionOptions {
   yes?: boolean;
 }
 
-/** Context passed to init command handlers. */
+/**
+ * Context passed to init command handlers.
+ */
 export interface InitCommandContext {
+  /** Target directory for project initialization. */
   directory: string;
+  /** Template name to use for scaffolding. */
   template: string;
+  /** Whether to overwrite existing files. */
   force: boolean;
+  /** Whether to answer yes to interactive prompts. */
   yes: boolean;
+  /** Global CLI options. */
   global: GlobalCLIOptions;
 }
 
-/** Function signature for init command implementations. */
+/**
+ * Function signature for init command implementations.
+ */
 export type InitCommandHandler = (context: InitCommandContext) => Promise<void> | void;
 
 interface InitHandlerDependencies {
@@ -51,7 +60,11 @@ interface InitHandlerDependencies {
   writer?: (line: string) => void;
 }
 
-/** Resolves the default templates directory from the current module location. */
+/**
+ * Resolves the default templates directory from the current module location.
+ *
+ * @returns Absolute path to the templates directory.
+ */
 function defaultTemplatesRoot(): string {
   return fromFileUrl(new URL("../../../../templates", import.meta.url));
 }
@@ -326,6 +339,11 @@ export function createInitCommand(
   return command;
 }
 
+/**
+ * Generates a default .gitignore file content for TSera projects.
+ *
+ * @returns .gitignore content with common TSera-specific ignores.
+ */
 function buildGitignore(): string {
   const content = [
     "# TSera",
@@ -341,6 +359,12 @@ function buildGitignore(): string {
   return normalizeNewlines(content);
 }
 
+/**
+ * Derives a PascalCase project name from a directory path.
+ *
+ * @param path - Directory path to derive name from.
+ * @returns PascalCase project name, or "TSeraApp" if path is empty or "."
+ */
 function deriveProjectName(path: string): string {
   const base = basename(path);
   if (!base || base === ".") {
@@ -349,6 +373,12 @@ function deriveProjectName(path: string): string {
   return toPascalCase(base);
 }
 
+/**
+ * Extracts the last segment of a path (basename).
+ *
+ * @param path - Path to extract basename from.
+ * @returns Last segment of the path.
+ */
 function basename(path: string): string {
   const normalised = path.replace(/\\+/g, "/").replace(/\/+$/, "");
   if (normalised === "") {
@@ -358,6 +388,12 @@ function basename(path: string): string {
   return parts[parts.length - 1] || normalised;
 }
 
+/**
+ * Converts a string to PascalCase by splitting on non-alphanumeric characters.
+ *
+ * @param value - String to convert.
+ * @returns PascalCase representation of the input.
+ */
 function toPascalCase(value: string): string {
   const parts = value
     .split(/[^A-Za-z0-9]+/)

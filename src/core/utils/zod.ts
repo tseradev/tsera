@@ -12,5 +12,8 @@ try {
 
 const { z } = zodModule;
 
+/**
+ * Zod schema library instance, resolved from JSR or fallback polyfill.
+ */
 export { z };
 export type { ZodObject, ZodTypeAny } from "../../deps/polyfills/zod.ts";

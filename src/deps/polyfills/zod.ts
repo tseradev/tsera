@@ -1,3 +1,6 @@
+/**
+ * Error thrown when schema validation fails.
+ */
 export class SchemaError extends Error {
   constructor(message: string) {
     super(message);
@@ -9,6 +12,10 @@ type ParseContext = { path: string[] };
 
 type SafeParseSuccess<T> = { success: true; data: T };
 type SafeParseFailure = { success: false; error: SchemaError };
+
+/**
+ * Return type for safe parsing operations that don't throw on validation failure.
+ */
 export type SafeParseReturnType<T> = SafeParseSuccess<T> | SafeParseFailure;
 
 function cloneValue<T>(value: T): T {
@@ -316,9 +323,19 @@ export class ZodObjectSchema<TShape extends ObjectShape> extends ZodType<ParsedO
   }
 }
 
+/**
+ * Type alias for any Zod schema type.
+ */
 export type ZodTypeAny = ZodType<unknown>;
+
+/**
+ * Type alias for Zod object schemas.
+ */
 export type ZodObject<T extends ObjectShape = ObjectShape> = ZodObjectSchema<T>;
 
+/**
+ * Zod schema factory object providing methods to create schemas for various types.
+ */
 export const z = {
   string: () => new StringSchema(),
   number: () => new NumberSchema(),

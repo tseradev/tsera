@@ -8,13 +8,19 @@ interface HelpCommandOptions extends GlobalCLIOptions {
   // Future: could add --format or --markdown options
 }
 
-/** Context object passed to help command handlers. */
+/**
+ * Context object passed to help command handlers.
+ */
 export interface HelpCommandContext {
+  /** Optional command name to show help for. */
   command?: string;
+  /** Global CLI options. */
   global: GlobalCLIOptions;
 }
 
-/** Function signature for help command implementations. */
+/**
+ * Function signature for help command implementations.
+ */
 export type HelpCommandHandler = (context: HelpCommandContext) => Promise<void> | void;
 
 /**

@@ -200,9 +200,17 @@ function dirnameWithSep(sep: string, path: string): string {
   return formatPath(segments, path.startsWith(sep), sep);
 }
 
-/** POSIX-flavoured path helpers mirroring Node's {@code path.posix}. */
+/**
+ * POSIX-flavoured path helpers mirroring Node's {@code path.posix}.
+ *
+ * Provides path manipulation functions that always use forward slashes,
+ * regardless of the operating system.
+ */
 export const posixPath = {
+  /** Joins path segments using forward slashes. */
   join: posixJoin,
+  /** Returns the directory portion of a path using forward slashes. */
   dirname: posixDirname,
+  /** Computes the relative path between two paths using forward slashes. */
   relative: posixRelative,
 };

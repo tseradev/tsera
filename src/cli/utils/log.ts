@@ -11,25 +11,48 @@ import {
   yellow,
 } from "../ui/colors.ts";
 
+/**
+ * Logging severity levels.
+ */
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
+/**
+ * Structured log event representation.
+ */
 export interface LogEvent {
+  /** Severity level of the log event. */
   level: LogLevel;
+  /** Human-readable message. */
   message: string;
+  /** Optional contextual data. */
   context?: Record<string, unknown>;
+  /** Optional event name for structured logging. */
   event?: string;
 }
 
+/**
+ * Options for creating a logger instance.
+ */
 export interface LoggerOptions {
+  /** Enables JSON/NDJSON output format. */
   json?: boolean;
+  /** Custom writer function for output (defaults to console.log). */
   writer?: (line: string) => void;
 }
 
+/**
+ * Logger interface for structured logging with multiple severity levels.
+ */
 export interface Logger {
+  /** Logs a debug-level message. */
   debug(message: string, context?: Record<string, unknown>): void;
+  /** Logs an info-level message. */
   info(message: string, context?: Record<string, unknown>): void;
+  /** Logs a warning-level message. */
   warn(message: string, context?: Record<string, unknown>): void;
+  /** Logs an error-level message. */
   error(message: string, context?: Record<string, unknown>): void;
+  /** Logs a structured event. */
   event(event: string, context?: Record<string, unknown>): void;
 }
 
@@ -65,6 +88,12 @@ const EVENT_STYLES: Record<string, EventStyle> = {
 
 const DEFAULT_EVENT_STYLE: EventStyle = { icon: "•", color: cyan };
 
+/**
+ * Creates a logger instance with the specified options.
+ *
+ * @param options - Logger configuration options.
+ * @returns A logger instance ready for use.
+ */
 export function createLogger(options: LoggerOptions = {}): Logger {
   const writer = options.writer ?? ((line: string) => console.log(line));
   const jsonMode = options.json ?? false;

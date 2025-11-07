@@ -11,12 +11,19 @@ import type { Colorizer } from "./colors.ts";
  * A color palette for consistent terminal styling.
  */
 export interface Palette {
+  /** Accent color for highlighting important elements. */
   accent: Colorizer;
+  /** Color for section headings. */
   heading: Colorizer;
+  /** Color for labels and metadata. */
   label: Colorizer;
+  /** Subtle color for secondary information. */
   subtle: Colorizer;
+  /** Strong color for emphasis. */
   strong: Colorizer;
+  /** Success color for positive feedback. */
   success: Colorizer;
+  /** Highlight color for drawing attention. */
   highlight: Colorizer;
 }
 

@@ -193,6 +193,12 @@ function formatJsonDefault(value: unknown, dialect: Dialect): string {
   return `'${escaped}'`;
 }
 
+/**
+ * Escapes single quotes in SQL string literals.
+ *
+ * @param value - String to escape.
+ * @returns Escaped string safe for use in SQL.
+ */
 function escapeSqlString(value: string): string {
   return value.replaceAll("'", "''");
 }

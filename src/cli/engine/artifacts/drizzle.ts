@@ -4,6 +4,12 @@ import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import { hashValue } from "../hash.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
+/**
+ * Derives a deterministic timestamp from a hash for migration file naming.
+ *
+ * @param hash - Hash value to derive timestamp from.
+ * @returns Timestamp string in format YYYYMMDDHHMM_microseconds.
+ */
 function deriveDeterministicTimestamp(hash: string): string {
   const year = 2000 + (parseInt(hash.slice(0, 4), 16) % 1000);
   const month = (parseInt(hash.slice(4, 6), 16) % 12) + 1;
@@ -19,6 +25,13 @@ function deriveDeterministicTimestamp(hash: string): string {
   }${minutes.toString().padStart(2, "0")}_${micros.toString().padStart(6, "0")}`;
 }
 
+/**
+ * Generates a deterministic migration filename from entity name and DDL.
+ *
+ * @param entityName - Name of the entity.
+ * @param ddl - SQL DDL statement.
+ * @returns Migration filename.
+ */
 async function nextMigrationFile(entityName: string, ddl: string): Promise<string> {
   const slug = pascalToSnakeCase(entityName);
   const hash = await hashValue({ entity: entityName, ddl }, {
@@ -28,6 +41,9 @@ async function nextMigrationFile(entityName: string, ddl: string): Promise<strin
   return `${deriveDeterministicTimestamp(hash)}_${slug}.sql`;
 }
 
+/**
+ * Builds Drizzle migration artifacts for an entity.
+ */
 export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
   const { entity, config } = context;
   const content = entityToDDL(entity, config.db.dialect);

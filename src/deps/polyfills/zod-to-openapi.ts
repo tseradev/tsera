@@ -2,37 +2,72 @@ import type { EntityDef, TColumn, TPrimitive } from "../../core/entity.ts";
 import { isArrayColumnType } from "../../core/entity.ts";
 import { entityToZod } from "../../core/schema.ts";
 
+/**
+ * Options for generating an OpenAPI document.
+ */
 export interface OpenAPIDocumentOptions {
+  /** Document title. */
   title: string;
+  /** API version string. */
   version: string;
+  /** Optional description. */
   description?: string;
 }
 
+/**
+ * OpenAPI schema object representation.
+ */
 export interface SchemaObject {
+  /** Type or array of types. */
   type?: string | string[];
+  /** Human-readable description. */
   description?: string;
+  /** Object properties (for object types). */
   properties?: Record<string, SchemaObject>;
+  /** Required property names. */
   required?: string[];
+  /** Whether the value can be null. */
   nullable?: boolean;
+  /** Default value. */
   default?: unknown;
+  /** Array item schema (for array types). */
   items?: SchemaObject;
+  /** Format hint (e.g., "date-time"). */
   format?: string;
+  /** Whether additional properties are allowed. */
   additionalProperties?: boolean;
 }
 
+/**
+ * Complete OpenAPI document structure.
+ */
 export interface OpenAPIObject {
+  /** OpenAPI specification version. */
   openapi: string;
+  /** API information. */
   info: {
+    /** API title. */
     title: string;
+    /** API version. */
     version: string;
+    /** Optional description. */
     description?: string;
   };
+  /** API paths (currently empty in TSera). */
   paths: Record<string, unknown>;
+  /** OpenAPI components including schemas. */
   components: {
+    /** Schema definitions keyed by schema name. */
     schemas: Record<string, SchemaObject>;
   };
 }
 
+/**
+ * Converts a primitive type to an OpenAPI schema object.
+ *
+ * @param type - Primitive type to convert.
+ * @returns OpenAPI schema object.
+ */
 function primitiveToSchema(type: TPrimitive): SchemaObject {
   switch (type) {
     case "string":
@@ -57,6 +92,12 @@ function primitiveToSchema(type: TPrimitive): SchemaObject {
   }
 }
 
+/**
+ * Converts a column definition to an OpenAPI schema object.
+ *
+ * @param column - Column definition to convert.
+ * @returns OpenAPI schema object.
+ */
 function columnToSchema(column: TColumn): SchemaObject {
   const base = isArrayColumnType(column.type)
     ? {
@@ -83,6 +124,12 @@ function columnToSchema(column: TColumn): SchemaObject {
   return schema;
 }
 
+/**
+ * Converts an entity definition to an OpenAPI schema object.
+ *
+ * @param entity - Entity definition to convert.
+ * @returns OpenAPI schema object representing the entity.
+ */
 function entityToSchema(entity: EntityDef): SchemaObject {
   const zodSchema = entityToZod(entity);
   const properties: Record<string, SchemaObject> = {};
@@ -116,6 +163,13 @@ function entityToSchema(entity: EntityDef): SchemaObject {
   return schema;
 }
 
+/**
+ * Generates a complete OpenAPI document from entity definitions.
+ *
+ * @param entities - Array of entity definitions to include.
+ * @param options - OpenAPI document options.
+ * @returns Complete OpenAPI document with schemas.
+ */
 export function generateOpenAPIDocument(
   entities: readonly EntityDef[],
   options: OpenAPIDocumentOptions,

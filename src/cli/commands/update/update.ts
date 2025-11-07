@@ -21,15 +21,23 @@ interface UpdateActionOptions {
   dryRun?: boolean;
 }
 
-/** Context object passed to update command handlers. */
+/**
+ * Context object passed to update command handlers.
+ */
 export interface UpdateCommandContext {
+  /** Release channel to use for updates. */
   channel: "stable" | "beta" | "canary";
+  /** Whether to install a compiled binary instead of using deno install. */
   binary: boolean;
+  /** Whether to show steps without applying them. */
   dryRun: boolean;
+  /** Global CLI options. */
   global: GlobalCLIOptions;
 }
 
-/** Function signature for update command implementations. */
+/**
+ * Function signature for update command implementations.
+ */
 export type UpdateCommandHandler = (context: UpdateCommandContext) => Promise<void> | void;
 
 interface CommandExecutionResult {
@@ -198,11 +206,24 @@ export function createUpdateCommand(
   return command;
 }
 
+/**
+ * Builds a JSR specifier string for the specified release channel.
+ *
+ * @param channel - Release channel to use.
+ * @returns JSR specifier string.
+ */
 function buildSpecifier(channel: UpdateCommandContext["channel"]): string {
   const tag = channel === "stable" ? "latest" : channel;
   return `jsr:tsera/cli/main.ts@${tag}`;
 }
 
+/**
+ * Builds Deno command arguments for the update operation.
+ *
+ * @param context - Update command context.
+ * @param specifier - JSR specifier string.
+ * @returns Array of Deno command arguments.
+ */
 function buildDenoArgs(context: UpdateCommandContext, specifier: string): string[] {
   if (context.binary) {
     return ["compile", "-A", "--output", "dist/tsera", specifier];
@@ -210,6 +231,13 @@ function buildDenoArgs(context: UpdateCommandContext, specifier: string): string
   return ["install", "--global", "-A", "-f", "--name", "tsera", specifier];
 }
 
+/**
+ * Parses the Deno version from command output.
+ *
+ * @param stdout - Standard output from `deno --version`.
+ * @returns Version string (e.g., "2.0.0").
+ * @throws {Error} If the version cannot be parsed.
+ */
 function parseDenoVersion(stdout: string): string {
   const match = stdout.match(/deno\s+([0-9]+(?:\.[0-9]+)*)/i);
   if (!match) {

@@ -30,6 +30,13 @@ interface ArgumentSpec {
   required: boolean;
 }
 
+/**
+ * Polyfill implementation of Cliffy's Command class for environments where
+ * the JSR package is not available.
+ *
+ * Provides a minimal command-line argument parser with support for options,
+ * arguments, subcommands, and action handlers.
+ */
 export class Command<TOptions = Record<string, unknown>> {
   private readonly options: OptionDefinition[] = [];
   private readonly subcommands = new Map<string, Command<unknown>>();

@@ -2,6 +2,9 @@ import { join } from "../../../shared/path.ts";
 import type { TColumn } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
 
+/**
+ * Builds Markdown documentation artifacts for an entity.
+ */
 export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   const { entity } = context;
   const lines: string[] = [
@@ -37,6 +40,12 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   }];
 };
 
+/**
+ * Formats a column type as a string for documentation.
+ *
+ * @param column - Column definition.
+ * @returns Type string representation.
+ */
 function columnType(column: TColumn): string {
   if (typeof column.type === "object" && "arrayOf" in column.type) {
     return `Array<${column.type.arrayOf}>`;
@@ -44,6 +53,12 @@ function columnType(column: TColumn): string {
   return String(column.type);
 }
 
+/**
+ * Formats a default value as a string for documentation.
+ *
+ * @param value - Default value.
+ * @returns Formatted string representation.
+ */
 function formatDefault(value: unknown): string {
   if (value === null) {
     return "null";

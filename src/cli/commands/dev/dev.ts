@@ -29,17 +29,27 @@ interface DevActionOptions {
   apply?: boolean;
 }
 
-/** Context object passed to dev command handlers. */
+/**
+ * Context object passed to dev command handlers.
+ */
 export interface DevCommandContext {
+  /** Project root directory. */
   projectDir: string;
+  /** Whether to watch for file changes. */
   watch: boolean;
+  /** Whether to run a single cycle and exit. */
   once: boolean;
+  /** Whether to compute the plan without applying it. */
   planOnly: boolean;
+  /** Whether to force apply even if the plan is empty. */
   apply: boolean;
+  /** Global CLI options. */
   global: GlobalCLIOptions;
 }
 
-/** Function signature for dev command implementations. */
+/**
+ * Function signature for dev command implementations.
+ */
 export type DevCommandHandler = (context: DevCommandContext) => Promise<void> | void;
 
 const WATCH_DEBOUNCE_MS = 150;

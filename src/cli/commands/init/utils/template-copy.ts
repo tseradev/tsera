@@ -1,8 +1,13 @@
 import { dirname, join } from "../../../../shared/path.ts";
 import { ensureDir, pathExists, safeWrite } from "../../../utils/fsx.ts";
 
+/**
+ * Result of copying a template directory.
+ */
 export interface CopyResult {
+  /** Array of relative paths of files that were copied. */
   files: string[];
+  /** Array of relative paths of files that were skipped (already existed). */
   skipped: string[];
 }
 

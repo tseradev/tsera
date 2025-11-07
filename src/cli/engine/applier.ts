@@ -4,17 +4,36 @@ import type { PlanResult, PlanStep } from "./planner.ts";
 import type { EngineState } from "./state.ts";
 import { applySnapshots } from "./state.ts";
 
+/**
+ * Options for applying an execution plan.
+ */
 export interface ApplyOptions {
+  /** Project root directory. */
   projectDir: string;
+  /** Optional callback invoked after each step is applied. */
   onStep?: (step: PlanStep, result: ApplyStepResult) => void | Promise<void>;
 }
 
+/**
+ * Result of applying a single plan step.
+ */
 export interface ApplyStepResult {
+  /** Type of operation performed. */
   kind: PlanStep["kind"];
+  /** Path of the file affected (if applicable). */
   path?: string;
+  /** Whether the file was actually changed. */
   changed: boolean;
 }
 
+/**
+ * Applies an execution plan by writing, updating, or deleting artifacts.
+ *
+ * @param plan - Execution plan to apply.
+ * @param state - Current engine state.
+ * @param options - Application options.
+ * @returns Updated engine state after applying all steps.
+ */
 export async function applyPlan(
   plan: PlanResult,
   state: EngineState,
@@ -48,6 +67,13 @@ export async function applyPlan(
   return applySnapshots(state, updates);
 }
 
+/**
+ * Handles a create or update step by writing content to disk.
+ *
+ * @param step - Plan step to execute.
+ * @param options - Application options.
+ * @param updates - Array to collect state updates.
+ */
 async function handleWriteStep(
   step: PlanStep,
   options: ApplyOptions,
@@ -71,6 +97,13 @@ async function handleWriteStep(
   }
 }
 
+/**
+ * Handles a delete step by removing a file from disk.
+ *
+ * @param step - Plan step to execute.
+ * @param options - Application options.
+ * @param updates - Array to collect state updates.
+ */
 async function handleDeleteStep(
   step: PlanStep,
   options: ApplyOptions,

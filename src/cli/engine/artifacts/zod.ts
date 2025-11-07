@@ -4,6 +4,9 @@ import type { ArtifactBuilder } from "./types.ts";
 
 const IMPORT_LINE = 'import { z } from "zod";';
 
+/**
+ * Builds Zod schema artifacts for an entity.
+ */
 export const buildZodArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
   const path = join(config.outDir, "schemas", `${entity.name}.schema.ts`);
@@ -28,6 +31,12 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
   }];
 };
 
+/**
+ * Converts a column definition to a Zod expression string.
+ *
+ * @param column - Column definition.
+ * @returns Zod expression string.
+ */
 function columnToZodExpression(column: TColumn): string {
   let expression = baseZodExpression(column);
 
@@ -47,6 +56,12 @@ function columnToZodExpression(column: TColumn): string {
   return expression;
 }
 
+/**
+ * Generates the base Zod expression for a column type.
+ *
+ * @param column - Column definition.
+ * @returns Base Zod expression string.
+ */
 function baseZodExpression(column: TColumn): string {
   if (typeof column.type === "object" && "arrayOf" in column.type) {
     return `z.array(${primitiveToZod(column.type.arrayOf)})`;
@@ -54,6 +69,13 @@ function baseZodExpression(column: TColumn): string {
   return primitiveToZod(column.type);
 }
 
+/**
+ * Converts a primitive type to a Zod expression string.
+ *
+ * @param type - Primitive or array column type.
+ * @returns Zod expression string.
+ * @throws {Error} If the type is not supported.
+ */
 function primitiveToZod(type: TColumn["type"] extends infer T ? T : never): string {
   if (typeof type === "object" && type !== null && "arrayOf" in type) {
     return `z.array(${primitiveToZod(type.arrayOf)})`;
@@ -74,6 +96,13 @@ function primitiveToZod(type: TColumn["type"] extends infer T ? T : never): stri
   }
 }
 
+/**
+ * Converts a default value to a TypeScript literal string.
+ *
+ * @param value - Default value.
+ * @param columnType - Column type for context.
+ * @returns TypeScript literal string representation.
+ */
 function toTsLiteral(value: unknown, columnType: TColumn["type"]): string {
   if (value instanceof Date) {
     return `new Date(${JSON.stringify(value.toISOString())})`;

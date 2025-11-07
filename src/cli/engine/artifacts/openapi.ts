@@ -5,6 +5,12 @@ import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 import type { TseraConfig } from "../../contracts/types.ts";
 
+/**
+ * Recursively sorts object keys for deterministic JSON output.
+ *
+ * @param value - Value to sort.
+ * @returns Sorted value.
+ */
 function sortObject<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((item) => sortObject(item)) as unknown as T;
@@ -21,6 +27,13 @@ function sortObject<T>(value: T): T {
   return value;
 }
 
+/**
+ * Builds dependency identifiers for OpenAPI artifact based on schema artifacts.
+ *
+ * @param entities - Array of entity definitions.
+ * @param outDir - Output directory.
+ * @returns Array of dependency node identifiers.
+ */
 function buildDependencies(entities: readonly EntityDef[], outDir: string): string[] {
   const dependencies: string[] = [];
   for (const entity of entities) {
@@ -31,6 +44,13 @@ function buildDependencies(entities: readonly EntityDef[], outDir: string): stri
   return dependencies;
 }
 
+/**
+ * Builds the project-level OpenAPI artifact from all entities.
+ *
+ * @param entities - Array of entity definitions.
+ * @param config - TSera configuration.
+ * @returns OpenAPI artifact descriptor, or {@code null} if OpenAPI is disabled.
+ */
 export function buildProjectOpenAPIArtifact(
   entities: readonly EntityDef[],
   config: TseraConfig,

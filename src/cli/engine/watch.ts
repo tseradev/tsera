@@ -1,19 +1,39 @@
 import { resolve } from "../../shared/path.ts";
 
+/**
+ * Options for file system watching.
+ */
 export interface WatchOptions {
+  /** Debounce delay in milliseconds. */
   debounceMs?: number;
+  /** Patterns to ignore when watching. */
   ignore?: (string | RegExp)[];
 }
 
+/**
+ * Controller for managing a file system watcher.
+ */
 export interface WatchController {
+  /** Closes the watcher and stops monitoring. */
   close(): void;
 }
 
+/**
+ * Callback function invoked when file system events occur.
+ */
 export type WatchCallback = (events: Deno.FsEvent[]) => void | Promise<void>;
 
 const DEFAULT_DEBOUNCE = 150;
 const DEFAULT_IGNORES: (string | RegExp)[] = [/\.tsera\//, /\.tsera$/];
 
+/**
+ * Watches a project directory for file system changes with debouncing and filtering.
+ *
+ * @param directory - Directory to watch.
+ * @param callback - Callback invoked when changes are detected.
+ * @param options - Watch options.
+ * @returns Controller for managing the watcher.
+ */
 export function watchProject(
   directory: string,
   callback: WatchCallback,
@@ -78,6 +98,13 @@ export function watchProject(
   };
 }
 
+/**
+ * Determines whether a path should be ignored based on the ignore patterns.
+ *
+ * @param path - File system path to check.
+ * @param ignores - Array of ignore patterns (strings or regex).
+ * @returns {@code true} if the path should be ignored; otherwise {@code false}.
+ */
 function shouldIgnore(path: string, ignores: (string | RegExp)[]): boolean {
   // Normalise les chemins Windows pour utiliser des forward slashes
   const normalizedPath = path.replace(/\\/g, "/");
