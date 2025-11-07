@@ -11,15 +11,16 @@ import {
 } from "./commands/help/help.ts";
 import type { CliMetadata } from "./main.ts";
 
-/** A subcommand instance returned by command factories. */
+/** A subcommand instance with global options applied. */
 type SubCommand = ReturnType<typeof Command.prototype.globalOption>;
 
 const CLI_NAME = "TSera";
 const CLI_TAGLINE = "The next era of fullstack TypeScript starts here.";
 const CLI_USAGE = "<command> [options]";
+const JSON_OPTION_DESC = "Enable machine-readable NDJSON output.";
 
 const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
-  { label: "--json", description: "Stream machine-readable NDJSON events." },
+  { label: "--json", description: JSON_OPTION_DESC },
   { label: "-h, --help", description: "Show this help message." },
   { label: "-V, --version", description: "Display the CLI version." },
 ];
@@ -87,10 +88,10 @@ export function createRouter(
     .name(CLI_NAME)
     .version(metadata.version)
     .description("TSera CLI — The next era of fullstack TypeScript starts here.")
-    .globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
+    .globalOption("--json", JSON_OPTION_DESC, { default: false });
 
   const withGlobalOpts = (cmd: SubCommand): SubCommand =>
-    cmd.globalOption("--json", "Enable machine-friendly NDJSON output.", { default: false });
+    cmd.globalOption("--json", JSON_OPTION_DESC, { default: false });
 
   root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));

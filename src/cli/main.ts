@@ -34,7 +34,9 @@ export async function main(
 
     await router.parse(args);
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
+    // Use console.error directly at the entrypoint level (no logger context yet)
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error: ${message}`);
     Deno.exit(1);
   }
 }
