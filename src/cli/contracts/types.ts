@@ -49,6 +49,22 @@ export interface PathsConfig {
 }
 
 /**
+ * Module configuration specifying which optional features are enabled.
+ */
+export interface ModulesConfig {
+  /** Enable Hono API framework. */
+  hono?: boolean;
+  /** Enable Fresh frontend framework. */
+  fresh?: boolean;
+  /** Enable Docker Compose configuration. */
+  docker?: boolean;
+  /** Enable CI/CD workflows. */
+  ci?: boolean;
+  /** Enable type-safe secrets management. */
+  secrets?: boolean;
+}
+
+/**
  * Complete TSera project configuration.
  */
 export interface TseraConfig {
@@ -68,6 +84,8 @@ export interface TseraConfig {
   db: DbConfig;
   /** Deployment configuration. */
   deploy: DeployConfig;
+  /** Optional module configuration. */
+  modules?: ModulesConfig;
 }
 
 /**

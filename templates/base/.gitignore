@@ -1,0 +1,10 @@
+# TSera
+.tsera/
+drizzle/
+dist/
+node_modules/
+.env
+.env.*
+coverage/
+*.log
+

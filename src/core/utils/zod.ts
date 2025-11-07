@@ -10,10 +10,14 @@ try {
   zodModule = await import("../../deps/polyfills/zod.ts");
 }
 
-const { z } = zodModule;
+const { z, SchemaError } = zodModule;
 
 /**
  * Zod schema library instance, resolved from JSR or fallback polyfill.
  */
-export { z };
-export type { ZodObject, ZodTypeAny } from "../../deps/polyfills/zod.ts";
+export { SchemaError, z };
+export type {
+  SchemaError as SchemaErrorType,
+  ZodObject,
+  ZodTypeAny,
+} from "../../deps/polyfills/zod.ts";

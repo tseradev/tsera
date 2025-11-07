@@ -2,7 +2,8 @@
   "imports": {
     "@std/": "jsr:@std/",
     "@fresh/": "jsr:@fresh/",
-    "@preact/": "jsr:@preact/",
+    "preact": "npm:preact@10",
+    "preact/": "npm:preact@10/",
     "tsera/": "jsr:tsera/",
     "zod": "npm:zod@^3.23.8"
   }

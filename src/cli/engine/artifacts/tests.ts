@@ -2,11 +2,16 @@ import { join } from "../../../shared/path.ts";
 import { posixPath } from "../../../shared/path.ts";
 import type { TColumn } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
+import {
+  addImportDeclaration,
+  createInMemorySourceFile,
+  createTSeraProject,
+} from "../../utils/ts-morph.ts";
 
 const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
 
 /**
- * Builds smoke test artifacts for an entity.
+ * Builds smoke test artifacts for an entity using TS-Morph for AST-based generation.
  */
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
@@ -26,24 +31,40 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
     posixRelative(posixDirname(testPath), posixJoin("testing", "asserts.ts")),
   );
 
-  const lines: string[] = [
-    `import { assertEquals } from "${assertsImport}";`,
-    `import { ${entity.name}Schema } from "${importPath}";`,
-    "",
-    `Deno.test("${entity.name} schema valide un exemple minimal", () => {`,
-    `  const sample = ${objectLiteral};`,
-    `  const parsed = ${entity.name}Schema.parse(sample);`,
-    `  assertEquals(Object.keys(parsed).sort(), ${JSON.stringify(keys)});`,
-    "});",
-    "",
-  ];
+  // Create a TS-Morph project and source file
+  const project = createTSeraProject();
+  const sourceFile = createInMemorySourceFile(
+    project,
+    `${entity.name}.test.ts`,
+  );
+
+  // Add imports
+  addImportDeclaration(sourceFile, assertsImport, {
+    namedImports: ["assertEquals"],
+  });
+  addImportDeclaration(sourceFile, importPath, {
+    namedImports: [`${entity.name}Schema`],
+  });
+
+  // Add the test using expression statement
+  sourceFile.addStatements(`
+Deno.test("${entity.name} schema valide un exemple minimal", () => {
+  const sample = ${objectLiteral};
+  const parsed = ${entity.name}Schema.parse(sample);
+  assertEquals(Object.keys(parsed).sort(), ${JSON.stringify(keys)});
+});
+`);
+
+  // Format and get the generated text
+  sourceFile.formatText();
+  const content = sourceFile.getFullText();
 
   const path = join("tests", `${entity.name}.test.ts`);
 
   return [{
     kind: "test",
     path,
-    content: lines.join("\n"),
+    content,
     label: `${entity.name} test`,
     data: { entity: entity.name },
   }];

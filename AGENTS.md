@@ -54,14 +54,37 @@
       core/{resolve-config.ts,project.ts,fsx.ts,tui.ts,log.ts}
       contracts/types.ts  # TseraConfig/DbConfig/DeployTarget
   templates/
-    app-minimal/
-      README.md
+    base/                 # Template de base (toujours inclus)
       deno.jsonc
       import_map.json
-      main.ts             # Hono minimal
-      routes/health.ts
+      .gitignore
+      README.md
       domain/User.entity.ts
-      web/                # Fresh minimal (optionnel MVP)
+      testing/asserts.ts
+    modules/
+      hono/               # Module API (optionnel, --no-hono)
+        main.ts
+        routes/health.ts
+        deps/hono.ts
+        tests/health.test.ts
+      fresh/              # Module Frontend (optionnel, --no-fresh)
+        web/
+          main.ts         # Fresh app entry
+          routes/index.tsx
+          islands/Counter.tsx
+          static/styles.css
+        fresh.config.ts
+      docker/             # Module Docker (optionnel, --no-docker)
+        docker-compose.yml
+        Dockerfile
+        .dockerignore
+      ci/                 # Module CI/CD (optionnel, --no-ci)
+        .github/workflows/ci.yml
+        .github/workflows/deploy.yml
+      secrets/            # Module Secrets (optionnel, --no-secrets)
+        env.config.ts
+        lib/env.ts
+        lib/env.test.ts
   docs/
     README.md             # landing OSS courte
     ARCHITECTURE.md       # graphe/DAG & CC
@@ -78,13 +101,15 @@
 
 ## 2) Contraintes non négociables
 
-- **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm**.
+- **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm** sauf pour les dépendances non
+  disponibles sur JSR (Preact).
 - Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/fmt/colors`, `@std/flags`,
-  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **zod‑to‑openapi**, **Drizzle**.
-- **Pas de MCP**. **Pas d’HTTP** dans le CLI.
+  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **zod‑to‑openapi**, **Drizzle**, **Hono**,
+  **Fresh** (SSR + islands via JSR), **Preact** (via npm, utilisé par Fresh).
+- **Pas de MCP**. **Pas d'HTTP** dans le CLI.
 - **Écritures bornées** : `.tsera/`, `drizzle/`, `docs/`, tests générés. `safeWrite` only (écrit si
   diff).
-- Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptifs**.
+- Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptives**.
 
 ---
 
@@ -155,13 +180,20 @@ Affiche le help global avec la liste des commandes disponibles.
 
 #### `tsera init [directory]`
 
-Copie `templates/app-minimal`, crée `deno.jsonc`, `.gitignore`, `README.md`, **écrit**
-`tsera.config.ts` **complet** (profil _full_ commenté).
+Compose un projet TSera à partir du template de base et des modules sélectionnés. Crée `deno.jsonc`,
+`.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
+
+**Modules inclus par défaut** : Hono (API), Fresh (frontend), Docker, CI/CD, Secrets.
 
 **Options :**
 
 - `[directory]` : Répertoire cible (défaut: `.`)
-- `--template <name>` : Template à utiliser (défaut: `app-minimal`)
+- `--template <name>` : Template de base à utiliser (défaut: `base`)
+- `--no-hono` : Exclut le module API Hono
+- `--no-fresh` : Exclut le module frontend Fresh
+- `--no-docker` : Exclut le module Docker Compose
+- `--no-ci` : Exclut le module CI/CD GitHub Actions
+- `--no-secrets` : Exclut le module de gestion des secrets type-safe
 - `-f, --force` : Écrase les fichiers existants
 - `-y, --yes` : Répond automatiquement "oui" aux prompts (mode non-interactif)
 
@@ -259,10 +291,11 @@ export interface TseraConfig {
 
 ## 5) Template app‑minimal
 
-- Projet Deno minimal avec **Hono** (`/health`), une entité `User`, `tsera.config.ts` complet,
-  `deno.jsonc`, `import_map.json`, README court.
-- Dossier `web/` (Fresh) optionnel au MVP.
-- Page racine affichant le component Fresh
+- Projet Deno minimal avec **Hono** (API `/health`), **Fresh** (frontend SSR avec islands), une
+  entité `User`, `tsera.config.ts` complet, `deno.jsonc`, `import_map.json`, README court.
+- Dossier `web/` (Fresh) pour le frontend SSR avec architecture islands.
+- Page racine affichant le component Fresh avec partage direct des types backend/frontend.
+- **Fresh est inclus par défaut** et peut être désactivé via `--no-fresh` lors de l'init.
 
 ---
 
@@ -336,11 +369,12 @@ export interface TseraConfig {
 ## 12) Roadmap (post‑MVP)
 
 1. Types enrichis (enums, relations, index/unique) → migrations plus riches.
-2. Détection de routes (Hono/Fresh) avancée → OpenAPI plus complet.
+2. Détection de routes (Hono/Fresh) avancée → OpenAPI plus complet avec partage de types.
 3. **Policies CC** (ex. `requireValidationSchema`, `forbidUntypedQuery`) + blocages configurables.
-4. Observabilité : export métriques (temps d’incohérence) ; badge public.
+4. Observabilité : export métriques (temps d'incohérence) ; badge public.
 5. Providers optionnels (GraphQL/gRPC/RBAC) **hors cœur**.
 6. **MCP** (plus tard) : interface agents ; **non inclus** ici.
+7. **Fresh islands avancées** : hydratation sélective, partage d'état backend/frontend type-safe.
 
 ---
 
@@ -350,6 +384,7 @@ export interface TseraConfig {
 - [ ] **Noyau** entités + helpers (zod/openapi/drizzle) testés et prêts à l’usage.
 - [ ] **CLI** : 4 commandes stables; `init` écrit `tsera.config.ts` _full_; `dev` maintient les
       artefacts; `doctor --fix` et `update` OK.
-- [ ] **Template** app‑minimal fonctionnel; `tsera dev` régénère bien.
+- [ ] **Template** base + modules (Hono, Fresh, Docker, CI, Secrets) fonctionnels; `tsera dev`
+      régénère bien; `--no-*` flags opérationnels.
 - [ ] **Tests** unit + golden + e2e verts en CI 3 OS.
 - [ ] **Release** : tags → binaires (et JSR optionnel); README à jour.

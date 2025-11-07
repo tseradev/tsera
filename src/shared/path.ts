@@ -131,6 +131,15 @@ export function dirname(path: string): string {
 }
 
 /**
+ * Returns the last portion of a path, similar to {@code path.basename}.
+ */
+export function basename(path: string): string {
+  path = normalizeSeparator(path, OS_SEP);
+  const segments = splitSegments(path, OS_SEP);
+  return segments.length > 0 ? segments[segments.length - 1] : "";
+}
+
+/**
  * Resolves a path against the current working directory when it is not already absolute.
  */
 export function resolve(path: string): string {
@@ -138,6 +147,34 @@ export function resolve(path: string): string {
     return join(path);
   }
   return join(Deno.cwd(), path);
+}
+
+/**
+ * Computes the relative path from `from` to `to` using the platform separator.
+ */
+export function relative(from: string, to: string): string {
+  const fromNorm = join(from);
+  const toNorm = join(to);
+  const fromSegs = splitSegments(fromNorm, OS_SEP);
+  const toSegs = splitSegments(toNorm, OS_SEP);
+
+  // Remove common prefix
+  let commonLength = 0;
+  const minLength = Math.min(fromSegs.length, toSegs.length);
+  for (let i = 0; i < minLength; i++) {
+    if (fromSegs[i].toLowerCase() === toSegs[i].toLowerCase()) {
+      commonLength++;
+    } else {
+      break;
+    }
+  }
+
+  const upwardsCount = fromSegs.length - commonLength;
+  const upwards = new Array(upwardsCount).fill("..");
+  const remaining = toSegs.slice(commonLength);
+
+  const result = [...upwards, ...remaining];
+  return result.length > 0 ? result.join(OS_SEP) : ".";
 }
 
 /** POSIX-specific join helper exposed via {@link posixPath}. */

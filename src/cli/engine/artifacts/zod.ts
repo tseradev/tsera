@@ -1,31 +1,62 @@
 import { join } from "../../../shared/path.ts";
 import type { TColumn } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
-
-const IMPORT_LINE = 'import { z } from "zod";';
+import {
+  addImportDeclaration,
+  createInMemorySourceFile,
+  createTSeraProject,
+} from "../../utils/ts-morph.ts";
+import { VariableDeclarationKind } from "../../../deps/polyfills/ts-morph.ts";
 
 /**
- * Builds Zod schema artifacts for an entity.
+ * Builds Zod schema artifacts for an entity using TS-Morph for AST-based generation.
  */
 export const buildZodArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
   const path = join(config.outDir, "schemas", `${entity.name}.schema.ts`);
-  const lines: string[] = [IMPORT_LINE, "", `export const ${entity.name}Schema = z.object({`];
 
+  // Create a TS-Morph project and source file
+  const project = createTSeraProject();
+  const sourceFile = createInMemorySourceFile(
+    project,
+    `${entity.name}.schema.ts`,
+  );
+
+  // Add import for Zod
+  addImportDeclaration(sourceFile, "zod", { namedImports: ["z"] });
+
+  // Build the schema object properties
   const columnEntries = Object.entries(entity.columns);
-  columnEntries.forEach(([name, column], index) => {
+  const properties = columnEntries.map(([name, column]) => {
     const expression = columnToZodExpression(column);
-    const suffix = index === columnEntries.length - 1 ? "" : ",";
-    lines.push(`  ${name}: ${expression}${suffix}`);
+    return `${name}: ${expression}`;
   });
 
-  lines.push(`}).strict();`);
-  lines.push("", `export type ${entity.name}Input = z.infer<typeof ${entity.name}Schema>;`, "");
+  // Add the schema constant declaration
+  sourceFile.addVariableStatement({
+    isExported: true,
+    declarationKind: VariableDeclarationKind.Const,
+    declarations: [{
+      name: `${entity.name}Schema`,
+      initializer: `z.object({\n  ${properties.join(",\n  ")}\n}).strict()`,
+    }],
+  });
+
+  // Add the inferred type export
+  sourceFile.addTypeAlias({
+    isExported: true,
+    name: `${entity.name}Input`,
+    type: `z.infer<typeof ${entity.name}Schema>`,
+  });
+
+  // Format and get the generated text
+  sourceFile.formatText();
+  const content = sourceFile.getFullText();
 
   return [{
     kind: "schema",
     path,
-    content: lines.join("\n"),
+    content,
     label: `${entity.name} schema`,
     data: { entity: entity.name },
   }];

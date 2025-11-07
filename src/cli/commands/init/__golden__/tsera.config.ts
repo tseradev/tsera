@@ -1,6 +1,6 @@
-// TSera configuration (full profile with comments).
-import type { TseraConfig } from "tsera/cli/contracts/types.ts";
+import { TseraConfig } from "tsera/cli/contracts/types.ts";
 
+// TSera configuration (full profile with comments).
 const config: TseraConfig = {
   // Toggle generated artifacts controlled by "tsera dev".
   openapi: true,
@@ -29,6 +29,13 @@ const config: TseraConfig = {
     target: "deno_deploy",
     entry: "main.ts",
     envFile: ".env.deploy",
+  },
+  modules: {
+    hono: true,
+    fresh: true,
+    docker: true,
+    ci: true,
+    secrets: true,
   },
 };
 

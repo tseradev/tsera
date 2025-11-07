@@ -36,6 +36,13 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
       force: false,
       yes: true,
       global: { json: false },
+      modules: {
+        hono: true,
+        fresh: true,
+        docker: true,
+        ci: true,
+        secrets: true,
+      },
     });
 
     await updateImportMapForTests(projectDir);
@@ -80,6 +87,13 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       force: false,
       yes: true,
       global: { json: false },
+      modules: {
+        hono: true,
+        fresh: true,
+        docker: true,
+        ci: true,
+        secrets: true,
+      },
     });
 
     await updateImportMapForTests(projectDir);

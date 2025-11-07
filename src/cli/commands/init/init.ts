@@ -14,7 +14,7 @@ import { readEngineState, writeDagState, writeEngineState } from "../../engine/s
 import type { GlobalCLIOptions } from "../../router.ts";
 import { InitConsole } from "./init-ui.ts";
 import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/file-ops.ts";
-import { copyTemplateDirectory } from "./utils/template-copy.ts";
+import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts";
 import { generateConfigFile } from "./utils/config-generator.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
@@ -23,6 +23,11 @@ interface InitCommandOptions extends GlobalCLIOptions {
   template: string;
   force: boolean;
   yes: boolean;
+  noHono: boolean;
+  noFresh: boolean;
+  noDocker: boolean;
+  noCi: boolean;
+  noSecrets: boolean;
 }
 
 /** Options passed to the init action handler by Cliffy. */
@@ -31,6 +36,11 @@ interface InitActionOptions {
   template?: string;
   force?: boolean;
   yes?: boolean;
+  noHono?: boolean;
+  noFresh?: boolean;
+  noDocker?: boolean;
+  noCi?: boolean;
+  noSecrets?: boolean;
 }
 
 /**
@@ -45,6 +55,14 @@ export interface InitCommandContext {
   force: boolean;
   /** Whether to answer yes to interactive prompts. */
   yes: boolean;
+  /** Enabled modules configuration. */
+  modules: {
+    hono: boolean;
+    fresh: boolean;
+    docker: boolean;
+    ci: boolean;
+    secrets: boolean;
+  };
   /** Global CLI options. */
   global: GlobalCLIOptions;
 }
@@ -66,7 +84,7 @@ interface InitHandlerDependencies {
  * @returns Absolute path to the templates directory.
  */
 function defaultTemplatesRoot(): string {
-  return fromFileUrl(new URL("../../../../templates", import.meta.url));
+  return getTemplatesRoot();
 }
 
 /**
@@ -155,40 +173,65 @@ export function createDefaultInitHandler(
     const jsonMode = context.global.json;
     const logger = createLogger({ json: jsonMode, writer });
     const targetDir = resolve(context.directory);
-    const templateDir = join(templatesRoot, context.template);
     const human = jsonMode
       ? undefined
       : new InitConsole({ projectDir: targetDir, template: context.template, writer });
 
     if (jsonMode) {
-      logger.event("init:start", { directory: targetDir, template: context.template });
+      logger.event("init:start", { 
+        directory: targetDir, 
+        template: context.template,
+        modules: context.modules,
+      });
     } else {
       human?.start();
     }
 
     await ensureDirectoryReady(targetDir, context.force);
 
-    if (!(await pathExists(templateDir))) {
-      throw new Error(`Unknown template: ${context.template}`);
-    }
+    // Determine which modules to enable
+    const enabledModules: string[] = [];
+    if (context.modules.hono) enabledModules.push("hono");
+    if (context.modules.fresh) enabledModules.push("fresh");
+    if (context.modules.docker) enabledModules.push("docker");
+    if (context.modules.ci) enabledModules.push("ci");
+    if (context.modules.secrets) enabledModules.push("secrets");
 
-    const copy = await copyTemplateDirectory(templateDir, targetDir, { force: context.force });
+    // Compose template from base + modules
+    const baseDir = join(templatesRoot, "base");
+    const modulesDir = join(templatesRoot, "modules");
+    
+    const composition = await composeTemplate({
+      targetDir,
+      baseDir,
+      modulesDir,
+      enabledModules,
+      force: context.force,
+    });
     
     // Patch import_map.json to use local sources instead of JSR (for development/testing)
     await patchImportMapForLocalDevelopment(targetDir, templatesRoot);
     
     if (jsonMode) {
-      logger.event("init:copy", { files: copy.files.length, skipped: copy.skipped.length });
+      logger.event("init:copy", { 
+        files: composition.copiedFiles.length,
+        merged: composition.mergedFiles.length,
+        skipped: composition.skippedFiles.length,
+        modules: enabledModules,
+      });
     } else {
-      human?.templateReady(copy.files.length, copy.skipped.length);
+      human?.templateReady(
+        composition.copiedFiles.length + composition.mergedFiles.length, 
+        composition.skippedFiles.length
+      );
     }
 
     const projectName = deriveProjectName(targetDir);
     const configPath = join(targetDir, "tsera.config.ts");
     await ensureWritable(configPath, context.force, "tsera.config.ts");
-    await safeWrite(configPath, generateConfigFile(projectName));
+    await safeWrite(configPath, generateConfigFile(projectName, context.modules));
     if (jsonMode) {
-      logger.event("init:config", { path: configPath });
+      logger.event("init:config", { path: configPath, modules: context.modules });
     } else {
       human?.configReady(configPath);
     }
@@ -281,13 +324,35 @@ export function createInitCommand(
     .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
+    .option("--no-hono", "Disable Hono API module.", { default: false })
+    .option("--no-fresh", "Disable Fresh frontend module.", { default: false })
+    .option("--no-docker", "Disable Docker Compose module.", { default: false })
+    .option("--no-ci", "Disable CI/CD workflows.", { default: false })
+    .option("--no-secrets", "Disable type-safe secrets management.", { default: false })
     .action(async (options: InitActionOptions, directory = ".") => {
-      const { json = false, template = "app-minimal", force = false, yes = false } = options;
+      const { 
+        json = false, 
+        template = "app-minimal", 
+        force = false, 
+        yes = false,
+        noHono = false,
+        noFresh = false,
+        noDocker = false,
+        noCi = false,
+        noSecrets = false,
+      } = options;
       await handler({
         directory,
         template,
         force,
         yes,
+        modules: {
+          hono: !noHono,
+          fresh: !noFresh,
+          docker: !noDocker,
+          ci: !noCi,
+          secrets: !noSecrets,
+        },
         global: { json },
       });
     });
@@ -319,6 +384,26 @@ export function createInitCommand(
               description: "Answer yes to all prompts (non-interactive mode)",
             },
             {
+              label: "--no-hono",
+              description: "Disable Hono API module (enabled by default)",
+            },
+            {
+              label: "--no-fresh",
+              description: "Disable Fresh frontend module (enabled by default)",
+            },
+            {
+              label: "--no-docker",
+              description: "Disable Docker Compose module (enabled by default)",
+            },
+            {
+              label: "--no-ci",
+              description: "Disable CI/CD workflows (enabled by default)",
+            },
+            {
+              label: "--no-secrets",
+              description: "Disable type-safe secrets management (enabled by default)",
+            },
+            {
               label: "--json",
               description: "Output machine-readable NDJSON events",
             },
@@ -326,7 +411,8 @@ export function createInitCommand(
           examples: [
             "tsera init",
             "tsera init my-app",
-            "tsera init my-app --template app-minimal",
+            "tsera init my-app --no-fresh --no-docker",
+            "tsera init --no-hono --no-ci",
             "tsera init --force --yes",
           ],
         }),

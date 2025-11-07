@@ -21,8 +21,10 @@ export function deepFreeze<T>(value: T): Readonly<T> {
 
   const propertyNames = Reflect.ownKeys(value as Record<PropertyKey, unknown>);
   for (const property of propertyNames) {
-    // deno-lint-ignore no-explicit-any
-    const descriptor = Object.getOwnPropertyDescriptor(value as any, property);
+    const descriptor = Object.getOwnPropertyDescriptor(
+      value as Record<PropertyKey, unknown>,
+      property,
+    );
     if (!descriptor || !("value" in descriptor)) {
       continue;
     }

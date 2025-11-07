@@ -21,8 +21,12 @@ team-facing documentation.
 - **Deno v2** (strict ESM, tasks managed via `deno.jsonc`).
 - **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `update`).
 - **Zod**, **zod-to-openapi**, and **Drizzle** to project entities.
-- **TS-Morph** to drive TypeScript generation.
-- **Hono/Fresh templates** to bootstrap the `app-minimal` project.
+- **TS-Morph** (via JSR) for AST-based TypeScript code generation.
+- **Hono** API framework (optional module).
+- **Fresh** SSR frontend framework (optional module).
+- **Docker Compose** for local development (optional module).
+- **GitHub Actions** CI/CD workflows (optional module).
+- **Type-safe secrets management** with environment validation (optional module).
 
 ## Quick start
 
@@ -53,8 +57,14 @@ This makes a `tsera` executable available in your shell (the command can also be
 ### Hello world walkthrough
 
 ```bash
-# 1. Scaffold a new project in ./demo
+# 1. Scaffold a new project with all modules enabled (default)
 tsera init demo
+
+# Or create a minimal project with only specific modules
+tsera init demo --no-fresh --no-docker --no-ci
+
+# Or create a backend-only project
+tsera init demo --no-fresh
 
 # 2. Move into the generated project and inspect the structure
 cd demo
@@ -67,14 +77,42 @@ tsera dev --once
 # 4. Keep the watcher active during development
 tsera dev
 
-# 5. Launch the demo API in a separate terminal
+# 5. Launch the demo API (if Hono module is enabled)
 deno run -A main.ts
+
+# Or use Docker Compose (if Docker module is enabled)
+docker-compose up
 
 # 6. Hit the health route (responds with `{ "status": "ok" }`)
 curl http://localhost:8000/health
 
 # 7. Run the bundled smoke tests (health route + generated schemas)
 deno task test
+```
+
+### Modular Architecture
+
+TSera uses a modular architecture where you can enable or disable specific features:
+
+**Available modules (all enabled by default):**
+
+- **Hono**: Fast and minimal API framework (Hono v4 via JSR/npm)
+- **Fresh**: Server-side rendering with islands architecture (Fresh v2 via JSR + Preact v10 via npm)
+- **Docker**: Docker Compose configuration with PostgreSQL
+- **CI/CD**: GitHub Actions workflows for testing and deployment
+- **Secrets**: Type-safe environment variable management with Zod validation
+
+**Disable modules using flags:**
+
+```bash
+# Minimal backend-only project
+tsera init my-app --no-fresh --no-docker --no-ci
+
+# API + Fresh frontend only
+tsera init my-app --no-docker --no-ci
+
+# Full stack without CI
+tsera init my-app --no-ci
 ```
 
 > The template ships with `deps/hono.ts`, a thin loader that attempts to import `npm:hono@4`. If the
@@ -84,13 +122,74 @@ deno task test
 
 When `tsera init` completes you will find:
 
-- `tsera.config.ts` — a fully documented configuration with defaults for entities, paths, and deploy
-  targets.
+- `tsera.config.ts` — a fully documented configuration with defaults for entities, paths, deploy
+  targets, and enabled modules.
 - `.tsera/graph.json` & `.tsera/manifest.json` — cached hashes and manifest produced by the engine.
 - `drizzle/`, `docs/`, and `tests/` — folders that will receive generated migrations, documentation,
   and smoke tests as soon as entities are introduced.
-- `templates/app-minimal` files copied into the new project: a Hono API, Fresh front-end islands,
-  and an example `User` entity to explore.
+- `domain/User.entity.ts` — an example entity to explore.
+- **Hono module** (if enabled): `main.ts`, `routes/health.ts`, and API infrastructure.
+- **Fresh module** (if enabled): `web/` directory with routes, islands, and static assets.
+- **Docker module** (if enabled): `docker-compose.yml` and `Dockerfile` for containerized
+  development.
+- **CI module** (if enabled): `.github/workflows/` with CI/CD pipelines.
+- **Secrets module** (if enabled): `env.config.ts` for type-safe environment variable management.
+
+### Type-Safe Secrets Management
+
+The **Secrets module** provides runtime validation of environment variables with full TypeScript
+support:
+
+```typescript
+// env.config.ts - Define your environment schema
+import { defineEnvSchema } from "tsera/core/secrets.ts";
+
+export const envSchema = defineEnvSchema({
+  DATABASE_URL: {
+    type: "string",
+    required: true,
+    description: "PostgreSQL connection URL",
+  },
+  PORT: {
+    type: "number",
+    required: false,
+    default: 8000,
+  },
+  API_KEY: {
+    type: "string",
+    // Environment-specific requirements
+    required: { dev: false, preprod: true, prod: true },
+  },
+  DEBUG: {
+    type: "boolean",
+    required: false,
+    default: false,
+    environments: ["dev"], // Only checked in dev
+  },
+});
+```
+
+```typescript
+// main.ts - Validate on startup
+import { validateEnv } from "./lib/env.ts";
+import { envSchema } from "./env.config.ts";
+
+const env = Deno.env.get("TSERA_ENV") || "dev";
+const validation = validateEnv(envSchema, env);
+
+if (!validation.valid) {
+  console.error("Environment validation failed:");
+  validation.errors.forEach((err) => console.error(`  - ${err}`));
+  Deno.exit(1);
+}
+
+// Type-safe access to environment variables
+const port = validation.values.PORT; // Type: number
+const dbUrl = validation.values.DATABASE_URL; // Type: string
+```
+
+This ensures your application refuses to start if required environment variables are missing or
+invalid, preventing runtime errors in production.
 
 Running `tsera dev` triggers a full **plan → apply** cycle. The default (interactive) mode displays
 a summary of the detected entities, the generated artifacts, and the resulting coherence status. Use

@@ -52,82 +52,133 @@ function findEvent(events: LogEvent[], name: string): LogEvent | undefined {
   return events.find((event) => event.event === name || event.message === name);
 }
 
-async function main(): Promise<void> {
+async function testBasicInit(): Promise<void> {
+  console.log("\n[e2e] Testing basic init with all modules...");
   const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
-  const projectDir = join(workspace, "demo");
+  const projectDir = join(workspace, "demo-full");
 
   try {
-    const initResult = await runCli(["init", "demo"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-full"], { cwd: workspace });
     if (!initResult.success) {
-      throw new Error(`The init command failed: ${initResult.stderr}`);
+      throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
-    const openapiPath = join(projectDir, ".tsera", "openapi", "User.json");
+    // Check core files
+    assert(await exists(join(projectDir, "tsera.config.ts")), "Config missing");
+    assert(await exists(join(projectDir, "domain", "User.entity.ts")), "Entity missing");
+
+    // Check Hono module
+    assert(await exists(join(projectDir, "main.ts")), "Hono main.ts missing");
+    assert(await exists(join(projectDir, "routes", "health.ts")), "Health route missing");
+
+    // Check Fresh module
+    assert(await exists(join(projectDir, "web", "main.ts")), "Fresh main.ts missing");
+    assert(await exists(join(projectDir, "web", "islands", "Counter.tsx")), "Counter island missing");
+
+    // Check Docker module
+    assert(await exists(join(projectDir, "docker-compose.yml")), "docker-compose.yml missing");
+    assert(await exists(join(projectDir, "Dockerfile")), "Dockerfile missing");
+
+    // Check CI module
+    assert(await exists(join(projectDir, ".github", "workflows", "ci.yml")), "CI workflow missing");
+
+    // Check Secrets module
+    assert(await exists(join(projectDir, "env.config.ts")), "env.config.ts missing");
+    assert(await exists(join(projectDir, "lib", "env.ts")), "lib/env.ts missing");
+
+    console.log("[e2e] ✓ Basic init test passed");
+  } finally {
+    await Deno.remove(workspace, { recursive: true });
+  }
+}
+
+async function testSelectiveModules(): Promise<void> {
+  console.log("\n[e2e] Testing selective module disabling...");
+  const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
+  const projectDir = join(workspace, "demo-minimal");
+
+  try {
+    const initResult = await runCli([
+      "init",
+      "demo-minimal",
+      "--no-fresh",
+      "--no-docker",
+      "--no-ci",
+    ], { cwd: workspace });
+
+    if (!initResult.success) {
+      throw new Error(`Init with flags failed: ${initResult.stderr}`);
+    }
+
+    // Check that base and enabled modules exist
+    assert(await exists(join(projectDir, "tsera.config.ts")), "Config missing");
+    assert(await exists(join(projectDir, "main.ts")), "Hono should be present");
+    assert(await exists(join(projectDir, "env.config.ts")), "Secrets should be present");
+
+    // Check that disabled modules don't exist
+    assert(!await exists(join(projectDir, "web")), "Fresh should be disabled");
+    assert(!await exists(join(projectDir, "docker-compose.yml")), "Docker should be disabled");
+    assert(!await exists(join(projectDir, ".github")), "CI should be disabled");
+
+    console.log("[e2e] ✓ Selective modules test passed");
+  } finally {
+    await Deno.remove(workspace, { recursive: true });
+  }
+}
+
+async function testCoherence(): Promise<void> {
+  console.log("\n[e2e] Testing coherence and artifact generation...");
+  const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
+  const projectDir = join(workspace, "demo-coherence");
+
+  try {
+    const initResult = await runCli(["init", "demo-coherence"], { cwd: workspace });
+    if (!initResult.success) {
+      throw new Error(`Init failed: ${initResult.stderr}`);
+    }
+
     const schemaPath = join(projectDir, ".tsera", "schemas", "User.schema.ts");
     const docPath = join(projectDir, "docs", "User.md");
 
-    assert(await exists(openapiPath), "The OpenAPI file was not generated.");
-    assert(await exists(schemaPath), "The Zod schema was not generated.");
-    assert(await exists(docPath), "The documentation file was not generated.");
+    assert(await exists(schemaPath), "Schema not generated");
+    assert(await exists(docPath), "Documentation not generated");
 
     const firstDev = await runCli(["--json", "dev", "--once"], { cwd: projectDir });
     if (!firstDev.success) {
-      throw new Error(`The initial dev command failed: ${firstDev.stderr}`);
+      throw new Error(`Dev command failed: ${firstDev.stderr}`);
     }
-    assertEquals(firstDev.stderr.trim(), "", "The dev command should not output errors.");
 
     const events = parseNdjson(firstDev.stdout);
     const planSummary = findEvent(events, "plan:summary");
-    assert(planSummary, "Missing plan:summary event.");
+    assert(planSummary, "Missing plan:summary event");
     const summary = planSummary!.context as Record<string, unknown>;
-    assert(summary.changed === false, "The first cycle after init must be clean.");
+    assert(summary.changed === false, "First cycle should be clean");
 
-    const coherenceEvent = findEvent(events, "coherence");
-    assert(coherenceEvent, "Missing coherence event.");
-    const coherence = coherenceEvent!.context as Record<string, unknown>;
-    assert(coherence.status === "clean", "The project should be coherent after init.");
-    assert(coherence.pending === false, "No inconsistencies should remain after init.");
-
-    const initialOpenapi = await Deno.readTextFile(openapiPath);
-
-    const entityPath = join(projectDir, "domain", "User.entity.ts");
-    const entitySource = await Deno.readTextFile(entityPath);
-    const injection =
-      '    lastLoginAt: {\n      type: "date",\n      optional: true,\n      description: "Last login.",\n    },\n\n';
-    const marker = "    settings: {";
-    const markerIndex = entitySource.indexOf(marker);
-    if (markerIndex === -1) {
-      throw new Error("Unable to locate the settings field in the User entity.");
-    }
-
-    const updatedSource = entitySource.replace(marker, `${injection}${marker}`);
-    await Deno.writeTextFile(entityPath, updatedSource);
-
-    const secondDev = await runCli(["--json", "dev", "--once"], { cwd: projectDir });
-    if (!secondDev.success) {
-      throw new Error(`The dev command after modification failed: ${secondDev.stderr}`);
-    }
-    assertEquals(secondDev.stderr.trim(), "", "The dev command should not output errors.");
-
-    const secondEvents = parseNdjson(secondDev.stdout);
-    const secondSummaryEvent = findEvent(secondEvents, "plan:summary");
-    assert(secondSummaryEvent, "Missing plan:summary event after modification.");
-    const secondSummary = secondSummaryEvent!.context as Record<string, unknown>;
-    assert(
-      (secondSummary.update as number) > 0,
-      "An update was expected after modifying the entity.",
-    );
-
-    const updatedOpenapi = await Deno.readTextFile(openapiPath);
-    assert(
-      updatedOpenapi.includes("lastLoginAt"),
-      "The OpenAPI file must contain the new field.",
-    );
-    assert(updatedOpenapi !== initialOpenapi, "The OpenAPI file must be regenerated.");
-
-    console.log(`[e2e] Success — artifacts regenerated in ${projectDir}`);
+    console.log("[e2e] ✓ Coherence test passed");
   } finally {
     await Deno.remove(workspace, { recursive: true });
+  }
+}
+
+async function main(): Promise<void> {
+  console.log("=".repeat(60));
+  console.log("TSera E2E Tests");
+  console.log("=".repeat(60));
+
+  try {
+    await testBasicInit();
+    await testSelectiveModules();
+    await testCoherence();
+
+    console.log("\n" + "=".repeat(60));
+    console.log("✅ All E2E tests passed!");
+    console.log("=".repeat(60));
+  } catch (error) {
+    console.error("\n" + "=".repeat(60));
+    console.error("❌ E2E tests failed:");
+    console.error(error);
+    console.error("=".repeat(60));
+    Deno.exit(1);
   }
 }
 

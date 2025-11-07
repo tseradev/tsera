@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "tsera/": "../../src/",
+    "tsera/core/": "../../src/core/",
+    "tsera/cli/": "../../src/cli/"
+  }
+}
