@@ -29,7 +29,7 @@ Deno.test("init generates the full skeleton and manifest", async () => {
 
     await handler({
       directory: projectDir,
-      template: "app-minimal",
+      template: "base",
       force: false,
       yes: true,
       global: { json: false },

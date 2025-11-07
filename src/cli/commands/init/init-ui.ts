@@ -42,7 +42,7 @@ export interface InitConsoleOptions {
  * ```typescript
  * const console = new InitConsole({
  *   projectDir: "/path/to/new-project",
- *   template: "app-minimal",
+ *   template: "base",
  * });
  *
  * console.start();

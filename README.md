@@ -252,12 +252,12 @@ The cycle can run manually (`plan/apply`) or automatically through `tsera dev`.
 
 ## CLI commands at a glance
 
-| Command             | Purpose                                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `tsera init <name>` | Scaffold the `app-minimal` template, generate `.tsera` state, and prepare a ready-to-commit project. |
-| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change.         |
-| `tsera doctor`      | Rebuild the dependency graph, detect drifts, and optionally auto-fix safe issues.                    |
-| `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                   |
+| Command             | Purpose                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `tsera init <name>` | Scaffold a project from `base` template + selected modules, generate `.tsera` state, and prepare a ready-to-commit project. |
+| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change.                                |
+| `tsera doctor`      | Rebuild the dependency graph, detect drifts, and optionally auto-fix safe issues.                                           |
+| `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                                          |
 
 Key options to remember:
 
@@ -297,6 +297,6 @@ For any discussion or proposal, open an issue or reach out via the channels list
 
 1. Finalize `defineEntity` and the Zod/OpenAPI/Drizzle helpers.
 2. Stabilize the Cliffy CLI with the `init`, `dev`, `doctor`, `update` commands.
-3. Ship the complete `app-minimal` template with generated artifacts.
+3. Ship the complete template system (`base` + modules) with generated artifacts.
 4. Enable the E2E flow (`scripts/e2e.ts`).
 5. Publish an experimental binary for early feedback.

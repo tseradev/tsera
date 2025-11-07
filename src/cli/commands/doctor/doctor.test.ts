@@ -32,7 +32,7 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
     const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
     await init({
       directory: projectDir,
-      template: "app-minimal",
+      template: "base",
       force: false,
       yes: true,
       global: { json: false },
@@ -83,7 +83,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
     const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
     await init({
       directory: projectDir,
-      template: "app-minimal",
+      template: "base",
       force: false,
       yes: true,
       global: { json: false },

@@ -321,7 +321,7 @@ export function createInitCommand(
   const command = new Command()
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
-    .option("--template <name:string>", "Template to use.", { default: "app-minimal" })
+    .option("--template <name:string>", "Template to use (currently ignored, always uses base + modules).", { default: "base" })
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
     .option("--no-hono", "Disable Hono API module.", { default: false })
@@ -332,7 +332,7 @@ export function createInitCommand(
     .action(async (options: InitActionOptions, directory = ".") => {
       const { 
         json = false, 
-        template = "app-minimal", 
+        template = "base", 
         force = false, 
         yes = false,
         noHono = false,
@@ -373,7 +373,7 @@ export function createInitCommand(
             },
             {
               label: "--template <name>",
-              description: "Template to use (default: app-minimal)",
+              description: "Template to use (currently ignored, always uses base + modules)",
             },
             {
               label: "-f, --force",

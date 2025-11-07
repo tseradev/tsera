@@ -48,7 +48,7 @@ const COMMAND_HELP: ModernHelpCommand[] = [
 ];
 
 const CLI_EXAMPLES = [
-  "tsera init demo-app --template app-minimal",
+  "tsera init demo-app",
   "tsera dev --json",
   "tsera doctor --fix",
 ];

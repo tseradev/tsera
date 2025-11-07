@@ -14,12 +14,12 @@
 ## 0) TL;DR (ordre recommandé)
 
 1. **Structure repo + tasks + CI** → 2) **Noyau “entités”** (`defineEntity` + helpers
-   Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Template app-minimal** → 5) **Tests
+   Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Templates modulaires (base + modules)** → 5) **Tests
    (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
 
 - Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
-- `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et le
-  squelette `templates/app-minimal`.
+- `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et compose
+  le projet à partir de `templates/base` + modules sélectionnés.
 - `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI (zod-to-openapi), migrations Drizzle,
   docs, tests smoke, `.tsera/graph.json`, `.tsera/manifest.json`.
 - `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
@@ -147,7 +147,7 @@ export function defineEntity(spec: EntitySpec): EntityDef {/* zod runtime + free
 **Exemple usage (template)**
 
 ```ts
-// templates/app-minimal/domain/User.entity.ts
+// templates/base/domain/User.entity.ts
 import { defineEntity } from "jsr:tsera/core"; // via import_map.json en dev
 export default defineEntity({
   name: "User",
