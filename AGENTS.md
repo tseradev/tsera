@@ -20,10 +20,10 @@
 - Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
 - `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et compose
   le projet à partir de `templates/base` + modules sélectionnés.
-- `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI (zod-to-openapi), migrations Drizzle,
-  docs, tests smoke, `.tsera/graph.json`, `.tsera/manifest.json`.
+- `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI, migrations Drizzle, docs, tests smoke,
+  `.tsera/graph.json`, `.tsera/manifest.json`.
 - `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
-- **Dépendances autorisées** seulement: Deno std, Cliffy, Zod, TS‑Morph, zod‑to‑openapi, Drizzle.
+- **Dépendances autorisées** seulement: Deno std, Cliffy, Zod v4 (JSR), TS‑Morph, Hono, Fresh.
 
 ---
 
@@ -42,17 +42,93 @@
       entity.ts           # defineEntity + types
       schema.ts           # helpers Zod
       drizzle.ts          # mapping entité → DDL SQL
-      openapi.ts          # zod-to-openapi
-      utils/{types.ts,guards.ts}
+      openapi.ts          # génération OpenAPI depuis entités
+      secrets.ts          # gestion secrets type-safe
+      secrets/
+        store.ts          # store KV chiffré
+        store.test.ts
+      tests/              # tests unitaires du core
+      utils/
+        object.ts
+        strings.ts
+        zod.ts
+        tests/
     cli/                  # CLI (Cliffy) + moteur
       main.ts
       router.ts
-      commands/{init,dev,doctor,update}.ts
-      engine/{dag.ts,hash.ts,planner.ts,applier.ts,watch.ts}
-      engine/artifacts/{openapi.ts,zod.ts,drizzle.ts,docs.ts,tests.ts}
-      engine/state.ts
-      core/{resolve-config.ts,project.ts,fsx.ts,tui.ts,log.ts}
-      contracts/types.ts  # TseraConfig/DbConfig/DeployTarget
+      router.test.ts
+      definitions.ts      # TseraConfig/DbConfig/DeployTarget
+      commands/
+        init/             # init command + utils
+          init.ts
+          init-ui.ts
+          init.test.ts
+          __golden__/      # golden files for tests
+            openapi.json
+            tsera.config.ts
+          utils/           # config-generator, env-generator, file-ops, template-composer
+            config-generator.ts
+            env-generator.ts
+            file-ops.ts
+            template-composer.ts
+        dev/               # dev command
+          dev.ts
+          dev-ui.ts
+          dev.test.ts
+        doctor/            # doctor command
+          doctor.ts
+          doctor-ui.ts
+          doctor.test.ts
+        update/            # update command
+          update.ts
+          update-ui.ts
+          update.test.ts
+        help/              # help command
+          help.ts
+          command-help-renderer.ts
+          formatters.ts
+          renderer.ts
+          types.ts
+          help.test.ts
+      engine/              # moteur de génération
+        dag.ts
+        hash.ts
+        planner.ts
+        applier.ts
+        watch.ts
+        state.ts
+        entities.ts
+        tests/             # tests du moteur
+        artifacts/         # générateurs d'artefacts
+          openapi.ts
+          zod.ts
+          drizzle.ts
+          docs.ts
+          tests.ts
+          types.ts
+          tests/           # tests des artefacts
+      ui/                  # UI components (console, colors, terminal, etc.)
+        console.ts
+        colors.ts
+        terminal.ts
+        formatters.ts
+        palette.ts
+        spinner.ts
+        text-utils.ts
+        types.ts
+        tests/
+      utils/               # utilitaires CLI
+        resolve-config.ts
+        project.ts
+        fsx.ts
+        log.ts
+        ts-morph.ts
+        version.ts
+        tests/
+    shared/                # utilitaires partagés
+      path.ts
+      newline.ts
+      file-url.ts
   templates/
     base/                 # Template de base (toujours inclus)
       deno.jsonc
@@ -77,7 +153,7 @@
       docker/             # Module Docker (optionnel, --no-docker)
         docker-compose.yml
         Dockerfile
-        .dockerignore
+        .dockerignore      # fichiers exclus du build Docker
       ci/                 # Module CI/CD (optionnel, --no-ci)
         .github/workflows/ci.yml
         .github/workflows/deploy.yml
@@ -85,9 +161,6 @@
         env.config.ts
         lib/env.ts
         lib/env.test.ts
-  docs/
-    README.md             # landing OSS courte
-    ARCHITECTURE.md       # graphe/DAG & CC
   .editorconfig
   LICENSE (Apache-2.0)
   README.md              # landing principale
@@ -103,9 +176,9 @@
 
 - **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm** sauf pour les dépendances non
   disponibles sur JSR (Preact).
-- Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/fmt/colors`, `@std/flags`,
-  `@std/streams`), **Cliffy**, **Zod**, **TS‑Morph**, **Hono**, **Fresh** (SSR + islands via JSR),
-  **Preact** (via npm, utilisé par Fresh).
+- Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/assert`), **Cliffy** (JSR), **Zod
+  v4** (JSR: `jsr:@zod/zod@^4.0.0`), **TS‑Morph** (JSR), **Hono**, **Fresh** (SSR + islands via
+  JSR), **Preact** (via npm, utilisé par Fresh).
 - **Pas de polyfills**. Les dépendances doivent être utilisées directement. Si une dépendance n'est
   pas disponible, le code doit échouer de manière explicite (pas de fallback silencieux).
 - **Pas de MCP**. **Pas d'HTTP** dans le CLI.
@@ -141,7 +214,7 @@ export function defineEntity(spec: EntitySpec): EntityDef {/* zod runtime + free
 **Helpers**
 
 - `src/core/schema.ts` : `entityToZod(entity): z.ZodObject<...>`
-- `src/core/openapi.ts` : `zodToOpenAPI(zod, { title, version })`
+- `src/core/openapi.ts` : `generateOpenAPIDocument(entities, { title, version })`
 - `src/core/drizzle.ts` : `entityToDDL(entity, dialect)` → SQL `CREATE TABLE` / `ALTER` minimal (MVP
   mapping : `string→TEXT/VARCHAR`, `number→INTEGER`, `boolean→BOOLEAN`, `date→TIMESTAMP`,
   `json/array→JSONB`/PG par défaut).
@@ -234,7 +307,7 @@ Met à jour l'outil (install vs binaire `deno compile`).
 ### 4.2 Config obligatoire (toujours générée par `init`)
 
 ```ts
-// src/cli/contracts/types.ts
+// src/cli/definitions.ts
 export type DbConfig =
   | {
     dialect: "postgres";
@@ -319,8 +392,8 @@ export interface TseraConfig {
   "tasks": {
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "test": "deno test -A --fail-fast",
-    "e2e": "deno test -A e2e.test.ts",
+    "test": "deno test -A --unstable-kv",
+    "e2e": "deno test -A --unstable-kv e2e.test.ts",
     "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
     "publish": "deno publish" // optionnel si JSR
   }

@@ -4,7 +4,7 @@
     "tsera/core/": "./src/core/",
     "tsera/cli/": "./src/cli/",
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
-    "zod": "npm:zod@3",
+    "zod": "jsr:@zod/zod@^4.0.0",
     "ts-morph": "jsr:@ts-morph/ts-morph@23",
     "@std/assert": "jsr:@std/assert@1",
     "@std/fs": "jsr:@std/fs@1",

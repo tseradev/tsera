@@ -3,7 +3,7 @@ import type { CliMetadata } from "./main.ts";
 import type { DevCommandContext } from "./commands/dev/dev.ts";
 import type { DoctorCommandContext } from "./commands/doctor/doctor.ts";
 import type { InitCommandContext } from "./commands/init/init.ts";
-// import type { UpdateCommandContext } from "./commands/update/update.ts"; // TODO: Restore when update test is fixed
+import type { UpdateCommandContext } from "./commands/update/update.ts";
 
 const TEST_METADATA: CliMetadata = { version: "test" };
 
@@ -83,26 +83,47 @@ Deno.test("router maps dev options", async () => {
   assertEquals(received.global, { json: false });
 });
 
-// TODO: Investigate why update command shows root help instead of executing handler
-// Deno.test("update validates the channel and exposes options", async () => {
-//   let received: UpdateCommandContext | undefined;
+Deno.test("update validates the channel and exposes options", async () => {
+  let received: UpdateCommandContext | undefined;
 
-//   const router = createRouter(TEST_METADATA, {
-//     update: (context) => {
-//       received = context;
-//     },
-//   });
+  const router = createRouter(TEST_METADATA, {
+    update: (context) => {
+      received = context;
+    },
+  });
 
-//   await router.parse(["update"]);
+  await router.parse(["update"]);
 
-//   if (!received) {
-//     throw new Error("The update handler was not invoked.");
-//   }
+  if (!received) {
+    throw new Error("The update handler was not invoked.");
+  }
 
-//   assertEquals(received.channel, "stable");
-//   assertEquals(received.binary, false);
-//   assertEquals(received.dryRun, false);
-// });
+  assertEquals(received.channel, "stable");
+  assertEquals(received.binary, false);
+  assertEquals(received.dryRun, false);
+  assertEquals(received.global, { json: false });
+});
+
+Deno.test("update accepts custom channel and options", async () => {
+  let received: UpdateCommandContext | undefined;
+
+  const router = createRouter(TEST_METADATA, {
+    update: (context) => {
+      received = context;
+    },
+  });
+
+  await router.parse(["update", "--channel", "beta", "--binary", "--dry-run", "--json"]);
+
+  if (!received) {
+    throw new Error("The update handler was not invoked.");
+  }
+
+  assertEquals(received.channel, "beta");
+  assertEquals(received.binary, true);
+  assertEquals(received.dryRun, true);
+  assertEquals(received.global, { json: true });
+});
 
 Deno.test("router shows modern help layout", () => {
   const router = createRouter(TEST_METADATA);
