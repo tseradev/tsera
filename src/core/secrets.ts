@@ -25,9 +25,9 @@ export interface EnvVarDefinition<T extends EnvVarType = EnvVarType> {
   required: boolean;
   /** Default value if not provided. */
   default?: T extends "string" ? string
-  : T extends "number" ? number
-  : T extends "boolean" ? boolean
-  : never;
+    : T extends "number" ? number
+    : T extends "boolean" ? boolean
+    : never;
   /** Human-readable description. */
   description?: string;
   /** Validation function for custom checks. */
@@ -263,8 +263,8 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
   if (!schema.environments.includes(environment)) {
     throw new Error(
       `[TSera Secrets] Error: Unknown environment "${environment}"\n` +
-      `Available: ${schema.environments.join(", ")}\n` +
-      `Set TSERA_ENV to one of these values.`,
+        `Available: ${schema.environments.join(", ")}\n` +
+        `Set TSERA_ENV to one of these values.`,
     );
   }
 
@@ -279,7 +279,7 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
     if (error instanceof Deno.errors.NotFound) {
       throw new Error(
         `[TSera Secrets] Error: Environment file not found: ${envFilePath}\n` +
-        `Create this file with required variables for "${environment}" environment.`,
+          `Create this file with required variables for "${environment}" environment.`,
       );
     }
     throw error;
@@ -336,8 +336,8 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
   if (errors.length > 0) {
     throw new Error(
       `[TSera Secrets] Validation failed for environment "${environment}":\n` +
-      errors.map((e) => `  - ${e}`).join("\n") + "\n" +
-      `Check ${envFilePath}`,
+        errors.map((e) => `  - ${e}`).join("\n") + "\n" +
+        `Check ${envFilePath}`,
     );
   }
 
@@ -362,7 +362,8 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
     } catch (error) {
       // If KV store fails, log a warning but don't fail initialization
       console.warn(
-        `\x1b[33m[TSera Secrets]\x1b[0m Failed to persist to KV store: ${error instanceof Error ? error.message : String(error)
+        `\x1b[33m[TSera Secrets]\x1b[0m Failed to persist to KV store: ${
+          error instanceof Error ? error.message : String(error)
         }`,
       );
     }

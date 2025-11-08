@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert@1.0.13";
+import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "../../../shared/path.ts";
 import { resolveConfig } from "../resolve-config.ts";
 import type { TseraConfig } from "../../definitions.ts";

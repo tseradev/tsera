@@ -27,10 +27,6 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const objectLiteral = buildSampleObject(entity.columns);
   const keys = Object.keys(entity.columns).sort();
 
-  const assertsImport = normaliseImport(
-    posixRelative(posixDirname(testPath), posixJoin("testing", "asserts.ts")),
-  );
-
   // Create a TS-Morph project and source file
   const project = createTSeraProject();
   const sourceFile = createInMemorySourceFile(
@@ -39,7 +35,7 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
   );
 
   // Add imports
-  addImportDeclaration(sourceFile, assertsImport, {
+  addImportDeclaration(sourceFile, "@std/assert", {
     namedImports: ["assertEquals"],
   });
   addImportDeclaration(sourceFile, importPath, {

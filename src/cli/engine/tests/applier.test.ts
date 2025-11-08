@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { join } from "../../../shared/path.ts";
 import { applyPlan } from "../applier.ts";
 import type { ApplyStepResult } from "../applier.ts";

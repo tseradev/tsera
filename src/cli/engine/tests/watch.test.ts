@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { join } from "../../../shared/path.ts";
 import { watchProject } from "../watch.ts";
 
@@ -9,7 +9,7 @@ async function withTempDir<T>(
   try {
     return await fn(dir);
   } finally {
-    await Deno.remove(dir, { recursive: true }).catch(() => {});
+    await Deno.remove(dir, { recursive: true }).catch(() => { });
   }
 }
 

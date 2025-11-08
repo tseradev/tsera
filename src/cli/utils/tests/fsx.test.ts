@@ -1,5 +1,5 @@
 import { join } from "../../../shared/path.ts";
-import { assert, assertEquals } from "../../../testing/asserts.ts";
+import { assert, assertEquals } from "@std/assert";
 import { readJsonFile, removeFileIfExists, safeWrite, writeJsonFile } from "../fsx.ts";
 
 Deno.test("safeWrite creates a new file when it does not exist", async () => {

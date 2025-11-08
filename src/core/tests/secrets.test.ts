@@ -4,16 +4,8 @@
  * @module
  */
 
-import {
-  assertEquals,
-  assertExists,
-  assertRejects,
-} from "../../../templates/base/testing/asserts.ts";
-import {
-  defineEnvSchema,
-  initializeSecrets,
-  parseEnvFile,
-} from "../secrets.ts";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
+import { defineEnvSchema, initializeSecrets, parseEnvFile } from "../secrets.ts";
 
 Deno.test("parseEnvFile - parses simple key=value format", () => {
   const content = `
@@ -125,10 +117,11 @@ DEBUG=true
     },
   });
 
-  // Initialize secrets
+  // Initialize secrets (without KV store for this test)
   await initializeSecrets(schema, {
     secretsDir,
     environment: "dev",
+    useStore: false,
   });
 
   // Check that global API is available
@@ -168,8 +161,8 @@ Deno.test("initializeSecrets - uses default environment from TSERA_ENV", async (
     },
   });
 
-  // Initialize secrets (should use prod from TSERA_ENV)
-  await initializeSecrets(schema, { secretsDir });
+  // Initialize secrets (should use prod from TSERA_ENV, without KV store)
+  await initializeSecrets(schema, { secretsDir, useStore: false });
 
   // Check
   assertEquals(globalThis.tsera.currentEnvironment, "prod");
@@ -199,6 +192,7 @@ Deno.test("initializeSecrets - throws on unknown environment", async () => {
       await initializeSecrets(schema, {
         secretsDir,
         environment: "staging", // Not in default environments
+        useStore: false,
       });
     },
     Error,
@@ -226,6 +220,7 @@ Deno.test("initializeSecrets - throws on missing required variable", async () =>
       await initializeSecrets(schema, {
         secretsDir,
         environment: "dev",
+        useStore: false,
       });
     },
     Error,
@@ -252,6 +247,7 @@ Deno.test("initializeSecrets - throws on invalid type", async () => {
       await initializeSecrets(schema, {
         secretsDir,
         environment: "dev",
+        useStore: false,
       });
     },
     Error,
@@ -285,6 +281,7 @@ Deno.test("initializeSecrets - uses default values for optional variables", asyn
   await initializeSecrets(schema, {
     secretsDir,
     environment: "dev",
+    useStore: false,
   });
 
   assertEquals(globalThis.tsera.env("PORT"), 8000);
@@ -316,6 +313,7 @@ DEBUG_ZERO=0
   await initializeSecrets(schema, {
     secretsDir,
     environment: "dev",
+    useStore: false,
   });
 
   assertEquals(globalThis.tsera.env("DEBUG_TRUE"), true);

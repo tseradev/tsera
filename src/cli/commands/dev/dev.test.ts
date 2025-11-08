@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "../../../testing/asserts.ts";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { createDevCommand, type DevCommandContext } from "./dev.ts";
 import type { CliMetadata } from "../../main.ts";
 

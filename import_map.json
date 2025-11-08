@@ -6,6 +6,7 @@
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
     "zod": "npm:zod@3",
     "ts-morph": "jsr:@ts-morph/ts-morph@23",
+    "@std/assert": "jsr:@std/assert@1",
     "@std/fs": "jsr:@std/fs@1",
     "@std/fs/walk": "jsr:@std/fs@1/walk",
     "@std/path": "jsr:@std/path@1"

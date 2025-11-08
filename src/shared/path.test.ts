@@ -1,5 +1,5 @@
 import { join } from "./path.ts";
-import { assertEquals } from "../testing/asserts.ts";
+import { assertEquals } from "@std/assert";
 
 if (Deno.build.os === "windows") {
   Deno.test("join preserves the Windows drive prefix", () => {

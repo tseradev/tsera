@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertThrows } from "../../../testing/asserts.ts";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import { deepFreeze } from "../object.ts";
 
 Deno.test("deepFreeze - freezes a simple object", () => {

@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { hashBytes, hashText, hashValue, stableStringify } from "../hash.ts";
 
 Deno.test("hashBytes - calcule le hash SHA-256 d'un Uint8Array", async () => {

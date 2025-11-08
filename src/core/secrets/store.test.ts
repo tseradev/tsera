@@ -2,13 +2,9 @@
  * Tests for secret store with encryption.
  */
 
-import {
-  assertEquals,
-  assertExists,
-  assertRejects,
-} from "../../../templates/base/testing/asserts.ts";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { createSecretStore, resetWarningCache } from "./store.ts";
-import { join } from "@std/path";
+import { join } from "../../shared/path.ts";
 
 // Helper to create a unique temp directory for each test
 async function createTempDir(): Promise<string> {
@@ -433,4 +429,3 @@ Deno.test("store - getAll returns empty object for environment with no secrets",
     await cleanupTempDir(tempDir);
   }
 });
-

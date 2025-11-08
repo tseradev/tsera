@@ -1,5 +1,5 @@
 import { join } from "./src/shared/path.ts";
-import { assert } from "./src/testing/asserts.ts";
+import { assert } from "@std/assert";
 
 interface RunCliOptions {
   cwd: string;
@@ -207,9 +207,15 @@ Deno.test("E2E: secrets with KV store and encryption", async () => {
     assert(await exists(gitignorePath), ".gitignore missing");
     const gitignoreContent = await Deno.readTextFile(gitignorePath);
     assert(gitignoreContent.match(/secrets\/.env\.dev/), ".gitignore should include .env.dev");
-    assert(gitignoreContent.match(/secrets\/.env\.preprod/), ".gitignore should include .env.preprod");
+    assert(
+      gitignoreContent.match(/secrets\/.env\.preprod/),
+      ".gitignore should include .env.preprod",
+    );
     assert(gitignoreContent.match(/secrets\/.env\.prod/), ".gitignore should include .env.prod");
-    assert(gitignoreContent.match(/!secrets\/.env\.example/), ".gitignore should NOT ignore .env.example");
+    assert(
+      gitignoreContent.match(/!secrets\/.env\.example/),
+      ".gitignore should NOT ignore .env.example",
+    );
     assert(gitignoreContent.match(/\.tsera\/kv\//), ".gitignore should include KV store");
     assert(gitignoreContent.match(/\.tsera\/salt/), ".gitignore should include salt");
 

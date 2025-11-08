@@ -4,7 +4,7 @@
  * @module
  */
 
-import { assertEquals, assertStringIncludes } from "../../../testing/asserts.ts";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { BaseConsole } from "../console.ts";
 
 /**

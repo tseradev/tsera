@@ -3,7 +3,7 @@
  * Secure secret storage using Deno KV with optional AES-GCM encryption.
  */
 
-import { join } from "@std/path";
+import { join } from "../../shared/path.ts";
 import { ensureDir } from "@std/fs";
 
 /**
@@ -305,4 +305,3 @@ export async function createSecretStore(
     },
   };
 }
-

@@ -69,7 +69,7 @@ TSera provides a secure, type-safe secrets management system with optional encry
    ```bash
    # On Windows
    $env:TSERA_ENV="dev"
-   
+
    # On macOS/Linux
    export TSERA_ENV=dev
    ```
@@ -79,7 +79,7 @@ TSera provides a secure, type-safe secrets management system with optional encry
    ```bash
    # Copy example file to get started
    cp secrets/.env.example secrets/.env.dev
-   
+
    # Edit with your actual values
    # secrets/.env.dev
    ```
@@ -91,13 +91,13 @@ TSera provides a secure, type-safe secrets management system with optional encry
    ```bash
    # On Windows
    $env:TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
-   
+
    # On macOS/Linux
    export TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
    ```
 
-   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in `.tsera/kv/` (warning displayed).
-   **With `TSERA_SECRET_KEY`**: Secrets are encrypted with AES-256-GCM before storage.
+   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in `.tsera/kv/` (warning
+   displayed). **With `TSERA_SECRET_KEY`**: Secrets are encrypted with AES-256-GCM before storage.
 
 ### Encrypted Store (Deno KV)
 
@@ -119,10 +119,10 @@ To version secrets in Git securely using **git-crypt**:
    ```bash
    # macOS
    brew install git-crypt
-   
+
    # Ubuntu/Debian
    sudo apt-get install git-crypt
-   
+
    # Windows
    # Download from: https://github.com/AGWA/git-crypt/releases
    ```
@@ -152,7 +152,8 @@ To version secrets in Git securely using **git-crypt**:
    git push
    ```
 
-**Note**: git-crypt is **optional**. Without it, the files listed in `.gitignore` won't be committed.
+**Note**: git-crypt is **optional**. Without it, the files listed in `.gitignore` won't be
+committed.
 
 ### Environment Variables Schema
 

@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "../../testing/asserts.ts";
+import { assert, assertEquals } from "@std/assert";
 import { defineEntity, generateOpenAPIDocument } from "../index.ts";
 
 const commentEntity = defineEntity({

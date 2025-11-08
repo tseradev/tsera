@@ -1,4 +1,4 @@
-import { assertEquals } from "../testing/asserts.ts";
+import { assertEquals } from "@std/assert";
 import { getPlatformNewline, normalizeNewlines } from "./newline.ts";
 
 Deno.test("getPlatformNewline returns the current separator", () => {
