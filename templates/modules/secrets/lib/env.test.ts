@@ -1,4 +1,4 @@
-import { assertEquals, assertExists, assertRejects } from "../testing/asserts.ts";
+import { assertEquals, assertExists, assertRejects } from "../test-utils/asserts.ts";
 import { defineEnvSchema, initializeSecrets } from "tsera/core/secrets.ts";
 
 Deno.test("initializeSecrets - loads variables from .env file", async () => {

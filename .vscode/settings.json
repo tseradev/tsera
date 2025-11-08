@@ -1,0 +1,7 @@
+{
+  "deno.enable": true,
+  "deno.testing.args": [
+    "-A",
+    "--unstable-kv"
+  ]
+}

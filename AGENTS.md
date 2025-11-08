@@ -136,7 +136,7 @@
       .gitignore
       README.md
       domain/User.entity.ts
-      testing/asserts.ts
+      test-utils/asserts.ts
     modules/
       hono/               # Module API (optionnel, --no-hono)
         main.ts
@@ -144,12 +144,13 @@
         deps/hono.ts
         tests/health.test.ts
       fresh/              # Module Frontend (optionnel, --no-fresh)
+        deps/
+          preact.ts       # Centralisation version Preact
         web/
           main.ts         # Fresh app entry
           routes/index.tsx
           islands/Counter.tsx
           static/styles.css
-        fresh.config.ts
       docker/             # Module Docker (optionnel, --no-docker)
         docker-compose.yml
         Dockerfile

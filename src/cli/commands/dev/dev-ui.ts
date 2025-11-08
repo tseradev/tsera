@@ -7,7 +7,7 @@
  * @module
  */
 
-import { cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
+import { bold, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
 import { TerminalSpinner } from "../../ui/spinner.ts";
 import { BaseConsole } from "../../ui/console.ts";
 import {

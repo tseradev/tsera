@@ -1,9 +1,18 @@
 /** @jsx h */
-import { h } from "npm:preact@10";
+import { h } from "../../deps/preact.ts";
 import { PageProps } from "jsr:@fresh/core@2";
 import Counter from "../islands/Counter.tsx";
 
-export default function Home(props: PageProps) {
+/**
+ * Home page route component.
+ *
+ * Displays the main landing page with an interactive counter island
+ * and information about the TSera application.
+ *
+ * @param _props - Fresh page props (unused in this component)
+ * @returns JSX element representing the home page
+ */
+export default function Home(_props: PageProps) {
   return (
     <html>
       <head>

@@ -1,13 +1,26 @@
+/**
+ * Hono application entry point.
+ *
+ * This module initializes a Hono web server with health check routes.
+ * It integrates with TSera's secrets module if enabled, falling back
+ * to standard Deno environment variables otherwise.
+ *
+ * @module
+ */
+
 import { Hono } from "./deps/hono.ts";
 import registerHealthRoutes from "./routes/health.ts";
 
 // Initialize secrets if available
 try {
-  await import("./lib/env.ts");
+  await import("../secrets/lib/env.ts");
 } catch {
   // Secrets module not enabled, will use Deno.env
 }
 
+/**
+ * Hono application instance with registered routes.
+ */
 export const app = new Hono();
 
 registerHealthRoutes(app);

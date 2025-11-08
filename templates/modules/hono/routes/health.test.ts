@@ -1,4 +1,4 @@
-import { assertEquals } from "../testing/asserts.ts";
+import { assertEquals } from "../test-utils/asserts.ts";
 import { app } from "../main.ts";
 
 Deno.test("GET /health returns ok status", async () => {

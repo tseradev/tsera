@@ -1,7 +1,6 @@
 import { join } from "../../shared/path.ts";
 import { posixPath } from "../../shared/path.ts";
 import type { EntityDef } from "../../core/entity.ts";
-import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import type { TseraConfig } from "../definitions.ts";
 import type { ArtifactDescriptor, DagEntityInput } from "./dag.ts";
 import { buildArtifactId } from "./dag.ts";
@@ -313,7 +312,7 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
 function isEntityDef(value: unknown): value is EntityDef {
   return Boolean(
     value && typeof value === "object" &&
-      (value as Record<string, unknown>).__brand === "TSeraEntity",
+    (value as Record<string, unknown>).__brand === "TSeraEntity",
   );
 }
 

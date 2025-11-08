@@ -7,7 +7,7 @@
  * @module
  */
 
-import { cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
+import { bold, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
 import { TerminalSpinner } from "../../ui/spinner.ts";
 import { BaseConsole } from "../../ui/console.ts";
 
@@ -91,8 +91,7 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${
-        dim("│")
+      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${dim("│")
       } ${gray(`current: ${this.#currentVersion}`)}`,
     );
   }
@@ -124,8 +123,7 @@ export class UpdateConsole extends BaseConsole {
    */
   updateComplete(): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${
-        gray("TSera CLI updated successfully")
+      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${gray("TSera CLI updated successfully")
       }`,
     );
   }
