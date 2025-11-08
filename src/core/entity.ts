@@ -64,7 +64,7 @@ const entitySpecSchema = z.object({
     message: "Entity name must be PascalCase",
   }),
   table: z.boolean().optional(),
-  columns: z.record(columnSchema).refine((columns) => Object.keys(columns).length > 0, {
+  columns: z.record(z.string(), columnSchema).refine((columns) => Object.keys(columns).length > 0, {
     message: "Entity must define at least one column",
   }),
   doc: z.boolean().optional(),
