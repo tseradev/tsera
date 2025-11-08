@@ -349,11 +349,110 @@ Deno.test("initializeSecrets - validates custom validators", async () => {
       await initializeSecrets(schema, {
         secretsDir,
         environment: "dev",
+        useStore: false,
       });
     },
     Error,
     "custom validator rejected value",
   );
+
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - persists to KV store when enabled", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  const kvPath = `${tempDir}/kv`;
+  await Deno.mkdir(secretsDir);
+
+  const schema = defineEnvSchema({
+    DATABASE_URL: { type: "string", required: true },
+    PORT: { type: "number", required: true },
+  });
+
+  await Deno.writeTextFile(
+    `${secretsDir}/.env.dev`,
+    "DATABASE_URL=postgres://localhost:5432/db\nPORT=8080",
+  );
+
+  // Initialize with KV store enabled
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: true,
+    kvPath,
+  });
+
+  // Verify values are in memory
+  assertEquals(globalThis.tsera.env("DATABASE_URL"), "postgres://localhost:5432/db");
+  assertEquals(globalThis.tsera.env("PORT"), 8080);
+
+  // Verify values were persisted to KV
+  const { createSecretStore } = await import("../secrets/store.ts");
+  const store = await createSecretStore({ kvPath });
+  const storedUrl = await store.get("dev", "DATABASE_URL");
+  const storedPort = await store.get("dev", "PORT");
+  assertEquals(storedUrl, "postgres://localhost:5432/db");
+  assertEquals(storedPort, 8080);
+  store.close();
+
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - works without KV store", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  const schema = defineEnvSchema({
+    TEST_VAR: { type: "string", required: true },
+  });
+
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "TEST_VAR=test123");
+
+  // Initialize with KV store disabled
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: false,
+  });
+
+  // Verify value is still accessible (from memory)
+  assertEquals(globalThis.tsera.env("TEST_VAR"), "test123");
+
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - global API reads from memory, not KV", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  const kvPath = `${tempDir}/kv`;
+  await Deno.mkdir(secretsDir);
+
+  const schema = defineEnvSchema({
+    VALUE: { type: "string", required: true },
+  });
+
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "VALUE=original");
+
+  // Initialize
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: true,
+    kvPath,
+  });
+
+  assertEquals(globalThis.tsera.env("VALUE"), "original");
+
+  // Manually modify KV (simulating KV corruption or external change)
+  const { createSecretStore } = await import("../secrets/store.ts");
+  const store = await createSecretStore({ kvPath });
+  await store.set("dev", "VALUE", "modified");
+  store.close();
+
+  // Global API should still return the original value from memory
+  assertEquals(globalThis.tsera.env("VALUE"), "original");
 
   await Deno.remove(tempDir, { recursive: true });
 });

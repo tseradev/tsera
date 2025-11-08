@@ -30,6 +30,7 @@ export function generateEnvFiles(
     ".env.dev": generateDevEnv(db, modules),
     ".env.preprod": generatePreprodEnv(db, modules),
     ".env.prod": generateProdEnv(db, modules),
+    ".env.example": generateExampleEnv(db, modules),
   };
 
   return files;
@@ -218,6 +219,69 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
 
   lines.push("# Debugging (should be false in production)");
   lines.push("DEBUG=false");
+
+  return lines.join("\n");
+}
+
+/**
+ * Generates example environment file with placeholders (safe to commit).
+ */
+function generateExampleEnv(db: DbConfig, modules: string[]): string {
+  const lines: string[] = [
+    "# Example Environment Configuration",
+    "# Copy this file to .env.dev, .env.preprod, or .env.prod and fill with actual values",
+    "# This file is safe to commit (no real secrets)",
+    "",
+    "# Database Configuration",
+  ];
+
+  // Database URL based on dialect
+  if (db.dialect === "postgres") {
+    lines.push("DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE");
+    lines.push("DATABASE_SSL=prefer");
+  } else if (db.dialect === "mysql") {
+    lines.push("DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DATABASE");
+    lines.push("DATABASE_SSL=false");
+  } else if (db.dialect === "sqlite") {
+    lines.push("DATABASE_URL=file:./data/tsera.db");
+  }
+
+  lines.push("");
+
+  // Hono module
+  if (modules.includes("hono")) {
+    lines.push("# API Server (Hono)");
+    lines.push("PORT=3000");
+    lines.push("HOST=localhost");
+    lines.push("API_PREFIX=/api");
+    lines.push("");
+  }
+
+  // Fresh module
+  if (modules.includes("fresh")) {
+    lines.push("# Frontend Server (Fresh)");
+    lines.push("FRESH_PORT=8000");
+    lines.push("");
+  }
+
+  // Docker module
+  if (modules.includes("docker")) {
+    lines.push("# Docker Configuration");
+    lines.push("DOCKER_REGISTRY=your-registry.example.com");
+    lines.push("DOCKER_IMAGE_NAME=tsera-app");
+    lines.push("");
+  }
+
+  // CI/CD module
+  if (modules.includes("ci")) {
+    lines.push("# CI/CD Configuration");
+    lines.push("DEPLOY_TOKEN=your-deploy-token-here");
+    lines.push("CI_REGISTRY=your-registry.example.com");
+    lines.push("");
+  }
+
+  lines.push("# Debugging");
+  lines.push("DEBUG=true");
 
   return lines.join("\n");
 }

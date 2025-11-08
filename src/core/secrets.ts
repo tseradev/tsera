@@ -250,6 +250,8 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
   options?: {
     secretsDir?: string;
     environment?: string;
+    useStore?: boolean; // default: true
+    kvPath?: string; // default: ".tsera/kv"
   },
 ): Promise<void> {
   const secretsDir = options?.secretsDir || "./secrets";
@@ -339,11 +341,34 @@ export async function initializeSecrets<T extends Record<string, EnvVarDefinitio
     );
   }
 
-  // Store validated values
+  // Store validated values in memory
   Object.assign(envStore, values);
   currentEnv = environment;
 
-  // Expose global API
+  // Optionally persist to KV store
+  const useStore = options?.useStore !== false; // Default: true
+  if (useStore) {
+    try {
+      const { createSecretStore } = await import("./secrets/store.ts");
+      const kvPath = options?.kvPath || ".tsera/kv";
+      const store = await createSecretStore({ kvPath });
+
+      // Persist validated values to KV
+      for (const [key, value] of Object.entries(values)) {
+        await store.set(environment, key, value);
+      }
+
+      store.close();
+    } catch (error) {
+      // If KV store fails, log a warning but don't fail initialization
+      console.warn(
+        `\x1b[33m[TSera Secrets]\x1b[0m Failed to persist to KV store: ${error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  // Expose global API (always reads from memory, not KV)
   globalThis.tsera = {
     env: (key: string) => envStore[key] as string | number | boolean | undefined,
     currentEnvironment: currentEnv,

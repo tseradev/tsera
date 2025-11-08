@@ -49,11 +49,131 @@ tsera doctor --fix
 ```
 .
 ├── domain/              # Entity definitions
-├── .tsera/              # Generated schemas and manifests
+├── secrets/             # Environment-specific .env files
+├── .tsera/              # Generated schemas, manifests, and KV store
 ├── drizzle/             # Database migrations
 ├── docs/                # Generated documentation
 ├── tests/               # Generated and custom tests
+├── env.config.ts        # Environment variable schema
 └── tsera.config.ts      # TSera configuration
+```
+
+## Secrets Management
+
+TSera provides a secure, type-safe secrets management system with optional encryption.
+
+### Local Development
+
+1. **Set environment** (default: `dev`):
+
+   ```bash
+   # On Windows
+   $env:TSERA_ENV="dev"
+   
+   # On macOS/Linux
+   export TSERA_ENV=dev
+   ```
+
+2. **Create your `.env` file**:
+
+   ```bash
+   # Copy example file to get started
+   cp secrets/.env.example secrets/.env.dev
+   
+   # Edit with your actual values
+   # secrets/.env.dev
+   ```
+
+3. **(Optional) Enable encryption**:
+
+   Set `TSERA_SECRET_KEY` to encrypt secrets in the local KV store:
+
+   ```bash
+   # On Windows
+   $env:TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
+   
+   # On macOS/Linux
+   export TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
+   ```
+
+   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in `.tsera/kv/` (warning displayed).
+   **With `TSERA_SECRET_KEY`**: Secrets are encrypted with AES-256-GCM before storage.
+
+### Encrypted Store (Deno KV)
+
+TSera persists validated secrets locally in `.tsera/kv` using Deno KV:
+
+- **With `TSERA_SECRET_KEY`**: Values encrypted with AES-256-GCM
+- **Without**: Values stored in clear (warning displayed)
+- **Salt**: Fixed per installation in `.tsera/salt`
+- **Isolation**: Each environment (dev/preprod/prod) has isolated storage
+
+The global API `tsera.env()` always reads from memory for speed, not from KV.
+
+### Git-Crypt Protection (Optional)
+
+To version secrets in Git securely using **git-crypt**:
+
+1. **Install git-crypt**:
+
+   ```bash
+   # macOS
+   brew install git-crypt
+   
+   # Ubuntu/Debian
+   sudo apt-get install git-crypt
+   
+   # Windows
+   # Download from: https://github.com/AGWA/git-crypt/releases
+   ```
+
+2. **Initialize git-crypt**:
+
+   ```bash
+   git-crypt init
+   ```
+
+3. **Add team member** (using their GPG key):
+
+   ```bash
+   git-crypt add-gpg-user <GPG_KEY_ID>
+   ```
+
+4. **Commit encrypted files**:
+
+   The `.gitattributes` file already configures which files to encrypt:
+   - `secrets/.env.*` (all environment files)
+   - `.tsera/kv/**` (KV store database)
+   - `.tsera/salt` (encryption salt)
+
+   ```bash
+   git add secrets/ .gitattributes
+   git commit -m "chore: add encrypted secrets"
+   git push
+   ```
+
+**Note**: git-crypt is **optional**. Without it, the files listed in `.gitignore` won't be committed.
+
+### Environment Variables Schema
+
+Environment variables are validated against `env.config.ts`:
+
+```typescript
+import { defineEnvSchema } from "tsera/core/secrets.ts";
+
+export const envSchema = defineEnvSchema({
+  DATABASE_URL: { type: "string", required: true },
+  PORT: { type: "number", required: true, default: 3000 },
+  DEBUG: { type: "boolean", required: false, default: false },
+});
+```
+
+Access validated variables via the global `tsera` API:
+
+```typescript
+const dbUrl = tsera.env("DATABASE_URL");
+const port = tsera.env("PORT") as number;
+console.log(`Running in ${tsera.currentEnvironment} mode`);
 ```
 
 ## Entities

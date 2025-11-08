@@ -7,6 +7,7 @@
     "zod": "npm:zod@3",
     "ts-morph": "jsr:@ts-morph/ts-morph@23",
     "@std/fs": "jsr:@std/fs@1",
-    "@std/fs/walk": "jsr:@std/fs@1/walk"
+    "@std/fs/walk": "jsr:@std/fs@1/walk",
+    "@std/path": "jsr:@std/path@1"
   }
 }

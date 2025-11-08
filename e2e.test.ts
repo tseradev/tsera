@@ -164,3 +164,82 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     await Deno.remove(workspace, { recursive: true });
   }
 });
+
+Deno.test("E2E: secrets with KV store and encryption", async () => {
+  const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
+  const projectDir = join(workspace, "demo-secrets");
+
+  try {
+    // Initialize project
+    const initResult = await runCli(["init", "demo-secrets"], { cwd: workspace });
+    if (!initResult.success) {
+      throw new Error(`Init failed: ${initResult.stderr}`);
+    }
+
+    // Check secrets files were generated
+    const secretsDir = join(projectDir, "secrets");
+    assert(await exists(join(secretsDir, ".env.dev")), ".env.dev missing");
+    assert(await exists(join(secretsDir, ".env.preprod")), ".env.preprod missing");
+    assert(await exists(join(secretsDir, ".env.prod")), ".env.prod missing");
+    assert(await exists(join(secretsDir, ".env.example")), ".env.example missing");
+    assert(await exists(join(projectDir, "env.config.ts")), "env.config.ts missing");
+    assert(await exists(join(projectDir, "lib", "env.ts")), "lib/env.ts missing");
+
+    // Check .gitattributes was generated for git-crypt
+    const gitattributesPath = join(projectDir, ".gitattributes");
+    assert(await exists(gitattributesPath), ".gitattributes missing");
+    const gitattributesContent = await Deno.readTextFile(gitattributesPath);
+    assert(
+      gitattributesContent.includes("secrets/.env.* filter=git-crypt"),
+      "git-crypt config for secrets missing",
+    );
+    assert(
+      gitattributesContent.includes(".tsera/kv/** filter=git-crypt"),
+      "git-crypt config for KV missing",
+    );
+    assert(
+      gitattributesContent.includes(".tsera/salt filter=git-crypt"),
+      "git-crypt config for salt missing",
+    );
+
+    // Check .gitignore has proper patterns
+    const gitignorePath = join(projectDir, ".gitignore");
+    assert(await exists(gitignorePath), ".gitignore missing");
+    const gitignoreContent = await Deno.readTextFile(gitignorePath);
+    assert(gitignoreContent.match(/secrets\/.env\.dev/), ".gitignore should include .env.dev");
+    assert(gitignoreContent.match(/secrets\/.env\.preprod/), ".gitignore should include .env.preprod");
+    assert(gitignoreContent.match(/secrets\/.env\.prod/), ".gitignore should include .env.prod");
+    assert(gitignoreContent.match(/!secrets\/.env\.example/), ".gitignore should NOT ignore .env.example");
+    assert(gitignoreContent.match(/\.tsera\/kv\//), ".gitignore should include KV store");
+    assert(gitignoreContent.match(/\.tsera\/salt/), ".gitignore should include salt");
+
+    // Verify the generated env.config.ts has proper schema
+    const envConfigPath = join(projectDir, "env.config.ts");
+    const envConfigContent = await Deno.readTextFile(envConfigPath);
+    assert(
+      envConfigContent.includes("defineEnvSchema"),
+      "env.config.ts should use defineEnvSchema",
+    );
+    assert(
+      envConfigContent.includes("DATABASE_URL"),
+      "env.config.ts should define DATABASE_URL",
+    );
+
+    // Verify lib/env.ts calls initializeSecrets
+    const envLibPath = join(projectDir, "lib", "env.ts");
+    const envLibContent = await Deno.readTextFile(envLibPath);
+    assert(
+      envLibContent.includes("initializeSecrets"),
+      "lib/env.ts should call initializeSecrets",
+    );
+    assert(
+      envLibContent.includes("secretsDir"),
+      "lib/env.ts should configure secrets directory",
+    );
+
+    // Note: Detailed KV store functionality is tested in src/core/secrets/store.test.ts
+    // This E2E test verifies that all files are generated correctly
+  } finally {
+    await Deno.remove(workspace, { recursive: true });
+  }
+});

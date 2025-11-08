@@ -24,8 +24,8 @@
   "tasks": {
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "test": "deno test -A --fail-fast --import-map import_map.json",
-    "e2e": "deno test -A --import-map import_map.json e2e.test.ts",
+    "test": "deno test -A --unstable-kv",
+    "e2e": "deno test -A --unstable-kv e2e.test.ts",
     "compile": "deno compile -A --import-map import_map.json --output dist/tsera src/cli/main.ts",
     "publish": "deno publish"
   }

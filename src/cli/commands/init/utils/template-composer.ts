@@ -140,6 +140,11 @@ export async function composeTemplate(
     await generateEnvironmentFiles(options, result);
   }
 
+  // Generate .gitattributes for git-crypt if secrets module is enabled
+  if (options.enabledModules.includes("secrets")) {
+    await generateGitAttributes(options, result);
+  }
+
   return result;
 }
 
@@ -400,4 +405,30 @@ async function generateEnvironmentFiles(
   const envConfigPath = join(options.targetDir, "env.config.ts");
   await Deno.writeTextFile(envConfigPath, envConfigContent + "\n");
   result.copiedFiles.push("env.config.ts");
+}
+
+/**
+ * Generates .gitattributes file for git-crypt encryption.
+ *
+ * @param options - Composition options.
+ * @param result - Composition result to update.
+ */
+async function generateGitAttributes(
+  options: ComposeOptions,
+  result: ComposedTemplate,
+): Promise<void> {
+  const gitattributesContent = `# TSera secrets encryption with git-crypt
+# Install: https://github.com/AGWA/git-crypt
+# Usage:
+#   git-crypt init
+#   git-crypt add-gpg-user <GPG_KEY_ID>
+
+secrets/.env.* filter=git-crypt diff=git-crypt
+.tsera/kv/** filter=git-crypt diff=git-crypt
+.tsera/salt filter=git-crypt diff=git-crypt
+`;
+
+  const gitattributesPath = join(options.targetDir, ".gitattributes");
+  await Deno.writeTextFile(gitattributesPath, gitattributesContent);
+  result.copiedFiles.push(".gitattributes");
 }
