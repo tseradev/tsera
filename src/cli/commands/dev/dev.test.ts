@@ -11,15 +11,14 @@ Deno.test("dev command passes context to handler", async () => {
     received = context;
   });
 
-  await command.parse(["--once", "--plan-only"]);
+  await command.parse(["--no-watch", "--plan-only"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
   }
 
   assertEquals(received.projectDir, ".");
-  assertEquals(received.watch, true);
-  assertEquals(received.once, true);
+  assertEquals(received.watch, false);
   assertEquals(received.planOnly, true);
   assertEquals(received.apply, false);
   // Note: global options like --json are added by the router, not the command itself
@@ -32,7 +31,7 @@ Deno.test("dev command accepts custom project directory", async () => {
     received = context;
   });
 
-  await command.parse(["./my-project", "--once"]);
+  await command.parse(["./my-project", "--no-watch"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
@@ -48,7 +47,7 @@ Deno.test("dev command handles --apply flag", async () => {
     received = context;
   });
 
-  await command.parse(["--once", "--apply"]);
+  await command.parse(["--no-watch", "--apply"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
@@ -65,7 +64,7 @@ Deno.test("dev command handles --plan-only flag", async () => {
     received = context;
   });
 
-  await command.parse(["--once", "--plan-only"]);
+  await command.parse(["--no-watch", "--plan-only"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
@@ -82,14 +81,14 @@ Deno.test("dev command handles all flags together", async () => {
     received = context;
   });
 
-  await command.parse(["./project", "--once", "--apply", "--plan-only"]);
+  await command.parse(["./project", "--no-watch", "--apply", "--plan-only"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
   }
 
   assertEquals(received.projectDir, "./project");
-  assertEquals(received.once, true);
+  assertEquals(received.watch, false);
   assertEquals(received.apply, true);
   assertEquals(received.planOnly, true);
 });
@@ -101,30 +100,13 @@ Deno.test("dev command defaults watch to true", async () => {
     received = context;
   });
 
-  await command.parse(["--once"]);
+  await command.parse(["--plan-only"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
   }
 
   assertEquals(received.watch, true);
-});
-
-Deno.test("dev command defaults once to false", async () => {
-  let received: DevCommandContext | undefined;
-
-  const command = createDevCommand(TEST_METADATA, (context) => {
-    received = context;
-  });
-
-  // Use --plan-only to avoid actually running the watch loop
-  await command.parse([".", "--plan-only", "--once"]);
-
-  if (!received) {
-    throw new Error("The dev handler was not invoked.");
-  }
-
-  assertEquals(received.once, true);
 });
 
 Deno.test("dev command handles --no-watch flag", async () => {
@@ -134,7 +116,7 @@ Deno.test("dev command handles --no-watch flag", async () => {
     received = context;
   });
 
-  await command.parse(["--once", "--no-watch"]);
+  await command.parse(["--no-watch"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
@@ -144,7 +126,7 @@ Deno.test("dev command handles --no-watch flag", async () => {
 });
 
 Deno.test("dev command shows help", () => {
-  const command = createDevCommand(TEST_METADATA, () => {});
+  const command = createDevCommand(TEST_METADATA, () => { });
   const captured: string[] = [];
   const originalLog = console.log;
 
@@ -164,7 +146,6 @@ Deno.test("dev command shows help", () => {
     "Watch entities, plan changes, and apply generated artifacts in-place.",
   );
   assertStringIncludes(output, "--no-watch");
-  assertStringIncludes(output, "--once");
   assertStringIncludes(output, "--plan-only");
   assertStringIncludes(output, "--apply");
   // Note: --json is a global option added by the router, not shown in command help

@@ -7,7 +7,7 @@
  * @module
  */
 
-import { bold, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
+import { bold, cyan, dim, gray, green, magenta, red, yellow } from "../../ui/colors.ts";
 import { TerminalSpinner } from "../../ui/spinner.ts";
 import { BaseConsole } from "../../ui/console.ts";
 import {
@@ -23,6 +23,8 @@ import {
 export interface DevConsoleOptions {
   /** The project directory being watched */
   projectDir: string;
+  /** Whether watch mode is enabled */
+  watchEnabled: boolean;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
 }
@@ -38,13 +40,14 @@ export interface DevConsoleOptions {
  * ```typescript
  * const console = new DevConsole({
  *   projectDir: "/path/to/project",
+ *   watchEnabled: true,
  * });
  *
- * console.watchStart("/path/to/project", 150);
+ * console.start();
  * console.cycleStart("initial", []);
  * console.planSummary({ create: 2, update: 1, delete: 0 });
  * console.applyComplete(3, true);
- * console.coherenceStatus("clean", 5);
+ * console.complete("clean", 5);
  * ```
  */
 export class DevConsole extends BaseConsole {
@@ -61,6 +64,12 @@ export class DevConsole extends BaseConsole {
   #projectLabel: string;
 
   /**
+   * Whether watch mode is enabled.
+   * @private
+   */
+  #watchEnabled: boolean;
+
+  /**
    * Creates a new dev console instance.
    *
    * @param options - Configuration options
@@ -69,20 +78,22 @@ export class DevConsole extends BaseConsole {
     super(options.writer);
     this.#spinner = new TerminalSpinner(options.writer);
     this.#projectLabel = formatProjectLabel(options.projectDir);
+    this.#watchEnabled = options.watchEnabled;
   }
 
   /**
-   * Announces that watch mode has started.
-   *
-   * @param _root - The root directory being watched (not displayed)
-   * @param debounce - The debounce delay in milliseconds
+   * Announces that dev mode has started.
    */
-  watchStart(_root: string, debounce: number): void {
+  start(): void {
+    const mode = this.#watchEnabled ? green("watch") : gray("single run");
     this.write(
-      `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${cyan(this.#projectLabel)}`,
+      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${mode}${dim(")")}`,
     );
-    this.writeMiddle(`${dim("→")} ${gray(`Watching for changes (${debounce}ms debounce)`)}`);
-    this.writeLast(`${dim("→")} ${gray("Waiting for file changes…")}`);
+    if (this.#watchEnabled) {
+      this.writeLast(`${gray("Watching entities for changes…")}`);
+    } else {
+      this.writeLast(`${gray("Verifying project coherence…")}`);
+    }
   }
 
   /**
@@ -94,35 +105,50 @@ export class DevConsole extends BaseConsole {
   cycleStart(reason: string, paths: string[]): void {
     if (reason === "initial") {
       this.#spinner.start(
-        `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Initial coherence check…")}`,
+        `${gray("Checking entities and artifacts…")}`,
       );
     } else if (paths.length > 0) {
       const fileCount = formatCount(paths.length, "file");
       this.#spinner.start(
-        `${magenta("◆")} ${bold("Change detected")} ${dim("│")} ${gray(`${fileCount} modified`)}`,
+        `${bold("Change detected")} ${dim("│")} ${yellow(`${fileCount} modified`)}`,
       );
     } else {
       this.#spinner.start(
-        `${magenta("◆")} ${bold("Dev")} ${dim("│")} ${gray("Checking coherence…")}`,
+        `${gray("Analyzing project state…")}`,
       );
     }
   }
 
   /**
-   * Displays the plan summary.
+   * Displays the plan summary with details of affected artifacts.
    *
    * @param summary - The plan summary with operation counts
+   * @param steps - The plan steps with node details
    */
-  planSummary(summary: PlanSummary): void {
+  planSummary(summary: PlanSummary, steps: Array<{ kind: string; node: { id: string; kind: string } }>): void {
     if (!summary.changed) {
       this.#spinner.update(
-        `${green("✓")} ${bold("No changes needed")} ${dim("│")} ${gray("artifacts are current")}`,
+        `${gray("Everything is in sync")}`,
       );
     } else {
       const actions = formatActionSummaryWithSymbols(summary);
       this.#spinner.update(
-        `${dim("→")} ${yellow("Applying changes")} ${dim("│")} ${actions}`,
+        `${yellow("Regenerating artifacts")} ${dim("│")} ${actions}`,
       );
+
+      // Show affected artifacts
+      this.#spinner.stop();
+      const affectedSteps = steps.filter((s) => s.kind !== "noop");
+      if (affectedSteps.length > 0) {
+        this.write("");
+        this.write(`🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)}`);
+        for (const step of affectedSteps) {
+          const symbol = step.kind === "create" ? green("✚") : step.kind === "update" ? yellow("↻") : red("✖");
+          const action = step.kind === "create" ? gray("create") : step.kind === "update" ? gray("update") : gray("delete");
+          this.writeMiddle(`${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)}`);
+        }
+      }
+      this.#spinner.start(`${yellow("Applying changes…")}`);
     }
   }
 
@@ -135,28 +161,64 @@ export class DevConsole extends BaseConsole {
   applyComplete(steps: number, changed: boolean): void {
     if (changed) {
       const label = formatCount(steps, "artifact");
-      this.#spinner.update(
-        `${green("✓")} ${bold("Artifacts updated")} ${dim("│")} ${gray(`${label} regenerated`)}`,
+      this.#spinner.succeed(
+        `${bold(`${label} refreshed`)} ${dim("│")} ${gray("Project synchronized")}`,
+      );
+    } else {
+      this.#spinner.succeed(
+        `${gray("No changes applied")}`,
       );
     }
   }
 
   /**
-   * Displays the final coherence status.
+   * Displays the final coherence status and next steps.
    *
    * @param status - The coherence status ("clean" or "pending")
    * @param entities - The number of entities in the project
+   * @param appliedChanges - Whether changes were applied in this cycle
    */
-  coherenceStatus(status: "clean" | "pending", entities: number): void {
+  complete(status: "clean" | "pending", entities: number, appliedChanges = false): void {
     const entityInfo = formatCount(entities, "entity", "entities");
     if (status === "clean") {
-      this.#spinner.succeed(
-        `${green("✓")} ${bold("Coherent")} ${dim("│")} ${gray(`${entityInfo} verified`)}`,
-      );
+      if (!appliedChanges) {
+        // No changes were needed or applied
+        this.#spinner.stop();
+        this.write("");
+        this.#spinner.succeed(
+          `${bold("Project is coherent")} ${dim("│")} ${gray(`${entityInfo} validated`)}`,
+        );
+      }
+      // If changes were applied, applyComplete already showed the success message
+
+      if (this.#watchEnabled) {
+        this.writeLast(`${gray("Ready. Watching for file changes…")}`);
+      } else if (!appliedChanges) {
+        this.write("");
+        this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
+        this.writeMiddle(
+          `${dim("→")} ${gray("Run ")}${cyan("tsera dev")}${gray(" to start watch mode")}`,
+        );
+        this.writeMiddle(
+          `${dim("→")} ${gray("Or ")}${cyan("deno task dev")}${gray(" to launch your app")}`,
+        );
+        this.write("");
+      } else {
+        this.write("");
+      }
     } else {
       this.#spinner.warn(
-        `${yellow("⚠")} ${bold("Pending")} ${dim("│")} ${gray(`${entityInfo} need attention`)}`,
+        `${bold("Inconsistencies detected")} ${dim("│")} ${gray(`${entityInfo} need sync`)}`,
       );
+      this.write("");
+      this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
+      this.writeMiddle(
+        `${dim("→")} ${gray("Run ")}${cyan("tsera dev --apply")}${gray(" to force regeneration")}`,
+      );
+      this.writeMiddle(
+        `${dim("→")} ${gray("Or ")}${cyan("tsera doctor --fix")}${gray(" to auto-repair issues")}`,
+      );
+      this.write("");
     }
   }
 
@@ -166,16 +228,15 @@ export class DevConsole extends BaseConsole {
    * @param message - The error message
    */
   cycleError(message: string): void {
-    this.#spinner.fail(`${yellow("✕")} ${bold("Error")} ${dim("│")} ${gray(message)}`);
-    this.writeLast(`${dim("→")} ${yellow("Fix the error and save to retry.")}`);
-  }
-
-  /**
-   * Updates the spinner with a custom message.
-   *
-   * @param text - The text to display
-   */
-  update(text: string): void {
-    this.#spinner.update(text);
+    this.#spinner.fail(`${bold("Error")} ${dim("│")} ${gray(message)}`);
+    this.write("");
+    this.write(`${magenta("◆")} ${bold("What to do")}`);
+    this.writeMiddle(`${dim("→")} ${yellow("Fix the error in your code")}`);
+    if (this.#watchEnabled) {
+      this.writeLast(`${gray("Save the file to retry automatically")}`);
+    } else {
+      this.writeLast(`${gray("Run ")}${cyan("tsera dev")}${gray(" again to retry")}`);
+    }
+    this.write("");
   }
 }

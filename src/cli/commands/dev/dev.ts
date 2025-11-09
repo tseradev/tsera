@@ -11,11 +11,11 @@ import { watchProject } from "../../engine/watch.ts";
 import type { CliMetadata } from "../../main.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
+import { DevConsole } from "./dev-ui.ts";
 
 /** CLI options accepted by the {@code dev} command. */
 interface DevCommandOptions extends GlobalCLIOptions {
   watch: boolean;
-  once: boolean;
   planOnly: boolean;
   apply: boolean;
 }
@@ -24,7 +24,6 @@ interface DevCommandOptions extends GlobalCLIOptions {
 interface DevActionOptions {
   json?: boolean;
   watch?: boolean;
-  once?: boolean;
   planOnly?: boolean;
   apply?: boolean;
 }
@@ -37,8 +36,6 @@ export interface DevCommandContext {
   projectDir: string;
   /** Whether to watch for file changes. */
   watch: boolean;
-  /** Whether to run a single cycle and exit. */
-  once: boolean;
   /** Whether to compute the plan without applying it. */
   planOnly: boolean;
   /** Whether to force apply even if the plan is empty. */
@@ -62,17 +59,37 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     const logger = createLogger({ json: context.global.json });
     const initial = await resolveConfig(context.projectDir);
     const projectRoot = dirname(initial.configPath);
-    const isWatchMode = context.watch && !context.once;
+    // --plan-only forces single-run mode (watch disabled) to avoid infinite loops
+    const isWatchMode = context.watch && !context.planOnly;
     let queue = Promise.resolve();
+
+    // Create UI console for human-friendly output (only if not JSON mode)
+    const uiConsole = context.global.json ? null : new DevConsole({
+      projectDir: projectRoot,
+      watchEnabled: isWatchMode,
+    });
+
+    // Show initial banner
+    if (uiConsole && !context.global.json) {
+      uiConsole.start();
+    }
 
     const runCycle = async (
       reason: string,
       paths: string[] = [],
     ): Promise<{ pending: boolean }> => {
-      if (paths.length > 0) {
-        logger.event("plan:start", { reason, paths });
-      } else {
-        logger.event("plan:start", { reason });
+      // Emit JSON events for machine consumption (only in JSON mode)
+      if (context.global.json) {
+        if (paths.length > 0) {
+          logger.event("plan:start", { reason, paths });
+        } else {
+          logger.event("plan:start", { reason });
+        }
+      }
+
+      // Show cycle start in UI (only in human mode)
+      if (uiConsole) {
+        uiConsole.cycleStart(reason, paths);
       }
 
       const { config } = await resolveConfig(projectRoot);
@@ -84,7 +101,15 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       const state = await readEngineState(projectRoot);
       const plan = planDag(dag, state);
 
-      logger.event("plan:summary", { ...plan.summary });
+      // Emit plan summary (only in JSON mode)
+      if (context.global.json) {
+        logger.event("plan:summary", { ...plan.summary });
+      }
+
+      // Show plan summary in UI (only in human mode)
+      if (uiConsole) {
+        uiConsole.planSummary(plan.summary, plan.steps);
+      }
 
       const shouldApply = !context.planOnly && (plan.summary.changed || context.apply);
       let nextState = state;
@@ -93,30 +118,56 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         nextState = await applyPlan(plan, state, {
           projectDir: projectRoot,
           onStep: (step, result) => {
-            logger.event("apply:step", {
-              id: step.node.id,
-              kind: step.node.kind,
-              action: step.kind,
-              path: result.path ?? null,
-              changed: result.changed,
-            });
+            // Emit step events (only in JSON mode)
+            if (context.global.json) {
+              logger.event("apply:step", {
+                id: step.node.id,
+                kind: step.node.kind,
+                action: step.kind,
+                path: result.path ?? null,
+                changed: result.changed,
+              });
+            }
           },
         });
 
-        logger.event("apply:done", {
-          steps: plan.summary.total,
-          changed: plan.summary.changed,
-        });
+        // Emit apply done (only in JSON mode)
+        if (context.global.json) {
+          logger.event("apply:done", {
+            steps: plan.summary.total,
+            changed: plan.summary.changed,
+          });
+        }
+
+        // Show apply completion in UI (only in human mode)
+        if (uiConsole) {
+          uiConsole.applyComplete(plan.summary.total, plan.summary.changed);
+        }
       }
 
       await writeEngineState(projectRoot, nextState);
 
       const pending = plan.summary.changed && !shouldApply;
-      logger.event("coherence", {
-        status: pending ? "pending" : "clean",
-        pending,
-        entities: dagInputs.length,
-      });
+
+      // Emit coherence event (only in JSON mode)
+      if (context.global.json) {
+        logger.event("coherence", {
+          status: pending ? "pending" : "clean",
+          pending,
+          entities: dagInputs.length,
+        });
+      }
+
+      // Show final coherence status in UI (only in human mode, and for initial/manual/watch)
+      if (uiConsole && (reason === "initial" || reason === "manual")) {
+        uiConsole.complete(pending ? "pending" : "clean", dagInputs.length, shouldApply && plan.summary.changed);
+      } else if (uiConsole && reason === "watch") {
+        // For watch cycles, just show a simpler status
+        const status = pending ? "pending" : "clean";
+        if (status === "clean") {
+          uiConsole.complete(status, dagInputs.length, shouldApply && plan.summary.changed);
+        }
+      }
 
       return { pending };
     };
@@ -126,10 +177,17 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         await runCycle(reason, paths);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        logger.event("error", { message });
-        if (!context.global.json) {
-          logger.error("cycle:failure", { message });
+
+        // Emit error event (only in JSON mode)
+        if (context.global.json) {
+          logger.event("error", { message });
         }
+
+        // Show error in UI (only in human mode)
+        if (uiConsole) {
+          uiConsole.cycleError(message);
+        }
+
         if (!isWatchMode) {
           throw error instanceof Error ? error : new Error(message);
         }
@@ -137,7 +195,11 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     };
 
     if (isWatchMode) {
-      logger.event("watch:start", { root: projectRoot, debounce: WATCH_DEBOUNCE_MS });
+      // Emit watch start event (only in JSON mode)
+      if (context.global.json) {
+        logger.event("watch:start", { root: projectRoot, debounce: WATCH_DEBOUNCE_MS });
+      }
+
       const controller = watchProject(projectRoot, (events) => {
         const paths = events.flatMap((event) => event.paths);
         queue = queue
@@ -172,15 +234,13 @@ export function createDevCommand(
     .description("Plan and apply TSera artifacts in development mode.")
     .arguments("[projectDir]")
     .option("--no-watch", "Disable the file watcher (enabled by default).")
-    .option("--once", "Run a single plan/apply cycle.", { default: false })
     .option("--plan-only", "Compute the plan without applying it.", { default: false })
     .option("--apply", "Force apply even if the plan is empty.", { default: false })
     .action(async (options: DevActionOptions, projectDir = ".") => {
-      const { json = false, watch, once = false, planOnly = false, apply = false } = options;
+      const { json = false, watch, planOnly = false, apply = false } = options;
       await handler({
         projectDir,
         watch: watch !== false, // watch is false only when --no-watch is explicitly used
-        once,
         planOnly,
         apply,
         global: { json },
@@ -206,12 +266,8 @@ export function createDevCommand(
               description: "Disable the file watcher (enabled by default)",
             },
             {
-              label: "--once",
-              description: "Run a single plan/apply cycle and exit",
-            },
-            {
               label: "--plan-only",
-              description: "Compute the plan without applying changes (dry-run)",
+              description: "Compute the plan without applying (implies --no-watch)",
             },
             {
               label: "--apply",
@@ -224,7 +280,7 @@ export function createDevCommand(
           ],
           examples: [
             "tsera dev",
-            "tsera dev --once",
+            "tsera dev --no-watch",
             "tsera dev --plan-only",
             "tsera dev --json",
           ],

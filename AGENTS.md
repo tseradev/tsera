@@ -281,8 +281,7 @@ Compose un projet TSera à partir du template de base et des modules sélectionn
 
 - `[projectDir]` : Répertoire du projet (défaut: `.`)
 - `--no-watch` : Désactive le file watcher (activé par défaut)
-- `--once` : Exécute un seul cycle plan/apply (mode CI/CD)
-- `--plan-only` : Calcule le plan sans appliquer (mode dry-run)
+- `--plan-only` : Calcule le plan sans appliquer (implique `--no-watch`)
 - `--apply` : Force l'application même si le plan est vide
 
 #### `tsera doctor [--cwd <path>]`

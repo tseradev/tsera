@@ -72,7 +72,7 @@ ls
 # (optional) run `tree -L 2` if the tree command is available
 
 # 3. Start the continuous coherence loop once to generate artifacts
-tsera dev --once
+tsera dev --no-watch
 
 # 4. Keep the watcher active during development
 tsera dev
@@ -263,7 +263,7 @@ Key options to remember:
 
 - `tsera init` — `--no-install` to skip dependency installs, `--json` for machine-readable progress.
 - `tsera dev` — `--json` for NDJSON logs, `--strict` to exit with code `2` when drift remains,
-  `--plan-only` or `--once` for scripted runs.
+  `--plan-only` (implies `--no-watch`) or `--no-watch` for scripted runs.
 - `tsera doctor` — `--fix` for safe remediation, `--strict` to gate CI, `--json` for diagnostics.
 - `tsera update` — `--channel` (`stable`/`beta`/`canary`), `--binary` to force compiled releases,
   `--json` to stream progress.
