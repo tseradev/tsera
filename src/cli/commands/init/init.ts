@@ -113,10 +113,10 @@ function isInsideTSeraRepo(
 
 /**
  * Patches the import_map.json in the target directory based on the environment.
- * 
+ *
  * - If the project is created inside the TSera repo (dev mode):
  *   Replaces JSR imports with local relative paths to the source code.
- * 
+ *
  * - If the project is created outside the TSera repo (production):
  *   Leaves JSR imports as-is.
  *

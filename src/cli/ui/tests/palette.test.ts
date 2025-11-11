@@ -1,4 +1,4 @@
-import { assertEquals } from "std/assert/mod.ts";
+import { assertEquals } from "std/assert";
 import { createPalette } from "../palette.ts";
 
 Deno.test("createPalette returns palette with all methods", () => {

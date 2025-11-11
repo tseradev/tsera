@@ -125,7 +125,10 @@ export class DevConsole extends BaseConsole {
    * @param summary - The plan summary with operation counts
    * @param steps - The plan steps with node details
    */
-  planSummary(summary: PlanSummary, steps: Array<{ kind: string; node: { id: string; kind: string } }>): void {
+  planSummary(
+    summary: PlanSummary,
+    steps: Array<{ kind: string; node: { id: string; kind: string } }>,
+  ): void {
     if (!summary.changed) {
       this.#spinner.update(
         `${gray("Everything is in sync")}`,
@@ -141,11 +144,27 @@ export class DevConsole extends BaseConsole {
       const affectedSteps = steps.filter((s) => s.kind !== "noop");
       if (affectedSteps.length > 0) {
         this.write("");
-        this.write(`🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)}`);
+        this.write(
+          `🔍 ${bold("Change detected")} ${dim("│")} ${
+            yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
+          }`,
+        );
         for (const step of affectedSteps) {
-          const symbol = step.kind === "create" ? green("✚") : step.kind === "update" ? yellow("↻") : red("✖");
-          const action = step.kind === "create" ? gray("create") : step.kind === "update" ? gray("update") : gray("delete");
-          this.writeMiddle(`${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)}`);
+          const symbol = step.kind === "create"
+            ? green("✚")
+            : step.kind === "update"
+            ? yellow("↻")
+            : red("✖");
+          const action = step.kind === "create"
+            ? gray("create")
+            : step.kind === "update"
+            ? gray("update")
+            : gray("delete");
+          this.writeMiddle(
+            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${
+              gray(step.node.id)
+            }`,
+          );
         }
       }
       this.#spinner.start(`${yellow("Applying changes…")}`);

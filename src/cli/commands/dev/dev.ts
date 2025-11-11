@@ -160,7 +160,11 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
       // Show final coherence status in UI (only in human mode, and for initial/manual/watch)
       if (uiConsole && (reason === "initial" || reason === "manual")) {
-        uiConsole.complete(pending ? "pending" : "clean", dagInputs.length, shouldApply && plan.summary.changed);
+        uiConsole.complete(
+          pending ? "pending" : "clean",
+          dagInputs.length,
+          shouldApply && plan.summary.changed,
+        );
       } else if (uiConsole && reason === "watch") {
         // For watch cycles, just show a simpler status
         const status = pending ? "pending" : "clean";

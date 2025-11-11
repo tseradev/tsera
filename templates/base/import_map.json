@@ -1,10 +1,10 @@
 {
   "imports": {
+    "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
     "std/assert": "jsr:@std/assert@1",
     "std/fs": "jsr:@std/fs@1",
     "std/fs/walk": "jsr:@std/fs@1/walk",
     "std/path": "jsr:@std/path@1",
-    "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
     "tsera/": "jsr:@tsera/tsera@^1.0.0/",
     "zod": "jsr:@zod/zod@^4.0.0"
   }

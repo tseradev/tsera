@@ -1,4 +1,4 @@
-import { assertEquals } from "std/assert/mod.ts";
+import { assertEquals } from "std/assert";
 import { defineEntity } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../definitions.ts";
 import { buildDocsArtifacts } from "../artifacts/docs.ts";

@@ -291,7 +291,22 @@ interface ImportMap {
 }
 
 /**
- * Merges import_map.json files from enabled modules.
+ * Module-specific dependencies that should be added to import_map.json
+ * when the module is enabled.
+ */
+const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
+  hono: {
+    "hono": "jsr:@hono/hono@^4.0.0",
+  },
+  fresh: {
+    "preact": "npm:preact@10.27.2",
+    "preact/": "npm:preact@10.27.2/",
+  },
+};
+
+/**
+ * Merges import_map.json files from enabled modules and adds module-specific dependencies.
+ * Removes dependencies from disabled modules to keep import_map.json clean.
  *
  * @param options - Composition options.
  * @param result - Composition result to update.
@@ -316,7 +331,30 @@ async function mergeImportMap(
     baseMap.imports = {};
   }
 
-  // Check each module for additional imports
+  // Collect all dependencies that should be removed (from disabled modules)
+  const dependenciesToRemove = new Set<string>();
+  for (const [moduleName, deps] of Object.entries(MODULE_DEPENDENCIES)) {
+    if (!options.enabledModules.includes(moduleName)) {
+      // Module is disabled, mark its dependencies for removal
+      for (const depKey of Object.keys(deps)) {
+        dependenciesToRemove.add(depKey);
+      }
+    }
+  }
+
+  // Remove dependencies from disabled modules
+  for (const depKey of dependenciesToRemove) {
+    delete baseMap.imports[depKey];
+  }
+
+  // Add module-specific dependencies for enabled modules
+  for (const moduleName of options.enabledModules) {
+    if (MODULE_DEPENDENCIES[moduleName]) {
+      baseMap.imports = { ...baseMap.imports, ...MODULE_DEPENDENCIES[moduleName] };
+    }
+  }
+
+  // Check each module for additional imports from their import_map.json files (legacy support)
   for (const moduleName of options.enabledModules) {
     const modulePath = join(options.modulesDir, moduleName, "import_map.json");
     if (await exists(modulePath)) {

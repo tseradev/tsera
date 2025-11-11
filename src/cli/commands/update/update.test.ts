@@ -1,6 +1,6 @@
 import { join } from "../../../shared/path.ts";
 import { createDefaultUpdateHandler } from "./update.ts";
-import { assert, assertEquals } from "std/assert/mod.ts";
+import { assert, assertEquals } from "std/assert";
 
 const NOOP_WRITER = () => {};
 

@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "std/assert/mod.ts";
+import { assertEquals, assertStringIncludes } from "std/assert";
 import { defineEntity, entityToDDL } from "../index.ts";
 
 const userEntity = defineEntity({

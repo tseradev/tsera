@@ -1,4 +1,4 @@
-import { assertEquals } from "std/assert/mod.ts";
+import { assertEquals } from "std/assert";
 import { isPascalCase, pascalToSnakeCase } from "../strings.ts";
 
 Deno.test("isPascalCase - accepts valid PascalCase strings", () => {

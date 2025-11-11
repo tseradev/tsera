@@ -1,85 +1,18 @@
 /**
- * Hono dependency loader with fallback for offline development.
+ * Hono framework re-exports for TSera projects.
  *
- * This module attempts to load Hono from npm. If the network is unavailable,
- * it falls back to a minimal router implementation to keep tests running.
+ * This module centralizes Hono imports and re-exports commonly used types
+ * and classes. The actual Hono package is imported via the import_map.json
+ * configuration (jsr:@hono/hono).
  *
  * @module
  */
 
-export type Context = {
-  json: (data: unknown) => Response;
-  text: (data: string) => Response;
-  req: Request;
-};
-
-export type Handler = (c: Context) => Response | Promise<Response>;
+export { Hono } from "hono";
+export type { Context, Env, Handler, Input, Schema, ToSchema } from "hono";
+export type { HonoRequest } from "hono";
 
 /**
- * Minimal Hono fallback implementation for offline development.
+ * Re-export the router type for convenience.
  */
-class HonoFallback {
-  private routes = new Map<string, Handler>();
-
-  get(path: string, handler: Handler) {
-    this.routes.set(`GET:${path}`, handler);
-    return this;
-  }
-
-  post(path: string, handler: Handler) {
-    this.routes.set(`POST:${path}`, handler);
-    return this;
-  }
-
-  fetch = async (req: Request): Promise<Response> => {
-    const url = new URL(req.url);
-    const key = `${req.method}:${url.pathname}`;
-    const handler = this.routes.get(key);
-
-    if (!handler) {
-      return new Response("Not Found", { status: 404 });
-    }
-
-    const context: Context = {
-      json: (data) =>
-        new Response(JSON.stringify(data), {
-          headers: { "content-type": "application/json" },
-        }),
-      text: (data) =>
-        new Response(data, {
-          headers: { "content-type": "text/plain" },
-        }),
-      req,
-    };
-
-    return await handler(context);
-  };
-}
-
-/**
- * Type representing a Hono-like router interface.
- */
-export type HonoRouter = {
-  get(path: string, handler: Handler): HonoRouter;
-  post(path: string, handler: Handler): HonoRouter;
-  fetch(req: Request): Response | Promise<Response>;
-};
-
-/**
- * Type representing the Hono class constructor.
- */
-export type HonoConstructor = new () => HonoRouter;
-
-// Try to import actual Hono, fallback to minimal implementation
-let Hono: HonoConstructor;
-
-try {
-  const actualHono = await import("npm:hono@4");
-  Hono = actualHono.Hono;
-} catch {
-  // Network unavailable or npm:hono@4 not accessible
-  console.warn("Hono not available, using minimal fallback router");
-  Hono = HonoFallback;
-}
-
-export { Hono };
+export type HonoRouter = ReturnType<typeof import("hono").Hono.prototype.route>;

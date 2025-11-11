@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "std/assert/mod.ts";
+import { assertEquals, assertStringIncludes } from "std/assert";
 import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildZodArtifacts } from "../zod.ts";

@@ -4,7 +4,7 @@
  * @module
  */
 
-import { assertEquals, assertStringIncludes } from "std/assert/mod.ts";
+import { assertEquals, assertStringIncludes } from "std/assert";
 import { TerminalSpinner } from "../spinner.ts";
 
 /**

@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "std/assert/mod.ts";
+import { assertEquals, assertStringIncludes } from "std/assert";
 import { createDevCommand, type DevCommandContext } from "./dev.ts";
 import type { CliMetadata } from "../../main.ts";
 
@@ -126,7 +126,7 @@ Deno.test("dev command handles --no-watch flag", async () => {
 });
 
 Deno.test("dev command shows help", () => {
-  const command = createDevCommand(TEST_METADATA, () => { });
+  const command = createDevCommand(TEST_METADATA, () => {});
   const captured: string[] = [];
   const originalLog = console.log;
 

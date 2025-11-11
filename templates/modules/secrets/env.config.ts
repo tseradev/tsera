@@ -28,4 +28,3 @@ export const envSchema = defineEnvSchema({
     description: "Database connection URL",
   },
 });
-

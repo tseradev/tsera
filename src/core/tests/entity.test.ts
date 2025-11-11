@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertThrows } from "std/assert/mod.ts";
+import { assert, assertEquals, assertThrows } from "std/assert";
 import { defineEntity, type EntitySpec } from "../index.ts";
 
 Deno.test("defineEntity validates PascalCase names", () => {

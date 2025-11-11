@@ -2,18 +2,18 @@
  * Preact dependency loader - centralized version management.
  *
  * This module centralizes Preact imports and version management.
- * To update Preact, simply change the version number in the import statements below.
+ * The actual Preact package is imported via the import_map.json configuration (npm:preact).
  *
  * Current version: 10.27.2
  *
  * @module
  */
 
-// Re-export core Preact (change version here: npm:preact@VERSION)
-export { h, Fragment } from "npm:preact@10.27.2";
-export type { ComponentChildren, FunctionalComponent, VNode } from "npm:preact@10.27.2";
+// Re-export core Preact (via import_map.json)
+export { Fragment, h } from "preact";
+export type { ComponentChildren, FunctionalComponent, VNode } from "preact";
 
-// Re-export hooks (change version here: npm:preact@VERSION/hooks)
+// Re-export hooks (via import_map.json)
 export {
   useCallback,
   useContext,
@@ -26,5 +26,4 @@ export {
   useReducer,
   useRef,
   useState,
-} from "npm:preact@10.27.2/hooks";
-
+} from "preact/hooks";

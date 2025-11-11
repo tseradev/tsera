@@ -1,5 +1,5 @@
 import { join } from "./src/shared/path.ts";
-import { assert } from "@std/assert";
+import { assert } from "std/assert";
 
 interface RunCliOptions {
   cwd: string;

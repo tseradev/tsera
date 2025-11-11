@@ -1,5 +1,5 @@
 import { createLogger } from "../log.ts";
-import { assert, assertEquals } from "std/assert/mod.ts";
+import { assert, assertEquals } from "std/assert";
 
 function stripAnsi(value: string): string {
   const escape = String.fromCharCode(27);

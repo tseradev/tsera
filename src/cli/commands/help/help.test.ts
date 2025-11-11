@@ -1,4 +1,4 @@
-import { assertEquals } from "std/assert/mod.ts";
+import { assertEquals } from "std/assert";
 import { applyModernHelp, createHelpCommand } from "./help.ts";
 
 Deno.test("createHelpCommand returns a Command instance", () => {

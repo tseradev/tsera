@@ -57,7 +57,7 @@ Deno.test("${entity.name} schema valide un exemple minimal", () => {
 
   // TS-Morph may format std/assert to @std/assert, fix it
   // Use a more robust replacement that handles any quote style
-  content = content.replace(/(from\s+["'])@std\/assert(["'])/g, '$1std/assert$2');
+  content = content.replace(/(from\s+["'])@std\/assert(["'])/g, "$1std/assert$2");
 
   const path = join("tests", `${entity.name}.test.ts`);
 

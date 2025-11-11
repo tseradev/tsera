@@ -2,7 +2,7 @@
  * Tests for secret store with encryption.
  */
 
-import { assertEquals, assertExists, assertRejects } from "std/assert/mod.ts";
+import { assertEquals, assertExists, assertRejects } from "std/assert";
 import { createSecretStore, resetWarningCache } from "./store.ts";
 import { join } from "../../shared/path.ts";
 
@@ -127,7 +127,7 @@ Deno.test("store - set/get clear value", async () => {
   try {
     // Silence warning
     const originalWarn = console.warn;
-    console.warn = () => { };
+    console.warn = () => {};
 
     const store = await createSecretStore({
       kvPath,
@@ -362,7 +362,7 @@ Deno.test("store - cannot decrypt without key", async () => {
 
     // Silence warning
     const originalWarn = console.warn;
-    console.warn = () => { };
+    console.warn = () => {};
 
     // Store 2: Try to decrypt without key
     const store2 = await createSecretStore({
