@@ -14,4 +14,4 @@ export {
   assertRejects,
   assertStrictEquals,
   assertThrows,
-} from "@std/assert";
+} from "std/assert";

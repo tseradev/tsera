@@ -2,7 +2,7 @@
  * Tests for secret store with encryption.
  */
 
-import { assertEquals, assertExists, assertRejects } from "@std/assert";
+import { assertEquals, assertExists, assertRejects } from "std/assert/mod.ts";
 import { createSecretStore, resetWarningCache } from "./store.ts";
 import { join } from "../../shared/path.ts";
 

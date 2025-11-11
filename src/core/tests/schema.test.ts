@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import { defineEntity, entityToZod } from "../index.ts";
 
 const postEntity = defineEntity({

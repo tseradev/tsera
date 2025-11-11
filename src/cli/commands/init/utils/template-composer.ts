@@ -10,8 +10,8 @@
 
 import { dirname, join, relative } from "../../../../shared/path.ts";
 import { fromFileUrl } from "../../../../shared/file-url.ts";
-import { exists } from "@std/fs";
-import { walk } from "@std/fs/walk";
+import { exists } from "std/fs";
+import { walk } from "std/fs/walk";
 import { ensureDir } from "../../../utils/fsx.ts";
 import type { DbConfig } from "../../../definitions.ts";
 import { generateEnvFiles, generateEnvSchema } from "./env-generator.ts";

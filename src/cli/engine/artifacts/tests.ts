@@ -35,7 +35,7 @@ export const buildTestArtifacts: ArtifactBuilder = (context) => {
   );
 
   // Add imports
-  addImportDeclaration(sourceFile, "@std/assert", {
+  addImportDeclaration(sourceFile, "std/assert", {
     namedImports: ["assertEquals"],
   });
   addImportDeclaration(sourceFile, importPath, {
@@ -53,7 +53,11 @@ Deno.test("${entity.name} schema valide un exemple minimal", () => {
 
   // Format and get the generated text
   sourceFile.formatText();
-  const content = sourceFile.getFullText();
+  let content = sourceFile.getFullText();
+
+  // TS-Morph may format std/assert to @std/assert, fix it
+  // Use a more robust replacement that handles any quote style
+  content = content.replace(/(from\s+["'])@std\/assert(["'])/g, '$1std/assert$2');
 
   const path = join("tests", `${entity.name}.test.ts`);
 

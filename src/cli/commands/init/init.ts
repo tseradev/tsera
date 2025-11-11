@@ -1,6 +1,6 @@
 import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
-import { Command } from "@cliffy/command";
+import { Command } from "cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { pathExists, safeWrite } from "../../utils/fsx.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
@@ -88,11 +88,42 @@ function defaultTemplatesRoot(): string {
 }
 
 /**
- * Patches the import_map.json in the target directory to use local TSera sources
- * instead of JSR. This is necessary during development and testing since the
- * package doesn't exist in JSR yet.
+ * Checks if the target directory is inside the TSera repository.
+ * Used to determine if we should use local sources or JSR imports.
+ *
+ * @param targetDir - Path to the project being created.
+ * @param templatesRoot - Path to templates directory.
+ * @returns True if targetDir is inside TSera repo, false otherwise.
  */
-async function patchImportMapForLocalDevelopment(
+function isInsideTSeraRepo(
+  targetDir: string,
+  templatesRoot: string,
+): boolean {
+  // templatesRoot is .../templates, go up one level to get repo root
+  const repoRoot = dirname(templatesRoot);
+
+  // Normalize both paths for comparison (handle Windows/POSIX differences)
+  const normalizedTarget = resolve(targetDir).replace(/\\/g, "/");
+  const normalizedRoot = resolve(repoRoot).replace(/\\/g, "/");
+
+  // Check if target is inside repo root
+  return normalizedTarget.startsWith(normalizedRoot + "/") ||
+    normalizedTarget === normalizedRoot;
+}
+
+/**
+ * Patches the import_map.json in the target directory based on the environment.
+ * 
+ * - If the project is created inside the TSera repo (dev mode):
+ *   Replaces JSR imports with local relative paths to the source code.
+ * 
+ * - If the project is created outside the TSera repo (production):
+ *   Leaves JSR imports as-is.
+ *
+ * This allows seamless development within the repo while ensuring
+ * production projects use the published JSR package.
+ */
+async function patchImportMapForEnvironment(
   targetDir: string,
   templatesRoot: string,
 ): Promise<void> {
@@ -100,6 +131,14 @@ async function patchImportMapForLocalDevelopment(
 
   // Check if import_map.json exists
   if (!(await pathExists(importMapPath))) {
+    return;
+  }
+
+  // Check if we're inside the TSera repository
+  const isLocalDev = isInsideTSeraRepo(targetDir, templatesRoot);
+
+  // If not in local dev, leave JSR imports as-is
+  if (!isLocalDev) {
     return;
   }
 
@@ -137,9 +176,14 @@ async function patchImportMapForLocalDevelopment(
     relativePath = `${relativePath}/`;
   }
 
-  // Replace the JSR import with local path
-  if (importMap.imports["tsera/"]) {
-    importMap.imports["tsera/"] = relativePath;
+  // Replace JSR imports with local paths for dev mode
+  // Only patch imports that start with jsr:@tsera/
+  for (const [key, value] of Object.entries(importMap.imports)) {
+    if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
+      if (key === "tsera/") {
+        importMap.imports[key] = relativePath;
+      }
+    }
   }
 
   // Write back with sorted keys for consistency
@@ -214,8 +258,8 @@ export function createDefaultInitHandler(
       dbConfig: defaultDbConfig,
     });
 
-    // Patch import_map.json to use local sources instead of JSR (for development/testing)
-    await patchImportMapForLocalDevelopment(targetDir, templatesRoot);
+    // Patch import_map.json based on environment (local dev vs production)
+    await patchImportMapForEnvironment(targetDir, templatesRoot);
 
     if (jsonMode) {
       logger.event("init:copy", {

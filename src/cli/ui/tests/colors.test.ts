@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import { bold, cyan, dim, gray, green, magenta, red, yellow } from "../colors.ts";
 
 Deno.test("color functions apply styles", () => {

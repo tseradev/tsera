@@ -30,4 +30,4 @@ export {
   fail,
   unimplemented,
   unreachable,
-} from "@std/assert";
+} from "std/assert";

@@ -1,4 +1,4 @@
-import { Command } from "@cliffy/command";
+import { Command } from "cliffy/command";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { renderModernHelp } from "./renderer.ts";
 import type { ModernHelpConfig } from "./types.ts";

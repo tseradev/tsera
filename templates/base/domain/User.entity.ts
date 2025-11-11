@@ -1,3 +1,4 @@
+
 import { defineEntity } from "tsera/core/entity.ts";
 
 export const UserEntity = defineEntity({

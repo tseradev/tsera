@@ -4,7 +4,7 @@
  */
 
 import { join } from "../../shared/path.ts";
-import { ensureDir } from "@std/fs";
+import { ensureDir } from "std/fs";
 
 /**
  * Cache of warnings already displayed to avoid repetition.
@@ -201,7 +201,7 @@ export async function createSecretStore(
         displayedWarnings.add(warningKey);
         console.warn(
           "\x1b[33m[TSera Secrets]\x1b[0m Weak encryption key (< 32 chars)\n" +
-            "Use a strong passphrase for production (32+ chars)",
+          "Use a strong passphrase for production (32+ chars)",
         );
       }
     }
@@ -212,7 +212,7 @@ export async function createSecretStore(
       displayedWarnings.add(warningKey);
       console.warn(
         "\x1b[33m[TSera Secrets]\x1b[0m Store not encrypted (TSERA_SECRET_KEY not set)\n" +
-          "Set TSERA_SECRET_KEY for production encryption",
+        "Set TSERA_SECRET_KEY for production encryption",
       );
     }
   }

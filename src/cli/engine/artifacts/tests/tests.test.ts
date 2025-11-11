@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "std/assert/mod.ts";
 import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildTestArtifacts } from "../tests.ts";
@@ -38,7 +38,7 @@ Deno.test("buildTestArtifacts - génère un test smoke basique", async () => {
   assertEquals(normalizedPath, "tests/User.test.ts");
 
   const content = artifacts[0].content as string;
-  assertStringIncludes(content, 'import { assertEquals } from "@std/assert"');
+  assertStringIncludes(content, 'import { assertEquals } from "std/assert/mod.ts"');
   assertStringIncludes(content, 'import { UserSchema } from "../.tsera/schemas/User.schema.ts"');
   assertStringIncludes(content, 'Deno.test("User schema valide un exemple minimal"');
   assertStringIncludes(content, "UserSchema.parse(sample)");
@@ -112,7 +112,7 @@ Deno.test("buildTestArtifacts - normalise les imports relatifs", async () => {
   const content = artifacts[0].content as string;
 
   // Les imports doivent utiliser @std/assert depuis import_map.json
-  assertStringIncludes(content, 'from "@std/assert"');
+  assertStringIncludes(content, 'from "std/assert/mod.ts"');
   assertStringIncludes(content, 'from "../.tsera/schemas/Order.schema.ts"');
 });
 

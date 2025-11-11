@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import { clampWidth, detectTerminalWidth } from "../terminal.ts";
 
 Deno.test("clampWidth constrains values within bounds", () => {

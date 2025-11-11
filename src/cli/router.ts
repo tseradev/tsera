@@ -1,4 +1,4 @@
-import { Command } from "@cliffy/command";
+import { Command } from "cliffy/command";
 import { createDevCommand, type DevCommandHandler } from "./commands/dev/dev.ts";
 import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor/doctor.ts";
 import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";

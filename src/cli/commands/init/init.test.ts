@@ -1,7 +1,7 @@
 import { join } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { createDefaultInitHandler } from "./init.ts";
-import { assert, assertEquals } from "@std/assert";
+import { assert, assertEquals } from "std/assert/mod.ts";
 
 const NOOP_WRITER = () => {};
 

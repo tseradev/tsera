@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import { TreeChars } from "../types.ts";
 
 Deno.test("TreeChars contains all expected characters", () => {

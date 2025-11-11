@@ -1,5 +1,5 @@
 import { dirname } from "../../../shared/path.ts";
-import { Command } from "@cliffy/command";
+import { Command } from "cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
 import { applyPlan } from "../../engine/applier.ts";

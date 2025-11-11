@@ -4,7 +4,7 @@
  * @module
  */
 
-import { assertEquals, assertExists, assertRejects } from "@std/assert";
+import { assertEquals, assertExists, assertRejects } from "std/assert/mod.ts";
 import { defineEnvSchema, initializeSecrets, parseEnvFile } from "../secrets.ts";
 
 Deno.test("parseEnvFile - parses simple key=value format", () => {

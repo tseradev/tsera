@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "std/assert/mod.ts";
 import { defineEntity } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../definitions.ts";
 import { createDag } from "../dag.ts";

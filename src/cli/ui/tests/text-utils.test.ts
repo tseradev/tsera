@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import { StringBuilder, visualWidth, wrapText } from "../text-utils.ts";
 
 Deno.test("visualWidth counts visible characters", () => {

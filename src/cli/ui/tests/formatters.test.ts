@@ -4,7 +4,7 @@
  * @module
  */
 
-import { assertEquals } from "@std/assert";
+import { assertEquals } from "std/assert/mod.ts";
 import {
   formatActionLabel,
   formatActionSummary,

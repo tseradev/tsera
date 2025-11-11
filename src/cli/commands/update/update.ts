@@ -1,5 +1,5 @@
 import { join } from "../../../shared/path.ts";
-import { Command } from "@cliffy/command";
+import { Command } from "cliffy/command";
 import { createLogger } from "../../utils/log.ts";
 import { ensureDir } from "../../utils/fsx.ts";
 import { determineCliVersion } from "../../utils/version.ts";
