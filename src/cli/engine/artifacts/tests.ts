@@ -15,7 +15,8 @@ const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posi
  */
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
-  const testPath = posixJoin("tests", `${entity.name}.test.ts`);
+  // Generate tests next to entities
+  const testPath = posixJoin("core", "entities", `${entity.name}.test.ts`);
   const schemaPath = posixJoin(
     normalise(config.outDir),
     "schemas",
@@ -59,7 +60,7 @@ Deno.test("${entity.name} schema valide un exemple minimal", () => {
   // Use a more robust replacement that handles any quote style
   content = content.replace(/(from\s+["'])@std\/assert(["'])/g, "$1std/assert$2");
 
-  const path = join("tests", `${entity.name}.test.ts`);
+  const path = join("core", "entities", `${entity.name}.test.ts`);
 
   return [{
     kind: "test",

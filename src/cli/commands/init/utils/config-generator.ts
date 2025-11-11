@@ -69,8 +69,8 @@ const config: TseraConfig = {
   outDir: ".tsera",
   // Source folders scanned for entities (add files or globs as needed).
   paths: {
-    entities: ["domain"],
-    // routes: ["routes/**/*.ts"],
+    entities: ["core/entities"],
+    // routes: ["app/back/routes/**/*.ts"],
   },
   db: {
     // Choose between "postgres", "mysql", or "sqlite".
@@ -80,12 +80,12 @@ const config: TseraConfig = {
     ssl: "prefer",
     // Example SQLite configuration:
     // dialect: "sqlite",
-    // file: "${sqliteFile}",
+    // file: "./data/tsera.sqlite",
   },
   deploy: {
     // Deployment target handled by "tsera update".
     target: "deno_deploy",
-    entry: "main.ts",
+    entry: "app/back/main.ts",
     envFile: ".env.deploy",
   },${modulesConfig}
 };

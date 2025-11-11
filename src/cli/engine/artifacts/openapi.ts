@@ -65,7 +65,7 @@ export function buildProjectOpenAPIArtifact(
   });
   const sorted = sortObject(document);
   const content = JSON.stringify(sorted, null, 2) + "\n";
-  const path = join(config.outDir, "openapi.json");
+  const path = join("docs", "openapi", "OpenAPI.json");
   const dependsOn = buildDependencies(entities, config.outDir);
 
   return {

@@ -43,7 +43,7 @@ Deno.test("init generates the full skeleton and manifest", async () => {
 
     await updateImportMapForTests(projectDir);
 
-    const configPath = join(projectDir, "tsera.config.ts");
+    const configPath = join(projectDir, "config", "tsera.config.ts");
     const config = normalizeNewlines(await Deno.readTextFile(configPath), "\n");
     const expectedConfig = normalizeNewlines(await readGoldenFile("tsera.config.ts"), "\n");
     assertEquals(config, expectedConfig);

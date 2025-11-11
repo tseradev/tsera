@@ -2,7 +2,7 @@ import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { Command } from "cliffy/command";
 import { createLogger } from "../../utils/log.ts";
-import { pathExists, safeWrite } from "../../utils/fsx.ts";
+import { ensureDir, pathExists, safeWrite } from "../../utils/fsx.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
 import { determineCliVersion } from "../../utils/version.ts";
 import { applyPlan } from "../../engine/applier.ts";
@@ -276,8 +276,10 @@ export function createDefaultInitHandler(
     }
 
     const projectName = deriveProjectName(targetDir);
-    const configPath = join(targetDir, "tsera.config.ts");
-    await ensureWritable(configPath, context.force, "tsera.config.ts");
+    const configDir = join(targetDir, "config");
+    await ensureDir(configDir);
+    const configPath = join(configDir, "tsera.config.ts");
+    await ensureWritable(configPath, context.force, "config/tsera.config.ts");
     await safeWrite(configPath, generateConfigFile(projectName, context.modules));
     if (jsonMode) {
       logger.event("init:config", { path: configPath, modules: context.modules });

@@ -48,7 +48,7 @@ export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
   const { entity, config } = context;
   const content = entityToDDL(entity, config.db.dialect);
   const fileName = await nextMigrationFile(entity.name, content);
-  const path = join("drizzle", fileName);
+  const path = join("app", "db", "migrations", fileName);
 
   return [{
     kind: "migration",

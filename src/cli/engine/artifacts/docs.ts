@@ -29,7 +29,7 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
     );
   }
 
-  const path = join("docs", `${entity.name}.md`);
+  const path = join("docs", "markdown", `${entity.name}.md`);
 
   return [{
     kind: "doc",

@@ -2,7 +2,7 @@ import { dirname, join, resolve } from "../../shared/path.ts";
 import { pathExists } from "./fsx.ts";
 
 /**
- * Searches for a tsera.config.ts file starting from a directory and walking up the tree.
+ * Searches for a config/tsera.config.ts file starting from a directory and walking up the tree.
  *
  * @param startDir - Directory to start searching from.
  * @returns Absolute path to the config file, or null if not found.
@@ -11,7 +11,7 @@ export async function findConfigPath(startDir: string): Promise<string | null> {
   let current = resolve(startDir);
 
   while (true) {
-    const candidate = join(current, "tsera.config.ts");
+    const candidate = join(current, "config", "tsera.config.ts");
     if (await pathExists(candidate)) {
       return candidate;
     }
@@ -46,11 +46,14 @@ export interface ProjectResolution {
 export async function resolveProject(startDir: string): Promise<ProjectResolution> {
   const configPath = await findConfigPath(startDir);
   if (!configPath) {
-    throw new Error(`Unable to find tsera.config.ts from ${startDir}`);
+    throw new Error(`Unable to find config/tsera.config.ts from ${startDir}`);
   }
 
+  // Root dir is the directory containing config/
+  const rootDir = dirname(dirname(configPath));
+
   return {
-    rootDir: dirname(configPath),
+    rootDir,
     configPath,
   };
 }

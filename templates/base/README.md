@@ -48,14 +48,26 @@ tsera doctor --fix
 
 ```
 .
-├── domain/              # Entity definitions
-├── secrets/             # Environment-specific .env files
-├── .tsera/              # Generated schemas, manifests, and KV store
-├── drizzle/             # Database migrations
+├── app/
+│   ├── back/            # Backend (Hono API)
+│   ├── front/           # Frontend (Fresh SSR)
+│   └── db/              # Database client and migrations
+├── core/
+│   ├── entities/        # Entity definitions (single source of truth)
+│   ├── validation/      # Shared validation schemas
+│   ├── types/           # Shared TypeScript types
+│   └── utils/           # Shared utilities
+├── config/
+│   ├── docker/          # Docker configuration
+│   ├── ci-cd/           # CI/CD workflows
+│   ├── secrets/         # Environment-specific secrets
+│   ├── db/              # Database configuration
+│   └── tsera.config.ts  # TSera configuration
+├── tests/               # Tests (unit, integration, e2e)
 ├── docs/                # Generated documentation
-├── tests/               # Generated and custom tests
-├── env.config.ts        # Environment variable schema
-└── tsera.config.ts      # TSera configuration
+│   ├── openapi/         # OpenAPI specs
+│   └── markdown/        # Entity documentation
+└── .tsera/              # Generated schemas, manifests, and KV store
 ```
 
 ## Secrets Management
@@ -179,7 +191,7 @@ console.log(`Running in ${tsera.currentEnvironment} mode`);
 
 ## Entities
 
-Entities are defined in the `domain/` directory and serve as the single source of truth for:
+Entities are defined in the `core/entities/` directory and serve as the single source of truth for:
 
 - TypeScript types
 - Zod validation schemas

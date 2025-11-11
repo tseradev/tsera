@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: config/docker/Dockerfile.back
+    ports:
+      - "8000:8000"
+    environment:
+      - TSERA_DATABASE_URL=postgresql://postgres:postgres@db:5432/tsera
+      - TSERA_ENV=dev
+      - PORT=8000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../..:/app
+      - /app/node_modules
+    command: deno run -A app/back/main.ts
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: config/docker/Dockerfile.front
+    ports:
+      - "8001:8001"
+    environment:
+      - TSERA_ENV=dev
+      - FRESH_PORT=8001
+    volumes:
+      - ../..:/app
+      - /app/node_modules
+    command: deno run -A app/front/main.ts
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tsera
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+

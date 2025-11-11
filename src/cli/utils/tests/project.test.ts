@@ -15,7 +15,8 @@ async function withTempDir<T>(
 
 Deno.test("findConfigPath - trouve le config à la racine", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     const found = await findConfigPath(dir);
@@ -26,7 +27,8 @@ Deno.test("findConfigPath - trouve le config à la racine", async () => {
 
 Deno.test("findConfigPath - trouve le config dans un sous-répertoire", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     // Crée un sous-répertoire
@@ -42,7 +44,8 @@ Deno.test("findConfigPath - trouve le config dans un sous-répertoire", async ()
 
 Deno.test("findConfigPath - remonte plusieurs niveaux", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     // Crée un sous-répertoire profond
@@ -77,13 +80,14 @@ Deno.test("findConfigPath - s'arrête à la racine du système", async () => {
 Deno.test("findConfigPath - préfère le config le plus proche", async () => {
   await withTempDir(async (dir) => {
     // Crée un config à la racine
-    const rootConfig = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const rootConfig = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(rootConfig, "export default { root: true }");
 
     // Crée un sous-répertoire avec son propre config
     const subDir = join(dir, "sub");
-    await Deno.mkdir(subDir);
-    const subConfig = join(subDir, "tsera.config.ts");
+    await Deno.mkdir(join(subDir, "config"), { recursive: true });
+    const subConfig = join(subDir, "config", "tsera.config.ts");
     await Deno.writeTextFile(subConfig, "export default { sub: true }");
 
     // Cherche depuis le sous-répertoire
@@ -96,7 +100,8 @@ Deno.test("findConfigPath - préfère le config le plus proche", async () => {
 
 Deno.test("resolveProject - retourne rootDir et configPath", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     const result = await resolveProject(dir);
@@ -108,7 +113,8 @@ Deno.test("resolveProject - retourne rootDir et configPath", async () => {
 
 Deno.test("resolveProject - rootDir est le répertoire du config", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     // Crée un sous-répertoire
@@ -131,7 +137,7 @@ Deno.test("resolveProject - échoue si config non trouvé", async () => {
         await resolveProject(dir);
       },
       Error,
-      "Unable to find tsera.config.ts",
+      "Unable to find config/tsera.config.ts",
     );
   });
 });
@@ -152,9 +158,9 @@ Deno.test("resolveProject - gère les chemins avec espaces", async () => {
   await withTempDir(async (dir) => {
     // Crée un sous-répertoire avec espaces
     const spacedDir = join(dir, "my project");
-    await Deno.mkdir(spacedDir);
+    await Deno.mkdir(join(spacedDir, "config"), { recursive: true });
 
-    const configPath = join(spacedDir, "tsera.config.ts");
+    const configPath = join(spacedDir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     const result = await resolveProject(spacedDir);
@@ -168,9 +174,9 @@ Deno.test("resolveProject - gère les chemins avec caractères spéciaux", async
   await withTempDir(async (dir) => {
     // Crée un sous-répertoire avec caractères spéciaux
     const specialDir = join(dir, "project-2024");
-    await Deno.mkdir(specialDir);
+    await Deno.mkdir(join(specialDir, "config"), { recursive: true });
 
-    const configPath = join(specialDir, "tsera.config.ts");
+    const configPath = join(specialDir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
     const result = await resolveProject(specialDir);
@@ -182,8 +188,9 @@ Deno.test("resolveProject - gère les chemins avec caractères spéciaux", async
 
 Deno.test("findConfigPath - ne trouve pas tsera.config.js", async () => {
   await withTempDir(async (dir) => {
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
     // Crée un fichier JS au lieu de TS
-    await Deno.writeTextFile(join(dir, "tsera.config.js"), "module.exports = {}");
+    await Deno.writeTextFile(join(dir, "config", "tsera.config.js"), "module.exports = {}");
 
     const found = await findConfigPath(dir);
 
@@ -194,6 +201,7 @@ Deno.test("findConfigPath - ne trouve pas tsera.config.js", async () => {
 
 Deno.test("findConfigPath - ne trouve pas config.ts", async () => {
   await withTempDir(async (dir) => {
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
     // Crée un fichier avec un nom différent
     await Deno.writeTextFile(join(dir, "config.ts"), "export default {}");
 

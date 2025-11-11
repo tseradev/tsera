@@ -84,7 +84,8 @@ function validSqliteConfig(): TseraConfig {
 Deno.test("resolveConfig loads valid Postgres config", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config, null, 2)};`,
@@ -101,7 +102,8 @@ Deno.test("resolveConfig loads valid Postgres config", async () => {
 Deno.test("resolveConfig loads valid MySQL config", async () => {
   await withTempDir(async (dir) => {
     const config = validMysqlConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config, null, 2)};`,
@@ -117,7 +119,8 @@ Deno.test("resolveConfig loads valid MySQL config", async () => {
 Deno.test("resolveConfig loads valid SQLite config", async () => {
   await withTempDir(async (dir) => {
     const config = validSqliteConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config, null, 2)};`,
@@ -133,7 +136,8 @@ Deno.test("resolveConfig loads valid SQLite config", async () => {
 Deno.test("resolveConfig accepts export named config", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export const config = ${JSON.stringify(config, null, 2)};`,
@@ -148,7 +152,8 @@ Deno.test("resolveConfig accepts export named config", async () => {
 Deno.test("resolveConfig accepts export named CONFIG", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export const CONFIG = ${JSON.stringify(config, null, 2)};`,
@@ -162,7 +167,8 @@ Deno.test("resolveConfig accepts export named CONFIG", async () => {
 
 Deno.test("resolveConfig fails if no export", async () => {
   await withTempDir(async (dir) => {
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "const config = {};");
 
     await assertRejects(
@@ -178,7 +184,8 @@ Deno.test("resolveConfig fails if no export", async () => {
 Deno.test("resolveConfig fails if openapi is not boolean", async () => {
   await withTempDir(async (dir) => {
     const config = { ...validPostgresConfig(), openapi: "true" };
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -197,7 +204,8 @@ Deno.test("resolveConfig fails if openapi is not boolean", async () => {
 Deno.test("resolveConfig fails if docs is not boolean", async () => {
   await withTempDir(async (dir) => {
     const config = { ...validPostgresConfig(), docs: 1 };
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -216,7 +224,8 @@ Deno.test("resolveConfig fails if docs is not boolean", async () => {
 Deno.test("resolveConfig fails if outDir is not string", async () => {
   await withTempDir(async (dir) => {
     const config = { ...validPostgresConfig(), outDir: 123 };
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -235,7 +244,8 @@ Deno.test("resolveConfig fails if outDir is not string", async () => {
 Deno.test("resolveConfig fails if outDir is empty", async () => {
   await withTempDir(async (dir) => {
     const config = { ...validPostgresConfig(), outDir: "" };
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -255,7 +265,8 @@ Deno.test("resolveConfig fails if paths entities is not array", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.paths.entities = "domain/**/*.entity.ts" as never;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -275,7 +286,8 @@ Deno.test("resolveConfig fails if paths entities is empty", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.paths.entities = [];
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -295,7 +307,8 @@ Deno.test("resolveConfig fails if paths entities contains empty string", async (
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.paths.entities = ["domain/**/*.ts", ""];
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -315,7 +328,8 @@ Deno.test("resolveConfig accepts optional paths routes", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     delete config.paths.routes;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -331,7 +345,8 @@ Deno.test("resolveConfig fails if db dialect is invalid", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.db.dialect = "mongodb" as never;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -351,7 +366,8 @@ Deno.test("resolveConfig fails if Postgres without urlEnv", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     delete (config.db as { urlEnv?: string }).urlEnv;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -371,7 +387,8 @@ Deno.test("resolveConfig fails if Postgres with invalid ssl", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.db.ssl = "always" as never;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -391,7 +408,8 @@ Deno.test("resolveConfig fails if Postgres with file", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     (config.db as { file?: string }).file = "db.sqlite";
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -411,7 +429,8 @@ Deno.test("resolveConfig fails if MySQL with ssl not boolean", async () => {
   await withTempDir(async (dir) => {
     const config = validMysqlConfig();
     config.db.ssl = "true" as never;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -431,7 +450,8 @@ Deno.test("resolveConfig fails if SQLite without file", async () => {
   await withTempDir(async (dir) => {
     const config = validSqliteConfig();
     delete (config.db as { file?: string }).file;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -451,7 +471,8 @@ Deno.test("resolveConfig fails if SQLite with ssl", async () => {
   await withTempDir(async (dir) => {
     const config = validSqliteConfig();
     (config.db as { ssl?: boolean }).ssl = true;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -471,7 +492,8 @@ Deno.test("resolveConfig fails if deploy target is invalid", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     config.deploy.target = "aws_lambda" as never;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -491,7 +513,8 @@ Deno.test("resolveConfig fails if deploy entry is missing", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     delete (config.deploy as { entry?: string }).entry;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -511,7 +534,8 @@ Deno.test("resolveConfig accepts optional deploy envFile", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
     delete config.deploy.envFile;
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -526,7 +550,8 @@ Deno.test("resolveConfig accepts optional deploy envFile", async () => {
 Deno.test("resolveConfig cache bust with timestamp", async () => {
   await withTempDir(async (dir) => {
     const config = validPostgresConfig();
-    const configPath = join(dir, "tsera.config.ts");
+    await Deno.mkdir(join(dir, "config"), { recursive: true });
+    const configPath = join(dir, "config", "tsera.config.ts");
 
     // Crée la config initiale
     await Deno.writeTextFile(

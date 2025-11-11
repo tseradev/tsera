@@ -28,7 +28,7 @@ export function generateEnvFiles(
 
   const files: Record<string, string> = {
     ".env.dev": generateDevEnv(db, modules),
-    ".env.preprod": generatePreprodEnv(db, modules),
+    ".env.staging": generateStagingEnv(db, modules),
     ".env.prod": generateProdEnv(db, modules),
     ".env.example": generateExampleEnv(db, modules),
   };
@@ -99,25 +99,25 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
 }
 
 /**
- * Generates preprod environment file.
+ * Generates staging environment file.
  */
-function generatePreprodEnv(db: DbConfig, modules: string[]): string {
+function generateStagingEnv(db: DbConfig, modules: string[]): string {
   const lines: string[] = [
-    "# Preprod Environment",
-    "# This file is loaded when TSERA_ENV=preprod",
+    "# Staging Environment",
+    "# This file is loaded when TSERA_ENV=staging",
     "",
     "# Database Configuration",
   ];
 
   // Database URL based on dialect
   if (db.dialect === "postgres") {
-    lines.push("DATABASE_URL=postgresql://preprod-host:5432/tsera_preprod");
+    lines.push("DATABASE_URL=postgresql://staging-host:5432/tsera_staging");
     lines.push("DATABASE_SSL=prefer");
   } else if (db.dialect === "mysql") {
-    lines.push("DATABASE_URL=mysql://preprod-host:3306/tsera_preprod");
+    lines.push("DATABASE_URL=mysql://staging-host:3306/tsera_staging");
     lines.push("DATABASE_SSL=true");
   } else if (db.dialect === "sqlite") {
-    lines.push("DATABASE_URL=file:./data/tsera_preprod.db");
+    lines.push("DATABASE_URL=file:./data/tsera_staging.db");
   }
 
   lines.push("");
@@ -229,7 +229,7 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
 function generateExampleEnv(db: DbConfig, modules: string[]): string {
   const lines: string[] = [
     "# Example Environment Configuration",
-    "# Copy this file to .env.dev, .env.preprod, or .env.prod and fill with actual values",
+    "# Copy this file to .env.dev, .env.staging, or .env.prod and fill with actual values",
     "# This file is safe to commit (no real secrets)",
     "",
     "# Database Configuration",
