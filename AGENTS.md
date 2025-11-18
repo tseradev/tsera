@@ -83,6 +83,13 @@
           update.ts
           update-ui.ts
           update.test.ts
+        update/            # update command
+          update.ts
+          update-ui.ts
+          update.test.ts
+        mcp/               # mcp command
+          mcp.ts
+          mcp.test.ts
         help/              # help command
           help.ts
           command-help-renderer.ts
@@ -105,7 +112,10 @@
           drizzle.ts
           docs.ts
           tests.ts
+          docs.ts
+          tests.ts
           types.ts
+          sdk.ts           # générateur SDK client (hono/client)
           tests/           # tests des artefacts
       ui/                  # UI components (console, colors, terminal, etc.)
         console.ts
@@ -185,6 +195,10 @@
 - **Pas de MCP**. **Pas d'HTTP** dans le CLI.
 - **Écritures bornées** : `.tsera/`, `drizzle/`, `docs/`, tests générés. `safeWrite` only (écrit si
   diff).
+- **Gestion de l'Atomicité** :
+  - Toute écriture de fichier généré doit passer par une fonction `safeWrite(path, content)`.
+  - Si le processus crash au milieu d'une génération (ex: `dev` loop), le projet ne doit pas rester dans un état corrompu (fichiers partiels).
+  - Utiliser des fichiers temporaires + rename atomique si possible.
 - Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptives**.
 
 ---

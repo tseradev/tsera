@@ -27,6 +27,8 @@ team-facing documentation.
 - **Docker Compose** for local development (optional module).
 - **GitHub Actions** CI/CD workflows (optional module).
 - **Type-safe secrets management** with environment validation (optional module).
+- **Type-Safe SDK** generation for seamless Backend-Frontend integration.
+- **MCP Server** (`tsera mcp`) to expose project architecture to AI agents.
 
 ## Quick start
 
