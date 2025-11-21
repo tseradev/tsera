@@ -8,12 +8,12 @@
  * @module
  */
 
-import { Hono } from "../../deps/hono.ts";
+import { Hono } from "hono";
 import registerHealthRoutes from "./routes/health.ts";
 
 // Initialize secrets if available
 try {
-  await import("../../config/secrets/manager.ts");
+  await import("../../../secrets/manager.ts");
 } catch {
   // Secrets module not enabled, will use Deno.env
 }

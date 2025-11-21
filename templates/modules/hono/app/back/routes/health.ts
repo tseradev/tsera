@@ -1,4 +1,4 @@
-import type { Context, HonoRouter } from "../../../deps/hono.ts";
+import type { Context, Hono } from "hono";
 
 /**
  * Registers health check routes on the provided Hono app instance.
@@ -7,9 +7,9 @@ import type { Context, HonoRouter } from "../../../deps/hono.ts";
  * status "ok" to indicate the server is running.
  *
  * @param app - The Hono application instance to register routes on
- * @returns The same HonoRouter instance (for chaining, if supported)
+ * @returns The same Hono instance (for chaining)
  */
-export default function registerHealthRoutes(app: HonoRouter): HonoRouter {
+export default function registerHealthRoutes(app: Hono): Hono {
   app.get("/health", (c: Context) => c.json({ status: "ok" }));
   return app;
 }

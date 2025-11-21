@@ -101,7 +101,17 @@ export async function safeWrite(
     return { written: false, changed: false, path: absolutePath };
   }
 
-  await Deno.writeFile(absolutePath, newContent);
+  // Atomic write: write to temp file then rename
+  const tempPath = `${absolutePath}.tmp.${crypto.randomUUID()}`;
+  try {
+    await Deno.writeFile(tempPath, newContent);
+    await Deno.rename(tempPath, absolutePath);
+  } catch (error) {
+    // Clean up temp file if rename fails
+    await removeFileIfExists(tempPath);
+    throw error;
+  }
+
   return { written: true, changed: true, path: absolutePath };
 }
 

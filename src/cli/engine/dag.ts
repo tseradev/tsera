@@ -5,7 +5,7 @@ import { hashValue } from "./hash.ts";
 /**
  * Types of nodes in the dependency graph.
  */
-export type DagNodeKind = "entity" | "schema" | "openapi" | "migration" | "test" | "doc";
+export type DagNodeKind = "entity" | "schema" | "openapi" | "migration" | "test" | "doc" | "drizzle-schema";
 
 /**
  * Node mode indicating whether it's an input (source) or output (generated artifact).

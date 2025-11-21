@@ -18,8 +18,11 @@ A fullstack TypeScript project powered by TSera - continuous coherence for moder
 ### Development
 
 ```bash
-# Start development mode with hot reload
-deno task dev
+# Start all active modules (backend + frontend) with TSera dev
+tsera dev
+
+# Show all module logs in real-time
+tsera dev --logs
 
 # Run tests
 deno task test
@@ -29,6 +32,27 @@ deno task fmt
 
 # Lint code
 deno task lint
+```
+
+**TSera Dev automatically:**
+- Detects and starts active modules (Backend API, Fresh frontend)
+- Watches for file changes and hot-reloads your code
+- Regenerates artifacts when entities change
+- Restarts modules when configuration changes
+
+**Manual module commands (if needed):**
+```bash
+# Start backend only
+deno task dev
+
+# Start frontend only
+deno task dev:front
+
+# Build frontend for production
+deno task build:front
+
+# Start frontend production server
+deno task start:front
 ```
 
 ### TSera Commands
@@ -217,7 +241,49 @@ export default defineEntity({
 });
 ```
 
+## Frontend (Fresh)
+
+The frontend uses [Fresh 2.1.4](https://fresh.deno.dev), a modern web framework for Deno with:
+
+- **Server-Side Rendering (SSR)**: Automatic SSR for all routes
+- **Islands Architecture**: Selective hydration for optimal performance
+- **File-based Routing**: Routes in `app/front/routes/` are automatically discovered
+- **Hot Module Reloading**: Instant updates during development
+
+### Fresh Structure
+
+```
+app/front/
+├── main.ts              # Fresh app entry point
+├── routes/              # File-based routes
+│   ├── _app.tsx         # Global layout
+│   └── index.tsx        # Home page
+├── islands/             # Client-side interactive components
+│   └── Counter.tsx      # Example island
+├── components/          # Shared Preact components
+├── static/              # Static assets (images, etc.)
+└── assets/              # CSS and other assets
+```
+
+### Development
+
+Start the Fresh development server:
+
+```bash
+deno task dev:front
+```
+
+This starts Vite with Fresh plugin, providing hot module reloading and automatic route discovery.
+
+### Building for Production
+
+```bash
+deno task build:front
+deno task start:front
+```
+
 ## Learn More
 
 - [TSera Documentation](https://github.com/yourusername/tsera)
+- [Fresh Documentation](https://fresh.deno.dev)
 - [Deno Documentation](https://docs.deno.com)

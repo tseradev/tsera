@@ -9,6 +9,7 @@ import { buildDrizzleArtifacts } from "./artifacts/drizzle.ts";
 import { buildTestArtifacts } from "./artifacts/tests.ts";
 import { buildZodArtifacts } from "./artifacts/zod.ts";
 import { buildProjectOpenAPIArtifact } from "./artifacts/openapi.ts";
+import { buildDrizzleSchemaArtifact } from "./artifacts/drizzle-schema.ts";
 
 type ModuleNamespace = Record<string, unknown>;
 
@@ -22,7 +23,7 @@ export interface DiscoveredEntity {
   sourcePath: string;
 }
 
-const ENTITY_SUFFIX = ".entity.ts";
+const ENTITY_SUFFIX = ".ts";
 
 /**
  * Prepares DAG inputs by discovering entities and building their artifacts.
@@ -137,6 +138,7 @@ export async function buildEntityArtifacts(
 
   if (entity.table) {
     pushStage(await buildDrizzleArtifacts(context));
+    pushStage(await buildDrizzleSchemaArtifact(context));
   }
 
   if (config.docs && entity.doc) {
@@ -171,7 +173,7 @@ async function gatherEntityPaths(
       stat = await Deno.stat(absolute);
     } catch (error) {
       if (error instanceof Deno.errors.NotFound) {
-        throw new Error(`Configured entity path ${entry} does not exist.`);
+        throw new Error(`Configured entity path ${entry} does not exist at ${absolute}.`);
       }
       throw error;
     }
@@ -213,7 +215,16 @@ async function walkEntities(
     if (!entry.isFile) {
       continue;
     }
-    if (!entry.name.toLowerCase().endsWith(ENTITY_SUFFIX)) {
+    // Skip test files, index files, and other non-entity files
+    const lowerName = entry.name.toLowerCase();
+    if (
+      lowerName.endsWith(".test.ts") ||
+      lowerName === "index.ts" ||
+      lowerName.startsWith("_")
+    ) {
+      continue;
+    }
+    if (!lowerName.endsWith(ENTITY_SUFFIX)) {
       continue;
     }
     await onEntity(entryPath);
@@ -312,7 +323,7 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
 function isEntityDef(value: unknown): value is EntityDef {
   return Boolean(
     value && typeof value === "object" &&
-      (value as Record<string, unknown>).__brand === "TSeraEntity",
+    (value as Record<string, unknown>).__brand === "TSeraEntity",
   );
 }
 

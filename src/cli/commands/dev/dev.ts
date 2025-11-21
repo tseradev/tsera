@@ -12,12 +12,15 @@ import type { CliMetadata } from "../../main.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
 import { DevConsole } from "./dev-ui.ts";
+import { detectActiveModules } from "./modules.ts";
+import { ProcessManager } from "./process-manager.ts";
 
 /** CLI options accepted by the {@code dev} command. */
 interface DevCommandOptions extends GlobalCLIOptions {
   watch: boolean;
   planOnly: boolean;
   apply: boolean;
+  logs: boolean;
 }
 
 /** Options passed to the dev action handler by Cliffy. */
@@ -26,6 +29,7 @@ interface DevActionOptions {
   watch?: boolean;
   planOnly?: boolean;
   apply?: boolean;
+  logs?: boolean;
 }
 
 /**
@@ -40,6 +44,8 @@ export interface DevCommandContext {
   planOnly: boolean;
   /** Whether to force apply even if the plan is empty. */
   apply: boolean;
+  /** Whether to show all module logs in real-time. */
+  logs: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
 }
@@ -58,7 +64,9 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
   return async (context) => {
     const logger = createLogger({ json: context.global.json });
     const initial = await resolveConfig(context.projectDir);
-    const projectRoot = dirname(initial.configPath);
+    // projectRoot is the directory containing the config (which is in config/ subdirectory)
+    // So we need to go up one level from config/tsera.config.ts to get the project root
+    const projectRoot = dirname(dirname(initial.configPath));
     // --plan-only forces single-run mode (watch disabled) to avoid infinite loops
     const isWatchMode = context.watch && !context.planOnly;
     let queue = Promise.resolve();
@@ -72,6 +80,58 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     // Show initial banner
     if (uiConsole && !context.global.json) {
       uiConsole.start();
+    }
+
+    // Detect active modules and start process manager
+    const activeModules = await detectActiveModules(projectRoot);
+    const processManager = new ProcessManager();
+    const configWatchPath = initial.configPath;
+
+    // Display detected modules
+    if (uiConsole && (activeModules.backend || activeModules.frontend)) {
+      uiConsole.modulesSummary(activeModules);
+    }
+
+    // Setup process status change handler
+    processManager.onStatusChange((name, status, url) => {
+      if (!uiConsole || context.global.json) return;
+
+      switch (status) {
+        case "starting":
+          uiConsole.moduleStarting(name);
+          break;
+        case "ready":
+          uiConsole.moduleReady(name, url);
+          break;
+        case "error": {
+          const errors = processManager.getErrors(name);
+          const lastError = errors[errors.length - 1] || "Unknown error";
+          uiConsole.moduleError(name, lastError);
+          break;
+        }
+      }
+    });
+
+    // Start backend module if active
+    if (activeModules.backend) {
+      await processManager.startModule({
+        name: "backend",
+        command: "deno",
+        args: ["run", "-A", "--watch", "app/back/main.ts"],
+        cwd: projectRoot,
+        showLogs: context.logs,
+      });
+    }
+
+    // Start frontend module if active
+    if (activeModules.frontend) {
+      await processManager.startModule({
+        name: "frontend",
+        command: "deno",
+        args: ["task", "dev:front"],
+        cwd: projectRoot,
+        showLogs: context.logs,
+      });
     }
 
     const runCycle = async (
@@ -178,6 +238,36 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     const executeCycle = async (reason: string, paths: string[] = []): Promise<void> => {
       try {
+        // Check if config file changed and restart modules if so
+        if (paths.some((p) => p === configWatchPath)) {
+          if (uiConsole) {
+            uiConsole.configChanged();
+          }
+
+          // Stop and restart all modules
+          await processManager.stopAll();
+
+          if (activeModules.backend) {
+            await processManager.startModule({
+              name: "backend",
+              command: "deno",
+              args: ["run", "-A", "--watch", "app/back/main.ts"],
+              cwd: projectRoot,
+              showLogs: context.logs,
+            });
+          }
+
+          if (activeModules.frontend) {
+            await processManager.startModule({
+              name: "frontend",
+              command: "deno",
+              args: ["run", "-A", "npm:vite@^7.1.3", "--config", "config/front/vite.config.ts"],
+              cwd: projectRoot,
+              showLogs: context.logs,
+            });
+          }
+        }
+
         await runCycle(reason, paths);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -217,12 +307,26 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       try {
         await executeCycle("initial");
         await queue;
-        await new Promise<void>(() => {});
+        await new Promise<void>(() => { });
       } finally {
         controller.close();
+        await processManager.stopAll();
       }
     } else {
       await executeCycle("manual");
+      await processManager.stopAll();
+    }
+
+    // Cleanup on exit
+    const cleanup = async () => {
+      await processManager.stopAll();
+      Deno.exit(0);
+    };
+
+    Deno.addSignalListener("SIGINT", cleanup);
+    // SIGTERM is not supported on Windows, only add it on other platforms
+    if (Deno.build.os !== "windows") {
+      Deno.addSignalListener("SIGTERM", cleanup);
     }
   };
 }
@@ -240,13 +344,15 @@ export function createDevCommand(
     .option("--no-watch", "Disable the file watcher (enabled by default).")
     .option("--plan-only", "Compute the plan without applying it.", { default: false })
     .option("--apply", "Force apply even if the plan is empty.", { default: false })
+    .option("--logs", "Show all module logs in real-time.", { default: false })
     .action(async (options: DevActionOptions, projectDir = ".") => {
-      const { json = false, watch, planOnly = false, apply = false } = options;
+      const { json = false, watch, planOnly = false, apply = false, logs = false } = options;
       await handler({
         projectDir,
         watch: watch !== false, // watch is false only when --no-watch is explicitly used
         planOnly,
         apply,
+        logs,
         global: { json },
       });
     });
@@ -278,12 +384,17 @@ export function createDevCommand(
               description: "Force apply artifacts even if the plan is empty",
             },
             {
+              label: "--logs",
+              description: "Show all module logs in real-time (backend, frontend)",
+            },
+            {
               label: "--json",
               description: "Output machine-readable NDJSON events",
             },
           ],
           examples: [
             "tsera dev",
+            "tsera dev --logs",
             "tsera dev --no-watch",
             "tsera dev --plan-only",
             "tsera dev --json",

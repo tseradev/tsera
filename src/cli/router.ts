@@ -3,6 +3,7 @@ import { createDevCommand, type DevCommandHandler } from "./commands/dev/dev.ts"
 import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor/doctor.ts";
 import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
+import { mcpCommand } from "./commands/mcp/mcp.ts";
 import {
   applyModernHelp,
   createHelpCommand,
@@ -41,6 +42,10 @@ const COMMAND_HELP: ModernHelpCommand[] = [
   {
     label: "update",
     description: "Upgrade the TSera CLI via deno install or compiled binaries.",
+  },
+  {
+    label: "mcp",
+    description: "Start the Model Context Protocol server for AI agents.",
   },
   {
     label: "help [command]",
@@ -97,6 +102,7 @@ export function createRouter(
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));
   root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
+  root.command("mcp", mcpCommand as any);
   root.command("help", withGlobalOpts(createHelpCommand(handlers.help)));
 
   applyModernHelp(root, {

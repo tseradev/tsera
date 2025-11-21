@@ -61,6 +61,7 @@ const OUTPUT_KINDS: ReadonlySet<DagNodeKind> = new Set([
   "migration",
   "test",
   "doc",
+  "drizzle-schema",
 ]);
 
 /**

@@ -97,6 +97,63 @@ export class DevConsole extends BaseConsole {
   }
 
   /**
+   * Displays a summary of active modules at startup.
+   *
+   * @param modules - Object indicating which modules are active
+   */
+  modulesSummary(modules: { backend?: boolean; frontend?: boolean }): void {
+    const active: string[] = [];
+    if (modules.backend) active.push("Backend");
+    if (modules.frontend) active.push("Frontend");
+
+    if (active.length > 0) {
+      this.write("");
+      this.write(dim("Detected modules: ") + active.join(", "));
+    }
+  }
+
+  /**
+   * Displays a message when configuration changes and modules are restarting.
+   */
+  configChanged(): void {
+    this.write("");
+    this.write(yellow("⚠️  Configuration changed - restarting modules..."));
+  }
+
+  /**
+   * Displays a module starting message.
+   *
+   * @param name - Module name (e.g., "backend", "frontend")
+   */
+  moduleStarting(name: string): void {
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    this.write(dim("◆ ") + cyan(label) + dim(" │ Starting..."));
+  }
+
+  /**
+   * Displays a module ready message.
+   *
+   * @param name - Module name
+   * @param url - Optional URL where the module is running
+   */
+  moduleReady(name: string, url?: string): void {
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    const urlPart = url ? dim(" at ") + cyan(url) : "";
+    this.write(green("✓ ") + cyan(label) + dim(" │ Ready") + urlPart);
+  }
+
+  /**
+   * Displays a module error message.
+   *
+   * @param name - Module name
+   * @param error - Error message
+   */
+  moduleError(name: string, error: string): void {
+    const label = name.charAt(0).toUpperCase() + name.slice(1);
+    this.write(red("✗ ") + cyan(label) + dim(" │ ") + red(error));
+  }
+
+  /**
    * Announces the start of a dev cycle.
    *
    * @param reason - The reason for the cycle (e.g., "initial", "watch")
