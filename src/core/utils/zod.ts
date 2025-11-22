@@ -18,4 +18,4 @@ export { z };
  */
 export { ZodError as SchemaError };
 
-export type { ZodError as SchemaErrorType, ZodObject, ZodTypeAny } from "zod";
+export type { ZodError as SchemaErrorType, ZodObject, ZodType } from "zod";

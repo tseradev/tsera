@@ -165,7 +165,7 @@
         docker-compose.yml
         Dockerfile
         .dockerignore      # fichiers exclus du build Docker
-      ci/                 # Module CI/CD (optionnel, --no-ci)
+      ci-cd/              # Module CI/CD (optionnel, --no-ci)
         .github/workflows/ci.yml
         .github/workflows/deploy.yml
       secrets/            # Module Secrets (optionnel, --no-secrets)

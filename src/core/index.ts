@@ -1,15 +1,21 @@
 export {
   defineEntity,
-  type EntityDef,
-  type EntitySpec,
-  isArrayColumnType,
-  type TArrayColumn,
-  type TColumn,
-  type TPrimitive,
+  type EntityConfig,
+  type EntityRuntime,
+  type FieldDef,
+  type FieldVisibility,
+  type FieldDbMetadata,
+  type RelationsConfig,
+  type ActionsConfig,
+  type OpenAPIConfig,
+  type DocsConfig,
+  filterStoredFields,
+  filterPublicFields,
+  maskSecretFields,
 } from "./entity.ts";
 export { type Dialect, entityToDDL } from "./drizzle.ts";
 export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
-export { entityToZod } from "./schema.ts";
+export { getEntitySchema, getEntityPublicSchema, getEntityInputSchemas } from "./schema.ts";
 export {
   defineEnvSchema,
   type EnvSchema,

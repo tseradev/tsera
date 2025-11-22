@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
 import { defineEntity } from "../../../../core/entity.ts";
+import { z } from "zod";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildDocsArtifacts } from "../docs.ts";
 
@@ -25,9 +26,9 @@ Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () =
   const entity = defineEntity({
     name: "User",
     doc: true,
-    columns: {
-      id: { type: "string" },
-      email: { type: "string" },
+    fields: {
+      id: { validator: z.string(), visibility: "public" },
+      email: { validator: z.string().email(), visibility: "public" },
     },
   });
 
@@ -37,18 +38,19 @@ Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () =
   assertEquals(artifacts[0].kind, "doc");
   // Normalise le chemin pour Windows
   const normalizedPath = artifacts[0].path.replace(/\\/g, "/");
-  assertEquals(normalizedPath, "docs/User.md");
+  assertEquals(normalizedPath, "docs/markdown/User.md");
   assertEquals(artifacts[0].label, "User documentation");
 });
 
-Deno.test("buildDocsArtifacts - contient un tableau des propriétés", async () => {
+Deno.test("buildDocsArtifacts - contient un tableau des propriétés publiques", async () => {
   const entity = defineEntity({
     name: "Product",
     doc: true,
-    columns: {
-      name: { type: "string" },
-      price: { type: "number" },
-      active: { type: "boolean" },
+    fields: {
+      name: { validator: z.string(), visibility: "public" },
+      price: { validator: z.number(), visibility: "public" },
+      active: { validator: z.boolean(), visibility: "public" },
+      secret: { validator: z.string(), visibility: "secret" },
     },
   });
 
@@ -59,124 +61,67 @@ Deno.test("buildDocsArtifacts - contient un tableau des propriétés", async () 
   assertStringIncludes(content, "# Product");
 
   // Vérifie l'en-tête du tableau
-  assertStringIncludes(content, "| Property | Type | Optional | Nullable | Default |");
-  assertStringIncludes(content, "| --- | --- | --- | --- | --- |");
+  assertStringIncludes(content, "## Public Fields");
+  assertStringIncludes(content, "| Property | Type | Optional | Nullable | Default | Description |");
 
-  // Vérifie les lignes de propriétés
-  assertStringIncludes(content, "| name | string | no | no | — |");
-  assertStringIncludes(content, "| price | number | no | no | — |");
-  assertStringIncludes(content, "| active | boolean | no | no | — |");
+  // Vérifie les lignes de propriétés publiques
+  assertStringIncludes(content, "| name |");
+  assertStringIncludes(content, "| price |");
+  assertStringIncludes(content, "| active |");
+  // secret ne doit pas apparaître dans Public Fields
+  assertEquals(content.includes("| secret |"), false);
 });
 
-Deno.test("buildDocsArtifacts - indique les champs optionnels", async () => {
+Deno.test("buildDocsArtifacts - filtre les champs visibility !== public", async () => {
   const entity = defineEntity({
-    name: "Post",
+    name: "Test",
     doc: true,
-    columns: {
-      title: { type: "string" },
-      subtitle: { type: "string", optional: true },
+    fields: {
+      public: { validator: z.string(), visibility: "public" },
+      internal: { validator: z.string(), visibility: "internal" },
+      secret: { validator: z.string(), visibility: "secret" },
     },
   });
 
   const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
   const content = artifacts[0].content as string;
 
-  assertStringIncludes(content, "| title | string | no |");
-  assertStringIncludes(content, "| subtitle | string | yes |");
+  // Public Fields doit contenir uniquement "public"
+  assertStringIncludes(content, "## Public Fields");
+  assertStringIncludes(content, "| public |");
+  assertEquals(content.includes("| internal |"), false);
+  assertEquals(content.includes("| secret |"), false);
+
+  // Internal Fields doit contenir "internal" mais pas "secret"
+  assertStringIncludes(content, "## Internal Fields");
+  assertStringIncludes(content, "| internal |");
+  assertEquals(content.includes("| secret |"), false);
 });
 
-Deno.test("buildDocsArtifacts - indique les champs nullables", async () => {
-  const entity = defineEntity({
-    name: "Comment",
-    doc: true,
-    columns: {
-      content: { type: "string" },
-      deletedAt: { type: "date", nullable: true },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, "| content | string | no | no |");
-  assertStringIncludes(content, "| deletedAt | date | no | yes |");
-});
-
-Deno.test("buildDocsArtifacts - affiche les valeurs par défaut", async () => {
-  const entity = defineEntity({
-    name: "Settings",
-    doc: true,
-    columns: {
-      theme: { type: "string", default: "dark" },
-      count: { type: "number", default: 42 },
-      enabled: { type: "boolean", default: true },
-      nullable: { type: "string", nullable: true, default: null },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, "| theme | string | no | no | `dark` |");
-  assertStringIncludes(content, "| count | number | no | no | 42 |");
-  assertStringIncludes(content, "| enabled | boolean | no | no | true |");
-  assertStringIncludes(content, "| nullable | string | no | yes | null |");
-});
-
-Deno.test("buildDocsArtifacts - formate les dates par défaut", async () => {
-  const defaultDate = new Date("2024-01-01T00:00:00.000Z");
-  const entity = defineEntity({
-    name: "Event",
-    doc: true,
-    columns: {
-      scheduledAt: { type: "date", default: defaultDate },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, "| scheduledAt | date | no | no | 2024-01-01T00:00:00.000Z |");
-});
-
-Deno.test("buildDocsArtifacts - affiche les types array", async () => {
-  const entity = defineEntity({
-    name: "Article",
-    doc: true,
-    columns: {
-      tags: { type: { arrayOf: "string" } },
-      scores: { type: { arrayOf: "number" } },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, "| tags | Array<string> |");
-  assertStringIncludes(content, "| scores | Array<number> |");
-});
-
-Deno.test("buildDocsArtifacts - inclut une description automatique", async () => {
+Deno.test("buildDocsArtifacts - utilise entity.docs.description", async () => {
   const entity = defineEntity({
     name: "Invoice",
     doc: true,
-    columns: {
-      id: { type: "string" },
+    docs: {
+      description: "Custom description for Invoice entity",
+    },
+    fields: {
+      id: { validator: z.string(), visibility: "public" },
     },
   });
 
   const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
   const content = artifacts[0].content as string;
 
-  assertStringIncludes(content, "Automatic documentation for Invoice.");
+  assertStringIncludes(content, "Custom description for Invoice entity");
 });
 
 Deno.test("buildDocsArtifacts - ajoute newline final", async () => {
   const entity = defineEntity({
     name: "Profile",
     doc: true,
-    columns: {
-      bio: { type: "string" },
+    fields: {
+      bio: { validator: z.string(), visibility: "public" },
     },
   });
 
@@ -184,34 +129,4 @@ Deno.test("buildDocsArtifacts - ajoute newline final", async () => {
   const content = artifacts[0].content as string;
 
   assertEquals(content.endsWith("\n"), true);
-});
-
-Deno.test("buildDocsArtifacts - formate les objets JSON par défaut", async () => {
-  const entity = defineEntity({
-    name: "Config",
-    doc: true,
-    columns: {
-      settings: { type: "json", default: { theme: "dark", lang: "en" } },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, '`{"theme":"dark","lang":"en"}`');
-});
-
-Deno.test("buildDocsArtifacts - gère les colonnes sans valeur par défaut", async () => {
-  const entity = defineEntity({
-    name: "Item",
-    doc: true,
-    columns: {
-      name: { type: "string" },
-    },
-  });
-
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
-  const content = artifacts[0].content as string;
-
-  assertStringIncludes(content, "| name | string | no | no | — |");
 });

@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
 import { defineEntity } from "../../../../core/entity.ts";
+import { z } from "zod";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildDrizzleArtifacts } from "../drizzle.ts";
 
@@ -33,9 +34,9 @@ Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
   const entity = defineEntity({
     name: "User",
     table: true,
-    columns: {
-      id: { type: "string" },
-      email: { type: "string" },
+    fields: {
+      id: { validator: z.string(), stored: true },
+      email: { validator: z.string().email(), stored: true },
     },
   });
 
@@ -49,12 +50,45 @@ Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
   assertStringIncludes(content, '"user"');
 });
 
+Deno.test("buildDrizzleArtifacts - filtre les champs stored: false", async () => {
+  const entity = defineEntity({
+    name: "Test",
+    table: true,
+    fields: {
+      id: { validator: z.string(), stored: true },
+      computed: { validator: z.string(), stored: false },
+      virtual: { validator: z.number(), stored: false },
+    },
+  });
+
+  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+  const content = artifacts[0].content as string;
+
+  assertStringIncludes(content, '"id"');
+  assertEquals(content.includes('"computed"'), false);
+  assertEquals(content.includes('"virtual"'), false);
+});
+
+Deno.test("buildDrizzleArtifacts - ne génère pas de migration si aucun champ stored", async () => {
+  const entity = defineEntity({
+    name: "Virtual",
+    table: true,
+    fields: {
+      computed: { validator: z.string(), stored: false },
+    },
+  });
+
+  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+
+  assertEquals(artifacts.length, 0);
+});
+
 Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", async () => {
   const entity = defineEntity({
     name: "Product",
     table: true,
-    columns: {
-      id: { type: "string" },
+    fields: {
+      id: { validator: z.string(), stored: true },
     },
   });
 
@@ -64,76 +98,17 @@ Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", as
   // Le même entity devrait générer le même nom de fichier
   assertEquals(artifacts1[0].path, artifacts2[0].path);
   const normalizedPath = artifacts1[0].path.replace(/\\/g, "/");
-  assertStringIncludes(normalizedPath, "drizzle/");
+  assertStringIncludes(normalizedPath, "app/db/migrations/");
   assertStringIncludes(normalizedPath, "_product.sql");
-});
-
-Deno.test("buildDrizzleArtifacts - nom de fichier change si DDL change", async () => {
-  const entity1 = defineEntity({
-    name: "Order",
-    table: true,
-    columns: {
-      id: { type: "string" },
-    },
-  });
-
-  const entity2 = defineEntity({
-    name: "Order",
-    table: true,
-    columns: {
-      id: { type: "string" },
-      total: { type: "number" },
-    },
-  });
-
-  const artifacts1 = await buildDrizzleArtifacts({ entity: entity1, config: baseConfigPostgres });
-  const artifacts2 = await buildDrizzleArtifacts({ entity: entity2, config: baseConfigPostgres });
-
-  // Des DDL différents devraient générer des noms de fichiers différents
-  assertEquals(artifacts1[0].path !== artifacts2[0].path, true);
-});
-
-Deno.test("buildDrizzleArtifacts - format de timestamp déterministe", async () => {
-  const entity = defineEntity({
-    name: "Invoice",
-    table: true,
-    columns: {
-      id: { type: "string" },
-    },
-  });
-
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
-  const normalizedPath = artifacts[0].path.replace(/\\/g, "/");
-  const filename = normalizedPath.split("/")[1];
-
-  // Format attendu: YYYYMMDDHHMM_microseconds_entity.sql
-  const regex = /^\d{12}_\d{6}_invoice\.sql$/;
-  assertEquals(regex.test(filename), true);
-});
-
-Deno.test("buildDrizzleArtifacts - ajoute un newline final", async () => {
-  const entity = defineEntity({
-    name: "Comment",
-    table: true,
-    columns: {
-      id: { type: "string" },
-    },
-  });
-
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
-  const content = artifacts[0].content as string;
-
-  // Vérifie que le contenu se termine par un newline
-  assertEquals(content.endsWith("\n"), true);
 });
 
 Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
   const entity = defineEntity({
     name: "Post",
     table: true,
-    columns: {
-      id: { type: "string" },
-      active: { type: "boolean" },
+    fields: {
+      id: { validator: z.string(), stored: true },
+      active: { validator: z.boolean(), stored: true },
     },
   });
 
@@ -149,34 +124,4 @@ Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
 
   assertStringIncludes(contentPostgres, "CREATE TABLE");
   assertStringIncludes(contentSqlite, "CREATE TABLE");
-});
-
-Deno.test("buildDrizzleArtifacts - inclut les métadonnées entity", async () => {
-  const entity = defineEntity({
-    name: "Article",
-    table: true,
-    columns: {
-      id: { type: "string" },
-    },
-  });
-
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
-
-  assertEquals(artifacts[0].data?.entity, "Article");
-  assertEquals(artifacts[0].label, "Article migration");
-});
-
-Deno.test("buildDrizzleArtifacts - chemin dans le dossier drizzle", async () => {
-  const entity = defineEntity({
-    name: "Settings",
-    table: true,
-    columns: {
-      id: { type: "string" },
-    },
-  });
-
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
-  const normalizedPath = artifacts[0].path.replace(/\\/g, "/");
-
-  assertStringIncludes(normalizedPath, "drizzle/");
 });

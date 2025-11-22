@@ -1,6 +1,6 @@
 import { join } from "../../../shared/path.ts";
 import { generateOpenAPIDocument } from "../../../core/openapi.ts";
-import type { EntityDef } from "../../../core/entity.ts";
+import type { EntityRuntime } from "../../../core/entity.ts";
 import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 import type { TseraConfig } from "../../definitions.ts";
@@ -30,11 +30,11 @@ function sortObject<T>(value: T): T {
 /**
  * Builds dependency identifiers for OpenAPI artifact based on schema artifacts.
  *
- * @param entities - Array of entity definitions.
+ * @param entities - Array of entity runtimes.
  * @param outDir - Output directory.
  * @returns Array of dependency node identifiers.
  */
-function buildDependencies(entities: readonly EntityDef[], outDir: string): string[] {
+function buildDependencies(entities: readonly EntityRuntime[], outDir: string): string[] {
   const dependencies: string[] = [];
   for (const entity of entities) {
     const slug = pascalToSnakeCase(entity.name);
@@ -46,34 +46,38 @@ function buildDependencies(entities: readonly EntityDef[], outDir: string): stri
 
 /**
  * Builds the project-level OpenAPI artifact from all entities.
+ * Uses only entity.public for schemas (visibility filtering).
  *
- * @param entities - Array of entity definitions.
+ * @param entities - Array of entity runtimes.
  * @param config - TSera configuration.
  * @returns OpenAPI artifact descriptor, or {@code null} if OpenAPI is disabled.
  */
 export function buildProjectOpenAPIArtifact(
-  entities: readonly EntityDef[],
+  entities: readonly EntityRuntime[],
   config: TseraConfig,
 ): ArtifactDescriptor | null {
   if (!config.openapi) {
     return null;
   }
 
-  const document = generateOpenAPIDocument(entities, {
+  // Filter entities with openapi.enabled !== false
+  const enabledEntities = entities.filter((entity) => entity.openapi?.enabled !== false);
+
+  const document = generateOpenAPIDocument(enabledEntities, {
     title: "TSera API",
     version: "1.0.0",
   });
   const sorted = sortObject(document);
   const content = JSON.stringify(sorted, null, 2) + "\n";
   const path = join("docs", "openapi", "OpenAPI.json");
-  const dependsOn = buildDependencies(entities, config.outDir);
+  const dependsOn = buildDependencies(enabledEntities, config.outDir);
 
   return {
     kind: "openapi",
     path,
     content,
     label: "Project OpenAPI",
-    data: { entities: entities.map((entity) => entity.name) },
+    data: { entities: enabledEntities.map((entity) => entity.name) },
     dependsOn: dependsOn.length > 0 ? dependsOn : undefined,
   };
 }

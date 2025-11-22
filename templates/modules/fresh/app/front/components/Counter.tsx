@@ -8,7 +8,9 @@
  *
  * @module
  */
-import { h, useState } from "../../../deps/preact.ts";
+// Install dependencies first: deno add npm:preact@^10.27.2
+// After installation, uncomment the import below:
+// import { h, useState } from "../../../deps/preact.ts";
 
 /**
  * Props for the Counter component.
@@ -21,21 +23,23 @@ interface CounterProps {
 /**
  * Counter island component.
  *
+ * NOTE: Uncomment after installing dependencies (deno add npm:preact@^10.27.2)
+ *
  * @param props - Component props containing the initial counter value
  * @returns JSX element representing the counter interface
  */
-export default function Counter(props: CounterProps) {
-  const [count, setCount] = useState(props.start);
+// export default function Counter(props: CounterProps) {
+//   const [count, setCount] = useState(props.start);
 
-  return (
-    <div class="counter">
-      <p class="counter-display">{count}</p>
-      <div class="counter-buttons">
-        <button type="button" onClick={() => setCount(count - 1)}>-1</button>
-        <button type="button" onClick={() => setCount(count + 1)}>+1</button>
-        <button type="button" onClick={() => setCount(props.start)}>Reset</button>
-      </div>
-    </div>
-  );
-}
+//   return (
+//     <div class="counter">
+//       <p class="counter-display">{count}</p>
+//       <div class="counter-buttons">
+//         <button type="button" onClick={() => setCount(count - 1)}>-1</button>
+//         <button type="button" onClick={() => setCount(count + 1)}>+1</button>
+//         <button type="button" onClick={() => setCount(props.start)}>Reset</button>
+//       </div>
+//     </div>
+//   );
+// }
 

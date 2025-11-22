@@ -9,6 +9,7 @@ import { buildZodArtifacts } from "../artifacts/zod.ts";
 import { createDag } from "../dag.ts";
 import { planDag, type PlanStep } from "../planner.ts";
 import { applySnapshots, createEmptyState } from "../state.ts";
+import { z } from "zod";
 
 const config: TseraConfig = {
   openapi: true,
@@ -31,9 +32,9 @@ const config: TseraConfig = {
 const entityV1 = defineEntity({
   name: "Invoice",
   table: true,
-  columns: {
-    id: { type: "string" },
-    total: { type: "number" },
+  fields: {
+    id: { validator: z.string() },
+    total: { validator: z.number() },
   },
   doc: true,
   test: "smoke",
@@ -42,10 +43,10 @@ const entityV1 = defineEntity({
 const entityV2 = defineEntity({
   name: "Invoice",
   table: true,
-  columns: {
-    id: { type: "string" },
-    total: { type: "number" },
-    currency: { type: "string", default: "EUR" },
+  fields: {
+    id: { validator: z.string() },
+    total: { validator: z.number() },
+    currency: { validator: z.string().default("EUR") },
   },
   doc: true,
   test: "smoke",

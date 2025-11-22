@@ -1,65 +1,82 @@
-import type { EntityDef, TColumn, TPrimitive } from "./entity.ts";
-import { isArrayColumnType } from "./entity.ts";
+import type { EntityRuntime, FieldDef } from "./entity.ts";
+import { filterStoredFields } from "./entity.ts";
 import { pascalToSnakeCase } from "./utils/strings.ts";
+import type { ZodType } from "./utils/zod.ts";
+
+/**
+ * Internal Zod definition structure (for accessing _zod.def).
+ * This is used to access Zod's internal API which is not part of the public types.
+ */
+interface ZodInternalDef {
+  type: string;
+  element?: ZodType;
+  innerType?: ZodType;
+  defaultValue?: unknown;
+  shape?: Record<string, ZodType>;
+}
+
+/**
+ * Helper type for accessing Zod's internal _zod property.
+ * Uses unknown instead of any for type safety.
+ */
+type ZodWithInternal = {
+  _zod: {
+    def: ZodInternalDef;
+  };
+} & ZodType;
 
 /** Supported SQL dialect identifiers for DDL generation. */
 export type Dialect = "postgres" | "sqlite" | "mysql";
 
 /**
- * Generates a CREATE TABLE statement for the provided entity when {@link EntitySpec.table}
- * is enabled. When the entity does not target a table, a comment describing the omission
- * is returned instead.
+ * Extracts the SQL type from a Zod schema.
+ * This function analyzes the Zod schema to determine the corresponding SQL type.
  *
- * @param entity - Validated entity definition to transform into SQL.
- * @param dialect - SQL dialect influencing type and default mapping (defaults to Postgres).
- * @returns SQL string representing the entity.
+ * @param zodSchema - Zod schema to analyze.
+ * @param dialect - Target SQL dialect.
+ * @returns Corresponding SQL type.
  */
-export function entityToDDL(entity: EntityDef, dialect: Dialect = "postgres"): string {
-  if (!entity.table) {
-    return `-- Entity ${entity.name} is not mapped to a table.`;
+function extractSqlTypeFromZod(zodSchema: ZodType, dialect: Dialect): string {
+  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
+  const def = zodWithInternal._zod.def;
+
+  // Handle ZodString
+  if (def.type === "string") {
+    return "TEXT";
   }
 
-  const tableName = pascalToSnakeCase(entity.name);
-  const columnDefinitions = Object.entries(entity.columns)
-    .map(([name, column]) => formatColumn(name, column, dialect))
-    .join(",\n");
-
-  return `CREATE TABLE IF NOT EXISTS "${tableName}" (\n${columnDefinitions}\n);`;
-}
-
-/**
- * Formats an individual column definition for inclusion in the CREATE TABLE statement.
- *
- * @param name - Column name as declared on the entity.
- * @param column - Column configuration describing type and constraints.
- * @param dialect - SQL dialect controlling generated syntax.
- * @returns A single column definition string.
- */
-function formatColumn(name: string, column: TColumn, dialect: Dialect): string {
-  const columnName = `  "${name}"`;
-  const sqlType = mapColumnType(column, dialect);
-  const constraints: string[] = [];
-
-  if (!column.optional && !column.nullable) {
-    constraints.push("NOT NULL");
+  // Handle ZodNumber
+  if (def.type === "number") {
+    if (dialect === "mysql") {
+      return "INT";
+    }
+    return "INTEGER";
   }
 
-  if (column.default !== undefined) {
-    constraints.push(`DEFAULT ${formatDefault(column, column.default, dialect)}`);
+  // Handle ZodBoolean
+  if (def.type === "boolean") {
+    if (dialect === "postgres") {
+      return "BOOLEAN";
+    }
+    if (dialect === "mysql") {
+      return "TINYINT(1)";
+    }
+    return "INTEGER";
   }
 
-  return [columnName, sqlType, ...constraints].join(" ").trimEnd();
-}
+  // Handle ZodDate
+  if (def.type === "date") {
+    if (dialect === "postgres") {
+      return "TIMESTAMP";
+    }
+    if (dialect === "mysql") {
+      return "DATETIME";
+    }
+    return "TEXT";
+  }
 
-/**
- * Resolves the SQL type for a column, delegating to array or primitive mappings.
- *
- * @param column - Column definition to translate.
- * @param dialect - SQL dialect controlling the mapping.
- * @returns Dialect-specific SQL type.
- */
-function mapColumnType(column: TColumn, dialect: Dialect): string {
-  if (isArrayColumnType(column.type)) {
+  // Handle ZodArray
+  if (def.type === "array") {
     if (dialect === "postgres") {
       return "JSONB";
     }
@@ -69,133 +86,212 @@ function mapColumnType(column: TColumn, dialect: Dialect): string {
     return "TEXT";
   }
 
-  return mapPrimitiveType(column.type, dialect);
-}
-
-/**
- * Maps a primitive column type to its SQL representation for the requested dialect.
- *
- * @param type - Primitive column type to convert.
- * @param dialect - SQL dialect controlling the conversion.
- * @returns SQL type string suitable for the dialect.
- */
-function mapPrimitiveType(type: TPrimitive, dialect: Dialect): string {
-  switch (type) {
-    case "string":
-      return "TEXT";
-    case "number":
-      if (dialect === "mysql") {
-        return "INT";
-      }
-      return "INTEGER";
-    case "boolean":
-      if (dialect === "postgres") {
-        return "BOOLEAN";
-      }
-      if (dialect === "mysql") {
-        return "TINYINT(1)";
-      }
-      return "INTEGER";
-    case "date":
-      if (dialect === "postgres") {
-        return "TIMESTAMP";
-      }
-      if (dialect === "mysql") {
-        return "DATETIME";
-      }
-      return "TEXT";
-    case "json":
-      if (dialect === "postgres") {
-        return "JSONB";
-      }
-      if (dialect === "mysql") {
-        return "JSON";
-      }
-      return "TEXT";
+  // Handle ZodAny (for JSON fields)
+  if (def.type === "any") {
+    if (dialect === "postgres") {
+      return "JSONB";
+    }
+    if (dialect === "mysql") {
+      return "JSON";
+    }
+    return "TEXT";
   }
+
+  // Handle ZodOptional
+  if (def.type === "optional") {
+    if (def.innerType) {
+      return extractSqlTypeFromZod(def.innerType, dialect);
+    }
+  }
+
+  // Handle ZodDefault
+  if (def.type === "default") {
+    if (def.innerType) {
+      return extractSqlTypeFromZod(def.innerType, dialect);
+    }
+  }
+
+  // Handle ZodNullable
+  if (def.type === "nullable") {
+    if (def.innerType) {
+      return extractSqlTypeFromZod(def.innerType, dialect);
+    }
+  }
+
+  // Fallback
+  return "TEXT";
 }
 
 /**
- * Produces a SQL fragment describing the default value for a column.
+ * Formats a column definition for inclusion in CREATE TABLE.
+ * Uses db metadata from field.db.
  *
- * @param column - Column definition containing the type metadata.
- * @param value - Default value assigned to the column.
- * @param dialect - SQL dialect controlling formatting decisions.
- * @returns SQL literal representing the default value.
+ * @param name - Column name.
+ * @param field - Field definition with metadata.
+ * @param zodSchema - Corresponding Zod schema.
+ * @param dialect - SQL dialect.
+ * @returns SQL column definition.
  */
-function formatDefault(column: TColumn, value: unknown, dialect: Dialect): string {
+function formatColumn(
+  name: string,
+  field: FieldDef,
+  zodSchema: ZodType,
+  dialect: Dialect,
+): string {
+  const columnName = `  "${name}"`;
+  const sqlType = extractSqlTypeFromZod(zodSchema, dialect);
+  const constraints: string[] = [];
+
+  // NOT NULL if field is not nullable and not optional
+  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
+  const def = zodWithInternal._zod.def;
+  const isOptional = def.type === "optional";
+  const innerDef = def.innerType
+    ? (def.innerType as unknown as ZodWithInternal)._zod.def
+    : null;
+  const isNullable = def.type === "nullable" ||
+    (isOptional && innerDef?.type === "nullable");
+
+  if (!isOptional && !isNullable) {
+    constraints.push("NOT NULL");
+  }
+
+  // PRIMARY KEY
+  if (field.db?.primary === true) {
+    constraints.push("PRIMARY KEY");
+  }
+
+  // UNIQUE
+  if (field.db?.unique === true) {
+    constraints.push("UNIQUE");
+  }
+
+  // DEFAULT
+  if (field.db?.defaultNow === true) {
+    if (dialect === "postgres" || dialect === "mysql") {
+      constraints.push("DEFAULT CURRENT_TIMESTAMP");
+    } else {
+      constraints.push("DEFAULT (datetime('now'))");
+    }
+  } else {
+    // Check if Zod schema has a default
+    if (def.type === "default") {
+      const defaultValue = def.defaultValue;
+      if (defaultValue !== undefined) {
+        const defaultStr = formatDefaultValue(defaultValue, dialect);
+        if (defaultStr) {
+          constraints.push(`DEFAULT ${defaultStr}`);
+        }
+      }
+    }
+  }
+
+  return [columnName, sqlType, ...constraints].join(" ").trimEnd();
+}
+
+/**
+ * Formats a default value for SQL.
+ *
+ * @param value - Default value.
+ * @param dialect - SQL dialect.
+ * @returns SQL fragment for the default value.
+ */
+function formatDefaultValue(value: unknown, dialect: Dialect): string | null {
   if (value === null) {
     return "NULL";
   }
 
-  if (isArrayColumnType(column.type) || column.type === "json") {
-    return formatJsonDefault(value, dialect);
+  if (typeof value === "string") {
+    return `'${escapeSqlString(value)}'`;
   }
 
-  switch (column.type) {
-    case "string":
-      if (typeof value !== "string") {
-        throw new TypeError("Default value for string column must be a string");
-      }
-      return `'${escapeSqlString(value)}'`;
-    case "number":
-      if (typeof value !== "number" || Number.isNaN(value)) {
-        throw new TypeError("Default value for number column must be a valid number");
-      }
-      return String(value);
-    case "boolean":
-      if (typeof value !== "boolean") {
-        throw new TypeError("Default value for boolean column must be a boolean");
-      }
-      if (dialect === "postgres") {
-        return value ? "TRUE" : "FALSE";
-      }
-      if (dialect === "mysql") {
-        return value ? "TRUE" : "FALSE";
-      }
-      return value ? "1" : "0";
-    case "date":
-      if (value instanceof Date) {
-        return `'${value.toISOString()}'`;
-      }
-      if (typeof value === "string") {
-        return `'${escapeSqlString(value)}'`;
-      }
-      throw new TypeError("Default value for date column must be a Date or ISO string");
+  if (typeof value === "number") {
+    return String(value);
   }
 
-  throw new TypeError("Unsupported column type for default value");
+  if (typeof value === "boolean") {
+    if (dialect === "postgres" || dialect === "mysql") {
+      return value ? "TRUE" : "FALSE";
+    }
+    return value ? "1" : "0";
+  }
+
+  if (value instanceof Date) {
+    return `'${value.toISOString()}'`;
+  }
+
+  // JSON values
+  try {
+    const jsonValue = JSON.stringify(value);
+    const escaped = escapeSqlString(jsonValue);
+    if (dialect === "postgres") {
+      return `'${escaped}'::jsonb`;
+    }
+    if (dialect === "mysql") {
+      return `CAST('${escaped}' AS JSON)`;
+    }
+    return `'${escaped}'`;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Serialises JSON values for use as SQL defaults, optionally applying dialect casting.
- *
- * @param value - Value to serialise as JSON.
- * @param dialect - SQL dialect controlling casting behaviour.
- * @returns SQL literal representing the JSON default value.
- */
-function formatJsonDefault(value: unknown, dialect: Dialect): string {
-  const jsonValue = JSON.stringify(value);
-  if (jsonValue === undefined) {
-    throw new TypeError("Default value for JSON column must be JSON-serialisable");
-  }
-
-  const escaped = escapeSqlString(jsonValue);
-  if (dialect === "postgres") {
-    return `'${escaped}'::jsonb`;
-  }
-  if (dialect === "mysql") {
-    return `CAST('${escaped}' AS JSON)`;
-  }
-  return `'${escaped}'`;
-}
-
-/**
- * Escapes single quotes in SQL string literals.
+ * Escapes single quotes in SQL strings.
  *
  * @param value - String to escape.
- * @returns Escaped string safe for use in SQL.
+ * @returns Escaped string.
  */
 function escapeSqlString(value: string): string {
   return value.replaceAll("'", "''");
+}
+
+/**
+ * Generates a CREATE TABLE statement for the provided entity.
+ * STRICTLY FILTERS: only generates fields where stored === true.
+ *
+ * @param entity - TSERA entity runtime.
+ * @param dialect - SQL dialect (default: postgres).
+ * @returns SQL CREATE TABLE statement.
+ */
+export function entityToDDL(entity: EntityRuntime, dialect: Dialect = "postgres"): string {
+  if (!entity.table) {
+    return `-- Entity ${entity.name} is not mapped to a table.`;
+  }
+
+  // STRICTLY FILTER: only keep fields where stored === true
+  const storedFields = filterStoredFields(entity.fields);
+
+  if (Object.keys(storedFields).length === 0) {
+    return `-- Entity ${entity.name} has no stored fields.`;
+  }
+
+  const tableName = pascalToSnakeCase(entity.name);
+  const columnDefinitions: string[] = [];
+
+  // Extract the shape from the Zod schema
+  const schemaWithInternal = entity.schema as unknown as ZodWithInternal;
+  const schemaDef = schemaWithInternal._zod.def;
+  if (schemaDef.type !== "object") {
+    throw new Error(`Entity ${entity.name} schema is not a ZodObject`);
+  }
+
+  const shape = schemaDef.shape;
+  if (!shape) {
+    throw new Error(`Entity ${entity.name} schema has no shape`);
+  }
+
+  for (const [name, field] of Object.entries(storedFields)) {
+    const zodSchema = shape[name] as ZodType;
+    if (!zodSchema) {
+      continue;
+    }
+    columnDefinitions.push(formatColumn(name, field, zodSchema, dialect));
+  }
+
+  if (columnDefinitions.length === 0) {
+    return `-- Entity ${entity.name} has no valid stored fields.`;
+  }
+
+  return `CREATE TABLE IF NOT EXISTS "${tableName}" (\n${columnDefinitions.join(",\n")}\n);`;
 }

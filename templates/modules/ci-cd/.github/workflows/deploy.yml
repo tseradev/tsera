@@ -3,15 +3,18 @@ name: Deploy
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
+  tags:
+    - "v*"
 
 jobs:
   deploy-staging:
-    if: github.ref == 'refs/heads/main'
+    name: Deploy to Staging
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     environment: staging
-    
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,10 +32,13 @@ jobs:
           token: ${{ secrets.DENO_DEPLOY_TOKEN }}
 
   deploy-production:
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: Deploy to Production
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
     environment: production
-    
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,4 +54,3 @@ jobs:
           project: ${{ secrets.DENO_DEPLOY_PROJECT_PROD }}
           entrypoint: app/back/main.ts
           token: ${{ secrets.DENO_DEPLOY_TOKEN }}
-

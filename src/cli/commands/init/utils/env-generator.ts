@@ -85,7 +85,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
   }
 
   // CI/CD module
-  if (modules.includes("ci")) {
+  if (modules.includes("ci-cd")) {
     lines.push("# CI/CD Configuration");
     lines.push("DEPLOY_TOKEN=dev-token-not-used-locally");
     lines.push("CI_REGISTRY=");
@@ -147,7 +147,7 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
   }
 
   // CI/CD module
-  if (modules.includes("ci")) {
+  if (modules.includes("ci-cd")) {
     lines.push("# CI/CD Configuration");
     lines.push("DEPLOY_TOKEN=CHANGE_ME_PREPROD_TOKEN");
     lines.push("CI_REGISTRY=registry.example.com");
@@ -210,7 +210,7 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
   }
 
   // CI/CD module
-  if (modules.includes("ci")) {
+  if (modules.includes("ci-cd")) {
     lines.push("# CI/CD Configuration");
     lines.push("DEPLOY_TOKEN=CHANGE_ME_PROD_DEPLOY_TOKEN");
     lines.push("CI_REGISTRY=CHANGE_ME_PROD_REGISTRY");
@@ -273,7 +273,7 @@ function generateExampleEnv(db: DbConfig, modules: string[]): string {
   }
 
   // CI/CD module
-  if (modules.includes("ci")) {
+  if (modules.includes("ci-cd")) {
     lines.push("# CI/CD Configuration");
     lines.push("DEPLOY_TOKEN=your-deploy-token-here");
     lines.push("CI_REGISTRY=your-registry.example.com");
@@ -379,7 +379,7 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
   }
 
   // CI/CD variables
-  if (modules.includes("ci")) {
+  if (modules.includes("ci-cd")) {
     lines.push("  DEPLOY_TOKEN: {");
     lines.push('    type: "string",');
     lines.push("    required: true,");

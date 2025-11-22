@@ -1,21 +1,22 @@
 import { assertEquals } from "std/assert";
-import { defineEntity, entityToZod } from "../index.ts";
+import { defineEntity, getEntitySchema } from "../index.ts";
+import { z } from "zod";
 
 const postEntity = defineEntity({
   name: "Post",
   table: true,
-  columns: {
-    id: { type: "string" },
-    title: { type: "string" },
-    publishedAt: { type: "date", nullable: true },
-    views: { type: "number", optional: true, default: 0 },
-    tags: { type: { arrayOf: "string" }, optional: true },
-    metadata: { type: "json", optional: true, default: { featured: false } },
+  fields: {
+    id: { validator: z.string() },
+    title: { validator: z.string() },
+    publishedAt: { validator: z.date().nullable() },
+    views: { validator: z.number().default(0).optional() },
+    tags: { validator: z.array(z.string()).optional() },
+    metadata: { validator: z.any().default({ featured: false }).optional() },
   },
 });
 
-Deno.test("entityToZod maps entity columns to Zod schema", () => {
-  const schema = entityToZod(postEntity);
+Deno.test("getEntitySchema returns the entity schema", () => {
+  const schema = getEntitySchema(postEntity);
 
   const parsed = schema.parse({
     id: "post_1",
@@ -29,8 +30,8 @@ Deno.test("entityToZod maps entity columns to Zod schema", () => {
   assertEquals(parsed.metadata, { featured: false });
 });
 
-Deno.test("entityToZod enforces required fields", () => {
-  const schema = entityToZod(postEntity);
+Deno.test("getEntitySchema enforces required fields", () => {
+  const schema = getEntitySchema(postEntity);
   const result = schema.safeParse({
     title: "Missing id",
   });

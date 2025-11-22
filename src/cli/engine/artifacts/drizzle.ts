@@ -17,12 +17,10 @@ function deriveDeterministicTimestamp(hash: string): string {
   const hours = parseInt(hash.slice(8, 10), 16) % 24;
   const minutes = parseInt(hash.slice(10, 12), 16) % 60;
   const micros = parseInt(hash.slice(12, 18), 16) % 1_000_000;
-  return `${year.toString().padStart(4, "0")}${month.toString().padStart(2, "0")}${
-    day.toString().padStart(2, "0")
-  }${
-    hours
+  return `${year.toString().padStart(4, "0")}${month.toString().padStart(2, "0")}${day.toString().padStart(2, "0")
+    }${hours
       .toString().padStart(2, "0")
-  }${minutes.toString().padStart(2, "0")}_${micros.toString().padStart(6, "0")}`;
+    }${minutes.toString().padStart(2, "0")}_${micros.toString().padStart(6, "0")}`;
 }
 
 /**
@@ -43,10 +41,19 @@ async function nextMigrationFile(entityName: string, ddl: string): Promise<strin
 
 /**
  * Builds Drizzle migration artifacts for an entity.
+ * STRICTLY FILTERS: only generates migrations for fields where stored === true.
  */
 export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
   const { entity, config } = context;
+
+  // entityToDDL already filters fields with stored: false
   const content = entityToDDL(entity, config.db.dialect);
+
+  // If no content (no stored fields), don't generate migration
+  if (content.startsWith("--")) {
+    return [];
+  }
+
   const fileName = await nextMigrationFile(entity.name, content);
   const path = join("app", "db", "migrations", fileName);
 

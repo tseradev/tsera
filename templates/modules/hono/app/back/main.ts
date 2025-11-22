@@ -8,7 +8,9 @@
  * @module
  */
 
-import { Hono } from "hono";
+// Install dependencies first: deno add jsr:@hono/hono@^4.0.0
+// After installation, uncomment the imports and code below:
+// import { Hono } from "hono";
 import registerHealthRoutes from "./routes/health.ts";
 
 // Initialize secrets if available
@@ -20,16 +22,17 @@ try {
 
 /**
  * Hono application instance with registered routes.
+ *
+ * NOTE: Uncomment after installing dependencies (deno add jsr:@hono/hono@^4.0.0)
  */
-export const app = new Hono();
+// export const app = new Hono();
+// registerHealthRoutes(app);
 
-registerHealthRoutes(app);
-
-if (import.meta.main) {
-  // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
-  const port = (globalThis.tsera?.env("PORT") as number) ??
-    Number(Deno.env.get("PORT") ?? 8000);
-  console.log(`Listening on http://localhost:${port}`);
-  Deno.serve({ port }, app.fetch);
-}
+// if (import.meta.main) {
+//   // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
+//   const port = (globalThis.tsera?.env("PORT") as number) ??
+//     Number(Deno.env.get("PORT") ?? 8000);
+//   console.log(`Listening on http://localhost:${port}`);
+//   Deno.serve({ port }, app.fetch);
+// }
 

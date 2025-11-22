@@ -102,7 +102,7 @@ export function createRouter(
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));
   root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
-  root.command("mcp", mcpCommand as any);
+  root.command("mcp", withGlobalOpts(mcpCommand));
   root.command("help", withGlobalOpts(createHelpCommand(handlers.help)));
 
   applyModernHelp(root, {

@@ -1,6 +1,6 @@
 import { join } from "../../shared/path.ts";
 import { posixPath } from "../../shared/path.ts";
-import type { EntityDef } from "../../core/entity.ts";
+import type { EntityRuntime } from "../../core/entity.ts";
 import type { TseraConfig } from "../definitions.ts";
 import type { ArtifactDescriptor, DagEntityInput } from "./dag.ts";
 import { buildArtifactId } from "./dag.ts";
@@ -17,8 +17,8 @@ type ModuleNamespace = Record<string, unknown>;
  * Represents a discovered entity with its source file path.
  */
 export interface DiscoveredEntity {
-  /** Validated entity definition. */
-  entity: EntityDef;
+  /** Validated entity runtime. */
+  entity: EntityRuntime;
   /** Relative path to the source file. */
   sourcePath: string;
 }
@@ -60,7 +60,7 @@ export async function prepareDagInputs(
 }
 
 /**
- * Discovers all entity definitions in the configured paths.
+ * Discovers all entity runtimes in the configured paths.
  *
  * @param projectDir - Project root directory.
  * @param config - TSera configuration.
@@ -102,12 +102,12 @@ export async function discoverEntities(
 /**
  * Builds all artifacts for a single entity based on configuration.
  *
- * @param entity - Entity definition.
+ * @param entity - Entity runtime.
  * @param config - TSera configuration.
  * @returns Array of artifact descriptors with dependency information.
  */
 export async function buildEntityArtifacts(
-  entity: EntityDef,
+  entity: EntityRuntime,
   config: TseraConfig,
 ): Promise<ArtifactDescriptor[]> {
   const context = { entity, config } as const;
@@ -252,17 +252,17 @@ function dedupePreserveOrder(values: string[]): string[] {
 }
 
 /**
- * Loads entity definitions from a TypeScript module file.
+ * Loads entity runtimes from a TypeScript module file.
  *
  * @param path - Absolute path to the entity file.
  * @param projectDir - Optional project root directory for import resolution.
- * @returns Array of entity definitions found in the module.
+ * @returns Array of entity runtimes found in the module.
  * @throws {Error} If no entities are exported by the file.
  */
 async function loadEntityDefinitions(
   path: string,
   projectDir?: string,
-): Promise<EntityDef[]> {
+): Promise<EntityRuntime[]> {
   const url = toImportUrl(path);
   let originalCwd: string | undefined;
 
@@ -290,17 +290,17 @@ async function loadEntityDefinitions(
 }
 
 /**
- * Extracts entity definitions from a module namespace.
+ * Extracts entity runtimes from a module namespace.
  *
  * @param mod - Module namespace to inspect.
- * @returns Array of entity definitions found.
+ * @returns Array of entity runtimes found.
  */
-function extractEntities(mod: ModuleNamespace): EntityDef[] {
-  const entities: EntityDef[] = [];
+function extractEntities(mod: ModuleNamespace): EntityRuntime[] {
+  const entities: EntityRuntime[] = [];
   const seen = new Set<string>();
 
   const consider = (candidate: unknown): void => {
-    if (isEntityDef(candidate) && !seen.has(candidate.name)) {
+    if (isEntityRuntime(candidate) && !seen.has(candidate.name)) {
       seen.add(candidate.name);
       entities.push(candidate);
     }
@@ -315,15 +315,19 @@ function extractEntities(mod: ModuleNamespace): EntityDef[] {
 }
 
 /**
- * Type guard verifying whether a value is a valid entity definition.
+ * Type guard verifying whether a value is a valid entity runtime.
  *
  * @param value - Value to inspect.
- * @returns {@code true} if the value is an entity definition; otherwise {@code false}.
+ * @returns {@code true} if the value is an entity runtime; otherwise {@code false}.
  */
-function isEntityDef(value: unknown): value is EntityDef {
+function isEntityRuntime(value: unknown): value is EntityRuntime {
   return Boolean(
     value && typeof value === "object" &&
-    (value as Record<string, unknown>).__brand === "TSeraEntity",
+    (value as Record<string, unknown>).__brand === "TSeraEntity" &&
+    "schema" in (value as Record<string, unknown>) &&
+    "public" in (value as Record<string, unknown>) &&
+    "input" in (value as Record<string, unknown>) &&
+    "fields" in (value as Record<string, unknown>),
   );
 }
 

@@ -1,6 +1,7 @@
 import { join } from "../../../shared/path.ts";
 import { assertEquals } from "std/assert";
 import { defineEntity } from "../../../core/entity.ts";
+import { z } from "zod";
 import type { TseraConfig } from "../../definitions.ts";
 import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "../entities.ts";
 
@@ -58,9 +59,10 @@ Deno.test("discoverEntities loads the paths defined in configuration", async () 
       entityPath,
       [
         'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Example",',
-        '  columns: { id: { type: "string" } },',
+        '  fields: { id: { validator: z.string() } },',
         "});",
       ].join("\n"),
     );
@@ -91,9 +93,10 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
       firstPath,
       [
         'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "User",',
-        '  columns: { id: { type: "string" } },',
+        '  fields: { id: { validator: z.string() } },',
         "});",
       ].join("\n"),
     );
@@ -102,9 +105,10 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
       secondPath,
       [
         'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Order",',
-        '  columns: { id: { type: "string" } },',
+        '  fields: { id: { validator: z.string() } },',
         "});",
       ].join("\n"),
     );
@@ -125,9 +129,9 @@ Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
     table: true,
     doc: true,
     test: "smoke",
-    columns: {
-      id: { type: "string" },
-      total: { type: "number" },
+    fields: {
+      id: { validator: z.string() },
+      total: { validator: z.number() },
     },
   });
 
@@ -135,17 +139,18 @@ Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
   assertEquals(artifacts.map((artifact) => artifact.kind), [
     "schema",
     "migration",
+    "drizzle-schema",
     "doc",
     "test",
   ]);
 
   const schemaId = `schema:invoice:${artifacts[0].path}`;
   const migrationId = `migration:invoice:${artifacts[1].path}`;
-  const docId = `doc:invoice:${artifacts[2].path}`;
+  const docId = `doc:invoice:${artifacts[3].path}`;
 
   assertEquals(artifacts[1].dependsOn, [schemaId]);
-  assertEquals(artifacts[2].dependsOn, [migrationId]);
-  assertEquals(artifacts[3].dependsOn, [docId]);
+  assertEquals(artifacts[3].dependsOn, [migrationId]);
+  assertEquals(artifacts[4].dependsOn, [docId]);
 });
 
 Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
@@ -154,8 +159,8 @@ Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
     table: false,
     doc: false,
     test: false,
-    columns: {
-      id: { type: "string" },
+    fields: {
+      id: { validator: z.string() },
     },
   });
 
@@ -175,9 +180,10 @@ Deno.test("prepareDagInputs adds an aggregated OpenAPI artifact", async () => {
       entityPath,
       [
         'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "User",',
-        '  columns: { id: { type: "string" } },',
+        '  fields: { id: { validator: z.string(), visibility: "public" } },',
         "  doc: true,",
         "});",
       ].join("\n"),

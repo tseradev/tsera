@@ -7,7 +7,9 @@
  * @module
  */
 
-import type { Config } from "drizzle-kit";
+// Install drizzle-kit first: deno add npm:drizzle-kit
+// After installation, uncomment the import below:
+// import type { Config } from "drizzle-kit";
 
 // Get database URL from environment
 const databaseUrl = Deno.env.get("DATABASE_URL") ??
@@ -25,6 +27,8 @@ if (!databaseUrl) {
  * - schema: Path to your generated schema files (managed by TSera)
  * - out: Output directory for migration files
  * - dialect: Database dialect (postgres, mysql, or sqlite)
+ *
+ * NOTE: Uncomment the import and use `satisfies Config` after installing drizzle-kit
  */
 export default {
   schema: "./.tsera/schemas/*.schema.ts",
@@ -33,5 +37,6 @@ export default {
   dbCredentials: {
     url: databaseUrl,
   },
-} satisfies Config;
+  // satisfies Config; // Uncomment after installing drizzle-kit
+};
 

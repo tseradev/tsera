@@ -16,6 +16,7 @@ import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/fi
 import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts";
 import { generateConfigFile } from "./utils/config-generator.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
+import { uncommentImportsInProject } from "./utils/uncomment-imports.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -235,7 +236,7 @@ export function createDefaultInitHandler(
     if (context.modules.hono) enabledModules.push("hono");
     if (context.modules.fresh) enabledModules.push("fresh");
     if (context.modules.docker) enabledModules.push("docker");
-    if (context.modules.ci) enabledModules.push("ci");
+    if (context.modules.ci) enabledModules.push("ci-cd");
     if (context.modules.secrets) enabledModules.push("secrets");
 
     // Compose template from base + modules
@@ -260,6 +261,12 @@ export function createDefaultInitHandler(
 
     // Patch import_map.json based on environment (local dev vs production)
     await patchImportMapForEnvironment(targetDir, templatesRoot);
+
+    // Uncomment imports in generated files if dependencies are declared
+    const uncommentedCount = await uncommentImportsInProject(targetDir);
+    if (jsonMode && uncommentedCount > 0) {
+      logger.event("init:uncomment", { files: uncommentedCount });
+    }
 
     if (jsonMode) {
       logger.event("init:copy", {

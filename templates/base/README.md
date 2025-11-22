@@ -83,10 +83,11 @@ tsera doctor --fix
 │   └── utils/           # Shared utilities
 ├── config/
 │   ├── docker/          # Docker configuration
-│   ├── ci-cd/           # CI/CD workflows
 │   ├── secrets/         # Environment-specific secrets
 │   ├── db/              # Database configuration
 │   └── tsera.config.ts  # TSera configuration
+├── .github/
+│   └── workflows/       # CI/CD workflows (GitHub Actions)
 ├── tests/               # Tests (unit, integration, e2e)
 ├── docs/                # Generated documentation
 │   ├── openapi/         # OpenAPI specs

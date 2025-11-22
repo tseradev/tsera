@@ -32,7 +32,6 @@ export function generateConfigFile(
   modules: ModuleOptions = {},
 ): string {
   const envVar = "TSERA_DATABASE_URL";
-  const sqliteFile = "data/tsera.sqlite";
 
   // Create a TS-Morph project and source file
   const project = createTSeraProject();

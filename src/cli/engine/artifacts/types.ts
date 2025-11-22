@@ -1,4 +1,4 @@
-import type { EntityDef } from "../../../core/entity.ts";
+import type { EntityRuntime } from "../../../core/entity.ts";
 import type { TseraConfig } from "../../definitions.ts";
 import type { ArtifactDescriptor } from "../dag.ts";
 
@@ -6,8 +6,8 @@ import type { ArtifactDescriptor } from "../dag.ts";
  * Context provided to artifact builders.
  */
 export interface ArtifactContext {
-  /** Entity definition to generate artifacts for. */
-  entity: EntityDef;
+  /** Entity runtime to generate artifacts for. */
+  entity: EntityRuntime;
   /** TSera configuration. */
   config: TseraConfig;
 }

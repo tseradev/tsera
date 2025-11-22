@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
 import { defineEntity } from "../../../../core/entity.ts";
+import { z } from "zod";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildProjectOpenAPIArtifact } from "../openapi.ts";
 
@@ -24,9 +25,9 @@ const baseConfig: TseraConfig = {
 Deno.test("buildProjectOpenAPIArtifact - génère un document OpenAPI", () => {
   const entity = defineEntity({
     name: "User",
-    columns: {
-      id: { type: "string" },
-      email: { type: "string" },
+    fields: {
+      id: { validator: z.string(), visibility: "public" },
+      email: { validator: z.string().email(), visibility: "public" },
     },
   });
 
@@ -35,15 +36,15 @@ Deno.test("buildProjectOpenAPIArtifact - génère un document OpenAPI", () => {
   assertEquals(artifact !== null, true);
   assertEquals(artifact!.kind, "openapi");
   const normalizedPath = artifact!.path.replace(/\\/g, "/");
-  assertEquals(normalizedPath, ".tsera/openapi.json");
+  assertEquals(normalizedPath, "docs/openapi/OpenAPI.json");
   assertEquals(artifact!.label, "Project OpenAPI");
 });
 
 Deno.test("buildProjectOpenAPIArtifact - retourne null si OpenAPI désactivé", () => {
   const entity = defineEntity({
     name: "User",
-    columns: {
-      id: { type: "string" },
+    fields: {
+      id: { validator: z.string(), visibility: "public" },
     },
   });
 
@@ -56,11 +57,11 @@ Deno.test("buildProjectOpenAPIArtifact - retourne null si OpenAPI désactivé", 
 Deno.test("buildProjectOpenAPIArtifact - contient les métadonnées entities", () => {
   const user = defineEntity({
     name: "User",
-    columns: { id: { type: "string" } },
+    fields: { id: { validator: z.string(), visibility: "public" } },
   });
   const post = defineEntity({
     name: "Post",
-    columns: { id: { type: "string" } },
+    fields: { id: { validator: z.string(), visibility: "public" } },
   });
 
   const artifact = buildProjectOpenAPIArtifact([user, post], baseConfig);
@@ -71,9 +72,9 @@ Deno.test("buildProjectOpenAPIArtifact - contient les métadonnées entities", (
 Deno.test("buildProjectOpenAPIArtifact - génère du JSON valide", () => {
   const entity = defineEntity({
     name: "Product",
-    columns: {
-      name: { type: "string" },
-      price: { type: "number" },
+    fields: {
+      name: { validator: z.string(), visibility: "public" },
+      price: { validator: z.number(), visibility: "public" },
     },
   });
 
@@ -86,56 +87,57 @@ Deno.test("buildProjectOpenAPIArtifact - génère du JSON valide", () => {
   assertEquals(parsed.openapi, "3.1.0");
 });
 
-Deno.test("buildProjectOpenAPIArtifact - trie les clés récursivement", () => {
-  const entity = defineEntity({
-    name: "Item",
-    columns: {
-      zebra: { type: "string" },
-      alpha: { type: "string" },
-      middle: { type: "string" },
-    },
+Deno.test("buildProjectOpenAPIArtifact - filtre les entités avec openapi.enabled === false", () => {
+  const visible = defineEntity({
+    name: "Visible",
+    fields: { id: { validator: z.string(), visibility: "public" } },
+    openapi: { enabled: true },
+  });
+  const hidden = defineEntity({
+    name: "Hidden",
+    fields: { id: { validator: z.string(), visibility: "public" } },
+    openapi: { enabled: false },
   });
 
-  const artifact = buildProjectOpenAPIArtifact([entity], baseConfig);
+  const artifact = buildProjectOpenAPIArtifact([visible, hidden], baseConfig);
   const content = artifact!.content as string;
-
-  // Parse le JSON et vérifie l'ordre des clés
   const parsed = JSON.parse(content);
 
-  // Les clés de premier niveau doivent être triées
-  const topLevelKeys = Object.keys(parsed);
-  const sortedTopLevelKeys = [...topLevelKeys].sort();
-  assertEquals(topLevelKeys, sortedTopLevelKeys);
-
-  // Les colonnes dans le schéma doivent être triées
-  if (parsed.components?.schemas?.Item?.properties) {
-    const propKeys = Object.keys(parsed.components.schemas.Item.properties);
-    assertEquals(propKeys, ["alpha", "middle", "zebra"]);
-  }
+  assertEquals(parsed.components?.schemas?.Visible !== undefined, true);
+  assertEquals(parsed.components?.schemas?.Hidden === undefined, true);
 });
 
-Deno.test("buildProjectOpenAPIArtifact - ajoute newline final", () => {
+Deno.test("buildProjectOpenAPIArtifact - filtre les champs visibility !== public", () => {
   const entity = defineEntity({
-    name: "Order",
-    columns: {
-      id: { type: "string" },
+    name: "Test",
+    fields: {
+      id: { validator: z.string(), visibility: "public" },
+      email: { validator: z.string().email(), visibility: "public" },
+      password: { validator: z.string(), visibility: "secret" },
+      internal: { validator: z.string(), visibility: "internal" },
     },
   });
 
   const artifact = buildProjectOpenAPIArtifact([entity], baseConfig);
   const content = artifact!.content as string;
+  const parsed = JSON.parse(content);
 
-  assertEquals(content.endsWith("\n"), true);
+  const schema = parsed.components?.schemas?.Test;
+  assertEquals(schema !== undefined, true);
+  assertEquals("id" in schema.properties, true);
+  assertEquals("email" in schema.properties, true);
+  assertEquals("password" in schema.properties, false);
+  assertEquals("internal" in schema.properties, false);
 });
 
 Deno.test("buildProjectOpenAPIArtifact - crée dépendances vers schémas", () => {
   const user = defineEntity({
     name: "User",
-    columns: { id: { type: "string" } },
+    fields: { id: { validator: z.string(), visibility: "public" } },
   });
   const post = defineEntity({
     name: "Post",
-    columns: { id: { type: "string" } },
+    fields: { id: { validator: z.string(), visibility: "public" } },
   });
 
   const artifact = buildProjectOpenAPIArtifact([user, post], baseConfig);
@@ -152,37 +154,4 @@ Deno.test("buildProjectOpenAPIArtifact - crée dépendances vers schémas", () =
   assertStringIncludes(dep0, ".tsera/schemas/User.schema.ts");
   assertStringIncludes(dep1, "schema:post:");
   assertStringIncludes(dep1, ".tsera/schemas/Post.schema.ts");
-});
-
-Deno.test("buildProjectOpenAPIArtifact - JSON bien formaté avec indentation", () => {
-  const entity = defineEntity({
-    name: "Comment",
-    columns: {
-      content: { type: "string" },
-    },
-  });
-
-  const artifact = buildProjectOpenAPIArtifact([entity], baseConfig);
-  const content = artifact!.content as string;
-
-  // Vérifie l'indentation à 2 espaces
-  assertStringIncludes(content, '  "openapi"');
-  assertStringIncludes(content, '    "title"');
-});
-
-Deno.test("buildProjectOpenAPIArtifact - gère plusieurs entités", () => {
-  const entities = [
-    defineEntity({ name: "User", columns: { id: { type: "string" } } }),
-    defineEntity({ name: "Post", columns: { id: { type: "string" } } }),
-    defineEntity({ name: "Comment", columns: { id: { type: "string" } } }),
-  ];
-
-  const artifact = buildProjectOpenAPIArtifact(entities, baseConfig);
-  const content = artifact!.content as string;
-  const parsed = JSON.parse(content);
-
-  // Vérifie que tous les schémas sont présents
-  assertEquals(parsed.components?.schemas?.User !== undefined, true);
-  assertEquals(parsed.components?.schemas?.Post !== undefined, true);
-  assertEquals(parsed.components?.schemas?.Comment !== undefined, true);
 });

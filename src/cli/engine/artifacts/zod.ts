@@ -1,5 +1,4 @@
 import { join } from "../../../shared/path.ts";
-import type { TColumn } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
 import {
   addImportDeclaration,
@@ -7,9 +6,194 @@ import {
   createTSeraProject,
 } from "../../utils/ts-morph.ts";
 import { VariableDeclarationKind } from "../../utils/ts-morph.ts";
+import type { ZodType } from "../../../core/utils/zod.ts";
 
 /**
- * Builds Zod schema artifacts for an entity using TS-Morph for AST-based generation.
+ * Internal Zod definition structure (for accessing _zod.def).
+ * This is used to access Zod's internal API which is not part of the public types.
+ */
+interface ZodInternalDef {
+  type: string;
+  checks?: Array<{ def?: { format?: string; min?: number; max?: number } }>;
+  element?: ZodType;
+  innerType?: ZodType;
+  defaultValue?: unknown;
+  shape?: Record<string, ZodType>;
+}
+
+/**
+ * Helper type for accessing Zod's internal _zod property.
+ * Uses unknown instead of any for type safety.
+ */
+type ZodWithInternal = {
+  _zod: {
+    def: ZodInternalDef;
+  };
+  description?: string;
+} & ZodType;
+
+/**
+ * Converts a Zod schema to a TypeScript expression.
+ * This function analyzes the Zod schema to generate the corresponding TypeScript code.
+ *
+ * @param zodSchema - Zod schema to convert.
+ * @returns TypeScript expression representing the schema.
+ */
+function zodSchemaToTsExpression(zodSchema: ZodType): string {
+  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
+  const def = zodWithInternal._zod.def;
+
+  // Handle ZodString
+  if (def.type === "string") {
+    let expr = "z.string()";
+    if (def.checks) {
+      for (const check of def.checks) {
+        const checkDef = check.def;
+        if (checkDef?.format === "email") {
+          expr += ".email()";
+        } else if (checkDef?.format === "uuid") {
+          expr += ".uuid()";
+        } else if (checkDef?.min !== undefined) {
+          expr += `.min(${checkDef.min})`;
+        } else if (checkDef?.max !== undefined) {
+          expr += `.max(${checkDef.max})`;
+        }
+      }
+    }
+    if (zodWithInternal.description) {
+      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    }
+    return expr;
+  }
+
+  // Handle ZodNumber
+  if (def.type === "number") {
+    let expr = "z.number()";
+    if (def.checks) {
+      for (const check of def.checks) {
+        const checkDef = check.def;
+        if (checkDef?.min !== undefined) {
+          expr += `.min(${checkDef.min})`;
+        } else if (checkDef?.max !== undefined) {
+          expr += `.max(${checkDef.max})`;
+        }
+      }
+    }
+    if (zodWithInternal.description) {
+      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    }
+    return expr;
+  }
+
+  // Handle ZodBoolean
+  if (def.type === "boolean") {
+    let expr = "z.boolean()";
+    if (zodWithInternal.description) {
+      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    }
+    return expr;
+  }
+
+  // Handle ZodDate
+  if (def.type === "date") {
+    let expr = "z.date()";
+    if (zodWithInternal.description) {
+      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    }
+    return expr;
+  }
+
+  // Handle ZodArray
+  if (def.type === "array") {
+    if (def.element) {
+      let expr = `z.array(${zodSchemaToTsExpression(def.element)})`;
+      if (zodWithInternal.description) {
+        expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+      }
+      return expr;
+    }
+    return "z.array(z.any())";
+  }
+
+  // Handle ZodObject
+  if (def.type === "object") {
+    if (!def.shape) {
+      return "z.object({}).strict()";
+    }
+    const shape = def.shape;
+    const properties: string[] = [];
+    for (const [key, value] of Object.entries(shape)) {
+      properties.push(`${key}: ${zodSchemaToTsExpression(value as ZodType)}`);
+    }
+    let expr = `z.object({\n    ${properties.join(",\n    ")}\n  }).strict()`;
+    if (zodWithInternal.description) {
+      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    }
+    return expr;
+  }
+
+  // Handle ZodOptional
+  if (def.type === "optional") {
+    if (def.innerType) {
+      return `${zodSchemaToTsExpression(def.innerType)}.optional()`;
+    }
+    return "z.any().optional()";
+  }
+
+  // Handle ZodDefault
+  if (def.type === "default") {
+    if (def.innerType) {
+      const defaultValue = def.defaultValue;
+      const defaultValueStr = defaultValue !== undefined
+        ? toTsLiteral(defaultValue)
+        : "undefined";
+      return `${zodSchemaToTsExpression(def.innerType)}.default(${defaultValueStr})`;
+    }
+    return "z.any()";
+  }
+
+  // Handle ZodNullable
+  if (def.type === "nullable") {
+    if (def.innerType) {
+      return `${zodSchemaToTsExpression(def.innerType)}.nullable()`;
+    }
+    return "z.any().nullable()";
+  }
+
+  // Handle ZodAny (for JSON fields)
+  if (def.type === "any") {
+    return "z.any()";
+  }
+
+  // Fallback
+  return "z.any()";
+}
+
+/**
+ * Converts a value to a TypeScript literal.
+ *
+ * @param value - Value to convert.
+ * @returns TypeScript literal.
+ */
+function toTsLiteral(value: unknown): string {
+  if (value instanceof Date) {
+    return `new Date(${JSON.stringify(value.toISOString())})`;
+  }
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (value === null) {
+    return "null";
+  }
+  return JSON.stringify(value);
+}
+
+/**
+ * Generates Zod artifacts for an entity.
+ * Generates the User super-object with schema, public, input, and the User namespace with types.
  */
 export const buildZodArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
@@ -25,28 +209,79 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
   // Add import for Zod
   addImportDeclaration(sourceFile, "zod", { namedImports: ["z"] });
 
-  // Build the schema object properties
-  const columnEntries = Object.entries(entity.columns);
-  const properties = columnEntries.map(([name, column]) => {
-    const expression = columnToZodExpression(column);
-    return `${name}: ${expression}`;
-  });
+  const entityName = entity.name;
 
-  // Add the schema constant declaration
+  // Generate expressions for schemas
+  const schemaExpr = zodSchemaToTsExpression(entity.schema);
+  const publicExpr = zodSchemaToTsExpression(entity.public);
+  const inputCreateExpr = zodSchemaToTsExpression(entity.input.create);
+  const inputUpdateExpr = zodSchemaToTsExpression(entity.input.update);
+
+  // Export individual schemas
   sourceFile.addVariableStatement({
     isExported: true,
     declarationKind: VariableDeclarationKind.Const,
     declarations: [{
-      name: `${entity.name}Schema`,
-      initializer: `z.object({\n  ${properties.join(",\n  ")}\n}).strict()`,
+      name: `${entityName}Schema`,
+      initializer: schemaExpr,
     }],
   });
 
-  // Add the inferred type export
-  sourceFile.addTypeAlias({
+  sourceFile.addVariableStatement({
     isExported: true,
-    name: `${entity.name}Input`,
-    type: `z.infer<typeof ${entity.name}Schema>`,
+    declarationKind: VariableDeclarationKind.Const,
+    declarations: [{
+      name: `${entityName}PublicSchema`,
+      initializer: publicExpr,
+    }],
+  });
+
+  sourceFile.addVariableStatement({
+    isExported: true,
+    declarationKind: VariableDeclarationKind.Const,
+    declarations: [{
+      name: `${entityName}InputCreateSchema`,
+      initializer: inputCreateExpr,
+    }],
+  });
+
+  sourceFile.addVariableStatement({
+    isExported: true,
+    declarationKind: VariableDeclarationKind.Const,
+    declarations: [{
+      name: `${entityName}InputUpdateSchema`,
+      initializer: inputUpdateExpr,
+    }],
+  });
+
+  // Export the User super-object
+  sourceFile.addVariableStatement({
+    isExported: true,
+    declarationKind: VariableDeclarationKind.Const,
+    declarations: [{
+      name: entityName,
+      initializer: `{
+  schema: ${entityName}Schema,
+  public: ${entityName}PublicSchema,
+  input: {
+    create: ${entityName}InputCreateSchema,
+    update: ${entityName}InputUpdateSchema,
+  },
+} as const`,
+    }],
+  });
+
+  // Export the User namespace with types
+  sourceFile.addModule({
+    isExported: true,
+    name: entityName,
+    statements: [
+      `export type type = z.infer<typeof ${entityName}Schema>;`,
+      `export type public = z.infer<typeof ${entityName}PublicSchema>;`,
+      `export type input_create = z.input<typeof ${entityName}InputCreateSchema>;`,
+      `export type input_update = z.input<typeof ${entityName}InputUpdateSchema>;`,
+      `export type id = type["id"];`,
+    ],
   });
 
   // Format and get the generated text
@@ -61,95 +296,3 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
     data: { entity: entity.name },
   }];
 };
-
-/**
- * Converts a column definition to a Zod expression string.
- *
- * @param column - Column definition.
- * @returns Zod expression string.
- */
-function columnToZodExpression(column: TColumn): string {
-  let expression = baseZodExpression(column);
-
-  if (column.description) {
-    expression += `.describe(${JSON.stringify(column.description)})`;
-  }
-  if (column.nullable) {
-    expression += ".nullable()";
-  }
-  if (column.optional) {
-    expression += ".optional()";
-  }
-  if (column.default !== undefined) {
-    expression += `.default(${toTsLiteral(column.default, column.type)})`;
-  }
-
-  return expression;
-}
-
-/**
- * Generates the base Zod expression for a column type.
- *
- * @param column - Column definition.
- * @returns Base Zod expression string.
- */
-function baseZodExpression(column: TColumn): string {
-  if (typeof column.type === "object" && "arrayOf" in column.type) {
-    return `z.array(${primitiveToZod(column.type.arrayOf)})`;
-  }
-  return primitiveToZod(column.type);
-}
-
-/**
- * Converts a primitive type to a Zod expression string.
- *
- * @param type - Primitive or array column type.
- * @returns Zod expression string.
- * @throws {Error} If the type is not supported.
- */
-function primitiveToZod(type: TColumn["type"] extends infer T ? T : never): string {
-  if (typeof type === "object" && type !== null && "arrayOf" in type) {
-    return `z.array(${primitiveToZod(type.arrayOf)})`;
-  }
-  switch (type) {
-    case "string":
-      return "z.string()";
-    case "number":
-      return "z.number()";
-    case "boolean":
-      return "z.boolean()";
-    case "date":
-      return "z.date()";
-    case "json":
-      return "z.any()";
-    default:
-      throw new Error(`Unsupported column type: ${String(type)}`);
-  }
-}
-
-/**
- * Converts a default value to a TypeScript literal string.
- *
- * @param value - Default value.
- * @param columnType - Column type for context.
- * @returns TypeScript literal string representation.
- */
-function toTsLiteral(value: unknown, columnType: TColumn["type"]): string {
-  if (value instanceof Date) {
-    return `new Date(${JSON.stringify(value.toISOString())})`;
-  }
-  if (typeof value === "string") {
-    // If column type is "date" and value looks like an ISO date string, convert it
-    if (columnType === "date" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(value)) {
-      return `new Date(${JSON.stringify(value)})`;
-    }
-    return JSON.stringify(value);
-  }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  if (value === null) {
-    return "null";
-  }
-  return JSON.stringify(value);
-}

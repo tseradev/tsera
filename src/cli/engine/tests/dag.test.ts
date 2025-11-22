@@ -1,5 +1,6 @@
 import { assert, assertEquals, assertRejects } from "std/assert";
 import { defineEntity } from "../../../core/entity.ts";
+import { z } from "zod";
 import type { TseraConfig } from "../../definitions.ts";
 import { createDag } from "../dag.ts";
 import { buildZodArtifacts } from "../artifacts/zod.ts";
@@ -29,11 +30,11 @@ const baseConfig: TseraConfig = {
 const userEntity = defineEntity({
   name: "User",
   table: true,
-  columns: {
-    id: { type: "string" },
-    email: { type: "string", optional: false },
-    createdAt: { type: "date", nullable: false },
-    preferences: { type: "json", optional: true },
+  fields: {
+    id: { validator: z.string(), visibility: "public" },
+    email: { validator: z.string().email(), visibility: "public" },
+    createdAt: { validator: z.date(), visibility: "internal" },
+    preferences: { validator: z.any().optional(), visibility: "public" },
   },
   doc: true,
   test: "smoke",

@@ -1,4 +1,4 @@
-import type { EntityDef } from "../../core/entity.ts";
+import type { EntityRuntime } from "../../core/entity.ts";
 import { pascalToSnakeCase } from "../../core/utils/strings.ts";
 import { hashValue } from "./hash.ts";
 
@@ -82,11 +82,11 @@ export interface ArtifactDescriptor {
 }
 
 /**
- * Input data for creating a DAG from an entity definition.
+ * Input data for creating a DAG from an entity runtime.
  */
 export interface DagEntityInput {
-  /** Entity definition. */
-  entity: EntityDef;
+  /** Entity runtime. */
+  entity: EntityRuntime;
   /** Source file path of the entity. */
   sourcePath: string;
   /** Artifacts to generate from this entity. */

@@ -7,14 +7,15 @@
  * @module
  */
 
-import { db } from "../connect.ts";
+// import { db } from "../connect.ts";
+// import { users } from "../schema.ts";
 
 /**
  * Seed example users.
  *
  * This is a template - adapt it to your actual schema once entities are defined.
  */
-async function seedUsers() {
+function seedUsers() {
   console.log("Seeding users...");
 
   // Example: Insert users (adapt to your actual schema)
@@ -43,10 +44,10 @@ async function seedUsers() {
 /**
  * Main seed function.
  */
-async function main() {
+function main() {
   try {
     console.log("Starting database seed...");
-    await seedUsers();
+    seedUsers();
     console.log("Seed completed successfully!");
   } catch (error) {
     console.error("Seed failed:", error);
@@ -56,6 +57,6 @@ async function main() {
 
 // Run if this is the main module
 if (import.meta.main) {
-  await main();
+  main();
 }
 
