@@ -11,7 +11,7 @@
 // Install dependencies first: deno add jsr:@hono/hono@^4.10.7
 // After installation, uncomment the imports and code below:
 // import { Hono } from "hono";
-import registerHealthRoutes from "./routes/health.ts";
+// import registerHealthRoutes from "./routes/health.ts";
 
 // Initialize secrets if available
 try {

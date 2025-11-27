@@ -3,7 +3,7 @@
 // After installation, uncomment the imports and function below:
 // import { h } from "../../../deps/preact.ts";
 // import { PageProps } from "jsr:@fresh/core@2";
-import Counter from "../components/Counter.tsx";
+// import Counter from "../components/Counter.tsx";
 
 /**
  * Home page route component.

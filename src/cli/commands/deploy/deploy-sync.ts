@@ -1,4 +1,4 @@
-import { join, resolve } from "../../../shared/path.ts";
+import { resolve } from "../../../shared/path.ts";
 import { createLogger } from "../../utils/log.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import type { DeployProvider } from "../../definitions.ts";

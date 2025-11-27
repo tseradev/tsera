@@ -97,7 +97,7 @@ export async function copyDirectory(
       relativePath.includes("\\domain\\");
 
     if (isEntityFile) {
-      content = await adaptEntityImports(content, target);
+      content = adaptEntityImports(content, target);
     }
 
     // Write adapted content

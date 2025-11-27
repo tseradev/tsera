@@ -149,7 +149,6 @@ Deno.test("update command rejects invalid channel", async () => {
 });
 
 Deno.test("update command accepts all valid channels", async () => {
-  const command = createUpdateCommand();
   let received: { channel?: string } = {};
 
   const handler = (context: { channel: string }) => {

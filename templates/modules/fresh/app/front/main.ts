@@ -16,7 +16,7 @@
 // Install dependencies first: deno add jsr:@fresh/core@^2.2.0
 // After installation, uncomment the import below:
 // import { App } from "jsr:@fresh/core@2";
-import { dirname, fromFileUrl } from "std/path";
+// import { dirname, fromFileUrl } from "std/path";
 
 // Initialize secrets if available
 try {
@@ -25,11 +25,9 @@ try {
   // Secrets module not enabled, will use Deno.env
 }
 
-// Get the directory of this module
-const baseDir = dirname(fromFileUrl(import.meta.url));
-
 // Fresh App with file-based routing
 // const app = new App();
+// const baseDir = dirname(fromFileUrl(import.meta.url));
 // app.fsRoutes(baseDir);
 
 // if (import.meta.main) {

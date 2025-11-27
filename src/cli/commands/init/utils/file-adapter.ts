@@ -338,10 +338,10 @@ export async function adaptDrizzleConfigFile(
  * @param targetDir - Target directory where the project is being created (unused but kept for consistency).
  * @returns Adapted file content with tsera/ imports.
  */
-export async function adaptEntityImports(
+export function adaptEntityImports(
   content: string,
   _targetDir: string,
-): Promise<string> {
+): string {
   try {
     const project = createTSeraProject();
     const sourceFile = createInMemorySourceFile(project, "entity.ts", content);

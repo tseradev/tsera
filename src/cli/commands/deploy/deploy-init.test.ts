@@ -2,7 +2,6 @@ import { assertEquals, assertRejects } from "std/assert";
 import { join } from "../../../shared/path.ts";
 import { ensureDir } from "../../utils/fsx.ts";
 import { handleDeployInit } from "./deploy-init.ts";
-import { updateDeployTargets } from "../../utils/deploy-config.ts";
 
 Deno.test("deploy-init: throws error in JSON mode", async () => {
   await assertRejects(
