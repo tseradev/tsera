@@ -21,6 +21,7 @@ import { copyDirectory } from "./utils/directory-copier.ts";
 import { readDeployTargets, updateDeployTargets } from "../../utils/deploy-config.ts";
 import { promptProviderSelection } from "../deploy/deploy-init-ui.ts";
 import { handleDeploySync } from "../deploy/deploy-sync.ts";
+import { parse as parseJsonc } from "jsr:@std/jsonc@1";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -175,7 +176,7 @@ function isInsideTSeraRepo(
 }
 
 /**
- * Patches the import_map.json in the target directory based on the environment.
+ * Patches the import_map.json or deno.jsonc in the target directory based on the environment.
  *
  * - If the project is created inside the TSera repo (dev mode):
  *   Replaces JSR imports with local relative paths to the source code.
@@ -190,33 +191,11 @@ async function patchImportMapForEnvironment(
   targetDir: string,
   templatesRoot: string,
 ): Promise<void> {
-  const importMapPath = join(targetDir, "import_map.json");
-
-  // Check if import_map.json exists
-  if (!(await pathExists(importMapPath))) {
-    return;
-  }
-
   // Check if we're inside the TSera repository
   const isLocalDev = isInsideTSeraRepo(targetDir, templatesRoot);
 
   // If not in local dev, leave JSR imports as-is
   if (!isLocalDev) {
-    return;
-  }
-
-  // Read the existing import_map.json
-  const content = await Deno.readTextFile(importMapPath);
-  let importMap: { imports?: Record<string, string> };
-
-  try {
-    importMap = JSON.parse(content);
-  } catch {
-    // If parsing fails, skip patching
-    return;
-  }
-
-  if (!importMap.imports) {
     return;
   }
 
@@ -239,31 +218,82 @@ async function patchImportMapForEnvironment(
     relativePath = `${relativePath}/`;
   }
 
-  // Replace JSR imports with local paths for dev mode
-  // Only patch imports that start with jsr:@tsera/
-  for (const [key, value] of Object.entries(importMap.imports)) {
-    if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
-      if (key === "tsera/") {
-        importMap.imports[key] = relativePath;
+  // Try import_map.json first (non-Fresh projects)
+  const importMapPath = join(targetDir, "import_map.json");
+  if (await pathExists(importMapPath)) {
+    const content = await Deno.readTextFile(importMapPath);
+    let importMap: { imports?: Record<string, string> };
+
+    try {
+      importMap = JSON.parse(content);
+    } catch {
+      // If parsing fails, skip patching
+      return;
+    }
+
+    if (!importMap.imports) {
+      return;
+    }
+
+    // Replace JSR imports with local paths for dev mode
+    // Only patch imports that start with jsr:@tsera/
+    for (const [key, value] of Object.entries(importMap.imports)) {
+      if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
+        if (key === "tsera/") {
+          importMap.imports[key] = relativePath;
+        }
       }
     }
+
+    // Write back with sorted keys for consistency
+    const sortedImports = Object.keys(importMap.imports)
+      .sort()
+      .reduce((acc: Record<string, string>, key) => {
+        acc[key] = importMap.imports![key];
+        return acc;
+      }, {});
+
+    const updatedContent = JSON.stringify(
+      { ...importMap, imports: sortedImports },
+      null,
+      2,
+    ) + "\n";
+
+    await safeWrite(importMapPath, normalizeNewlines(updatedContent));
+    return;
   }
 
-  // Write back with sorted keys for consistency
-  const sortedImports = Object.keys(importMap.imports)
-    .sort()
-    .reduce((acc: Record<string, string>, key) => {
-      acc[key] = importMap.imports![key];
-      return acc;
-    }, {});
+  // Try deno.jsonc (Fresh projects)
+  const denoConfigPath = join(targetDir, "deno.jsonc");
+  if (await pathExists(denoConfigPath)) {
+    const content = await Deno.readTextFile(denoConfigPath);
+    let denoConfig: { imports?: Record<string, string> };
 
-  const updatedContent = JSON.stringify(
-    { ...importMap, imports: sortedImports },
-    null,
-    2,
-  ) + "\n";
+    try {
+      denoConfig = parseJsonc(content) as { imports?: Record<string, string> };
+    } catch {
+      // If parsing fails, skip patching
+      return;
+    }
 
-  await safeWrite(importMapPath, normalizeNewlines(updatedContent));
+    if (!denoConfig.imports) {
+      return;
+    }
+
+    // Replace JSR imports with local paths for dev mode
+    // Only patch imports that start with jsr:@tsera/
+    for (const [key, value] of Object.entries(denoConfig.imports)) {
+      if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
+        if (key === "tsera/") {
+          denoConfig.imports[key] = relativePath;
+        }
+      }
+    }
+
+    // Write back (preserve JSONC format)
+    const updatedContent = JSON.stringify(denoConfig, null, 2) + "\n";
+    await safeWrite(denoConfigPath, normalizeNewlines(updatedContent));
+  }
 }
 
 /**

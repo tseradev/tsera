@@ -85,7 +85,7 @@ Deno.test("E2E: basic init with all modules", async () => {
     // Check Fresh module
     assert(await exists(join(projectDir, "app", "front", "main.ts")), "Fresh main.ts missing");
     assert(
-      await exists(join(projectDir, "app", "front", "components", "Counter.tsx")),
+      await exists(join(projectDir, "app", "front", "islands", "Counter.tsx")),
       "Counter component missing",
     );
 
@@ -159,9 +159,17 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     }
 
     const events = parseNdjson(firstDev.stdout);
-    const planSummary = findEvent(events, "plan:summary");
-    assert(planSummary, "Missing plan:summary event");
-    const summary = planSummary!.context as Record<string, unknown>;
+    const planSummary = findEvent(events, "doctor:plan");
+    assert(planSummary, "Missing doctor:plan event");
+    const context = planSummary!.context as Record<string, unknown>;
+    const summary = context.summary as Record<string, unknown>;
+    assert(summary, "Missing summary in doctor:plan event");
+    if (summary.changed !== false) {
+      const summaryStr = JSON.stringify(summary, null, 2);
+      throw new Error(
+        `First cycle should be clean but found changes:\n${summaryStr}\n\nFull events:\n${JSON.stringify(events, null, 2)}`,
+      );
+    }
     assert(summary.changed === false, "First cycle should be clean");
   } finally {
     await Deno.remove(workspace, { recursive: true });

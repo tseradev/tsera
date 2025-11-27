@@ -142,15 +142,16 @@ function formatColumn(
   const sqlType = extractSqlTypeFromZod(zodSchema, dialect);
   const constraints: string[] = [];
 
-  // NOT NULL if field is not nullable and not optional
+  // NOT NULL if field is not nullable and not optional and has no default
   const zodWithInternal = zodSchema as unknown as ZodWithInternal;
   const def = zodWithInternal._zod.def;
   const isOptional = def.type === "optional";
+  const hasDefault = def.type === "default" || (def.innerType && (def.innerType as unknown as ZodWithInternal)._zod.def.type === "default");
   const innerDef = def.innerType ? (def.innerType as unknown as ZodWithInternal)._zod.def : null;
   const isNullable = def.type === "nullable" ||
     (isOptional && innerDef?.type === "nullable");
 
-  if (!isOptional && !isNullable) {
+  if (!isOptional && !isNullable && !hasDefault) {
     constraints.push("NOT NULL");
   }
 

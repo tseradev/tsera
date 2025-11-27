@@ -2,6 +2,8 @@
  * Recursively freezes an object and all nested properties, returning an immutable
  * representation of the supplied value. Primitive values are returned unchanged.
  *
+ * Note: Zod schemas are not frozen as they use lazy getters that would break if frozen.
+ *
  * @param value - Object or primitive to freeze.
  * @returns A deeply frozen version of the provided value.
  */
@@ -12,6 +14,11 @@ export function deepFreeze<T>(value: T, visited = new WeakSet<object>()): Readon
 
   const valueType = typeof value;
   if (valueType !== "object" && valueType !== "function") {
+    return value as Readonly<T>;
+  }
+
+  // Skip Zod schemas - they use lazy getters that break if frozen
+  if (valueType === "object" && value !== null && "_zod" in (value as Record<string, unknown>)) {
     return value as Readonly<T>;
   }
 

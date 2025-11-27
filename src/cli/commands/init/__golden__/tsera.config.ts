@@ -30,6 +30,9 @@ const config: TseraConfig = {
     entry: "app/back/main.ts",
     envFile: ".env.deploy",
   },
+  // List of enabled deployment providers for CD (empty = no CD).
+  // Configure via "tsera deploy init" or during "tsera init".
+  deployTargets: [],
   modules: {
     hono: true,
     fresh: true,

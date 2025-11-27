@@ -331,6 +331,7 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
       errors.push(args.map((v) => String(v)).join(" "));
     };
 
+    let timeoutId: number | undefined;
     try {
       // Try to start in foreground (without --background flag)
       // Use Promise.race with timeout to prevent infinite blocking
@@ -338,7 +339,7 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
       await Promise.race([
         mcpCommand.parse([]),
         new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error("Test timeout: command blocked too long")), 2000);
+          timeoutId = setTimeout(() => reject(new Error("Test timeout: command blocked too long")), 2000);
         }),
       ]);
     } catch (error) {
@@ -359,6 +360,9 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
       }
       // Other errors are acceptable
     } finally {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
       Deno.exit = originalExit;
       console.error = originalError;
       Deno.chdir(originalCwd);

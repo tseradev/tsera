@@ -105,7 +105,7 @@ export function createRouter(
     });
 
   const withGlobalOpts = (cmd: SubCommand): SubCommand =>
-    cmd.globalOption("--json", JSON_OPTION_DESC, { default: false });
+    cmd.globalOption("--json", JSON_OPTION_DESC, { default: false, override: true });
 
   root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));

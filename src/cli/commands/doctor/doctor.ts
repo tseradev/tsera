@@ -104,7 +104,9 @@ export function createDefaultDoctorHandler(
         human?.allClear(dagInputs.length, context.quick);
       }
       // In quick mode, exit with code 0
-      // In full mode, exit with code 0 if no issues (already returning)
+      // In full mode, exit with code 0 if no issues
+      const exitCode = 0;
+      exitFn(exitCode);
       return;
     }
 

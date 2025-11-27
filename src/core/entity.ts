@@ -1,5 +1,6 @@
 import { z, type ZodObject, type ZodType } from "./utils/zod.ts";
 import { isPascalCase } from "./utils/strings.ts";
+import { deepFreeze } from "./utils/object.ts";
 
 /**
  * Field visibility level:
@@ -507,5 +508,5 @@ export function defineEntity(config: EntityConfig): EntityRuntime {
   };
 
   // Freeze and return
-  return runtime as EntityRuntime;
+  return deepFreeze(runtime) as EntityRuntime;
 }

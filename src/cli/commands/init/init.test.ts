@@ -3,7 +3,7 @@ import { normalizeNewlines } from "../../../shared/newline.ts";
 import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "std/assert";
 
-const NOOP_WRITER = () => {};
+const NOOP_WRITER = () => { };
 
 async function readGoldenFile(name: string): Promise<string> {
   const url = new URL(`./__golden__/${name}`, import.meta.url);
@@ -13,7 +13,7 @@ async function readGoldenFile(name: string): Promise<string> {
 async function updateImportMapForTests(projectDir: string): Promise<void> {
   const srcPath = join(Deno.cwd(), "src");
   const normalizedSrcPath = srcPath.replace(/\\/g, "/");
-  
+
   // Check if import_map.json exists (non-Fresh projects)
   const importMapPath = join(projectDir, "import_map.json");
   if (await fileExists(importMapPath)) {

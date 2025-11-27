@@ -54,7 +54,15 @@ export async function copyDirectory(
       continue;
     }
 
-    const targetPath = join(target, relativePath);
+    // Special handling for secrets module: manager.ts and manager.test.ts should go to config/secrets/
+    let targetPath = join(target, relativePath);
+    const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");
+    const isManagerFile = lastPart === "manager.ts" || lastPart === "manager.test.ts";
+
+    if (isSecretsModule && isManagerFile && relativePath === lastPart) {
+      // File is at root of secrets module, place it in config/secrets/
+      targetPath = join(target, "config", "secrets", lastPart);
+    }
 
     // Skip deps files if they already exist (shared between modules)
     if (relativePath.startsWith("deps/") || relativePath.startsWith("deps\\")) {
@@ -102,6 +110,11 @@ export async function copyDirectory(
 
     // Write adapted content
     await Deno.writeTextFile(targetPath, content);
-    result.copiedFiles.push(relativePath);
+
+    // Use the actual target path relative to project root for copiedFiles
+    const copiedPath = isSecretsModule && isManagerFile && relativePath === lastPart
+      ? `config/secrets/${lastPart}`
+      : relativePath;
+    result.copiedFiles.push(copiedPath);
   }
 }

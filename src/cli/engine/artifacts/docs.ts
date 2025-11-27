@@ -155,7 +155,12 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
     if (schemaDef.type === "object" && schemaDef.shape) {
       const shape = schemaDef.shape;
 
+      // Only iterate over fields that are actually in publicFields (visibility === "public")
       for (const [name, field] of Object.entries(publicFields)) {
+        // Double-check that this field is actually public
+        if (field.visibility !== undefined && field.visibility !== "public") {
+          continue;
+        }
         const zodSchema = shape[name] as ZodType;
         if (!zodSchema) {
           continue;

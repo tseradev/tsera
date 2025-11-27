@@ -15,7 +15,7 @@
 
 // Initialize secrets if available
 try {
-  await import("../../../secrets/manager.ts");
+  await import("../../config/secrets/manager.ts");
 } catch {
   // Secrets module not enabled, will use Deno.env
 }

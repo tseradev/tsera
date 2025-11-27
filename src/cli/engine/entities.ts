@@ -323,11 +323,11 @@ function extractEntities(mod: ModuleNamespace): EntityRuntime[] {
 function isEntityRuntime(value: unknown): value is EntityRuntime {
   return Boolean(
     value && typeof value === "object" &&
-      (value as Record<string, unknown>).__brand === "TSeraEntity" &&
-      "schema" in (value as Record<string, unknown>) &&
-      "public" in (value as Record<string, unknown>) &&
-      "input" in (value as Record<string, unknown>) &&
-      "fields" in (value as Record<string, unknown>),
+    (value as Record<string, unknown>).__brand === "TSeraEntity" &&
+    "schema" in (value as Record<string, unknown>) &&
+    "public" in (value as Record<string, unknown>) &&
+    "input" in (value as Record<string, unknown>) &&
+    "fields" in (value as Record<string, unknown>),
   );
 }
 
