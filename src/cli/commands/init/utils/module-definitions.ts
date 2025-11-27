@@ -59,16 +59,16 @@ export const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
  */
 export const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
   hono: {
-    "hono": "jsr:@hono/hono@^4.0.0",
+    "hono": "jsr:@hono/hono@^4.10.7",
   },
   fresh: {
-    "fresh": "jsr:@fresh/core@^2.1.4",
-    "fresh/": "jsr:@fresh/core@^2.1.4/",
+    "fresh": "jsr:@fresh/core@^2.2.0",
+    "fresh/": "jsr:@fresh/core@^2.2.0/",
     "preact": "npm:preact@^10.27.2",
     "preact/": "npm:preact@^10.27.2/",
-    "@preact/signals": "npm:@preact/signals@^2.3.2",
-    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.0.7",
-    "vite": "npm:vite@^7.1.3",
+    "@preact/signals": "npm:@preact/signals@^2.5.1",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.0.8",
+    "vite": "npm:vite@^7.2.4",
   },
 };
 

@@ -62,7 +62,7 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
     });
 
     try {
-      await doctor({ cwd: projectDir, fix: false, global: { json: false, strict: false } });
+      await doctor({ cwd: projectDir, fix: false, quick: false, global: { json: false, strict: false } });
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("exit:")) {
         throw error;
@@ -70,6 +70,57 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
     }
 
     assertEquals(collector.codes, [1]);
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("doctor --quick exits with code 0 even when issues found", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const projectDir = join(tempDir, "doctor-quick");
+    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    await init({
+      directory: projectDir,
+      force: false,
+      yes: true,
+      global: { json: false },
+      modules: {
+        hono: true,
+        fresh: true,
+        docker: true,
+        ci: true,
+        secrets: true,
+      },
+    });
+
+    await updateImportMapForTests(projectDir);
+
+    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const original = await Deno.readTextFile(entityPath);
+    const updated = original.replace(
+      "Optional display name.",
+      "Optional display name (doctor quick test).",
+    );
+    await Deno.writeTextFile(entityPath, updated);
+
+    const collector = createExitCollector();
+    const doctor = createDefaultDoctorHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+      exit: collector.exit,
+    });
+
+    try {
+      await doctor({ cwd: projectDir, fix: false, quick: true, global: { json: false, strict: false } });
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.startsWith("exit:")) {
+        throw error;
+      }
+    }
+
+    // In quick mode, should exit with code 0 even if issues found
+    assertEquals(collector.codes, [0]);
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }
@@ -108,7 +159,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       },
     });
 
-    await doctor({ cwd: projectDir, fix: true, global: { json: false, strict: false } });
+    await doctor({ cwd: projectDir, fix: true, quick: false, global: { json: false, strict: false } });
 
     const collector = createExitCollector();
     const check = createDefaultDoctorHandler({
@@ -117,7 +168,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       exit: collector.exit,
     });
 
-    await check({ cwd: projectDir, fix: false, global: { json: false, strict: false } });
+    await check({ cwd: projectDir, fix: false, quick: false, global: { json: false, strict: false } });
     assertEquals(collector.codes.length, 0);
   } finally {
     await Deno.remove(tempDir, { recursive: true });

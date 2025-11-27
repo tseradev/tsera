@@ -23,8 +23,6 @@ interface CounterProps {
 /**
  * Counter island component.
  *
- * NOTE: Uncomment after installing dependencies (deno add npm:preact@^10.27.2)
- *
  * @param props - Component props containing the initial counter value
  * @returns JSX element representing the counter interface
  */
@@ -42,4 +40,3 @@ interface CounterProps {
 //     </div>
 //   );
 // }
-

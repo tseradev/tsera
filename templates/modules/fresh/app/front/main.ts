@@ -13,7 +13,7 @@
  * @module
  */
 
-// Install dependencies first: deno add jsr:@fresh/core@^2.1.4
+// Install dependencies first: deno add jsr:@fresh/core@^2.2.0
 // After installation, uncomment the import below:
 // import { App } from "jsr:@fresh/core@2";
 import { dirname, fromFileUrl } from "std/path";
@@ -29,7 +29,6 @@ try {
 const baseDir = dirname(fromFileUrl(import.meta.url));
 
 // Fresh App with file-based routing
-// NOTE: Uncomment after installing dependencies (deno add jsr:@fresh/core@^2.1.4)
 // const app = new App();
 // app.fsRoutes(baseDir);
 

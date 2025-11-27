@@ -8,7 +8,7 @@
  * @module
  */
 
-// Install dependencies first: deno add jsr:@hono/hono@^4.0.0
+// Install dependencies first: deno add jsr:@hono/hono@^4.10.7
 // After installation, uncomment the imports and code below:
 // import { Hono } from "hono";
 import registerHealthRoutes from "./routes/health.ts";
@@ -22,8 +22,6 @@ try {
 
 /**
  * Hono application instance with registered routes.
- *
- * NOTE: Uncomment after installing dependencies (deno add jsr:@hono/hono@^4.0.0)
  */
 // export const app = new Hono();
 // registerHealthRoutes(app);

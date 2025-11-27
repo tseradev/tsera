@@ -7,8 +7,6 @@ import { mcpCommand } from "./commands/mcp/mcp.ts";
 import { createDeployCommand } from "./commands/deploy/deploy.ts";
 import {
   applyModernHelp,
-  createHelpCommand,
-  type HelpCommandHandler,
   type ModernHelpCommand,
 } from "./commands/help/help.ts";
 import type { CliMetadata } from "./main.ts";
@@ -52,10 +50,6 @@ const COMMAND_HELP: ModernHelpCommand[] = [
     label: "mcp",
     description: "Start the Model Context Protocol server for AI agents.",
   },
-  {
-    label: "help [command]",
-    description: "Display help information for TSera CLI commands.",
-  },
 ];
 
 const CLI_EXAMPLES = [
@@ -84,7 +78,6 @@ export interface RouterHandlers {
     sync?: (context: import("./commands/deploy/deploy-sync.ts").DeploySyncContext) => Promise<void> | void;
   };
   update?: UpdateCommandHandler;
-  help?: HelpCommandHandler;
 }
 
 /**
@@ -119,7 +112,6 @@ export function createRouter(
   root.command("deploy", withGlobalOpts(createDeployCommand(handlers.deploy)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
   root.command("mcp", withGlobalOpts(mcpCommand));
-  root.command("help", withGlobalOpts(createHelpCommand(handlers.help)));
 
   applyModernHelp(root, {
     cliName: CLI_NAME,

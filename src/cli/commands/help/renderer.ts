@@ -145,7 +145,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append(
     "       " + palette.accent("$") + " " +
-    palette.strong(`${config.cliName} init my-app`) + "\n",
+    palette.strong(`${config.cliName.toLowerCase()} init my-app`) + "\n",
   );
   builder.append("\n");
   builder.append(
@@ -153,7 +153,7 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append(
     "       " + palette.accent("$") + " " +
-    palette.strong(`cd my-app && ${config.cliName} dev`) + "\n",
+    palette.strong(`cd my-app && ${config.cliName.toLowerCase()} dev`) + "\n",
   );
   builder.append("\n");
 

@@ -305,23 +305,21 @@ Compose un projet TSera à partir du template de base et des modules sélectionn
 
 #### `tsera dev [projectDir]`
 
-**Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent.
+**Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent. Utilisé pour le développement actif avec régénération automatique.
 
 **Options :**
 
 - `[projectDir]` : Répertoire du projet (défaut: `.`)
-- `--no-watch` : Désactive le file watcher (activé par défaut)
-- `--plan-only` : Calcule le plan sans appliquer (implique `--no-watch`)
 - `--apply` : Force l'application même si le plan est vide
 
 #### `tsera doctor [--cwd <path>]`
 
-Vérifications (Deno v2, FS, entités importables, DB/env, format artefacts). Détecte les
-incohérences.
+Diagnostic de la cohérence du projet. Mode par défaut : affiche **tous les artefacts** (modifiés et non modifiés), exit code 1-2 si problèmes détectés. Mode `--quick` : affiche uniquement les changements, exit code 0. Utilisé pour diagnostic complet, validation rapide en CI, et corrections automatisées.
 
 **Options :**
 
 - `--cwd <path>` : Répertoire du projet à diagnostiquer (défaut: `.`)
+- `--quick` : Mode rapide : affiche uniquement les changements, exit code 0. Utilisé pour validation rapide en CI ou avant application.
 - `--fix` : Applique automatiquement les corrections sûres (régénère les artefacts)
 
 #### `tsera update`

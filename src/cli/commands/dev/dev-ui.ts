@@ -127,7 +127,49 @@ export class DevConsole extends BaseConsole {
    */
   moduleStarting(name: string): void {
     const label = name.charAt(0).toUpperCase() + name.slice(1);
-    this.write(dim("◆ ") + cyan(label) + dim(" │ Starting..."));
+    // Pad label to 10 characters to align the separator
+    const paddedLabel = label.padEnd(10);
+    this.write(dim("◆ ") + cyan(paddedLabel) + dim(" │ Starting..."));
+  }
+
+  /**
+   * Parses URL to extract protocol, host, and port information.
+   *
+   * @param url - Full URL string
+   * @returns Object with parsed components or null if parsing fails
+   */
+  private parseUrl(url: string): { protocol: string; host: string; port: string | null } | null {
+    try {
+      const urlObj = new URL(url);
+      return {
+        protocol: urlObj.protocol.replace(":", ""),
+        host: urlObj.hostname,
+        port: urlObj.port || null,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Formats URL information for display.
+   *
+   * @param url - Full URL string
+   * @returns Formatted string with protocol, host, and port
+   */
+  private formatUrlInfo(url: string): string {
+    const parsed = this.parseUrl(url);
+    if (!parsed) return cyan(url);
+
+    const parts: string[] = [];
+    parts.push(gray(parsed.protocol));
+    parts.push(dim("@"));
+    parts.push(cyan(parsed.host));
+    if (parsed.port) {
+      parts.push(dim(":"));
+      parts.push(yellow(parsed.port));
+    }
+    return parts.join(" ") + dim(" (") + cyan(url) + dim(")");
   }
 
   /**
@@ -138,8 +180,14 @@ export class DevConsole extends BaseConsole {
    */
   moduleReady(name: string, url?: string): void {
     const label = name.charAt(0).toUpperCase() + name.slice(1);
-    const urlPart = url ? dim(" at ") + cyan(url) : "";
-    this.write(green("✓ ") + cyan(label) + dim(" │ Ready") + urlPart);
+    // Pad label to 10 characters to align the separator
+    const paddedLabel = label.padEnd(10);
+    if (url) {
+      const urlInfo = this.formatUrlInfo(url);
+      this.write(green("✓ ") + cyan(paddedLabel) + dim(" │ Ready") + dim(" at ") + urlInfo);
+    } else {
+      this.write(green("✓ ") + cyan(paddedLabel) + dim(" │ Ready"));
+    }
   }
 
   /**
@@ -150,7 +198,9 @@ export class DevConsole extends BaseConsole {
    */
   moduleError(name: string, error: string): void {
     const label = name.charAt(0).toUpperCase() + name.slice(1);
-    this.write(red("✗ ") + cyan(label) + dim(" │ ") + red(error));
+    // Pad label to 10 characters to align the separator
+    const paddedLabel = label.padEnd(10);
+    this.write(red("✗ ") + cyan(paddedLabel) + dim(" │ ") + red(error));
   }
 
   /**
@@ -202,24 +252,22 @@ export class DevConsole extends BaseConsole {
       if (affectedSteps.length > 0) {
         this.write("");
         this.write(
-          `🔍 ${bold("Change detected")} ${dim("│")} ${
-            yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
+          `🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
           }`,
         );
         for (const step of affectedSteps) {
           const symbol = step.kind === "create"
             ? green("✚")
             : step.kind === "update"
-            ? yellow("↻")
-            : red("✖");
+              ? yellow("↻")
+              : red("✖");
           const action = step.kind === "create"
             ? gray("create")
             : step.kind === "update"
-            ? gray("update")
-            : gray("delete");
+              ? gray("update")
+              : gray("delete");
           this.writeMiddle(
-            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${
-              gray(step.node.id)
+            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)
             }`,
           );
         }
@@ -307,11 +355,123 @@ export class DevConsole extends BaseConsole {
     this.#spinner.fail(`${bold("Error")} ${dim("│")} ${gray(message)}`);
     this.write("");
     this.write(`${magenta("◆")} ${bold("What to do")}`);
-    this.writeMiddle(`${dim("→")} ${yellow("Fix the error in your code")}`);
+    this.writeMiddle(`${yellow("Fix the error in your code")}`);
     if (this.#watchEnabled) {
       this.writeLast(`${gray("Save the file to retry automatically")}`);
     } else {
       this.writeLast(`${gray("Run ")}${cyan("tsera dev")}${gray(" again to retry")}`);
+    }
+    this.write("");
+  }
+
+  /**
+   * Displays a warning when module errors are detected.
+   */
+  moduleErrorsWarning(): void {
+    this.#spinner.stop();
+    this.write("");
+    this.write(
+      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${gray("Skipping coherence check until modules are fixed")}`,
+    );
+    // Don't add extra blank line - let the next message decide spacing
+  }
+
+  /**
+   * Displays a message indicating that the system is checking if all modules have failed.
+   */
+  checkingModulesStatus(): void {
+    this.#spinner.start(
+      `${gray("Checking module status…")}`,
+    );
+  }
+
+  /**
+   * Stops the spinner if it's running.
+   */
+  stopSpinner(): void {
+    this.#spinner.stop();
+  }
+
+  /**
+   * Displays a message when all modules have failed and the process is exiting.
+   * Optionally shows a summary of module statuses.
+   */
+  allModulesFailed(modules?: Map<string, { status: string; url?: string }>): void {
+    this.write("");
+    if (modules && modules.size > 0) {
+      // Show summary without header for cleaner display
+      this.write(`${red("✗ All modules failed")} ${dim("│")} ${gray("Status:")}`);
+      for (const [name, info] of modules.entries()) {
+        const label = name.charAt(0).toUpperCase() + name.slice(1);
+        const statusText = info.status === "error"
+          ? red("Error")
+          : info.status === "starting"
+            ? yellow("Starting")
+            : gray(info.status);
+        this.writeMiddle(`${dim("  •")} ${cyan(label)} ${dim("│")} ${statusText}`);
+      }
+      this.write("");
+    } else {
+      this.write(
+        `${red("✗ Module loading failed")} ${dim("│")} ${gray("Exiting...")}`,
+      );
+      this.write("");
+    }
+  }
+
+  /**
+   * Displays a summary of all modules with their status and connection info.
+   *
+   * @param modules - Map of module names to their status and URLs
+   * @param showHeader - Whether to show the "Services" header (default: true)
+   */
+  modulesStatus(modules: Map<string, { status: string; url?: string }>, showHeader: boolean = true): void {
+    if (modules.size === 0) return;
+
+    // Only show summary if at least one module has a meaningful status (not "stopped")
+    const hasActiveStatus = Array.from(modules.values()).some(
+      (info) => info.status !== "stopped"
+    );
+    if (!hasActiveStatus) return;
+
+    // Only show summary if at least one module is ready (not just errors)
+    // This prevents showing the summary when all modules are failing
+    const hasReadyModule = Array.from(modules.values()).some(
+      (info) => info.status === "ready"
+    );
+    if (!hasReadyModule) return; // Don't show summary if no module is ready
+
+    this.write("");
+    if (showHeader) {
+      this.write(`${magenta("◆")} ${bold("Services")}`);
+    }
+
+    for (const [name, info] of modules.entries()) {
+      const label = name.charAt(0).toUpperCase() + name.slice(1);
+      const statusIcon = info.status === "ready"
+        ? green("✓")
+        : info.status === "error"
+          ? red("✗")
+          : info.status === "starting"
+            ? yellow("◆")
+            : gray("○");
+
+      const statusText = info.status === "ready"
+        ? green("Ready")
+        : info.status === "error"
+          ? red("Error")
+          : info.status === "starting"
+            ? yellow("Starting")
+            : gray("Stopped");
+
+      if (info.url) {
+        const urlInfo = this.formatUrlInfo(info.url);
+        this.writeMiddle(
+          `${statusIcon} ${cyan(label)} ${dim("│")} ${statusText} ${dim("│")} ${urlInfo}`,
+        );
+      } else {
+        this.writeMiddle(`${statusIcon} ${cyan(label)} ${dim("│")} ${statusText}`);
+      }
     }
     this.write("");
   }

@@ -29,9 +29,9 @@ jobs:
           echo "⚠️  TODO: Configure TSera CLI installation"
           # deno install --global -A --name tsera <CLI_URL>
 
-      - name: Run TSera dev (plan only)
+      - name: Run TSera doctor (quick validation)
         run: |
           # TODO: Uncomment when TSera CLI is installed
-          # tsera dev --plan-only
-          echo "⚠️  TODO: Run 'tsera dev --plan-only' to validate codegen"
+          # tsera doctor --quick
+          echo "⚠️  TODO: Run 'tsera doctor --quick' to validate codegen"
 

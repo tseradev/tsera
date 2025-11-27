@@ -16,6 +16,7 @@ import { renderCommandHelp } from "../help/command-help-renderer.ts";
 interface DoctorCommandOptions extends GlobalCLIOptions {
   cwd: string;
   fix: boolean;
+  quick: boolean;
 }
 
 /** Options passed to the doctor action handler by Cliffy. */
@@ -23,6 +24,7 @@ interface DoctorActionOptions {
   json?: boolean;
   cwd?: string;
   fix?: boolean;
+  quick?: boolean;
 }
 
 /**
@@ -33,6 +35,8 @@ export interface DoctorCommandContext {
   cwd: string;
   /** Whether to automatically apply safe fixes. */
   fix: boolean;
+  /** Whether to use quick mode (shows only changes, exits with code 0). */
+  quick: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
 }
@@ -65,11 +69,12 @@ export function createDefaultDoctorHandler(
     const human = jsonMode ? undefined : new DoctorConsole({
       projectDir,
       fix: context.fix,
+      quick: context.quick,
       writer,
     });
 
     if (jsonMode) {
-      logger.event("doctor:start", { cwd: projectDir, fix: context.fix });
+      logger.event("doctor:start", { cwd: projectDir, fix: context.fix, quick: context.quick });
     } else {
       human?.start();
     }
@@ -81,7 +86,9 @@ export function createDefaultDoctorHandler(
     await writeDagState(projectDir, dag);
 
     const previousState = await readEngineState(projectDir);
-    const plan = planDag(dag, previousState, { includeUnchanged: true });
+    // In quick mode, only show changes
+    // In full mode, show all artifacts (changed and unchanged)
+    const plan = planDag(dag, previousState, { includeUnchanged: !context.quick });
 
     if (jsonMode) {
       logger.event("doctor:plan", { summary: plan.summary });
@@ -94,8 +101,10 @@ export function createDefaultDoctorHandler(
         logger.event("doctor:clean", { entities: dagInputs.length });
         logger.info("No inconsistencies detected", { entities: dagInputs.length });
       } else {
-        human?.allClear(dagInputs.length);
+        human?.allClear(dagInputs.length, context.quick);
       }
+      // In quick mode, exit with code 0
+      // In full mode, exit with code 0 if no issues (already returning)
       return;
     }
 
@@ -166,7 +175,9 @@ export function createDefaultDoctorHandler(
       human?.suggestNextSteps();
     }
 
-    const exitCode = context.global.strict ? 2 : 1;
+    // In quick mode, always exit with code 0
+    // In full mode, exit with code 1-2 if issues found
+    const exitCode = context.quick ? 0 : (context.global.strict ? 2 : 1);
     exitFn(exitCode);
   };
 }
@@ -178,14 +189,16 @@ export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
 ) {
   const command = new Command()
-    .description("Check project coherence and suggest safe fixes.")
+    .description("Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes. Use --quick for fast validation (shows only changes, exits with code 0). Default mode shows all artifacts and exits with code 1-2 if issues found.")
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
-    .option("--fix", "Automatically apply safe corrections.", { default: false })
+    .option("--quick", "Quick mode: show only changes, exit with code 0. Use for validation in CI or before applying.", { default: false })
+    .option("--fix", "Automatically apply safe corrections to fix detected issues.", { default: false })
     .action(async (options: DoctorActionOptions) => {
-      const { json = false, cwd = ".", fix = false } = options;
+      const { json = false, cwd = ".", fix = false, quick = false } = options;
       await handler({
         cwd,
         fix,
+        quick,
         global: { json },
       });
     });
@@ -197,11 +210,15 @@ export function createDoctorCommand(
       console.log(
         renderCommandHelp({
           commandName: "doctor",
-          description: "Inspect project coherence, highlight issues, and offer safe fixes.",
+          description: "Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes. Default mode shows all artifacts (changed and unchanged) and exits with code 1-2 if issues found. Use --quick for fast validation (shows only changes, exits with code 0).",
           options: [
             {
               label: "--cwd <path>",
               description: "Project directory to diagnose (default: current directory)",
+            },
+            {
+              label: "--quick",
+              description: "Quick mode: show only changes, exit with code 0. Use for validation in CI or before applying.",
             },
             {
               label: "--fix",
@@ -214,7 +231,9 @@ export function createDoctorCommand(
           ],
           examples: [
             "tsera doctor",
+            "tsera doctor --quick",
             "tsera doctor --fix",
+            "tsera doctor --quick --fix",
             "tsera doctor --cwd ./my-project",
           ],
         }),

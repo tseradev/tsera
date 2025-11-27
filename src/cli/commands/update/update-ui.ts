@@ -91,8 +91,7 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${
-        dim("│")
+      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${dim("│")
       } ${gray(`current: ${this.#currentVersion}`)}`,
     );
   }
@@ -124,8 +123,7 @@ export class UpdateConsole extends BaseConsole {
    */
   updateComplete(): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${
-        gray("TSera CLI updated successfully")
+      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${gray("TSera CLI updated successfully")
       }`,
     );
   }
@@ -137,11 +135,11 @@ export class UpdateConsole extends BaseConsole {
    */
   dryRun(command: string): void {
     this.#spinner.warn(
-      `${yellow("⚠")} ${bold("Dry run")} ${dim("│")} ${gray("No changes made")}`,
+      ` ${bold("Dry run")} ${dim("│")} ${gray("No changes made")}`,
     );
     this.write("");
-    this.writeMiddle(`${magenta("◆")} ${bold("Command Preview")}`);
-    this.writeMiddle(`${dim("→")} ${cyan(command)}`);
+    this.write(`${magenta("◆")} ${bold("Command Preview")}`);
+    this.write(`${dim("→")} ${cyan(command)}`);
     this.write("");
   }
 
@@ -152,10 +150,9 @@ export class UpdateConsole extends BaseConsole {
    */
   showNextSteps(steps: string[]): void {
     this.write("");
-    this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
-    this.writeMiddle(`${dim("→")} ${gray("Recommended post-update actions:")}`);
+    this.write(`${bold(cyan("→"))} ${bold("Next Steps")}`);
     for (const step of steps) {
-      this.writeMiddle(`  ${dim("→")} ${cyan(step)}`);
+      this.write(`  ${dim("→")} ${cyan(step)}`);
     }
     this.write("");
   }
@@ -164,9 +161,27 @@ export class UpdateConsole extends BaseConsole {
    * Reports an update error.
    *
    * @param message - The error message
+   * @param errorType - Type of error for context-specific help
    */
-  updateError(message: string): void {
-    this.#spinner.fail(`${yellow("✕")} ${bold("Update failed")} ${dim("│")} ${gray(message)}`);
-    this.writeLast(`${dim("→")} ${yellow("Check your network connection and try again.")}`);
+  updateError(message: string, errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" = "unknown"): void {
+    this.#spinner.fail(`${bold("Update failed")} ${dim("│")} ${gray(message)}`);
+
+    // Provide context-specific help message based on error type
+    let helpMessage: string;
+    switch (errorType) {
+      case "package-not-found":
+        helpMessage = "Either the specified version is incorrect, or the TSera package is not yet published on JSR.";
+        break;
+      case "permission":
+        helpMessage = "You may need administrator/sudo privileges to install globally.";
+        break;
+      case "network":
+        helpMessage = "Check your network connection and try again.";
+        break;
+      default:
+        helpMessage = "An unexpected error occurred. Please check the error message above.";
+    }
+
+    this.writeLast(`${yellow(helpMessage)}`);
   }
 }

@@ -37,6 +37,6 @@ export default {
   dbCredentials: {
     url: databaseUrl,
   },
-  // satisfies Config; // Uncomment after installing drizzle-kit
+  // satisfies Config;
 };
 

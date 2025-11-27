@@ -78,11 +78,11 @@ cd demo
 ls
 # (optional) run `tree -L 2` if the tree command is available
 
-# 3. Start the continuous coherence loop once to generate artifacts
-tsera dev --no-watch
-
-# 4. Keep the watcher active during development
+# 3. Start the continuous coherence loop (watches for changes)
 tsera dev
+
+# 4. Or run a quick validation (useful for CI)
+tsera doctor --quick
 
 # 5. Launch the demo API (if Hono module is enabled)
 deno run -A main.ts
@@ -286,16 +286,15 @@ The cycle can run manually (`plan/apply`) or automatically through `tsera dev`.
 | Command             | Purpose                                                                                                                     |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `tsera init <name>` | Scaffold a project from `base` template + selected modules, generate `.tsera` state, and prepare a ready-to-commit project. |
-| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change.                                |
-| `tsera doctor`      | Rebuild the dependency graph, detect drifts, and optionally auto-fix safe issues.                                           |
+| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change. |
+| `tsera doctor`      | Diagnose project coherence. Default mode shows all artifacts (changed and unchanged), exits with code 1-2 if issues found. Use `--quick` for fast validation (shows only changes, exits with code 0). |
 | `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                                          |
 
 Key options to remember:
 
 - `tsera init` — `--no-install` to skip dependency installs, `--json` for machine-readable progress.
-- `tsera dev` — `--json` for NDJSON logs, `--strict` to exit with code `2` when drift remains,
-  `--plan-only` (implies `--no-watch`) or `--no-watch` for scripted runs.
-- `tsera doctor` — `--fix` for safe remediation, `--strict` to gate CI, `--json` for diagnostics.
+- `tsera dev` — `--json` for NDJSON logs. Use for active development with watch mode and module management.
+- `tsera doctor` — `--quick` for fast validation (shows only changes, exits with code 0). `--fix` for safe remediation. `--strict` to gate CI. `--json` for diagnostics. Default mode shows all artifacts and exits with code 1-2 if issues found.
 - `tsera update` — `--channel` (`stable`/`beta`/`canary`), `--binary` to force compiled releases,
   `--json` to stream progress.
 

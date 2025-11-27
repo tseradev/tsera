@@ -1,5 +1,5 @@
 /** @jsx h */
-// Install dependencies first: deno add npm:preact@^10.27.2 jsr:@fresh/core@^2.1.4
+// Install dependencies first: deno add npm:preact@^10.27.2 jsr:@fresh/core@^2.2.0
 // After installation, uncomment the imports and function below:
 // import { h } from "../../../deps/preact.ts";
 // import { PageProps } from "jsr:@fresh/core@2";
@@ -10,8 +10,6 @@ import Counter from "../components/Counter.tsx";
  *
  * Displays the main landing page with an interactive counter island
  * and information about the TSera application.
- *
- * NOTE: Uncomment after installing dependencies (deno add npm:preact@^10.27.2 jsr:@fresh/core@^2.1.4)
  *
  * @param _props - Fresh page props (unused in this component)
  * @returns JSX element representing the home page
@@ -59,4 +57,3 @@ import Counter from "../components/Counter.tsx";
 //     </html>
 //   );
 // }
-

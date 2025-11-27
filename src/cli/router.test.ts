@@ -70,15 +70,13 @@ Deno.test("router maps dev options", async () => {
     },
   });
 
-  await router.parse(["dev", "./project", "--no-watch", "--plan-only", "--apply"]);
+  await router.parse(["dev", "./project", "--apply"]);
 
   if (!received) {
     throw new Error("The dev handler was not invoked.");
   }
 
   assertEquals(received.projectDir, "./project");
-  assertEquals(received.watch, false);
-  assertEquals(received.planOnly, true);
   assertEquals(received.apply, true);
   assertEquals(received.global, { json: false });
 });

@@ -297,23 +297,47 @@ export class ProcessManager {
     const process = this.processes.get(name);
     if (!process || process.status === "ready") return;
 
-    // const lowerLine = line.toLowerCase(); // Unused
     const readyPatterns = [
       /listening on/i,
       /server (?:running|started|listening)/i,
       /ready in/i,
       /local:\s*(https?:\/\/[^\s]+)/i,
       /http:\/\/[^\s]+/i,
+      /https:\/\/[^\s]+/i,
+      /vite.*(?:ready|running)/i,
+      /deno.*(?:listening|running)/i,
     ];
 
     for (const pattern of readyPatterns) {
       if (pattern.test(line)) {
         process.status = "ready";
 
-        // Try to extract URL
-        const urlMatch = line.match(/https?:\/\/[^\s]+/i);
+        // Try to extract URL with improved patterns
+        let urlMatch = line.match(/https?:\/\/[^\s\)]+/i);
+        
+        // If no full URL found, try to extract port and construct URL
+        if (!urlMatch) {
+          const portMatch = line.match(/:(\d{4,5})\b/);
+          if (portMatch) {
+            const port = portMatch[1];
+            // Default to http://localhost if no protocol/host found
+            urlMatch = [`http://localhost:${port}`];
+          }
+        }
+
+        // Also try to extract from common patterns like "localhost:8000" or "127.0.0.1:5173"
+        if (!urlMatch) {
+          const hostPortMatch = line.match(/(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{4,5})\b/i);
+          if (hostPortMatch) {
+            const host = hostPortMatch[1];
+            const port = hostPortMatch[2];
+            urlMatch = [`http://${host}:${port}`];
+          }
+        }
+
         if (urlMatch) {
-          process.url = urlMatch[0];
+          // Clean up URL (remove trailing punctuation)
+          process.url = urlMatch[0].replace(/[.,;\)\]\}]+$/, "");
         }
 
         this.notifyStatusChange(name, "ready", process.url);

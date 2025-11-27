@@ -5,15 +5,22 @@ import { ensureDir } from "../../utils/fsx.ts";
 import { determineCliVersion } from "../../utils/version.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
+import { UpdateConsole } from "./update-ui.ts";
 
-/** CLI options accepted by the {@code update} command. */
+/**
+ * CLI options accepted by the {@code update} command.
+ * @internal
+ */
 interface UpdateCommandOptions extends GlobalCLIOptions {
   channel: "stable" | "beta" | "canary";
   binary: boolean;
   dryRun: boolean;
 }
 
-/** Options passed to the update action handler by Cliffy. */
+/**
+ * Options passed to the update action handler by Cliffy.
+ * @internal
+ */
 interface UpdateActionOptions {
   json?: boolean;
   channel?: "stable" | "beta" | "canary";
@@ -40,24 +47,52 @@ export interface UpdateCommandContext {
  */
 export type UpdateCommandHandler = (context: UpdateCommandContext) => Promise<void> | void;
 
+/**
+ * Result of executing a command.
+ * @internal
+ */
 interface CommandExecutionResult {
+  /** Whether the command succeeded. */
   success: boolean;
+  /** Exit code from the command. */
   code: number;
+  /** Standard output from the command. */
   stdout: string;
+  /** Standard error from the command. */
   stderr: string;
 }
 
+/**
+ * Function that executes a command and returns its result.
+ * @internal
+ */
 type CommandRunner = (command: string, args: string[]) => Promise<CommandExecutionResult>;
 
+/**
+ * Dependencies for the update command handler.
+ * @internal
+ */
 interface UpdateHandlerDependencies {
+  /** Optional command runner for testing. */
   runner?: CommandRunner;
+  /** Optional writer for output. */
   writer?: (line: string) => void;
+  /** Optional CLI version override for testing. */
   cliVersion?: string;
+  /** Optional exit function for testing. */
+  exit?: (code: number) => never;
 }
 
 const TEXT_DECODER = new TextDecoder();
 
-/** Executes a subprocess and captures stdout/stderr for use in update operations. */
+/**
+ * Executes a subprocess and captures stdout/stderr for use in update operations.
+ *
+ * @param command - Command to execute.
+ * @param args - Command arguments.
+ * @returns Promise resolving to the command execution result.
+ * @internal
+ */
 function defaultRunner(command: string, args: string[]): Promise<CommandExecutionResult> {
   const denoCommand = new Deno.Command(command, {
     args,
@@ -81,63 +116,153 @@ export function createDefaultUpdateHandler(
   const runner = dependencies.runner ?? defaultRunner;
   const writer = dependencies.writer;
   const cliVersion = dependencies.cliVersion ?? determineCliVersion();
+  const exitFn = dependencies.exit ?? ((code: number): never => Deno.exit(code));
 
   return async (context) => {
-    const logger = createLogger({ json: context.global.json, writer });
-    logger.event("update:start", {
+    const jsonMode = context.global.json;
+    const logger = createLogger({ json: jsonMode, writer });
+    const human: UpdateConsole | undefined = jsonMode ? undefined : new UpdateConsole({
       channel: context.channel,
       binary: context.binary,
-      dryRun: context.dryRun,
-      current: cliVersion,
+      currentVersion: cliVersion,
+      writer,
     });
+
+    if (jsonMode) {
+      logger.event("update:start", {
+        channel: context.channel,
+        binary: context.binary,
+        dryRun: context.dryRun,
+        current: cliVersion,
+      });
+    } else {
+      human?.start();
+    }
 
     const versionInfo = await runner("deno", ["--version"]);
     if (!versionInfo.success) {
-      throw new Error(`Unable to determine the Deno version (code ${versionInfo.code}).`);
+      const error = `Unable to determine the Deno version (code ${versionInfo.code}).`;
+      if (jsonMode) {
+        logger.error("Failed to get Deno version", { code: versionInfo.code });
+        throw new Error(error);
+      } else {
+        human?.updateError(error, "unknown");
+        exitFn(1);
+      }
     }
 
     const denoVersion = parseDenoVersion(versionInfo.stdout);
-    logger.event("update:deno", { deno: denoVersion });
+    if (jsonMode) {
+      logger.event("update:deno", { deno: denoVersion });
+    } else {
+      human?.denoVersionChecked(denoVersion);
+    }
 
     const specifier = buildSpecifier(context.channel);
     const args = buildDenoArgs(context, specifier);
+    const command = `deno ${args.join(" ")}`;
 
+    if (context.dryRun) {
+      if (jsonMode) {
+        logger.event("update:dry-run", { command: "deno", args });
+      } else {
+        human?.dryRun(command);
+      }
+      return;
+    }
+
+    // Only create dist directory if not in dry-run mode
     if (context.binary) {
       await ensureDir(join(Deno.cwd(), "dist"));
     }
 
-    if (context.dryRun) {
-      logger.event("update:dry-run", { command: "deno", args });
-      if (!context.global.json) {
-        logger.info("Suggested command", { command: `deno ${args.join(" ")}` });
-      }
-    } else {
-      const result = await runner("deno", args);
-      if (!result.success) {
-        const detail = result.stderr.trim() || result.stdout.trim();
-        throw new Error(
-          `The deno ${args.join(" ")} command failed (code ${result.code}).${
-            detail ? ` ${detail}` : ""
-          }`,
-        );
+    if (!jsonMode) {
+      human?.updateInProgress(command);
+    }
+
+    const result = await runner("deno", args);
+    if (!result.success) {
+      const stderr = result.stderr.trim();
+      const stdout = result.stdout.trim();
+      const detail = stderr || stdout;
+
+      // Extract the main error message from Deno output
+      let errorMessage = `Update command failed (exit code ${result.code})`;
+      let errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" = "unknown";
+
+      if (detail) {
+        // Try to extract a cleaner error message
+        const errorMatch = detail.match(/error:\s*(.+?)(?:\n|$)/i);
+        if (errorMatch) {
+          errorMessage = errorMatch[1].trim();
+        } else {
+          // Use first line of detail if no match
+          errorMessage = detail.split("\n")[0].trim();
+        }
+
+        // Detect error type for better user guidance
+        const lowerDetail = detail.toLowerCase();
+        // Package/version errors: either package doesn't exist or version is invalid
+        if (lowerDetail.includes("version tag not supported") ||
+          lowerDetail.includes("invalid version") ||
+          lowerDetail.includes("version not found") ||
+          lowerDetail.includes("not found") ||
+          lowerDetail.includes("does not exist") ||
+          lowerDetail.includes("could not find") ||
+          lowerDetail.includes("package not found")) {
+          errorType = "package-not-found";
+        } else if (lowerDetail.includes("permission") || lowerDetail.includes("denied") ||
+          lowerDetail.includes("eacces") || lowerDetail.includes("access denied")) {
+          errorType = "permission";
+        } else if (lowerDetail.includes("network") || lowerDetail.includes("connection") ||
+          lowerDetail.includes("timeout") || lowerDetail.includes("dns")) {
+          errorType = "network";
+        }
       }
 
+      if (jsonMode) {
+        logger.error("Update failed", { code: result.code, stderr, stdout, errorType });
+        throw new Error(errorMessage);
+      } else {
+        human?.updateError(errorMessage, errorType);
+        exitFn(1);
+      }
+    }
+
+    if (jsonMode) {
       logger.event("update:applied", {
         method: context.binary ? "compile" : "install",
         code: result.code,
       });
+    } else {
+      human?.updateComplete();
     }
 
     const migrationSteps = ["tsera doctor --fix", "tsera dev --apply"];
-    logger.event("update:migration", { steps: migrationSteps });
-    if (!context.global.json) {
-      logger.info("Post-update steps", { next: migrationSteps.join(" && ") });
+    if (jsonMode) {
+      logger.event("update:migration", { steps: migrationSteps });
+    } else {
+      human?.showNextSteps(migrationSteps);
     }
   };
 }
 
 /**
  * Constructs the Cliffy command definition for {@code tsera update}.
+ *
+ * The command supports three options:
+ * - `--channel <channel>`: Release channel (stable|beta|canary, default: stable)
+ * - `--binary`: Install compiled binary instead of using deno install
+ * - `--dry-run`: Show commands without executing them
+ *
+ * @param handler - Optional update command handler (defaults to {@link createDefaultUpdateHandler})
+ * @returns Configured Cliffy command ready for parsing
+ *
+ * @example
+ * ```typescript
+ * const command = createUpdateCommand();
+ * await command.parse(["--channel", "beta", "--dry-run"]);
+ * ```
  */
 export function createUpdateCommand(
   handler: UpdateCommandHandler = createDefaultUpdateHandler(),
@@ -214,7 +339,8 @@ export function createUpdateCommand(
  */
 function buildSpecifier(channel: UpdateCommandContext["channel"]): string {
   const tag = channel === "stable" ? "latest" : channel;
-  return `jsr:tsera/cli/main.ts@${tag}`;
+  // JSR format: jsr:package@version/path
+  return `jsr:tsera@${tag}/cli/main.ts`;
 }
 
 /**

@@ -29,8 +29,6 @@ if (!databaseUrl) {
  *
  * This pool manages database connections efficiently and handles
  * automatic reconnection on failure.
- *
- * NOTE: Uncomment after installing dependencies (deno add npm:drizzle-orm npm:pg)
  */
 // export const pool = new Pool({
 //   connectionString: databaseUrl,
@@ -45,8 +43,6 @@ if (!databaseUrl) {
  * Use this instance to perform database operations with type safety
  * and automatic query building.
  *
- * NOTE: Uncomment after installing dependencies (deno add npm:drizzle-orm npm:pg)
- *
  * @example
  * ```ts
  * import { db } from "@/app/db/connect.ts";
@@ -59,8 +55,6 @@ if (!databaseUrl) {
 
 /**
  * Test database connection.
- *
- * NOTE: Uncomment after installing dependencies (deno add npm:drizzle-orm npm:pg)
  *
  * @returns Promise that resolves to true if connection is successful
  * @throws Error if connection fails
@@ -77,8 +71,6 @@ if (!databaseUrl) {
 
 /**
  * Close database connection pool.
- *
- * NOTE: Uncomment after installing dependencies (deno add npm:drizzle-orm npm:pg)
  *
  * Call this when shutting down the application to ensure
  * all connections are properly closed.

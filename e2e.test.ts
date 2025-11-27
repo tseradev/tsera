@@ -150,7 +150,7 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     assert(await exists(schemaPath), "Schema not generated");
     assert(await exists(docPath), "Documentation not generated");
 
-    const firstDev = await runCli(["--json", "dev", "--no-watch"], { cwd: projectDir });
+    const firstDev = await runCli(["--json", "doctor", "--quick"], { cwd: projectDir });
     if (!firstDev.success) {
       throw new Error(`Dev command failed: ${firstDev.stderr}`);
     }
