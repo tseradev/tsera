@@ -131,4 +131,3 @@ export async function updateDeployTargets(
   // Save file
   await formatAndSave(sourceFile, configPath);
 }
-

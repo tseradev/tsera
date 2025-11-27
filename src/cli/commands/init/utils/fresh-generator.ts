@@ -69,15 +69,17 @@ export async function generateFreshProject(
     let freshDenoConfig: Record<string, unknown> | null = null;
 
     // Use walk with skip patterns to avoid node_modules and other problematic directories
-    for await (const entry of walk(tempDir, {
-      includeDirs: false,
-      skip: [
-        /node_modules/,
-        /\.deno/,
-        /_fresh/,
-        /\.git/,
-      ],
-    })) {
+    for await (
+      const entry of walk(tempDir, {
+        includeDirs: false,
+        skip: [
+          /node_modules/,
+          /\.deno/,
+          /_fresh/,
+          /\.git/,
+        ],
+      })
+    ) {
       const relativePath = relative(tempDir, entry.path);
 
       // Skip files that shouldn't be copied
@@ -421,4 +423,3 @@ export default defineConfig({
 });
 `;
 }
-

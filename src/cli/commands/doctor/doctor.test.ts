@@ -62,7 +62,12 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
     });
 
     try {
-      await doctor({ cwd: projectDir, fix: false, quick: false, global: { json: false, strict: false } });
+      await doctor({
+        cwd: projectDir,
+        fix: false,
+        quick: false,
+        global: { json: false, strict: false },
+      });
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("exit:")) {
         throw error;
@@ -112,7 +117,12 @@ Deno.test("doctor --quick exits with code 0 even when issues found", async () =>
     });
 
     try {
-      await doctor({ cwd: projectDir, fix: false, quick: true, global: { json: false, strict: false } });
+      await doctor({
+        cwd: projectDir,
+        fix: false,
+        quick: true,
+        global: { json: false, strict: false },
+      });
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("exit:")) {
         throw error;
@@ -159,7 +169,12 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       },
     });
 
-    await doctor({ cwd: projectDir, fix: true, quick: false, global: { json: false, strict: false } });
+    await doctor({
+      cwd: projectDir,
+      fix: true,
+      quick: false,
+      global: { json: false, strict: false },
+    });
 
     const collector = createExitCollector();
     const check = createDefaultDoctorHandler({
@@ -168,7 +183,12 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       exit: collector.exit,
     });
 
-    await check({ cwd: projectDir, fix: false, quick: false, global: { json: false, strict: false } });
+    await check({
+      cwd: projectDir,
+      fix: false,
+      quick: false,
+      global: { json: false, strict: false },
+    });
     assertEquals(collector.codes.length, 0);
   } finally {
     await Deno.remove(tempDir, { recursive: true });

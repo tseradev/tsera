@@ -189,10 +189,18 @@ export function createDoctorCommand(
   handler: DoctorCommandHandler = createDefaultDoctorHandler(),
 ) {
   const command = new Command()
-    .description("Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes. Use --quick for fast validation (shows only changes, exits with code 0). Default mode shows all artifacts and exits with code 1-2 if issues found.")
+    .description(
+      "Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes.",
+    )
     .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
-    .option("--quick", "Quick mode: show only changes, exit with code 0. Use for validation in CI or before applying.", { default: false })
-    .option("--fix", "Automatically apply safe corrections to fix detected issues.", { default: false })
+    .option(
+      "--quick",
+      "Quick mode: show only changes. Use for validation in CI or before applying.",
+      { default: false },
+    )
+    .option("--fix", "Automatically apply safe corrections to fix detected issues.", {
+      default: false,
+    })
     .action(async (options: DoctorActionOptions) => {
       const { json = false, cwd = ".", fix = false, quick = false } = options;
       await handler({
@@ -210,7 +218,8 @@ export function createDoctorCommand(
       console.log(
         renderCommandHelp({
           commandName: "doctor",
-          description: "Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes. Default mode shows all artifacts (changed and unchanged) and exits with code 1-2 if issues found. Use --quick for fast validation (shows only changes, exits with code 0).",
+          description:
+            "Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes.",
           options: [
             {
               label: "--cwd <path>",
@@ -218,7 +227,8 @@ export function createDoctorCommand(
             },
             {
               label: "--quick",
-              description: "Quick mode: show only changes, exit with code 0. Use for validation in CI or before applying.",
+              description:
+                "Quick mode: show only changes. Use for validation in CI or before applying.",
             },
             {
               label: "--fix",

@@ -19,12 +19,15 @@
 
 - Implémente **5 commandes principales**: `init`, `dev`, `doctor`, `deploy`, `update` (Cliffy).
 - `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et compose
-  le projet à partir de `templates/base` + modules sélectionnés. Propose la configuration CD à la fin.
+  le projet à partir de `templates/base` + modules sélectionnés. Propose la configuration CD à la
+  fin.
 - `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI, migrations Drizzle, docs, tests smoke,
   `.tsera/graph.json`, `.tsera/manifest.json`.
 - `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
-- `deploy init` configure interactivement les providers de déploiement (Docker, Cloudflare, Deno Deploy, Vercel, GitHub).
-- `deploy sync` synchronise les workflows CD depuis `config/cd/` vers `.github/workflows/` avec protection par hash.
+- `deploy init` configure interactivement les providers de déploiement (Docker, Cloudflare, Deno
+  Deploy, Vercel, GitHub).
+- `deploy sync` synchronise les workflows CD depuis `config/cd/` vers `.github/workflows/` avec
+  protection par hash.
 - **Dépendances autorisées** seulement: Deno std, Cliffy, Zod v4 (JSR), TS‑Morph, Hono, Fresh.
 
 ---
@@ -213,7 +216,8 @@
   diff).
 - **Gestion de l'Atomicité** :
   - Toute écriture de fichier généré doit passer par une fonction `safeWrite(path, content)`.
-  - Si le processus crash au milieu d'une génération (ex: `dev` loop), le projet ne doit pas rester dans un état corrompu (fichiers partiels).
+  - Si le processus crash au milieu d'une génération (ex: `dev` loop), le projet ne doit pas rester
+    dans un état corrompu (fichiers partiels).
   - Utiliser des fichiers temporaires + rename atomique si possible.
 - Sorties **diff‑friendly** (tri des clés JSON), logs **courts et prescriptives**.
 
@@ -305,7 +309,8 @@ Compose un projet TSera à partir du template de base et des modules sélectionn
 
 #### `tsera dev [projectDir]`
 
-**Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent. Utilisé pour le développement actif avec régénération automatique.
+**Watch** (`Deno.watchFs`) sur entités/config ; calcule **plan (diff)** → **apply** idempotent.
+Utilisé pour le développement actif avec régénération automatique.
 
 **Options :**
 
@@ -314,12 +319,16 @@ Compose un projet TSera à partir du template de base et des modules sélectionn
 
 #### `tsera doctor [--cwd <path>]`
 
-Diagnostic de la cohérence du projet. Mode par défaut : affiche **tous les artefacts** (modifiés et non modifiés), exit code 1-2 si problèmes détectés. Mode `--quick` : affiche uniquement les changements, exit code 0. Utilisé pour diagnostic complet, validation rapide en CI, et corrections automatisées.
+Diagnostic de la cohérence du projet. Mode par défaut : affiche **tous les artefacts** (modifiés et
+non modifiés), exit code 1-2 si problèmes détectés. Mode `--quick` : affiche uniquement les
+changements, exit code 0. Utilisé pour diagnostic complet, validation rapide en CI, et corrections
+automatisées.
 
 **Options :**
 
 - `--cwd <path>` : Répertoire du projet à diagnostiquer (défaut: `.`)
-- `--quick` : Mode rapide : affiche uniquement les changements, exit code 0. Utilisé pour validation rapide en CI ou avant application.
+- `--quick` : Mode rapide : affiche uniquement les changements, exit code 0. Utilisé pour validation
+  rapide en CI ou avant application.
 - `--fix` : Applique automatiquement les corrections sûres (régénère les artefacts)
 
 #### `tsera update`
@@ -445,7 +454,8 @@ export interface TseraConfig {
 
 ## 9) CI (GitHub Actions)
 
-Le module `ci` génère **6 workflows GitHub Actions** directement dans `.github/workflows/` lors de `tsera init` :
+Le module `ci` génère **6 workflows GitHub Actions** directement dans `.github/workflows/` lors de
+`tsera init` :
 
 - `ci-lint.yml` : Vérification du format et du lint TypeScript/Deno
 - `ci-test.yml` : Exécution des tests
@@ -454,7 +464,10 @@ Le module `ci` génère **6 workflows GitHub Actions** directement dans `.github
 - `ci-coherence.yml` : Vérification de la cohérence continue TSera
 - `ci-openapi.yml` : Validation du fichier OpenAPI généré
 
-**Important** : Ces workflows sont des **templates de départ** générés une seule fois lors de l'init. TSera ne les régénère pas ni ne les synchronise automatiquement. Ils sont librement modifiables par l'utilisateur après génération. Contrairement au CD (géré par `tsera deploy sync`), la CI est un **bootstrap initial** sans mécanisme de synchronisation.
+**Important** : Ces workflows sont des **templates de départ** générés une seule fois lors de
+l'init. TSera ne les régénère pas ni ne les synchronise automatiquement. Ils sont librement
+modifiables par l'utilisateur après génération. Contrairement au CD (géré par `tsera deploy sync`),
+la CI est un **bootstrap initial** sans mécanisme de synchronisation.
 
 ---
 

@@ -54,7 +54,7 @@ on:
     const meta = await readWorkflowsMeta(testDir);
     assertExists(meta[".github/workflows/cd-docker-staging.yml"]);
   } finally {
-    await Deno.remove(testDir, { recursive: true }).catch(() => { });
+    await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
 });
 
@@ -97,9 +97,13 @@ on:
     await ensureDir(tseraDir);
     await Deno.writeTextFile(
       join(tseraDir, "workflows-meta.json"),
-      JSON.stringify({
-        ".github/workflows/cd-docker-staging.yml": "sha256-test",
-      }, null, 2),
+      JSON.stringify(
+        {
+          ".github/workflows/cd-docker-staging.yml": "sha256-test",
+        },
+        null,
+        2,
+      ),
     );
 
     // Create the workflow file
@@ -130,7 +134,6 @@ on:
     const meta = await readWorkflowsMeta(testDir);
     assertEquals(meta[".github/workflows/cd-docker-staging.yml"], undefined);
   } finally {
-    await Deno.remove(testDir, { recursive: true }).catch(() => { });
+    await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
 });
-

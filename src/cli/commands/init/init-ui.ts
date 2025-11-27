@@ -273,7 +273,9 @@ export class InitConsole extends BaseConsole {
     const prompt = brightMagenta("$");
     this.write(`    ${prompt} ${brightMagenta(`cd ${this.#projectLabel}`)}`);
     this.write(
-      `    ${prompt} ${brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')}`,
+      `    ${prompt} ${
+        brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
+      }`,
     );
     this.write(`    ${prompt} ${brightMagenta("tsera dev")}`);
     this.write("");

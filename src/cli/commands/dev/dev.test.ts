@@ -71,7 +71,6 @@ Deno.test("dev command handles all flags together", async () => {
   assertEquals(received.apply, true);
 });
 
-
 Deno.test("dev command shows help", () => {
   const command = createDevCommand(TEST_METADATA, () => {});
   const captured: string[] = [];

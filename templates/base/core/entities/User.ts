@@ -88,7 +88,6 @@ export const User = defineEntity({
       },
     },
   },
-
   // actions: (a) => ({
   //   create: a.create(),
   //   update: a.update(),

@@ -252,22 +252,24 @@ export class DevConsole extends BaseConsole {
       if (affectedSteps.length > 0) {
         this.write("");
         this.write(
-          `🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
+          `🔍 ${bold("Change detected")} ${dim("│")} ${
+            yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
           }`,
         );
         for (const step of affectedSteps) {
           const symbol = step.kind === "create"
             ? green("✚")
             : step.kind === "update"
-              ? yellow("↻")
-              : red("✖");
+            ? yellow("↻")
+            : red("✖");
           const action = step.kind === "create"
             ? gray("create")
             : step.kind === "update"
-              ? gray("update")
-              : gray("delete");
+            ? gray("update")
+            : gray("delete");
           this.writeMiddle(
-            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)
+            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${
+              gray(step.node.id)
             }`,
           );
         }
@@ -371,7 +373,9 @@ export class DevConsole extends BaseConsole {
     this.#spinner.stop();
     this.write("");
     this.write(
-      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${gray("Skipping coherence check until modules are fixed")}`,
+      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${
+        gray("Skipping coherence check until modules are fixed")
+      }`,
     );
     // Don't add extra blank line - let the next message decide spacing
   }
@@ -406,8 +410,8 @@ export class DevConsole extends BaseConsole {
         const statusText = info.status === "error"
           ? red("Error")
           : info.status === "starting"
-            ? yellow("Starting")
-            : gray(info.status);
+          ? yellow("Starting")
+          : gray(info.status);
         this.writeMiddle(`${cyan(label)} ${dim("│")} ${statusText}`);
       }
     } else {
@@ -424,19 +428,22 @@ export class DevConsole extends BaseConsole {
    * @param modules - Map of module names to their status and URLs
    * @param showHeader - Whether to show the "Services" header (default: true)
    */
-  modulesStatus(modules: Map<string, { status: string; url?: string }>, showHeader: boolean = true): void {
+  modulesStatus(
+    modules: Map<string, { status: string; url?: string }>,
+    showHeader: boolean = true,
+  ): void {
     if (modules.size === 0) return;
 
     // Only show summary if at least one module has a meaningful status (not "stopped")
     const hasActiveStatus = Array.from(modules.values()).some(
-      (info) => info.status !== "stopped"
+      (info) => info.status !== "stopped",
     );
     if (!hasActiveStatus) return;
 
     // Only show summary if at least one module is ready (not just errors)
     // This prevents showing the summary when all modules are failing
     const hasReadyModule = Array.from(modules.values()).some(
-      (info) => info.status === "ready"
+      (info) => info.status === "ready",
     );
     if (!hasReadyModule) return; // Don't show summary if no module is ready
 
@@ -450,18 +457,18 @@ export class DevConsole extends BaseConsole {
       const statusIcon = info.status === "ready"
         ? green("✓")
         : info.status === "error"
-          ? red("✗")
-          : info.status === "starting"
-            ? yellow("◆")
-            : gray("○");
+        ? red("✗")
+        : info.status === "starting"
+        ? yellow("◆")
+        : gray("○");
 
       const statusText = info.status === "ready"
         ? green("Ready")
         : info.status === "error"
-          ? red("Error")
-          : info.status === "starting"
-            ? yellow("Starting")
-            : gray("Stopped");
+        ? red("Error")
+        : info.status === "starting"
+        ? yellow("Starting")
+        : gray("Stopped");
 
       if (info.url) {
         const urlInfo = this.formatUrlInfo(info.url);

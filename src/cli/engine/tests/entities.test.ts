@@ -62,7 +62,7 @@ Deno.test("discoverEntities loads the paths defined in configuration", async () 
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Example",',
-        '  fields: { id: { validator: z.string() } },',
+        "  fields: { id: { validator: z.string() } },",
         "});",
       ].join("\n"),
     );
@@ -96,7 +96,7 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "User",',
-        '  fields: { id: { validator: z.string() } },',
+        "  fields: { id: { validator: z.string() } },",
         "});",
       ].join("\n"),
     );
@@ -108,7 +108,7 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Order",',
-        '  fields: { id: { validator: z.string() } },',
+        "  fields: { id: { validator: z.string() } },",
         "});",
       ].join("\n"),
     );

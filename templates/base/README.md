@@ -35,12 +35,14 @@ deno task lint
 ```
 
 **TSera Dev automatically:**
+
 - Detects and starts active modules (Backend API, Fresh frontend)
 - Watches for file changes and hot-reloads your code
 - Regenerates artifacts when entities change
 - Restarts modules when configuration changes
 
 **Manual module commands (if needed):**
+
 ```bash
 # Start backend only
 deno task dev

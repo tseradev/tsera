@@ -68,4 +68,3 @@ export async function removeWorkflowFromMeta(
   delete meta[workflowPath];
   await writeWorkflowsMeta(projectDir, meta);
 }
-

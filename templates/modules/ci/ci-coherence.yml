@@ -45,4 +45,3 @@ jobs:
           # fi
           # echo "✅ Project is coherent"
           echo "⚠️  TODO: Verify git status is clean after 'tsera doctor --fix'"
-

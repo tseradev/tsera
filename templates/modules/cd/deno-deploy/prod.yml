@@ -26,4 +26,3 @@ jobs:
           project: ${{ inputs.project }}
           entrypoint: ${{ inputs.entrypoint }}
           token: ${{ secrets.DENO_DEPLOY_TOKEN }}
-

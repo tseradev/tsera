@@ -43,4 +43,3 @@ export async function computeFileHash(filePath: string): Promise<string> {
   const content = await Deno.readTextFile(filePath);
   return await computeWorkflowHash(content);
 }
-

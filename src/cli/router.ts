@@ -5,10 +5,7 @@ import { createInitCommand, type InitCommandHandler } from "./commands/init/init
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
 import { mcpCommand } from "./commands/mcp/mcp.ts";
 import { createDeployCommand } from "./commands/deploy/deploy.ts";
-import {
-  applyModernHelp,
-  type ModernHelpCommand,
-} from "./commands/help/help.ts";
+import { applyModernHelp, type ModernHelpCommand } from "./commands/help/help.ts";
 import type { CliMetadata } from "./main.ts";
 
 /** A subcommand instance with global options applied. */
@@ -74,8 +71,12 @@ export interface RouterHandlers {
   dev?: DevCommandHandler;
   doctor?: DoctorCommandHandler;
   deploy?: {
-    init?: (context: import("./commands/deploy/deploy-init.ts").DeployInitContext) => Promise<void> | void;
-    sync?: (context: import("./commands/deploy/deploy-sync.ts").DeploySyncContext) => Promise<void> | void;
+    init?: (
+      context: import("./commands/deploy/deploy-init.ts").DeployInitContext,
+    ) => Promise<void> | void;
+    sync?: (
+      context: import("./commands/deploy/deploy-sync.ts").DeploySyncContext,
+    ) => Promise<void> | void;
   };
   update?: UpdateCommandHandler;
 }

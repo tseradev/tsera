@@ -113,13 +113,16 @@ tsera deploy sync --force
 ```
 
 **Supported providers:**
+
 - **Docker**: Build and push Docker images, deploy to container registries
 - **Cloudflare**: Deploy to Cloudflare Pages or Workers
 - **Deno Deploy**: Deploy to Deno Deploy platform
 - **Vercel**: Deploy to Vercel (preview and production)
 - **GitHub**: Deploy to GitHub Pages or create GitHub Releases
 
-Workflows are defined in `config/cd/<provider>/` and automatically synchronized to `.github/workflows/` with hash-based protection to prevent accidental overwrites of manual modifications.
+Workflows are defined in `config/cd/<provider>/` and automatically synchronized to
+`.github/workflows/` with hash-based protection to prevent accidental overwrites of manual
+modifications.
 
 ### Modular Architecture
 
@@ -163,7 +166,9 @@ When `tsera init` completes you will find:
 - **Fresh module** (if enabled): `web/` directory with routes, islands, and static assets.
 - **Docker module** (if enabled): `docker-compose.yml` and `Dockerfile` for containerized
   development.
-- **CI module** (if enabled): `.github/workflows/` with 6 CI workflows (`ci-lint.yml`, `ci-test.yml`, `ci-build.yml`, `ci-codegen.yml`, `ci-coherence.yml`, `ci-openapi.yml`). These are templates generated once at init and can be freely modified (not synchronized by TSera).
+- **CI module** (if enabled): `.github/workflows/` with 6 CI workflows (`ci-lint.yml`,
+  `ci-test.yml`, `ci-build.yml`, `ci-codegen.yml`, `ci-coherence.yml`, `ci-openapi.yml`). These are
+  templates generated once at init and can be freely modified (not synchronized by TSera).
 - **Secrets module** (if enabled): `env.config.ts` for type-safe environment variable management.
 
 ### Type-Safe Secrets Management
@@ -283,18 +288,21 @@ The cycle can run manually (`plan/apply`) or automatically through `tsera dev`.
 
 ## CLI commands at a glance
 
-| Command             | Purpose                                                                                                                     |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `tsera init <name>` | Scaffold a project from `base` template + selected modules, generate `.tsera` state, and prepare a ready-to-commit project. |
-| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change. |
+| Command             | Purpose                                                                                                                                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsera init <name>` | Scaffold a project from `base` template + selected modules, generate `.tsera` state, and prepare a ready-to-commit project.                                                                           |
+| `tsera dev`         | Run the continuous coherence loop (watch → plan → apply) and regenerate artifacts on change.                                                                                                          |
 | `tsera doctor`      | Diagnose project coherence. Default mode shows all artifacts (changed and unchanged), exits with code 1-2 if issues found. Use `--quick` for fast validation (shows only changes, exits with code 0). |
-| `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                                          |
+| `tsera update`      | Download or compile the latest CLI release/binary and refresh recommended tooling.                                                                                                                    |
 
 Key options to remember:
 
 - `tsera init` — `--no-install` to skip dependency installs, `--json` for machine-readable progress.
-- `tsera dev` — `--json` for NDJSON logs. Use for active development with watch mode and module management.
-- `tsera doctor` — `--quick` for fast validation (shows only changes, exits with code 0). `--fix` for safe remediation. `--strict` to gate CI. `--json` for diagnostics. Default mode shows all artifacts and exits with code 1-2 if issues found.
+- `tsera dev` — `--json` for NDJSON logs. Use for active development with watch mode and module
+  management.
+- `tsera doctor` — `--quick` for fast validation (shows only changes, exits with code 0). `--fix`
+  for safe remediation. `--strict` to gate CI. `--json` for diagnostics. Default mode shows all
+  artifacts and exits with code 1-2 if issues found.
 - `tsera update` — `--channel` (`stable`/`beta`/`canary`), `--binary` to force compiled releases,
   `--json` to stream progress.
 

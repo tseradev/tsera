@@ -81,4 +81,3 @@ export async function detectActiveModules(projectDir: string): Promise<ActiveMod
 export function getModuleName(module: "backend" | "frontend"): string {
   return module.charAt(0).toUpperCase() + module.slice(1);
 }
-

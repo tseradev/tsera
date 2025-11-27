@@ -1,12 +1,8 @@
 import { join } from "../../../../shared/path.ts";
 import type { DeployProvider } from "../../../definitions.ts";
-import { pathExists, safeWrite, removeFileIfExists } from "../../../utils/fsx.ts";
+import { pathExists, removeFileIfExists, safeWrite } from "../../../utils/fsx.ts";
 import { computeFileHash, computeWorkflowHash } from "./workflow-hash.ts";
-import {
-  readWorkflowsMeta,
-  removeWorkflowFromMeta,
-  updateWorkflowHash,
-} from "./workflow-meta.ts";
+import { readWorkflowsMeta, removeWorkflowFromMeta, updateWorkflowHash } from "./workflow-meta.ts";
 
 /**
  * Options for synchronizing a workflow.
@@ -174,4 +170,3 @@ export async function computeWorkflowsToGenerate(
 
   return workflows;
 }
-

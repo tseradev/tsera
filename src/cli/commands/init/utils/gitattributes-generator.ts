@@ -43,4 +43,3 @@ config/secrets/.env.* filter=git-crypt diff=git-crypt
   await Deno.writeTextFile(gitattributesPath, gitattributesContent);
   options.result.copiedFiles.push(".gitattributes");
 }
-

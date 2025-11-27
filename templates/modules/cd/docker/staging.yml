@@ -43,4 +43,3 @@ jobs:
       - name: Deploy to staging
         run: |
           echo "Deploying ${{ inputs.registry }}/${{ github.repository }}:${{ inputs.image_tag }} to staging environment"
-

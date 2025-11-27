@@ -1,5 +1,5 @@
 import { assertEquals } from "std/assert";
-import { computeWorkflowHash, computeFileHash } from "./workflow-hash.ts";
+import { computeFileHash, computeWorkflowHash } from "./workflow-hash.ts";
 import { join } from "../../../../shared/path.ts";
 
 Deno.test("workflow-hash: computes consistent hash for same content", async () => {
@@ -41,4 +41,3 @@ Deno.test("workflow-hash: computes hash from file", async () => {
     await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
 });
-

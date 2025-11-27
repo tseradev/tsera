@@ -6,7 +6,7 @@ import type { DeploySyncContext } from "./deploy-sync.ts";
 Deno.test("deploy command shows help when called without subcommand", () => {
   let helpShown = false;
   const originalConsoleLog = console.log;
-  
+
   console.log = () => {
     helpShown = true;
   };
@@ -82,4 +82,3 @@ Deno.test("deploy command handlers receive context with json option", async () =
   assertEquals(syncReceived?.global.json, false);
   assertEquals(syncReceived?.force, false);
 });
-

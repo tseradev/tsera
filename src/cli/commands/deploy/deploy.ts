@@ -1,8 +1,8 @@
 import { resolve } from "../../../shared/path.ts";
 import { Command } from "cliffy/command";
 import type { GlobalCLIOptions } from "../../router.ts";
-import { handleDeployInit, type DeployInitContext } from "./deploy-init.ts";
-import { handleDeploySync, type DeploySyncContext } from "./deploy-sync.ts";
+import { type DeployInitContext, handleDeployInit } from "./deploy-init.ts";
+import { type DeploySyncContext, handleDeploySync } from "./deploy-sync.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /**
@@ -128,4 +128,3 @@ export function createDeployCommand(handlers: {
 
   return root;
 }
-

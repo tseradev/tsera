@@ -301,7 +301,9 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         // Check for module errors before running the cycle
         if (hasModuleErrors()) {
           if (context.global.json) {
-            logger.event("modules:errors", { message: "Module errors detected, skipping coherence check" });
+            logger.event("modules:errors", {
+              message: "Module errors detected, skipping coherence check",
+            });
           } else if (uiConsole) {
             uiConsole.moduleErrorsWarning();
             // Show that we're checking if all modules have failed
@@ -348,12 +350,10 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         if (status === "ready") {
           allFailed = false;
           return false; // Early return if any module is ready
-        }
-        // If status is "error", mark that we have at least one error
+        } // If status is "error", mark that we have at least one error
         else if (status === "error") {
           hasError = true;
-        }
-        // If status is "starting", we don't know yet
+        } // If status is "starting", we don't know yet
         else if (status === "starting") {
           allFailed = false; // Can't say all failed if one is still starting
         }
@@ -366,12 +366,10 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         if (status === "ready") {
           allFailed = false;
           return false; // Early return if any module is ready
-        }
-        // If status is "error", mark that we have at least one error
+        } // If status is "error", mark that we have at least one error
         else if (status === "error") {
           hasError = true;
-        }
-        // If status is "starting", we don't know yet
+        } // If status is "starting", we don't know yet
         else if (status === "starting") {
           allFailed = false; // Can't say all failed if one is still starting
         }
@@ -411,9 +409,11 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
       if (isLenientCheck) {
         // Check if we have at least one error and no ready modules
-        const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+        const hasErrorModule =
+          (activeModules.backend && processManager.getStatus("backend") === "error") ||
           (activeModules.frontend && processManager.getStatus("frontend") === "error");
-        const hasReadyModule = (activeModules.backend && processManager.getStatus("backend") === "ready") ||
+        const hasReadyModule =
+          (activeModules.backend && processManager.getStatus("backend") === "ready") ||
           (activeModules.frontend && processManager.getStatus("frontend") === "ready");
 
         // If we have errors, no ready modules, and all modules that have a definitive status are in error
@@ -554,7 +554,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         checks++;
 
         // Check if at least one module is ready
-        hasReadyModule = (activeModules.backend && processManager.getStatus("backend") === "ready") ||
+        hasReadyModule =
+          (activeModules.backend && processManager.getStatus("backend") === "ready") ||
           (activeModules.frontend && processManager.getStatus("frontend") === "ready");
 
         if (hasReadyModule) {
@@ -565,11 +566,15 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         }
 
         // Check if we have at least one module in error
-        const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+        const hasErrorModule =
+          (activeModules.backend && processManager.getStatus("backend") === "error") ||
           (activeModules.frontend && processManager.getStatus("frontend") === "error");
 
         // Show warning when first error is detected (after minimum wait time)
-        if (checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule && !errorWarningShown) {
+        if (
+          checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule &&
+          !errorWarningShown
+        ) {
           if (uiConsole && !context.global.json) {
             uiConsole.moduleErrorsWarning();
             uiConsole.checkingModulesStatus();
@@ -593,7 +598,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         // If all modules have definitive status, check if all failed
         if (allDefinitive) {
           // Show warning if we have errors but haven't shown it yet
-          const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+          const hasErrorModule =
+            (activeModules.backend && processManager.getStatus("backend") === "error") ||
             (activeModules.frontend && processManager.getStatus("frontend") === "error");
 
           if (hasErrorModule && !errorWarningShown) {
@@ -619,7 +625,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       // If we didn't find a ready module, check one more time if all failed
       if (!hasReadyModule) {
         // Check if we have errors but haven't shown warning yet
-        const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+        const hasErrorModule =
+          (activeModules.backend && processManager.getStatus("backend") === "error") ||
           (activeModules.frontend && processManager.getStatus("frontend") === "error");
 
         if (hasErrorModule && !errorWarningShown) {
@@ -647,7 +654,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       }, 2000) as unknown as number; // Check every 2 seconds
 
       // Otherwise, wait indefinitely for file changes
-      await new Promise<void>(() => { });
+      await new Promise<void>(() => {});
     } finally {
       if (periodicCheckInterval !== null) {
         clearInterval(periodicCheckInterval);
@@ -702,7 +709,8 @@ export function createDevCommand(
       console.log(
         renderCommandHelp({
           commandName: "dev",
-          description: "Watch entities, plan changes, and apply generated artifacts in-place. Use for active development with automatic regeneration.",
+          description:
+            "Watch entities, plan changes, and apply generated artifacts in-place. Use for active development with automatic regeneration.",
           usage: "[projectDir]",
           options: [
             {

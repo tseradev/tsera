@@ -91,7 +91,8 @@ export class UpdateConsole extends BaseConsole {
     const method = this.#binary ? "binary" : "deno install";
     const channelLabel = this.#channel !== "stable" ? ` (${this.#channel})` : "";
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${dim("│")
+      `${magenta("◆")} ${bold("Update")} ${dim("│")} ${cyan(`${method}${channelLabel}`)} ${
+        dim("│")
       } ${gray(`current: ${this.#currentVersion}`)}`,
     );
   }
@@ -123,7 +124,8 @@ export class UpdateConsole extends BaseConsole {
    */
   updateComplete(): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${gray("TSera CLI updated successfully")
+      `${green("✓")} ${bold("Update complete")} ${dim("│")} ${
+        gray("TSera CLI updated successfully")
       }`,
     );
   }
@@ -163,14 +165,19 @@ export class UpdateConsole extends BaseConsole {
    * @param message - The error message
    * @param errorType - Type of error for context-specific help
    */
-  updateError(message: string, errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" = "unknown"): void {
+  updateError(
+    message: string,
+    errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" =
+      "unknown",
+  ): void {
     this.#spinner.fail(`${bold("Update failed")} ${dim("│")} ${gray(message)}`);
 
     // Provide context-specific help message based on error type
     let helpMessage: string;
     switch (errorType) {
       case "package-not-found":
-        helpMessage = "Either the specified version is incorrect, or the TSera package is not yet published on JSR.";
+        helpMessage =
+          "Either the specified version is incorrect, or the TSera package is not yet published on JSR.";
         break;
       case "permission":
         helpMessage = "You may need administrator/sudo privileges to install globally.";

@@ -42,4 +42,3 @@ jobs:
         run: |
           echo "⚠️  TODO: Add full OpenAPI schema validation"
           # Example: npx @apidevtools/swagger-cli validate docs/openapi/OpenAPI.json
-

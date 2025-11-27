@@ -5,4 +5,3 @@
 
 // Export all entities
 export * from "./entities/User.ts";
-

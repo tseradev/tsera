@@ -16,7 +16,7 @@ import type { DbConfig } from "../../../definitions.ts";
 import { generateEnvFiles } from "./env-generator.ts";
 import { generateFreshProject } from "./fresh-generator.ts";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
-import { validateModuleDependencies, getAvailableModules } from "./module-definitions.ts";
+import { getAvailableModules, validateModuleDependencies } from "./module-definitions.ts";
 import { copyDirectory } from "./directory-copier.ts";
 import { mergeConfigFiles } from "./config-merger.ts";
 import type { DenoConfig } from "./config-merger.ts";

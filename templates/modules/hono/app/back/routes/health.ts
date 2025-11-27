@@ -13,4 +13,3 @@ export default function registerHealthRoutes(app: Hono): Hono {
   app.get("/health", (c: Context) => c.json({ status: "ok" }));
   return app;
 }
-

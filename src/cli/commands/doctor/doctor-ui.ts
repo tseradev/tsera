@@ -112,7 +112,8 @@ export class DoctorConsole extends BaseConsole {
       mode = `${gray("analysis mode")}`;
     }
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Doctor")} ${dim("│")} ${cyan(this.#projectLabel)} ${dim("│")
+      `${magenta("◆")} ${bold("Doctor")} ${dim("│")} ${cyan(this.#projectLabel)} ${
+        dim("│")
       } ${mode}`,
     );
   }
@@ -148,7 +149,9 @@ export class DoctorConsole extends BaseConsole {
     if (quick) {
       // In quick mode, show a simpler message
       this.#spinner.succeed(
-        `${bold("Project is coherent")} ${dim("│")} ${gray(formatCount(entities, "entity validated", "entities validated"))}`,
+        `${bold("Project is coherent")} ${dim("│")} ${
+          gray(formatCount(entities, "entity validated", "entities validated"))
+        }`,
       );
     } else {
       const label = formatCount(entities, "entity verified", "entities verified");
@@ -205,7 +208,8 @@ export class DoctorConsole extends BaseConsole {
     const progress = total > 0 ? `${this.#completed}/${total}` : `${this.#completed}`;
     const target = path ? cyan(path) : gray("(internal)");
     this.#spinner.update(
-      `${dim("→")} ${yellow("Auto-fix")} ${dim("│")} ${progress} ${dim("│")} ${label} ${dim("→")
+      `${dim("→")} ${yellow("Auto-fix")} ${dim("│")} ${progress} ${dim("│")} ${label} ${
+        dim("→")
       } ${target}`,
     );
   }
@@ -249,12 +253,10 @@ export class DoctorConsole extends BaseConsole {
     this.write("");
     this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
     this.writeMiddle(
-      `${gray("Run ")}${cyan("tsera doctor --fix")}${gray(" to correct issues automatically")
-      }`,
+      `${gray("Run ")}${cyan("tsera doctor --fix")}${gray(" to correct issues automatically")}`,
     );
     this.writeMiddle(
-      `${gray("Or ")}${cyan("tsera dev --apply")}${gray(" to force a full regeneration")
-      }`,
+      `${gray("Or ")}${cyan("tsera dev --apply")}${gray(" to force a full regeneration")}`,
     );
     this.write("");
   }

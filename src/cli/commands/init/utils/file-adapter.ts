@@ -11,8 +11,8 @@ import { join } from "../../../../shared/path.ts";
 import { exists } from "std/fs";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
 import {
-  createTSeraProject,
   createInMemorySourceFile,
+  createTSeraProject,
   VariableDeclarationKind,
 } from "../../../utils/ts-morph.ts";
 
@@ -94,8 +94,8 @@ export async function checkDependenciesInstalled(targetDir: string): Promise<boo
 
     const imports = denoConfig.imports || {};
     return (
-      Object.values(imports).some(v => typeof v === "string" && v.includes("drizzle-orm")) &&
-      Object.values(imports).some(v => typeof v === "string" && v.includes("pg"))
+      Object.values(imports).some((v) => typeof v === "string" && v.includes("drizzle-orm")) &&
+      Object.values(imports).some((v) => typeof v === "string" && v.includes("pg"))
     );
   } catch {
     return false;
@@ -120,7 +120,7 @@ export async function checkDrizzleKitInstalled(targetDir: string): Promise<boole
       };
 
       const imports = denoConfig.imports || {};
-      if (Object.values(imports).some(v => typeof v === "string" && v.includes("drizzle-kit"))) {
+      if (Object.values(imports).some((v) => typeof v === "string" && v.includes("drizzle-kit"))) {
         return true;
       }
     } catch {
@@ -138,7 +138,7 @@ export async function checkDrizzleKitInstalled(targetDir: string): Promise<boole
       };
 
       const imports = importMap.imports || {};
-      return Object.values(imports).some(v => typeof v === "string" && v.includes("drizzle-kit"));
+      return Object.values(imports).some((v) => typeof v === "string" && v.includes("drizzle-kit"));
     } catch {
       // Ignore errors
     }
@@ -175,7 +175,7 @@ export async function adaptConnectFile(content: string, targetDir: string): Prom
           if (!existing) {
             sourceFile.addImportDeclaration({
               moduleSpecifier: element.moduleSpecifier,
-              namedImports: element.namedImports.map(name => ({ name })),
+              namedImports: element.namedImports.map((name) => ({ name })),
             });
           }
           break;
@@ -222,7 +222,11 @@ export async function adaptConnectFile(content: string, targetDir: string): Prom
   } catch (error) {
     // If TS-Morph fails (e.g., syntax errors in template), return original content
     // This can happen if the template has syntax issues, but we don't want to break the init
-    console.warn(`Failed to adapt connect.ts with TS-Morph: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(
+      `Failed to adapt connect.ts with TS-Morph: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
     return content;
   }
 }
@@ -316,7 +320,11 @@ export async function adaptDrizzleConfigFile(
   } catch (error) {
     // If TS-Morph fails (e.g., syntax errors in template), return original content
     // This can happen if the template has syntax issues, but we don't want to break the init
-    console.warn(`Failed to adapt drizzle.config.ts with TS-Morph: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(
+      `Failed to adapt drizzle.config.ts with TS-Morph: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
     return content;
   }
 }
@@ -380,8 +388,11 @@ export async function adaptEntityImports(
   } catch (error) {
     // If TS-Morph fails (e.g., syntax errors in template), return original content
     // This can happen if the template has syntax issues, but we don't want to break the init
-    console.warn(`Failed to adapt entity imports with TS-Morph: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(
+      `Failed to adapt entity imports with TS-Morph: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
     return content;
   }
 }
-

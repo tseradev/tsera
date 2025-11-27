@@ -86,7 +86,9 @@ export class DeploySyncConsole extends BaseConsole {
   applyStart(count: number): void {
     const workflowLabel = count === 1 ? "workflow" : "workflows";
     this.writeMiddle(
-      `${dim("→")} ${yellow("Writing generated files")} ${dim("│")} ${gray(`${count} ${workflowLabel}`)}`,
+      `${dim("→")} ${yellow("Writing generated files")} ${dim("│")} ${
+        gray(`${count} ${workflowLabel}`)
+      }`,
     );
   }
 
@@ -201,13 +203,17 @@ export class DeploySyncConsole extends BaseConsole {
 
     if (summary.skipped > 0) {
       this.writeLast(
-        `${yellow("⚠")} ${yellow(`${summary.skipped} workflow(s) skipped`)}, ${gray("(manually modified, use --force to overwrite)")}`,
+        `${yellow("⚠")} ${yellow(`${summary.skipped} workflow(s) skipped`)}, ${
+          gray("(manually modified, use --force to overwrite)")
+        }`,
       );
     }
 
     if (summary.conflicts > 0) {
       this.writeLast(
-        `${magenta("✗")} ${magenta(`${summary.conflicts} workflow(s) have conflicts`)}, ${gray("(use --force to overwrite)")}`,
+        `${magenta("✗")} ${magenta(`${summary.conflicts} workflow(s) have conflicts`)}, ${
+          gray("(use --force to overwrite)")
+        }`,
       );
     }
   }
@@ -222,11 +228,13 @@ export class DeploySyncConsole extends BaseConsole {
   #relative(path: string): string {
     // If path is already relative (starts with . or doesn't start with / or drive letter), use it as-is
     const normalizedPath = path.replace(/\\/g, "/");
-    if (normalizedPath.startsWith(".") || (!normalizedPath.startsWith("/") && !/^[A-Za-z]:/.test(normalizedPath))) {
+    if (
+      normalizedPath.startsWith(".") ||
+      (!normalizedPath.startsWith("/") && !/^[A-Za-z]:/.test(normalizedPath))
+    ) {
       return normalizedPath;
     }
     // Otherwise, convert absolute path to relative
     return formatRelativePath(path, this.#normalizedDir);
   }
 }
-

@@ -41,7 +41,7 @@ Deno.test("buildTestArtifacts - génère un test smoke basique", async () => {
 
   const content = artifacts[0].content as string;
   assertStringIncludes(content, 'import { assertEquals } from "std/assert"');
-  assertStringIncludes(content, 'import { UserSchema');
+  assertStringIncludes(content, "import { UserSchema");
   assertStringIncludes(content, 'Deno.test("User schema valide un exemple minimal"');
   assertStringIncludes(content, "UserSchema.parse(sample)");
 });

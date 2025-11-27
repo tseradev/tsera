@@ -58,9 +58,8 @@ on:
 
     // Verify initial state
     const initialConfig = await Deno.readTextFile(configPath);
-    assertEquals(initialConfig.includes('deployTargets: []'), true);
+    assertEquals(initialConfig.includes("deployTargets: []"), true);
   } finally {
     await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
 });
-

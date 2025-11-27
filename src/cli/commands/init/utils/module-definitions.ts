@@ -103,4 +103,3 @@ export function validateModuleDependencies(enabledModules: string[]): void {
 export function getAvailableModules(): string[] {
   return Object.keys(MODULE_DEFINITIONS);
 }
-

@@ -47,4 +47,3 @@ jobs:
           body: ${{ inputs.body }}
           draft: ${{ inputs.draft == 'true' }}
           prerelease: ${{ inputs.prerelease == 'true' }}
-

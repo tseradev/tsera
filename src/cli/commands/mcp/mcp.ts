@@ -153,7 +153,9 @@ async function stopMcpServer(projectDir: string): Promise<void> {
     console.error(`${green("✓")} ${bold("MCP server stopped")} ${dim("│")} ${gray(`PID ${pid}`)}`);
     console.error("");
   } catch (error) {
-    console.error(`Failed to stop MCP server: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `Failed to stop MCP server: ${error instanceof Error ? error.message : String(error)}`,
+    );
     Deno.exit(1);
   }
 }
@@ -178,7 +180,9 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)}`,
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
+          gray(`PID ${existingPid}`)
+        }`,
       );
       console.error("");
       Deno.exit(1);
@@ -191,7 +195,9 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
   // Display startup message on stderr (stdout is reserved for JSON-RPC responses)
   console.error("");
   console.error(
-    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${gray("Server started. Waiting for JSON-RPC requests on stdin…")}`,
+    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${
+      gray("Server started. Waiting for JSON-RPC requests on stdin…")
+    }`,
   );
   console.error(`  ${dim("Project:")} ${cyan(projectDir)}`);
   console.error("");
@@ -234,7 +240,9 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)}`,
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
+          gray(`PID ${existingPid}`)
+        }`,
       );
       console.error("");
       Deno.exit(1);
@@ -257,7 +265,9 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       const psCommand = new Deno.Command("powershell", {
         args: [
           "-Command",
-          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${getPidFilePath(projectRoot)}" -Encoding ASCII`,
+          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${
+            getPidFilePath(projectRoot)
+          }" -Encoding ASCII`,
         ],
         stdout: "piped",
         stderr: "piped",
@@ -279,7 +289,9 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)}`,
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
+          gray(`PID ${pid}`)
+        }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);
       console.error(`  ${dim("Stop with:")} ${cyan("tsera mcp stop")}`);
@@ -304,7 +316,9 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)}`,
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
+          gray(`PID ${pid}`)
+        }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);
       console.error(`  ${dim("Stop with:")} ${cyan("tsera mcp stop")}`);
@@ -313,7 +327,9 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Don't wait for the process
     }
   } catch (error) {
-    console.error(`Failed to start MCP server: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `Failed to start MCP server: ${error instanceof Error ? error.message : String(error)}`,
+    );
     await removePid(projectRoot);
     Deno.exit(1);
   }

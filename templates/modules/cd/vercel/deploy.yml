@@ -34,4 +34,3 @@ jobs:
           vercel-org-id: ${{ inputs.vercel_org_id }}
           vercel-project-id: ${{ inputs.vercel_project_id }}
           vercel-args: ${{ inputs.production == 'true' && '--prod' || '' }}
-

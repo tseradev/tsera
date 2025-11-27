@@ -126,4 +126,3 @@ export async function closeConnection(): Promise<void> {
   await connection.end();
 }
 */
-

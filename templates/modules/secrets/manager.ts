@@ -61,4 +61,3 @@ await initializeSecrets(envSchema, {
 // const dbUrl = tsera.env("DATABASE_URL");
 // const port = tsera.env("PORT") as number;
 // console.log(`Running in ${tsera.currentEnvironment} mode`);
-

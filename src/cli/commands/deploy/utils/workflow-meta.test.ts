@@ -3,9 +3,9 @@ import { join } from "../../../../shared/path.ts";
 import { ensureDir } from "../../../utils/fsx.ts";
 import {
   readWorkflowsMeta,
-  writeWorkflowsMeta,
-  updateWorkflowHash,
   removeWorkflowFromMeta,
+  updateWorkflowHash,
+  writeWorkflowsMeta,
 } from "./workflow-meta.ts";
 
 Deno.test("workflow-meta: reads empty meta when file doesn't exist", async () => {
@@ -76,4 +76,3 @@ Deno.test("workflow-meta: removes workflow from meta", async () => {
     await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
 });
-

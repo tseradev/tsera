@@ -314,7 +314,7 @@ export class ProcessManager {
 
         // Try to extract URL with improved patterns
         let urlMatch = line.match(/https?:\/\/[^\s\)]+/i);
-        
+
         // If no full URL found, try to extract port and construct URL
         if (!urlMatch) {
           const portMatch = line.match(/:(\d{4,5})\b/);

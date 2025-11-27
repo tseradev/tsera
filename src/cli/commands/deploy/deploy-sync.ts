@@ -6,8 +6,8 @@ import { readDeployTargets } from "../../utils/deploy-config.ts";
 import {
   computeWorkflowsToGenerate,
   removeWorkflow,
-  syncWorkflow,
   type SyncResult,
+  syncWorkflow,
 } from "./utils/workflow-sync.ts";
 import { readWorkflowsMeta } from "./utils/workflow-meta.ts";
 import { DeploySyncConsole } from "./deploy-sync-ui.ts";
@@ -59,7 +59,10 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
 
   // 4. Group workflows by provider for better display
   // Compute workflows per provider to maintain grouping
-  const workflowsByProvider = new Map<DeployProvider, Array<{ sourcePath: string; targetPath: string }>>();
+  const workflowsByProvider = new Map<
+    DeployProvider,
+    Array<{ sourcePath: string; targetPath: string }>
+  >();
 
   for (const provider of enabledProviders) {
     const providerWorkflows = await computeWorkflowsToGenerate(
@@ -212,4 +215,3 @@ function logSyncResult(
     reason: result.reason,
   });
 }
-

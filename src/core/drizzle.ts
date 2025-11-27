@@ -146,9 +146,7 @@ function formatColumn(
   const zodWithInternal = zodSchema as unknown as ZodWithInternal;
   const def = zodWithInternal._zod.def;
   const isOptional = def.type === "optional";
-  const innerDef = def.innerType
-    ? (def.innerType as unknown as ZodWithInternal)._zod.def
-    : null;
+  const innerDef = def.innerType ? (def.innerType as unknown as ZodWithInternal)._zod.def : null;
   const isNullable = def.type === "nullable" ||
     (isOptional && innerDef?.type === "nullable");
 

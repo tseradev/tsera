@@ -10,7 +10,7 @@
 import { join } from "../../../../shared/path.ts";
 import { exists } from "std/fs";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
-import type { ComposeOptions, ComposedTemplate } from "./template-composer.ts";
+import type { ComposedTemplate, ComposeOptions } from "./template-composer.ts";
 import { MODULE_DEPENDENCIES } from "./module-definitions.ts";
 
 /**
@@ -277,4 +277,3 @@ async function mergeImportMap(
     result.mergedFiles.push("import_map.json");
   }
 }
-

@@ -62,7 +62,10 @@ Deno.test("buildDocsArtifacts - contient un tableau des propriétés publiques",
 
   // Vérifie l'en-tête du tableau
   assertStringIncludes(content, "## Public Fields");
-  assertStringIncludes(content, "| Property | Type | Optional | Nullable | Default | Description |");
+  assertStringIncludes(
+    content,
+    "| Property | Type | Optional | Nullable | Default | Description |",
+  );
 
   // Vérifie les lignes de propriétés publiques
   assertStringIncludes(content, "| name |");

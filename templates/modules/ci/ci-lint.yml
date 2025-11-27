@@ -24,4 +24,3 @@ jobs:
 
       - name: Lint
         run: deno lint
-

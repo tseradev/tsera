@@ -28,4 +28,3 @@ jobs:
           projectName: ${{ inputs.project_name }}
           directory: .
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-

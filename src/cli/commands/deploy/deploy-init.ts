@@ -45,4 +45,3 @@ export async function handleDeployInit(context: DeployInitContext): Promise<void
     force: false,
   });
 }
-

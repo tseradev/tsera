@@ -188,7 +188,12 @@ export function createDefaultUpdateHandler(
 
       // Extract the main error message from Deno output
       let errorMessage = `Update command failed (exit code ${result.code})`;
-      let errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" = "unknown";
+      let errorType:
+        | "package-not-found"
+        | "version-unsupported"
+        | "permission"
+        | "network"
+        | "unknown" = "unknown";
 
       if (detail) {
         // Try to extract a cleaner error message
@@ -203,19 +208,25 @@ export function createDefaultUpdateHandler(
         // Detect error type for better user guidance
         const lowerDetail = detail.toLowerCase();
         // Package/version errors: either package doesn't exist or version is invalid
-        if (lowerDetail.includes("version tag not supported") ||
+        if (
+          lowerDetail.includes("version tag not supported") ||
           lowerDetail.includes("invalid version") ||
           lowerDetail.includes("version not found") ||
           lowerDetail.includes("not found") ||
           lowerDetail.includes("does not exist") ||
           lowerDetail.includes("could not find") ||
-          lowerDetail.includes("package not found")) {
+          lowerDetail.includes("package not found")
+        ) {
           errorType = "package-not-found";
-        } else if (lowerDetail.includes("permission") || lowerDetail.includes("denied") ||
-          lowerDetail.includes("eacces") || lowerDetail.includes("access denied")) {
+        } else if (
+          lowerDetail.includes("permission") || lowerDetail.includes("denied") ||
+          lowerDetail.includes("eacces") || lowerDetail.includes("access denied")
+        ) {
           errorType = "permission";
-        } else if (lowerDetail.includes("network") || lowerDetail.includes("connection") ||
-          lowerDetail.includes("timeout") || lowerDetail.includes("dns")) {
+        } else if (
+          lowerDetail.includes("network") || lowerDetail.includes("connection") ||
+          lowerDetail.includes("timeout") || lowerDetail.includes("dns")
+        ) {
           errorType = "network";
         }
       }

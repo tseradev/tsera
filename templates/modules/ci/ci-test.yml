@@ -23,4 +23,3 @@ jobs:
         run: deno test -A --fail-fast
         env:
           TSERA_ENV: test
-

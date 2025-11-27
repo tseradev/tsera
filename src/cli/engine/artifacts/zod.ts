@@ -144,9 +144,7 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
   if (def.type === "default") {
     if (def.innerType) {
       const defaultValue = def.defaultValue;
-      const defaultValueStr = defaultValue !== undefined
-        ? toTsLiteral(defaultValue)
-        : "undefined";
+      const defaultValueStr = defaultValue !== undefined ? toTsLiteral(defaultValue) : "undefined";
       return `${zodSchemaToTsExpression(def.innerType)}.default(${defaultValueStr})`;
     }
     return "z.any()";

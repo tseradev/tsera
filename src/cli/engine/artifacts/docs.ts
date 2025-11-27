@@ -185,7 +185,9 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
         }
 
         const description = field.description || "—";
-        lines.push(`| ${name} | ${type} | ${optional} | ${nullable} | ${defaultValue} | ${description} |`);
+        lines.push(
+          `| ${name} | ${type} | ${optional} | ${nullable} | ${defaultValue} | ${description} |`,
+        );
       }
     }
   }
@@ -196,7 +198,13 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   );
 
   if (internalFields.length > 0) {
-    lines.push("", "## Internal Fields", "", "> These fields are not exposed in the public API.", "");
+    lines.push(
+      "",
+      "## Internal Fields",
+      "",
+      "> These fields are not exposed in the public API.",
+      "",
+    );
     lines.push(
       "| Property | Type | Description |",
       "| --- | --- | --- |",
