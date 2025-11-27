@@ -1,6 +1,7 @@
-import { resolve } from "../../../shared/path.ts";
+import { join, resolve } from "../../../shared/path.ts";
 import { createLogger } from "../../utils/log.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
+import type { DeployProvider } from "../../definitions.ts";
 import { readDeployTargets } from "../../utils/deploy-config.ts";
 import {
   computeWorkflowsToGenerate,
@@ -9,6 +10,8 @@ import {
   type SyncResult,
 } from "./utils/workflow-sync.ts";
 import { readWorkflowsMeta } from "./utils/workflow-meta.ts";
+import { DeploySyncConsole } from "./deploy-sync-ui.ts";
+import { AVAILABLE_PROVIDERS } from "./deploy-init-ui.ts";
 
 /**
  * Context for the `tsera deploy sync` command.
@@ -36,9 +39,12 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   const logger = createLogger({ json: jsonMode });
 
   const absoluteProjectDir = resolve(projectDir);
+  const human = jsonMode ? undefined : new DeploySyncConsole({ projectDir: absoluteProjectDir });
 
   if (jsonMode) {
     logger.event("deploy:sync:start", { projectDir: absoluteProjectDir, force });
+  } else {
+    human?.start();
   }
 
   // 1. Read deployTargets (array) from config/tsera.config.ts
@@ -51,11 +57,22 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   // Note: Untracked cd-*.yml files (manually created) are never removed
   const trackedWorkflows = Object.keys(meta);
 
-  // 4. Determine workflows to generate (based on enabled providers)
-  const workflowsToGenerate = await computeWorkflowsToGenerate(
-    absoluteProjectDir,
-    enabledProviders,
-  );
+  // 4. Group workflows by provider for better display
+  // Compute workflows per provider to maintain grouping
+  const workflowsByProvider = new Map<DeployProvider, Array<{ sourcePath: string; targetPath: string }>>();
+  
+  for (const provider of enabledProviders) {
+    const providerWorkflows = await computeWorkflowsToGenerate(
+      absoluteProjectDir,
+      [provider],
+    );
+    if (providerWorkflows.length > 0) {
+      workflowsByProvider.set(provider, providerWorkflows);
+    }
+  }
+  
+  // Flatten for removal check and total count
+  const workflowsToGenerate = Array.from(workflowsByProvider.values()).flat();
 
   // 5. Determine workflows to remove (disabled providers)
   // Only workflows tracked in workflows-meta.json can be removed
@@ -63,21 +80,53 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
     (wf) => !workflowsToGenerate.some((w) => w.targetPath === wf),
   );
 
-  // 6. Generate workflows for each enabled provider
+  // 7. Generate workflows grouped by provider
   const results: SyncResult[] = [];
 
-  for (const workflow of workflowsToGenerate) {
-    const result = await syncWorkflow({
-      projectDir: absoluteProjectDir,
-      sourcePath: workflow.sourcePath,
-      targetPath: workflow.targetPath,
-      force,
-    });
-    results.push(result);
-    logSyncResult(workflow.targetPath, result, jsonMode, logger);
+  if (!jsonMode && workflowsToGenerate.length > 0) {
+    human?.applyStart(workflowsToGenerate.length);
   }
 
-  // 7. Remove workflows for disabled providers
+  // Helper to get provider display name
+  const getProviderName = (provider: DeployProvider): string => {
+    const providerInfo = AVAILABLE_PROVIDERS.find((p) => p.value === provider);
+    return providerInfo?.label ?? provider;
+  };
+
+  // Process each provider group
+  for (const [provider, workflows] of workflowsByProvider.entries()) {
+    const providerName = getProviderName(provider);
+    
+    if (!jsonMode) {
+      human?.startProvider(providerName);
+    }
+
+    for (const workflow of workflows) {
+      const result = await syncWorkflow({
+        projectDir: absoluteProjectDir,
+        sourcePath: workflow.sourcePath,
+        targetPath: workflow.targetPath,
+        force,
+      });
+      results.push(result);
+
+      if (jsonMode) {
+        logSyncResult(workflow.targetPath, result, logger);
+      } else {
+        // workflow.targetPath is already relative (e.g., .github/workflows/cd-docker-prod.yml)
+        // Pass it directly - the UI will handle it correctly
+        if (result.action === "skipped") {
+          human?.trackSkipped(workflow.targetPath);
+        } else if (result.action === "conflict") {
+          human?.trackConflict(workflow.targetPath);
+        } else {
+          human?.trackWorkflow(workflow.targetPath, result);
+        }
+      }
+    }
+  }
+
+  // 8. Remove workflows for disabled providers
   // Note: Only workflows tracked in workflows-meta.json are removed
   // Untracked cd-*.yml files (manually created) are never removed
   for (const workflowPath of workflowsToRemove) {
@@ -85,11 +134,12 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
     if (jsonMode) {
       logger.event("deploy:sync:removed", { workflow: workflowPath });
     } else {
-      logger.info(`Removed ${workflowPath}`);
+      // workflowPath is already relative, pass it directly
+      human?.trackRemoved(workflowPath);
     }
   }
 
-  // 8. Display summary
+  // 9. Display summary
   const created = results.filter((r) => r.action === "created").length;
   const updated = results.filter((r) => r.action === "updated").length;
   const skipped = results.filter((r) => r.action === "skipped").length;
@@ -104,63 +154,32 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
       removed: workflowsToRemove.length,
     });
   } else {
-    if (created > 0 || updated > 0 || workflowsToRemove.length > 0) {
-      logger.info(
-        `Deploy sync complete: ${created} created, ${updated} updated, ${workflowsToRemove.length} removed`,
-      );
-    }
-    if (skipped > 0) {
-      logger.warn(`${skipped} workflow(s) skipped (manually modified, use --force to overwrite)`);
-    }
-    if (conflicts > 0) {
-      logger.error(
-        `${conflicts} workflow(s) have conflicts (manually modified, use --force to overwrite)`,
-      );
-    }
+    human?.complete({
+      created,
+      updated,
+      skipped,
+      conflicts,
+      removed: workflowsToRemove.length,
+    });
   }
 }
 
 /**
- * Logs the synchronization result of a workflow.
+ * Logs the synchronization result of a workflow (JSON mode only).
  *
  * @param workflowPath - Workflow path.
  * @param result - Synchronization result.
- * @param jsonMode - JSON mode enabled.
  * @param logger - Logger to use.
  */
 function logSyncResult(
   workflowPath: string,
   result: SyncResult,
-  jsonMode: boolean,
   logger: ReturnType<typeof createLogger>,
 ): void {
-  if (jsonMode) {
-    logger.event("deploy:sync:workflow", {
-      workflow: workflowPath,
-      action: result.action,
-      reason: result.reason,
-    });
-  } else {
-    switch (result.action) {
-      case "created":
-        logger.info(`Created ${workflowPath}`);
-        break;
-      case "updated":
-        if (result.reason?.includes("forced")) {
-          logger.warn(`Updated ${workflowPath} (--force)`);
-        } else {
-          logger.info(`Updated ${workflowPath}`);
-        }
-        break;
-      case "skipped":
-        logger.warn(`Skipped ${workflowPath} (manually created, use --force to overwrite)`);
-        break;
-      case "conflict":
-        logger.error(
-          `Conflict ${workflowPath} (manually modified, use --force to overwrite)`,
-        );
-        break;
-    }
-  }
+  logger.event("deploy:sync:workflow", {
+    workflow: workflowPath,
+    action: result.action,
+    reason: result.reason,
+  });
 }
 

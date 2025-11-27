@@ -24,7 +24,7 @@ const JSON_OPTION_DESC = "Enable machine-readable NDJSON output.";
 const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
   { label: "--json", description: JSON_OPTION_DESC },
   { label: "-h, --help", description: "Show this help message." },
-  { label: "-V, --version", description: "Display the CLI version." },
+  { label: "-v, -V, --version", description: "Display the CLI version." },
 ];
 
 const COMMAND_HELP: ModernHelpCommand[] = [
@@ -100,9 +100,15 @@ export function createRouter(
 ) {
   const root = new Command()
     .name(CLI_NAME)
-    .version(metadata.version)
     .description("TSera CLI — The next era of fullstack TypeScript starts here.")
-    .globalOption("--json", JSON_OPTION_DESC, { default: false });
+    .globalOption("--json", JSON_OPTION_DESC, { default: false })
+    .globalOption("-v, -V, --version", "Display the CLI version.", {
+      override: true,
+      action: () => {
+        console.log(`TSera CLI ${metadata.version}`);
+        Deno.exit(0);
+      },
+    });
 
   const withGlobalOpts = (cmd: SubCommand): SubCommand =>
     cmd.globalOption("--json", JSON_OPTION_DESC, { default: false });

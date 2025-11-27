@@ -30,6 +30,18 @@ import { gray, green, magenta, yellow } from "./colors.ts";
 const CLEAR_LINE = "\x1b[2K";
 
 /**
+ * ANSI escape sequence to hide the cursor.
+ * @internal
+ */
+const HIDE_CURSOR = "\x1b[?25l";
+
+/**
+ * ANSI escape sequence to show the cursor.
+ * @internal
+ */
+const SHOW_CURSOR = "\x1b[?25h";
+
+/**
  * Spinner animation frames using Braille patterns.
  * Displays a smooth rotating animation in interactive terminals.
  * @internal
@@ -166,6 +178,8 @@ export class TerminalSpinner {
   start(text: string): void {
     this.#text = text;
     if (this.#enabled) {
+      // Hide cursor during animation
+      this.#write(HIDE_CURSOR);
       this.#render(true);
       this.#timer = setInterval(() => this.#render(), 80);
     } else {
@@ -270,6 +284,8 @@ export class TerminalSpinner {
     if (this.#enabled) {
       this.#clear();
       this.#stopTimer();
+      // Show cursor again
+      this.#write(SHOW_CURSOR);
     }
     this.#staticMessage = undefined;
   }
@@ -284,6 +300,8 @@ export class TerminalSpinner {
       this.#clear();
       this.#write(`${line}\n`);
       this.#stopTimer();
+      // Show cursor again
+      this.#write(SHOW_CURSOR);
     } else {
       this.#writer(line);
     }
@@ -303,6 +321,9 @@ export class TerminalSpinner {
     this.#frame = (this.#frame + 1) % SPINNER_FRAMES.length;
     if (force) {
       this.#clear();
+    } else {
+      // Always return to start of line before writing (even if not clearing)
+      this.#write("\r");
     }
     this.#write(`${frame} ${this.#text}`);
   }

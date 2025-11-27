@@ -4,7 +4,7 @@ import type { DeployProvider } from "../../definitions.ts";
 /**
  * Available deployment providers with their descriptions.
  */
-const AVAILABLE_PROVIDERS: Array<{
+export const AVAILABLE_PROVIDERS: Array<{
   value: DeployProvider;
   label: string;
   description: string;

@@ -101,12 +101,13 @@ function defaultTemplatesRoot(): string {
  * @param targetDir - Target directory for the project.
  * @param templatesRoot - Root directory containing templates.
  * @param force - Whether to overwrite existing files.
+ * @returns Number of workflow files copied.
  */
 async function applyCiModule(
   targetDir: string,
   templatesRoot: string,
   force: boolean,
-): Promise<void> {
+): Promise<number> {
   const workflowsDir = join(targetDir, ".github", "workflows");
   await ensureDir(workflowsDir);
 
@@ -119,6 +120,8 @@ async function applyCiModule(
     "ci-coherence.yml",
     "ci-openapi.yml",
   ];
+
+  let copiedCount = 0;
 
   for (const file of workflowFiles) {
     const sourcePath = join(ciTemplatesDir, file);
@@ -141,7 +144,10 @@ async function applyCiModule(
     // Write file (create or overwrite based on force)
     const content = await Deno.readTextFile(sourcePath);
     await safeWrite(targetPath, content);
+    copiedCount++;
   }
+
+  return copiedCount;
 }
 
 /**
@@ -285,7 +291,17 @@ export function createDefaultInitHandler(
       human?.start();
     }
 
-    await ensureDirectoryReady(targetDir, context.force);
+    try {
+      await ensureDirectoryReady(targetDir, context.force);
+    } catch (error) {
+      // Stop spinner before displaying error
+      if (!jsonMode && human) {
+        human.stopSpinner();
+        // Add newline before error
+        console.log("");
+      }
+      throw error;
+    }
 
     // Determine which modules to enable
     // IMPORTANT: enabledModules must include "ci" for env-generator and other parts
@@ -322,8 +338,9 @@ export function createDefaultInitHandler(
 
     // After composeTemplate, apply CI if enabled
     // applyCiModule explicitly handles copying to .github/workflows/
+    let ciWorkflowsCount = 0;
     if (ciEnabled) {
-      await applyCiModule(targetDir, templatesRoot, context.force);
+      ciWorkflowsCount = await applyCiModule(targetDir, templatesRoot, context.force);
     }
 
     // Patch import_map.json based on environment (local dev vs production)
@@ -359,7 +376,14 @@ export function createDefaultInitHandler(
     const gitignoreExisted = await pathExists(gitignorePath);
     await writeIfMissing(gitignorePath, buildGitignore(), context.force);
     if (!jsonMode) {
-      human?.gitignoreReady(gitignorePath, context.force || !gitignoreExisted);
+      // If CI is enabled, gitignore is not the last item
+      // If CI is disabled, gitignore is the last item before artifacts
+      const gitignoreIsLast = !ciEnabled || ciWorkflowsCount === 0;
+      human?.gitignoreReady(gitignorePath, context.force || !gitignoreExisted, gitignoreIsLast);
+      if (ciEnabled && ciWorkflowsCount > 0) {
+        // CI workflows is always the last item before artifacts section
+        human?.ciWorkflowsReady(ciWorkflowsCount, true);
+      }
     }
 
     const { config } = await resolveConfig(targetDir);
@@ -412,15 +436,6 @@ export function createDefaultInitHandler(
 
     await writeEngineState(targetDir, nextState);
 
-    if (jsonMode) {
-      logger.info("Project initialized", { directory: targetDir });
-      logger.info("Tip", {
-        next: 'git init && git add -A && git commit -m "feat: boot tsera"',
-      });
-    } else {
-      human?.complete();
-    }
-
     // Copy CD templates if CI module is enabled
     if (context.modules.ci) {
       const cdTemplatesDir = join(templatesRoot, "modules", "cd");
@@ -455,8 +470,9 @@ export function createDefaultInitHandler(
       }
     }
 
-    // Propose CD configuration at the end
+    // Propose CD configuration before showing "Project ready!"
     if (!jsonMode && !context.yes) {
+      console.log("");
       const shouldConfigureCd = await Confirm.prompt({
         message: "Do you want to configure deployment targets (CD) now?",
         default: false,
@@ -473,6 +489,15 @@ export function createDefaultInitHandler(
           force: false,
         });
       }
+    }
+
+    if (jsonMode) {
+      logger.info("Project initialized", { directory: targetDir });
+      logger.info("Tip", {
+        next: 'git init && git add -A && git commit -m "feat: boot tsera"',
+      });
+    } else {
+      human?.complete();
     }
 
     if (jsonMode) {

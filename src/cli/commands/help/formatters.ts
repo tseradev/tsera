@@ -106,12 +106,14 @@ export function formatExamples(examples: string[], width: number, palette: Palet
  * @param entries - Command or option descriptors.
  * @param width - Maximum characters per line.
  * @param palette - Active color palette.
+ * @param labelWidth - Optional fixed label width. If not provided, calculated from entries.
  * @returns Array of formatted lines.
  */
 export function formatTwoColumn(
   entries: ModernHelpCommand[],
   width: number,
   palette: Palette,
+  labelWidth?: number,
 ): string[] {
   if (entries.length === 0) {
     return [];
@@ -154,15 +156,16 @@ export function formatTwoColumn(
     groupedEntries.push({ entries });
   }
 
-  const labelWidth = Math.min(
+  // Use provided labelWidth or calculate from entries
+  const computedLabelWidth = labelWidth ?? Math.min(
     entries.reduce((max, entry) => Math.max(max, entry.label.length), 0),
     38,
   );
   const indent = "    ";
   const gap = "  ";
   const bullet = palette.subtle("▸");
-  const available = Math.max(width - (indent.length + 2 + labelWidth + gap.length), 24);
-  const emptyLabel = " ".repeat(labelWidth);
+  const available = Math.max(width - (indent.length + 2 + computedLabelWidth + gap.length), 24);
+  const emptyLabel = " ".repeat(computedLabelWidth);
 
   const lines: string[] = [];
 
@@ -176,7 +179,7 @@ export function formatTwoColumn(
 
     // Format entries in this group
     for (const entry of group.entries) {
-      const paddedLabel = entry.label.padEnd(labelWidth, " ");
+      const paddedLabel = entry.label.padEnd(computedLabelWidth, " ");
       const wrapped = wrapText(entry.description, available);
 
       if (wrapped.length === 0) {
