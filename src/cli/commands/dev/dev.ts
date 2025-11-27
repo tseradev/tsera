@@ -11,7 +11,6 @@ import { watchProject } from "../../engine/watch.ts";
 import type { CliMetadata } from "../../main.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
-import { dim, gray, yellow } from "../../ui/colors.ts";
 import { DevConsole } from "./dev-ui.ts";
 import { detectActiveModules } from "./modules.ts";
 import { ProcessManager } from "./process-manager.ts";
@@ -99,10 +98,11 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       // Emit JSON events for module status changes
       if (context.global.json) {
         switch (status) {
-          case "starting":
+          case "starting": {
             logger.event("module:starting", { name });
             break;
-          case "ready":
+          }
+          case "ready": {
             logger.event("module:ready", { name, url: url || null });
             // Emit modules status summary when a module becomes ready
             const readyStatus = buildModulesStatus();
@@ -114,6 +114,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
               logger.event("modules:status", { modules: statusObj });
             }
             break;
+          }
           case "error": {
             const errors = processManager.getErrors(name);
             const lastError = errors[errors.length - 1] || "Unknown error";
@@ -128,10 +129,11 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       if (!uiConsole) return;
 
       switch (status) {
-        case "starting":
+        case "starting": {
           uiConsole.moduleStarting(name);
           break;
-        case "ready":
+        }
+        case "ready": {
           uiConsole.moduleReady(name, url);
           // Show summary when a module becomes ready
           const readyStatus = buildModulesStatus();
@@ -139,6 +141,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             uiConsole.modulesStatus(readyStatus);
           }
           break;
+        }
         case "error": {
           const errors = processManager.getErrors(name);
           const lastError = errors[errors.length - 1] || "Unknown error";
@@ -448,8 +451,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
               logger.event("modules:all-failed", { modules: statusObj });
             } else if (uiConsole) {
               uiConsole.stopSpinner();
-              // Don't show services summary again - errors were already shown individually
-              uiConsole.allModulesFailed();
+              uiConsole.allModulesFailed(modulesStatus);
             }
             await processManager.stopAll();
             Deno.exit(1);
@@ -467,8 +469,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             logger.event("modules:all-failed", { modules: statusObj });
           } else if (uiConsole) {
             uiConsole.stopSpinner();
-            // Don't show services summary again - errors were already shown individually
-            uiConsole.allModulesFailed();
+            uiConsole.allModulesFailed(modulesStatus);
           }
           await processManager.stopAll();
           Deno.exit(1);
@@ -522,105 +523,79 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     }
 
     const controller = watchProject(projectRoot, (events) => {
-        const paths = events.flatMap((event) => event.paths);
-        queue = queue
-          .then(async () => {
-            await executeCycle("watch", paths);
-            // Check if all modules failed after each cycle
-            // Pass the elapsed time since modules started
-            const elapsed = Date.now() - modulesStartTime;
-            await checkAndExitIfAllFailed(elapsed);
-          })
-          .catch(() => {
-            // Errors are already logged by executeCycle.
-          });
-        return queue;
-      }, { debounceMs: WATCH_DEBOUNCE_MS });
+      const paths = events.flatMap((event) => event.paths);
+      queue = queue
+        .then(async () => {
+          await executeCycle("watch", paths);
+          // Check if all modules failed after each cycle
+          // Pass the elapsed time since modules started
+          const elapsed = Date.now() - modulesStartTime;
+          await checkAndExitIfAllFailed(elapsed);
+        })
+        .catch(() => {
+          // Errors are already logged by executeCycle.
+        });
+      return queue;
+    }, { debounceMs: WATCH_DEBOUNCE_MS });
 
-      try {
-        await queue;
+    try {
+      await queue;
 
-        // Wait for modules to start and potentially fail
-        // Check every 200ms for up to 4 seconds (20 checks)
-        let checks = 0;
-        const maxChecks = 20; // 20 * 200ms = 4 seconds
-        let hasReadyModule = false;
-        const minChecksForErrorDetection = 5; // ~1 second
-        let errorWarningShown = false; // Track if we've shown the error warning
+      // Wait for modules to start and potentially fail
+      // Check every 200ms for up to 4 seconds (20 checks)
+      let checks = 0;
+      const maxChecks = 20; // 20 * 200ms = 4 seconds
+      let hasReadyModule = false;
+      const minChecksForErrorDetection = 5; // ~1 second
+      let errorWarningShown = false; // Track if we've shown the error warning
 
-        while (checks < maxChecks) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-          checks++;
+      while (checks < maxChecks) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        checks++;
 
-          // Check if at least one module is ready
-          hasReadyModule = (activeModules.backend && processManager.getStatus("backend") === "ready") ||
-            (activeModules.frontend && processManager.getStatus("frontend") === "ready");
+        // Check if at least one module is ready
+        hasReadyModule = (activeModules.backend && processManager.getStatus("backend") === "ready") ||
+          (activeModules.frontend && processManager.getStatus("frontend") === "ready");
 
-          if (hasReadyModule) {
-            if (uiConsole && !context.global.json) {
-              uiConsole.stopSpinner();
-            }
-            break; // At least one module is working, continue watching
+        if (hasReadyModule) {
+          if (uiConsole && !context.global.json) {
+            uiConsole.stopSpinner();
           }
+          break; // At least one module is working, continue watching
+        }
 
-          // Check if we have at least one module in error
-          const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
-            (activeModules.frontend && processManager.getStatus("frontend") === "error");
+        // Check if we have at least one module in error
+        const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+          (activeModules.frontend && processManager.getStatus("frontend") === "error");
 
-          // Show warning when first error is detected (after minimum wait time)
-          if (checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule && !errorWarningShown) {
-            if (uiConsole && !context.global.json) {
-              uiConsole.moduleErrorsWarning();
-              uiConsole.checkingModulesStatus();
-              errorWarningShown = true;
-            }
-          }
-
-          // After waiting at least 1 second, if we have errors and no ready modules,
-          // check if all active modules have failed
-          // We wait a bit to give modules time to start properly
-          if (checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule) {
-            // Use the lenient check that considers modules failed even if some are still "starting"
-            const elapsed = Date.now() - modulesStartTime;
-            await checkAndExitIfAllFailed(elapsed);
-            // If we didn't exit, continue checking
-          }
-
-          // Check if all modules have a definitive status (not starting)
-          const allDefinitive = allModulesHaveDefinitiveStatus();
-
-          // If all modules have definitive status, check if all failed
-          if (allDefinitive) {
-            // Show warning if we have errors but haven't shown it yet
-            const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
-              (activeModules.frontend && processManager.getStatus("frontend") === "error");
-            
-            if (hasErrorModule && !errorWarningShown) {
-              if (uiConsole && !context.global.json) {
-                uiConsole.moduleErrorsWarning();
-                uiConsole.checkingModulesStatus();
-                errorWarningShown = true;
-              }
-            }
-
-            if (uiConsole && !context.global.json) {
-              uiConsole.stopSpinner();
-            }
-            const elapsed = Date.now() - modulesStartTime;
-            await checkAndExitIfAllFailed(elapsed);
-            // If we didn't exit, break and continue watching
-            // (maybe some modules are stopped but not in error)
-            break;
+        // Show warning when first error is detected (after minimum wait time)
+        if (checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule && !errorWarningShown) {
+          if (uiConsole && !context.global.json) {
+            uiConsole.moduleErrorsWarning();
+            uiConsole.checkingModulesStatus();
+            errorWarningShown = true;
           }
         }
 
-        // Final check before continuing to watch
-        // If we didn't find a ready module, check one more time if all failed
-        if (!hasReadyModule) {
-          // Check if we have errors but haven't shown warning yet
+        // After waiting at least 1 second, if we have errors and no ready modules,
+        // check if all active modules have failed
+        // We wait a bit to give modules time to start properly
+        if (checks >= minChecksForErrorDetection && hasErrorModule && !hasReadyModule) {
+          // Use the lenient check that considers modules failed even if some are still "starting"
+          const elapsed = Date.now() - modulesStartTime;
+          await checkAndExitIfAllFailed(elapsed);
+          // If we didn't exit, continue checking
+        }
+
+        // Check if all modules have a definitive status (not starting)
+        const allDefinitive = allModulesHaveDefinitiveStatus();
+
+        // If all modules have definitive status, check if all failed
+        if (allDefinitive) {
+          // Show warning if we have errors but haven't shown it yet
           const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
             (activeModules.frontend && processManager.getStatus("frontend") === "error");
-          
+
           if (hasErrorModule && !errorWarningShown) {
             if (uiConsole && !context.global.json) {
               uiConsole.moduleErrorsWarning();
@@ -632,28 +607,54 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
           if (uiConsole && !context.global.json) {
             uiConsole.stopSpinner();
           }
-          // Wait a bit more to ensure all modules have had time to fail
-          await new Promise((resolve) => setTimeout(resolve, 300));
-
           const elapsed = Date.now() - modulesStartTime;
           await checkAndExitIfAllFailed(elapsed);
+          // If we didn't exit, break and continue watching
+          // (maybe some modules are stopped but not in error)
+          break;
         }
-
-        // Set up periodic check during watch mode to detect if all modules fail later
-        periodicCheckInterval = setInterval(async () => {
-          const elapsed = Date.now() - modulesStartTime;
-          await checkAndExitIfAllFailed(elapsed);
-        }, 2000) as unknown as number; // Check every 2 seconds
-
-        // Otherwise, wait indefinitely for file changes
-        await new Promise<void>(() => { });
-      } finally {
-        if (periodicCheckInterval !== null) {
-          clearInterval(periodicCheckInterval);
-        }
-        controller.close();
-        await processManager.stopAll();
       }
+
+      // Final check before continuing to watch
+      // If we didn't find a ready module, check one more time if all failed
+      if (!hasReadyModule) {
+        // Check if we have errors but haven't shown warning yet
+        const hasErrorModule = (activeModules.backend && processManager.getStatus("backend") === "error") ||
+          (activeModules.frontend && processManager.getStatus("frontend") === "error");
+
+        if (hasErrorModule && !errorWarningShown) {
+          if (uiConsole && !context.global.json) {
+            uiConsole.moduleErrorsWarning();
+            uiConsole.checkingModulesStatus();
+            errorWarningShown = true;
+          }
+        }
+
+        if (uiConsole && !context.global.json) {
+          uiConsole.stopSpinner();
+        }
+        // Wait a bit more to ensure all modules have had time to fail
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        const elapsed = Date.now() - modulesStartTime;
+        await checkAndExitIfAllFailed(elapsed);
+      }
+
+      // Set up periodic check during watch mode to detect if all modules fail later
+      periodicCheckInterval = setInterval(async () => {
+        const elapsed = Date.now() - modulesStartTime;
+        await checkAndExitIfAllFailed(elapsed);
+      }, 2000) as unknown as number; // Check every 2 seconds
+
+      // Otherwise, wait indefinitely for file changes
+      await new Promise<void>(() => { });
+    } finally {
+      if (periodicCheckInterval !== null) {
+        clearInterval(periodicCheckInterval);
+      }
+      controller.close();
+      await processManager.stopAll();
+    }
 
     // Cleanup on exit
     const cleanup = async () => {
@@ -679,7 +680,7 @@ export function createDevCommand(
   metadata: CliMetadata,
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
 ) {
-    const command = new Command()
+  const command = new Command()
     .description("Watch entities, plan changes, and apply generated artifacts in development mode.")
     .arguments("[projectDir]")
     .option("--apply", "Force apply even if the plan is empty.", { default: false })

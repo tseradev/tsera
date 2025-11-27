@@ -400,7 +400,7 @@ export class DevConsole extends BaseConsole {
     this.write("");
     if (modules && modules.size > 0) {
       // Show summary without header for cleaner display
-      this.write(`${red("✗ All modules failed")} ${dim("│")} ${gray("Status:")}`);
+      this.write(`${red("✗ Module loading failed")} ${dim("│")} ${gray("Status:")}`);
       for (const [name, info] of modules.entries()) {
         const label = name.charAt(0).toUpperCase() + name.slice(1);
         const statusText = info.status === "error"
@@ -408,15 +408,14 @@ export class DevConsole extends BaseConsole {
           : info.status === "starting"
             ? yellow("Starting")
             : gray(info.status);
-        this.writeMiddle(`${dim("  •")} ${cyan(label)} ${dim("│")} ${statusText}`);
+        this.writeMiddle(`${cyan(label)} ${dim("│")} ${statusText}`);
       }
-      this.write("");
     } else {
       this.write(
-        `${red("✗ Module loading failed")} ${dim("│")} ${gray("Exiting...")}`,
+        `${red("✗ Module loading failed")}`,
       );
-      this.write("");
     }
+    this.writeLast(`${gray("Exiting...")}`);
   }
 
   /**
