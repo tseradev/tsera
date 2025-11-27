@@ -108,7 +108,7 @@ Deno.test("mcp stop fails when no server is running", async () => {
     const errorOutput = errors.join("\n");
     assertStringIncludes(errorOutput, "No MCP server found");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
   }
 });
 
@@ -193,7 +193,7 @@ Deno.test("mcp stop handles stale PID file", async () => {
     const pidFileAfter = await Deno.stat(join(tempDir, ".tsera", "mcp.pid")).catch(() => null);
     assert(pidFileAfter === null, "PID file should be removed after handling stale PID");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
   }
 });
 
@@ -229,7 +229,7 @@ Deno.test("mcp background start creates PID file", async () => {
     assert(backgroundOption !== undefined, "--background option should exist");
   } finally {
     Deno.chdir(originalCwd);
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
   }
 });
 
@@ -287,7 +287,7 @@ Deno.test("mcp background start prevents duplicate servers", async () => {
     const errorOutput = errors.join("\n");
     assertStringIncludes(errorOutput, "already running");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
   }
 });
 
@@ -325,6 +325,7 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
 
     Deno.exit = ((code: number) => {
       exitCode = code;
+      throw new Error(`exit:${code}`);
     }) as typeof Deno.exit;
     console.error = (...args: unknown[]) => {
       errors.push(args.map((v) => String(v)).join(" "));
@@ -332,9 +333,31 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
 
     try {
       // Try to start in foreground (without --background flag)
-      await mcpCommand.parse([]);
-    } catch {
-      // Expected to fail
+      // Use Promise.race with timeout to prevent infinite blocking
+      // The command should detect the existing PID and exit before reading from stdin
+      await Promise.race([
+        mcpCommand.parse([]),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Test timeout: command blocked too long")), 2000);
+        }),
+      ]);
+    } catch (error) {
+      // Expected to fail (either exit or timeout)
+      if (error instanceof Error && error.message.startsWith("exit:")) {
+        // Exit was called, which is expected
+        const match = error.message.match(/exit:(\d+)/);
+        if (match) {
+          exitCode = parseInt(match[1], 10);
+        }
+      } else if (error instanceof Error && error.message.includes("timeout")) {
+        // Timeout means the command blocked, which shouldn't happen if PID detection works
+        // This could happen if isProcessRunning doesn't detect the current PID correctly
+        // In that case, we should still check if exit was called
+        if (exitCode === undefined) {
+          throw new Error("Command blocked on stdin - PID detection may have failed");
+        }
+      }
+      // Other errors are acceptable
     } finally {
       Deno.exit = originalExit;
       console.error = originalError;
@@ -347,6 +370,6 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
     assertStringIncludes(errorOutput, "already running");
     assertStringIncludes(errorOutput, "background");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
+    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
   }
 });

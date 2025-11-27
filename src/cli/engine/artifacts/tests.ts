@@ -202,6 +202,53 @@ function buildSampleObject(entity: EntityRuntime, usePublic: boolean): string {
 }
 
 /**
+ * Builds a TypeScript object literal for input.create schema.
+ * Excludes id, immutable fields, and auto-generated fields (db.defaultNow).
+ * Masks values of fields with visibility === "secret".
+ *
+ * @param entity - Entity runtime.
+ * @returns TypeScript object literal.
+ */
+function buildInputCreateSample(entity: EntityRuntime): string {
+  const fields = entity.fields;
+  const schema = entity.input.create;
+
+  const schemaWithInternal = schema as unknown as ZodWithInternal;
+  const schemaDef = schemaWithInternal._zod.def;
+  if (schemaDef.type !== "object" || !schemaDef.shape) {
+    return "{}";
+  }
+
+  const shape = schemaDef.shape;
+  const lines: string[] = ["{"];
+  const entries = Object.entries(fields).filter(([name]) => {
+    // Only include fields that are in the input.create schema
+    return name in shape;
+  });
+
+  entries.forEach(([name, field], index) => {
+    const zodSchema = shape[name] as ZodType;
+    if (!zodSchema) {
+      return;
+    }
+
+    // Mask values of fields with visibility === "secret"
+    let value: string;
+    if (field.visibility === "secret") {
+      value = '"***"'; // Mask secrets
+    } else {
+      value = generateSampleValue(zodSchema, field);
+    }
+
+    const suffix = index === entries.length - 1 ? "" : ",";
+    lines.push(`    ${name}: ${value}${suffix}`);
+  });
+
+  lines.push("  }");
+  return lines.join("\n");
+}
+
+/**
  * Generates test artifacts for an entity.
  * Public tests: use entity.public (fields with visibility === "public").
  * Internal tests: use filtered entity.schema (fields with visibility === "public" or "internal").
@@ -269,8 +316,8 @@ Deno.test("${entityName} public schema valide un exemple minimal", () => {
 `);
   }
 
-  // Test input.create
-  const inputCreateSample = buildSampleObject(entity, false);
+  // Test input.create (excludes id, immutable, defaultNow fields)
+  const inputCreateSample = buildInputCreateSample(entity);
   sourceFile.addStatements(`
 Deno.test("${entityName} input.create valide un exemple minimal", () => {
   const sample = ${inputCreateSample};

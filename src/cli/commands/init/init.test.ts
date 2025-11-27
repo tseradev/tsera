@@ -11,14 +11,37 @@ async function readGoldenFile(name: string): Promise<string> {
 }
 
 async function updateImportMapForTests(projectDir: string): Promise<void> {
-  const importMapPath = join(projectDir, "import_map.json");
-  const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
   const srcPath = join(Deno.cwd(), "src");
   const normalizedSrcPath = srcPath.replace(/\\/g, "/");
-  importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
-  importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
-  importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
-  await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+  
+  // Check if import_map.json exists (non-Fresh projects)
+  const importMapPath = join(projectDir, "import_map.json");
+  if (await fileExists(importMapPath)) {
+    const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
+    if (!importMap.imports) {
+      importMap.imports = {};
+    }
+    importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+    importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+    importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+    await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+  } else {
+    // Fresh projects: imports are in deno.jsonc
+    const denoConfigPath = join(projectDir, "deno.jsonc");
+    if (await fileExists(denoConfigPath)) {
+      const { parse } = await import("jsr:@std/jsonc@1");
+      const denoConfig = parse(await Deno.readTextFile(denoConfigPath)) as {
+        imports?: Record<string, string>;
+      };
+      if (!denoConfig.imports) {
+        denoConfig.imports = {};
+      }
+      denoConfig.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+      denoConfig.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+      denoConfig.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+      await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig, null, 2) + "\n");
+    }
+  }
 }
 
 Deno.test("init generates the full skeleton and manifest", async () => {

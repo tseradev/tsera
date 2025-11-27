@@ -52,11 +52,11 @@ Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async
   assertStringIncludes(content, "create: UserInputCreateSchema");
   assertStringIncludes(content, "update: UserInputUpdateSchema");
   assertStringIncludes(content, "export namespace User {");
-  assertStringIncludes(content, "export type type = z.infer<typeof UserSchema>");
-  assertStringIncludes(content, "export type public = z.infer<typeof UserPublicSchema>");
+  assertStringIncludes(content, "export type type_ = z.infer<typeof UserSchema>");
+  assertStringIncludes(content, "export type public_ = z.infer<typeof UserPublicSchema>");
   assertStringIncludes(content, "export type input_create = z.input<typeof UserInputCreateSchema>");
   assertStringIncludes(content, "export type input_update = z.input<typeof UserInputUpdateSchema>");
-  assertStringIncludes(content, 'export type id = type["id"]');
+  assertStringIncludes(content, 'export type id = type_["id"]');
 });
 
 Deno.test("buildZodArtifacts - génère un schéma pour types primitifs", async () => {
@@ -173,7 +173,7 @@ Deno.test("buildZodArtifacts - combine optional et nullable", async () => {
   const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
   const content = artifacts[0].content as string;
 
-  assertStringIncludes(content, "bio: z.string().nullable().optional()");
+  assertStringIncludes(content, "bio: z.string().optional().nullable()");
 });
 
 Deno.test("buildZodArtifacts - génère du code syntaxiquement valide", async () => {

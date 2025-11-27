@@ -14,15 +14,50 @@ function createExitCollector() {
   return { codes, exit };
 }
 
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await Deno.stat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 async function updateImportMapForTests(projectDir: string): Promise<void> {
-  const importMapPath = join(projectDir, "import_map.json");
-  const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
   const srcPath = join(Deno.cwd(), "src");
   const normalizedSrcPath = srcPath.replace(/\\/g, "/");
-  importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
-  importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
-  importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
-  await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+  
+  // Check if import_map.json exists (non-Fresh projects)
+  const importMapPath = join(projectDir, "import_map.json");
+  if (await fileExists(importMapPath)) {
+    const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
+    if (!importMap.imports) {
+      importMap.imports = {};
+    }
+    importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+    importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+    importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+    await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
+  } else {
+    // Fresh projects: imports are in deno.jsonc
+    const denoConfigPath = join(projectDir, "deno.jsonc");
+    if (await fileExists(denoConfigPath)) {
+      const { parse } = await import("jsr:@std/jsonc@1");
+      const denoConfig = parse(await Deno.readTextFile(denoConfigPath)) as {
+        imports?: Record<string, string>;
+      };
+      if (!denoConfig.imports) {
+        denoConfig.imports = {};
+      }
+      denoConfig.imports["tsera/"] = `file://${normalizedSrcPath}/`;
+      denoConfig.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
+      denoConfig.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+      await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig, null, 2) + "\n");
+    }
+  }
 }
 
 Deno.test("doctor reports a pending plan with exit code", async () => {
@@ -46,7 +81,7 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
 
     await updateImportMapForTests(projectDir);
 
-    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const entityPath = join(projectDir, "core", "entities", "User.ts");
     const original = await Deno.readTextFile(entityPath);
     const updated = original.replace(
       "Optional display name.",
@@ -101,7 +136,7 @@ Deno.test("doctor --quick exits with code 0 even when issues found", async () =>
 
     await updateImportMapForTests(projectDir);
 
-    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const entityPath = join(projectDir, "core", "entities", "User.ts");
     const original = await Deno.readTextFile(entityPath);
     const updated = original.replace(
       "Optional display name.",
@@ -157,7 +192,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
 
     await updateImportMapForTests(projectDir);
 
-    const entityPath = join(projectDir, "domain", "User.entity.ts");
+    const entityPath = join(projectDir, "core", "entities", "User.ts");
     const original = await Deno.readTextFile(entityPath);
     await Deno.writeTextFile(entityPath, `${original}\n// mutation`);
 

@@ -26,6 +26,7 @@ async function runCli(args: string[], options: RunCliOptions): Promise<CliResult
     cwd: options.cwd,
     stdout: "piped",
     stderr: "piped",
+    stdin: "null", // Close stdin to prevent interactive prompts from blocking
     env: {
       DENO_NO_PROMPT: "1",
     },
@@ -68,36 +69,37 @@ Deno.test("E2E: basic init with all modules", async () => {
   const projectDir = join(workspace, "demo-full");
 
   try {
-    const initResult = await runCli(["init", "demo-full"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-full", "--yes"], { cwd: workspace });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
     // Check core files
-    assert(await exists(join(projectDir, "tsera.config.ts")), "Config missing");
-    assert(await exists(join(projectDir, "domain", "User.entity.ts")), "Entity missing");
+    assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
+    assert(await exists(join(projectDir, "core", "entities", "User.ts")), "Entity missing");
 
     // Check Hono module
-    assert(await exists(join(projectDir, "main.ts")), "Hono main.ts missing");
-    assert(await exists(join(projectDir, "routes", "health.ts")), "Health route missing");
+    assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono main.ts missing");
+    assert(await exists(join(projectDir, "app", "back", "routes", "health.ts")), "Health route missing");
 
     // Check Fresh module
-    assert(await exists(join(projectDir, "web", "main.ts")), "Fresh main.ts missing");
+    assert(await exists(join(projectDir, "app", "front", "main.ts")), "Fresh main.ts missing");
     assert(
-      await exists(join(projectDir, "web", "islands", "Counter.tsx")),
-      "Counter island missing",
+      await exists(join(projectDir, "app", "front", "components", "Counter.tsx")),
+      "Counter component missing",
     );
 
     // Check Docker module
-    assert(await exists(join(projectDir, "docker-compose.yml")), "docker-compose.yml missing");
-    assert(await exists(join(projectDir, "Dockerfile")), "Dockerfile missing");
+    assert(await exists(join(projectDir, "config", "docker", "docker-compose.yml")), "docker-compose.yml missing");
+    assert(await exists(join(projectDir, "config", "docker", "Dockerfile.back")), "Dockerfile.back missing");
+    assert(await exists(join(projectDir, "config", "docker", "Dockerfile.front")), "Dockerfile.front missing");
 
     // Check CI module
-    assert(await exists(join(projectDir, ".github", "workflows", "ci.yml")), "CI workflow missing");
+    assert(await exists(join(projectDir, ".github", "workflows", "ci-lint.yml")), "CI lint workflow missing");
+    assert(await exists(join(projectDir, ".github", "workflows", "ci-test.yml")), "CI test workflow missing");
 
     // Check Secrets module
-    assert(await exists(join(projectDir, "env.config.ts")), "env.config.ts missing");
-    assert(await exists(join(projectDir, "lib", "env.ts")), "lib/env.ts missing");
+    assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "manager.ts missing");
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }
@@ -114,6 +116,7 @@ Deno.test("E2E: selective module disabling", async () => {
       "--no-fresh",
       "--no-docker",
       "--no-ci",
+      "--yes",
     ], { cwd: workspace });
 
     if (!initResult.success) {
@@ -121,13 +124,13 @@ Deno.test("E2E: selective module disabling", async () => {
     }
 
     // Check that base and enabled modules exist
-    assert(await exists(join(projectDir, "tsera.config.ts")), "Config missing");
-    assert(await exists(join(projectDir, "main.ts")), "Hono should be present");
-    assert(await exists(join(projectDir, "env.config.ts")), "Secrets should be present");
+    assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
+    assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono should be present");
+    assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "Secrets should be present");
 
     // Check that disabled modules don't exist
-    assert(!await exists(join(projectDir, "web")), "Fresh should be disabled");
-    assert(!await exists(join(projectDir, "docker-compose.yml")), "Docker should be disabled");
+    assert(!await exists(join(projectDir, "app", "front")), "Fresh should be disabled");
+    assert(!await exists(join(projectDir, "config", "docker")), "Docker should be disabled");
     assert(!await exists(join(projectDir, ".github")), "CI should be disabled");
   } finally {
     await Deno.remove(workspace, { recursive: true });
@@ -139,13 +142,13 @@ Deno.test("E2E: coherence and artifact generation", async () => {
   const projectDir = join(workspace, "demo-coherence");
 
   try {
-    const initResult = await runCli(["init", "demo-coherence"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-coherence", "--yes"], { cwd: workspace });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
     const schemaPath = join(projectDir, ".tsera", "schemas", "User.schema.ts");
-    const docPath = join(projectDir, "docs", "User.md");
+    const docPath = join(projectDir, "docs", "markdown", "User.md");
 
     assert(await exists(schemaPath), "Schema not generated");
     assert(await exists(docPath), "Documentation not generated");
@@ -171,19 +174,18 @@ Deno.test("E2E: secrets with KV store and encryption", async () => {
 
   try {
     // Initialize project
-    const initResult = await runCli(["init", "demo-secrets"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-secrets", "--yes"], { cwd: workspace });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
     // Check secrets files were generated
-    const secretsDir = join(projectDir, "secrets");
+    const secretsDir = join(projectDir, "config", "secrets");
     assert(await exists(join(secretsDir, ".env.dev")), ".env.dev missing");
-    assert(await exists(join(secretsDir, ".env.preprod")), ".env.preprod missing");
+    assert(await exists(join(secretsDir, ".env.staging")), ".env.staging missing");
     assert(await exists(join(secretsDir, ".env.prod")), ".env.prod missing");
     assert(await exists(join(secretsDir, ".env.example")), ".env.example missing");
-    assert(await exists(join(projectDir, "env.config.ts")), "env.config.ts missing");
-    assert(await exists(join(projectDir, "lib", "env.ts")), "lib/env.ts missing");
+    assert(await exists(join(secretsDir, "manager.ts")), "manager.ts missing");
 
     // Check .gitattributes was generated for git-crypt
     const gitattributesPath = join(projectDir, ".gitattributes");
@@ -208,8 +210,8 @@ Deno.test("E2E: secrets with KV store and encryption", async () => {
     const gitignoreContent = await Deno.readTextFile(gitignorePath);
     assert(gitignoreContent.match(/secrets\/.env\.dev/), ".gitignore should include .env.dev");
     assert(
-      gitignoreContent.match(/secrets\/.env\.preprod/),
-      ".gitignore should include .env.preprod",
+      gitignoreContent.match(/secrets\/.env\.staging/),
+      ".gitignore should include .env.staging",
     );
     assert(gitignoreContent.match(/secrets\/.env\.prod/), ".gitignore should include .env.prod");
     assert(
@@ -219,28 +221,20 @@ Deno.test("E2E: secrets with KV store and encryption", async () => {
     assert(gitignoreContent.match(/\.tsera\/kv\//), ".gitignore should include KV store");
     assert(gitignoreContent.match(/\.tsera\/salt/), ".gitignore should include salt");
 
-    // Verify the generated env.config.ts has proper schema
-    const envConfigPath = join(projectDir, "env.config.ts");
-    const envConfigContent = await Deno.readTextFile(envConfigPath);
+    // Verify manager.ts has proper schema and calls initializeSecrets
+    const managerPath = join(secretsDir, "manager.ts");
+    const managerContent = await Deno.readTextFile(managerPath);
     assert(
-      envConfigContent.includes("defineEnvSchema"),
-      "env.config.ts should use defineEnvSchema",
+      managerContent.includes("defineEnvSchema"),
+      "manager.ts should use defineEnvSchema",
     );
     assert(
-      envConfigContent.includes("DATABASE_URL"),
-      "env.config.ts should define DATABASE_URL",
-    );
-
-    // Verify lib/env.ts calls initializeSecrets
-    const envLibPath = join(projectDir, "lib", "env.ts");
-    const envLibContent = await Deno.readTextFile(envLibPath);
-    assert(
-      envLibContent.includes("initializeSecrets"),
-      "lib/env.ts should call initializeSecrets",
+      managerContent.includes("DATABASE_URL"),
+      "manager.ts should define DATABASE_URL",
     );
     assert(
-      envLibContent.includes("secretsDir"),
-      "lib/env.ts should configure secrets directory",
+      managerContent.includes("initializeSecrets"),
+      "manager.ts should call initializeSecrets",
     );
 
     // Note: Detailed KV store functionality is tested in src/core/secrets/store.test.ts

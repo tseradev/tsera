@@ -190,6 +190,29 @@ function toTsLiteral(value: unknown): string {
 }
 
 /**
+ * Escapes TypeScript reserved words by appending an underscore.
+ * Reserved words cannot be used as identifiers in strict mode.
+ *
+ * @param name - Identifier name to escape.
+ * @returns Escaped identifier name.
+ */
+function escapeReservedWord(name: string): string {
+  const reservedWords = new Set([
+    "abstract", "any", "as", "asserts", "assert", "async", "await",
+    "boolean", "break", "case", "catch", "class", "const", "constructor",
+    "continue", "debugger", "declare", "default", "delete", "do", "else",
+    "enum", "export", "extends", "false", "finally", "for", "from", "function",
+    "if", "implements", "import", "in", "infer", "instanceof", "interface",
+    "is", "keyof", "let", "module", "namespace", "never", "new", "null",
+    "number", "object", "of", "package", "private", "protected", "public",
+    "readonly", "return", "satisfies", "static", "string", "super", "switch",
+    "symbol", "this", "throw", "true", "try", "type", "typeof", "undefined",
+    "unique", "unknown", "using", "var", "void", "while", "with", "yield",
+  ]);
+  return reservedWords.has(name) ? `${name}_` : name;
+}
+
+/**
  * Generates Zod artifacts for an entity.
  * Generates the User super-object with schema, public, input, and the User namespace with types.
  */
@@ -270,15 +293,22 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
   });
 
   // Export the User namespace with types
+  // Escape reserved words to avoid TypeScript errors
+  const typeName = escapeReservedWord("type");
+  const publicName = escapeReservedWord("public");
+  const inputCreateName = escapeReservedWord("input_create");
+  const inputUpdateName = escapeReservedWord("input_update");
+  const idName = escapeReservedWord("id");
+
   sourceFile.addModule({
     isExported: true,
     name: entityName,
     statements: [
-      `export type type = z.infer<typeof ${entityName}Schema>;`,
-      `export type public = z.infer<typeof ${entityName}PublicSchema>;`,
-      `export type input_create = z.input<typeof ${entityName}InputCreateSchema>;`,
-      `export type input_update = z.input<typeof ${entityName}InputUpdateSchema>;`,
-      `export type id = type["id"];`,
+      `export type ${typeName} = z.infer<typeof ${entityName}Schema>;`,
+      `export type ${publicName} = z.infer<typeof ${entityName}PublicSchema>;`,
+      `export type ${inputCreateName} = z.input<typeof ${entityName}InputCreateSchema>;`,
+      `export type ${inputUpdateName} = z.input<typeof ${entityName}InputUpdateSchema>;`,
+      `export type ${idName} = ${typeName}["id"];`,
     ],
   });
 

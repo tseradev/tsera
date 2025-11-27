@@ -661,7 +661,7 @@ function buildGitignore(): string {
     "",
     "# TSera secrets (local unless using git-crypt)",
     "secrets/.env.dev",
-    "secrets/.env.preprod",
+    "secrets/.env.staging",
     "secrets/.env.prod",
     "!secrets/.env.example",
     "",
