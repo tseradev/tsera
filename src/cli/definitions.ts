@@ -39,6 +39,16 @@ export interface DeployConfig {
 }
 
 /**
+ * Supported deployment providers for CD (Continuous Deployment).
+ */
+export type DeployProvider =
+  | "docker"
+  | "cloudflare"
+  | "deno-deploy"
+  | "vercel"
+  | "github";
+
+/**
  * Path configuration for entity and route discovery.
  */
 export interface PathsConfig {
@@ -86,6 +96,11 @@ export interface TseraConfig {
   deploy: DeployConfig;
   /** Optional module configuration. */
   modules?: ModulesConfig;
+  /**
+   * Liste des providers de déploiement activés (vide = aucun CD).
+   * Les workflows CD correspondants seront générés dans .github/workflows/
+   */
+  deployTargets?: DeployProvider[];
 }
 
 /**

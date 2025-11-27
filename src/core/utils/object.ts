@@ -5,7 +5,7 @@
  * @param value - Object or primitive to freeze.
  * @returns A deeply frozen version of the provided value.
  */
-export function deepFreeze<T>(value: T): Readonly<T> {
+export function deepFreeze<T>(value: T, visited = new WeakSet<object>()): Readonly<T> {
   if (value === null) {
     return value as Readonly<T>;
   }
@@ -19,6 +19,11 @@ export function deepFreeze<T>(value: T): Readonly<T> {
     return value as Readonly<T>;
   }
 
+  if (visited.has(value as object)) {
+    return value as Readonly<T>;
+  }
+  visited.add(value as object);
+
   const propertyNames = Reflect.ownKeys(value as Record<PropertyKey, unknown>);
   for (const property of propertyNames) {
     const descriptor = Object.getOwnPropertyDescriptor(
@@ -31,7 +36,7 @@ export function deepFreeze<T>(value: T): Readonly<T> {
 
     const propertyValue = descriptor.value;
     if (propertyValue !== undefined) {
-      deepFreeze(propertyValue);
+      deepFreeze(propertyValue, visited);
     }
   }
 

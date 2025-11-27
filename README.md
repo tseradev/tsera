@@ -19,13 +19,13 @@ team-facing documentation.
 ## Current stack
 
 - **Deno v2** (strict ESM, tasks managed via `deno.jsonc`).
-- **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `update`).
+- **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `cd`, `update`).
 - **Zod**, **zod-to-openapi**, and **Drizzle** to project entities.
 - **TS-Morph** (via JSR) for AST-based TypeScript code generation.
 - **Hono** API framework (optional module).
 - **Fresh** SSR frontend framework (optional module).
 - **Docker Compose** for local development (optional module).
-- **GitHub Actions** CI/CD workflows (optional module).
+- **GitHub Actions** CI workflows (optional module, generates 6 workflows in `.github/workflows/`).
 - **Type-safe secrets management** with environment validation (optional module).
 - **Type-Safe SDK** generation for seamless Backend-Frontend integration.
 - **MCP Server** (`tsera mcp`) to expose project architecture to AI agents.
@@ -65,6 +65,11 @@ tsera init demo
 # Or create a minimal project with only specific modules
 tsera init demo --no-fresh --no-docker --no-ci
 
+# Note: The CI module generates 6 workflows in .github/workflows/:
+# - ci-lint.yml, ci-test.yml, ci-build.yml, ci-codegen.yml, ci-coherence.yml, ci-openapi.yml
+# These workflows are templates that can be freely modified after generation.
+# TSera does not regenerate or synchronize them (unlike CD workflows managed by 'tsera deploy sync').
+
 # Or create a backend-only project
 tsera init demo --no-fresh
 
@@ -92,6 +97,30 @@ curl http://localhost:8000/health
 deno task test
 ```
 
+### Continuous Deployment (CD)
+
+TSera supports multi-provider Continuous Deployment via the `tsera deploy` command:
+
+```bash
+# Configure deployment providers interactively
+tsera deploy init
+
+# Synchronize CD workflows from config/cd/ to .github/workflows/
+tsera deploy sync
+
+# Force overwrite manually modified workflows
+tsera deploy sync --force
+```
+
+**Supported providers:**
+- **Docker**: Build and push Docker images, deploy to container registries
+- **Cloudflare**: Deploy to Cloudflare Pages or Workers
+- **Deno Deploy**: Deploy to Deno Deploy platform
+- **Vercel**: Deploy to Vercel (preview and production)
+- **GitHub**: Deploy to GitHub Pages or create GitHub Releases
+
+Workflows are defined in `config/cd/<provider>/` and automatically synchronized to `.github/workflows/` with hash-based protection to prevent accidental overwrites of manual modifications.
+
 ### Modular Architecture
 
 TSera uses a modular architecture where you can enable or disable specific features:
@@ -101,7 +130,7 @@ TSera uses a modular architecture where you can enable or disable specific featu
 - **Hono**: Fast and minimal API framework (Hono v4 via JSR/npm)
 - **Fresh**: Server-side rendering with islands architecture (Fresh v2 via JSR + Preact v10 via npm)
 - **Docker**: Docker Compose configuration with PostgreSQL
-- **CI/CD**: GitHub Actions workflows for testing and deployment
+- **CI**: GitHub Actions workflows (6 workflows: lint, test, build, codegen, coherence, openapi)
 - **Secrets**: Type-safe environment variable management with Zod validation
 
 **Disable modules using flags:**
@@ -134,7 +163,7 @@ When `tsera init` completes you will find:
 - **Fresh module** (if enabled): `web/` directory with routes, islands, and static assets.
 - **Docker module** (if enabled): `docker-compose.yml` and `Dockerfile` for containerized
   development.
-- **CI module** (if enabled): `.github/workflows/` with CI/CD pipelines.
+- **CI module** (if enabled): `.github/workflows/` with 6 CI workflows (`ci-lint.yml`, `ci-test.yml`, `ci-build.yml`, `ci-codegen.yml`, `ci-coherence.yml`, `ci-openapi.yml`). These are templates generated once at init and can be freely modified (not synchronized by TSera).
 - **Secrets module** (if enabled): `env.config.ts` for type-safe environment variable management.
 
 ### Type-Safe Secrets Management

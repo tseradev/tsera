@@ -1,6 +1,7 @@
 {
   "imports": {
     "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.7",
+    "cliffy/prompt": "jsr:@cliffy/prompt@1.0.0-rc.7",
     "fresh/": "jsr:@fresh/core@2/",
     "hono": "jsr:@hono/hono@^4.0.0",
     "preact": "npm:preact@10.27.2",

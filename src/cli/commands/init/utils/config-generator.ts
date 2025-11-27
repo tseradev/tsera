@@ -86,7 +86,10 @@ const config: TseraConfig = {
     target: "deno_deploy",
     entry: "app/back/main.ts",
     envFile: ".env.deploy",
-  },${modulesConfig}
+  },
+  // List of enabled deployment providers for CD (empty = no CD).
+  // Configure via "tsera deploy init" or during "tsera init".
+  deployTargets: [],${modulesConfig}
 };
 
 export default config;

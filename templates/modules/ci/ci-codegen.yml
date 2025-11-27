@@ -1,0 +1,37 @@
+name: CI - Codegen
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  codegen:
+    name: Validate Codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # TODO: Install TSera CLI
+      # Option 1: Via JSR (when available)
+      #   deno install --global -A --name tsera jsr:@tsera/cli
+      # Option 2: Via direct URL
+      #   deno install --global -A --name tsera https://deno.land/x/tsera/cli/main.ts
+      - name: Install TSera CLI
+        run: |
+          echo "⚠️  TODO: Configure TSera CLI installation"
+          # deno install --global -A --name tsera <CLI_URL>
+
+      - name: Run TSera dev (plan only)
+        run: |
+          # TODO: Uncomment when TSera CLI is installed
+          # tsera dev --plan-only
+          echo "⚠️  TODO: Run 'tsera dev --plan-only' to validate codegen"
+

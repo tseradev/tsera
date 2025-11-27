@@ -4,6 +4,7 @@ import { createDoctorCommand, type DoctorCommandHandler } from "./commands/docto
 import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
 import { mcpCommand } from "./commands/mcp/mcp.ts";
+import { createDeployCommand } from "./commands/deploy/deploy.ts";
 import {
   applyModernHelp,
   createHelpCommand,
@@ -40,6 +41,10 @@ const COMMAND_HELP: ModernHelpCommand[] = [
     description: "Inspect project coherence, highlight issues, and offer safe fixes.",
   },
   {
+    label: "deploy <command>",
+    description: "Manage Continuous Deployment (CD) workflows for multiple providers.",
+  },
+  {
     label: "update",
     description: "Upgrade the TSera CLI via deno install or compiled binaries.",
   },
@@ -74,6 +79,10 @@ export interface RouterHandlers {
   init?: InitCommandHandler;
   dev?: DevCommandHandler;
   doctor?: DoctorCommandHandler;
+  deploy?: {
+    init?: (context: import("./commands/deploy/deploy-init.ts").DeployInitContext) => Promise<void> | void;
+    sync?: (context: import("./commands/deploy/deploy-sync.ts").DeploySyncContext) => Promise<void> | void;
+  };
   update?: UpdateCommandHandler;
   help?: HelpCommandHandler;
 }
@@ -101,6 +110,7 @@ export function createRouter(
   root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));
   root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
+  root.command("deploy", withGlobalOpts(createDeployCommand(handlers.deploy)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
   root.command("mcp", withGlobalOpts(mcpCommand));
   root.command("help", withGlobalOpts(createHelpCommand(handlers.help)));

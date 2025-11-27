@@ -43,8 +43,8 @@ export const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
     name: "docker",
     mergeStrategy: "copy",
   },
-  "ci-cd": {
-    name: "ci-cd",
+  ci: {
+    name: "ci",
     mergeStrategy: "copy",
   },
   secrets: {

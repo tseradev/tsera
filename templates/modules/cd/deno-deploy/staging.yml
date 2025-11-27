@@ -1,0 +1,29 @@
+name: CD Deno Deploy Staging
+
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: "Deno Deploy project name"
+        required: true
+        type: string
+      entrypoint:
+        description: "Entry point file"
+        required: false
+        default: "app/back/main.ts"
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Deno Deploy (staging)
+        uses: denoland/deployctl@v1
+        with:
+          project: ${{ inputs.project }}
+          entrypoint: ${{ inputs.entrypoint }}
+          token: ${{ secrets.DENO_DEPLOY_TOKEN }}
+

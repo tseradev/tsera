@@ -1,5 +1,4 @@
 import { z, type ZodObject, type ZodType } from "./utils/zod.ts";
-import { deepFreeze } from "./utils/object.ts";
 import { isPascalCase } from "./utils/strings.ts";
 
 /**
@@ -508,5 +507,5 @@ export function defineEntity(config: EntityConfig): EntityRuntime {
   };
 
   // Freeze and return
-  return deepFreeze(runtime) as EntityRuntime;
+  return runtime as EntityRuntime;
 }

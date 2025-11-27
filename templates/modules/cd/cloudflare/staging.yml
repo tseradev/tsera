@@ -1,0 +1,31 @@
+name: CD Cloudflare Staging
+
+on:
+  workflow_call:
+    inputs:
+      account_id:
+        description: "Cloudflare account ID"
+        required: true
+        type: string
+      project_name:
+        description: "Cloudflare Pages project name"
+        required: false
+        default: "${{ github.repository }}"
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Pages (staging)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ inputs.account_id }}
+          projectName: ${{ inputs.project_name }}
+          directory: .
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+

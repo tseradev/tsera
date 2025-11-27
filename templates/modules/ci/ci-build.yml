@@ -1,0 +1,41 @@
+name: CI - Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # NOTE: Default backend entrypoint for a TSera-generated project.
+      # If your project uses a different entrypoint, adjust this path.
+      # Example: app/api/main.ts or a monorepo with multiple apps.
+      - name: Cache dependencies
+        run: |
+          if [ -f "app/back/main.ts" ]; then
+            deno cache --lock=deno.lock app/back/main.ts
+          else
+            echo "⚠️  app/back/main.ts not found, skipping cache step"
+          fi
+
+      - name: Build backend
+        run: |
+          if [ -f "app/back/main.ts" ]; then
+            deno compile -A --output ./dist/backend app/back/main.ts
+          else
+            echo "⚠️  app/back/main.ts not found, skipping build step"
+            exit 1
+          fi
+

@@ -1,6 +1,7 @@
 import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { Command } from "cliffy/command";
+import { Confirm } from "cliffy/prompt";
 import { createLogger } from "../../utils/log.ts";
 import { ensureDir, pathExists, safeWrite } from "../../utils/fsx.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
@@ -16,7 +17,10 @@ import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/fi
 import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts";
 import { generateConfigFile } from "./utils/config-generator.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
-import { uncommentImportsInProject } from "./utils/uncomment-imports.ts";
+import { copyDirectory } from "./utils/directory-copier.ts";
+import { readDeployTargets, updateDeployTargets } from "../../utils/deploy-config.ts";
+import { promptProviderSelection } from "../deploy/deploy-init-ui.ts";
+import { handleDeploySync } from "../deploy/deploy-sync.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -86,6 +90,58 @@ interface InitHandlerDependencies {
  */
 function defaultTemplatesRoot(): string {
   return getTemplatesRoot();
+}
+
+/**
+ * Applies the CI module by copying workflow files to .github/workflows/.
+ *
+ * This function handles the CI module separately from the generic template composition
+ * to ensure workflows are placed in the correct location without creating .github/ in templates.
+ *
+ * @param targetDir - Target directory for the project.
+ * @param templatesRoot - Root directory containing templates.
+ * @param force - Whether to overwrite existing files.
+ */
+async function applyCiModule(
+  targetDir: string,
+  templatesRoot: string,
+  force: boolean,
+): Promise<void> {
+  const workflowsDir = join(targetDir, ".github", "workflows");
+  await ensureDir(workflowsDir);
+
+  const ciTemplatesDir = join(templatesRoot, "modules", "ci");
+  const workflowFiles = [
+    "ci-lint.yml",
+    "ci-test.yml",
+    "ci-build.yml",
+    "ci-codegen.yml",
+    "ci-coherence.yml",
+    "ci-openapi.yml",
+  ];
+
+  for (const file of workflowFiles) {
+    const sourcePath = join(ciTemplatesDir, file);
+    const targetPath = join(workflowsDir, file);
+    const relativeTargetPath = join(".github", "workflows", file);
+
+    // Check source file exists
+    if (!(await pathExists(sourcePath))) {
+      continue; // Skip if file absent (should not happen)
+    }
+
+    // Respect force flag: if file exists and force === false, log and skip
+    if (await pathExists(targetPath) && !force) {
+      console.log(
+        `Skipping ${relativeTargetPath} (already exists, use --force to overwrite)`,
+      );
+      continue;
+    }
+
+    // Write file (create or overwrite based on force)
+    const content = await Deno.readTextFile(sourcePath);
+    await safeWrite(targetPath, content);
+  }
 }
 
 /**
@@ -232,11 +288,14 @@ export function createDefaultInitHandler(
     await ensureDirectoryReady(targetDir, context.force);
 
     // Determine which modules to enable
+    // IMPORTANT: enabledModules must include "ci" for env-generator and other parts
+    // of the code to know that CI is present
     const enabledModules: string[] = [];
     if (context.modules.hono) enabledModules.push("hono");
     if (context.modules.fresh) enabledModules.push("fresh");
     if (context.modules.docker) enabledModules.push("docker");
-    if (context.modules.ci) enabledModules.push("ci-cd");
+    const ciEnabled = context.modules.ci;
+    if (ciEnabled) enabledModules.push("ci"); // Inclure pour env-generator et autres
     if (context.modules.secrets) enabledModules.push("secrets");
 
     // Compose template from base + modules
@@ -250,23 +309,25 @@ export function createDefaultInitHandler(
       ssl: "prefer" as const,
     };
 
+    // composeTemplate must NOT receive "ci" as it would be copied with its directory structure
+    const modulesForComposition = enabledModules.filter((m) => m !== "ci");
     const composition = await composeTemplate({
       targetDir,
       baseDir,
       modulesDir,
-      enabledModules,
+      enabledModules: modulesForComposition, // Without "ci"
       force: context.force,
       dbConfig: defaultDbConfig,
     });
 
+    // After composeTemplate, apply CI if enabled
+    // applyCiModule explicitly handles copying to .github/workflows/
+    if (ciEnabled) {
+      await applyCiModule(targetDir, templatesRoot, context.force);
+    }
+
     // Patch import_map.json based on environment (local dev vs production)
     await patchImportMapForEnvironment(targetDir, templatesRoot);
-
-    // Uncomment imports in generated files if dependencies are declared
-    const uncommentedCount = await uncommentImportsInProject(targetDir);
-    if (jsonMode && uncommentedCount > 0) {
-      logger.event("init:uncomment", { files: uncommentedCount });
-    }
 
     if (jsonMode) {
       logger.event("init:copy", {
@@ -358,6 +419,60 @@ export function createDefaultInitHandler(
       });
     } else {
       human?.complete();
+    }
+
+    // Copy CD templates if CI module is enabled
+    if (context.modules.ci) {
+      const cdTemplatesDir = join(templatesRoot, "modules", "cd");
+      const targetCdDir = join(targetDir, "config", "cd");
+      try {
+        const cdTemplatesExist = await pathExists(cdTemplatesDir);
+        if (cdTemplatesExist) {
+          await ensureDir(targetCdDir);
+          // Copy each provider's templates
+          const providers = ["docker", "cloudflare", "deno-deploy", "vercel", "github"];
+          for (const provider of providers) {
+            const providerSource = join(cdTemplatesDir, provider);
+            const providerTarget = join(targetCdDir, provider);
+            if (await pathExists(providerSource)) {
+              await copyDirectory({
+                source: providerSource,
+                target: providerTarget,
+                result: { copiedFiles: [], mergedFiles: [], skippedFiles: [] },
+                force: context.force,
+              });
+            }
+          }
+          if (jsonMode) {
+            logger.event("init:cd:templates", { copied: true });
+          }
+        }
+      } catch (error) {
+        // Log but don't fail if CD templates can't be copied
+        if (jsonMode) {
+          logger.event("init:cd:templates", { error: String(error) });
+        }
+      }
+    }
+
+    // Propose CD configuration at the end
+    if (!jsonMode && !context.yes) {
+      const shouldConfigureCd = await Confirm.prompt({
+        message: "Do you want to configure deployment targets (CD) now?",
+        default: false,
+      });
+
+      if (shouldConfigureCd) {
+        // Reuse the logic from tsera deploy init
+        const current = await readDeployTargets(targetDir);
+        const selectedProviders = await promptProviderSelection(current);
+        await updateDeployTargets(targetDir, selectedProviders);
+        await handleDeploySync({
+          projectDir: targetDir,
+          global: context.global,
+          force: false,
+        });
+      }
     }
 
     if (jsonMode) {

@@ -69,9 +69,9 @@ export function stableStringify(value: unknown): string {
  * @param value - Value to sort.
  * @returns Sorted and normalised value.
  */
-function sortValue(value: unknown): unknown {
+function sortValue(value: unknown, visited = new WeakSet<object>()): unknown {
   if (Array.isArray(value)) {
-    return value.map((item) => sortValue(item));
+    return value.map((item) => sortValue(item, visited));
   }
   if (value instanceof Date) {
     return value.toISOString();
@@ -80,11 +80,16 @@ function sortValue(value: unknown): unknown {
     return value.toString();
   }
   if (value && typeof value === "object") {
+    if (visited.has(value)) {
+      return "[Circular]";
+    }
+    visited.add(value);
+
     const entries = Object.entries(value as Record<string, unknown>)
       .sort(([a], [b]) => a.localeCompare(b));
     const result: Record<string, unknown> = {};
     for (const [key, val] of entries) {
-      result[key] = sortValue(val);
+      result[key] = sortValue(val, visited);
     }
     return result;
   }

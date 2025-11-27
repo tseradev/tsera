@@ -1,0 +1,37 @@
+name: CD Vercel Deploy
+
+on:
+  workflow_call:
+    inputs:
+      vercel_org_id:
+        description: "Vercel organization ID"
+        required: true
+        type: string
+      vercel_project_id:
+        description: "Vercel project ID"
+        required: true
+        type: string
+      production:
+        description: "Deploy to production (true) or preview (false)"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ inputs.vercel_org_id }}
+          vercel-project-id: ${{ inputs.vercel_project_id }}
+          vercel-args: ${{ inputs.production == 'true' && '--prod' || '' }}
+

@@ -17,12 +17,14 @@
    Zod/OpenAPI/Drizzle) → 3) **CLI Cliffy** (4 commandes) → 4) **Templates modulaires (base +
    modules)** → 5) **Tests (unit/golden/E2E)** → 6) **Release binaire + (optionnel) JSR**.
 
-- Implémente **4 commandes**: `init`, `dev`, `doctor`, `update` (Cliffy).
+- Implémente **5 commandes principales**: `init`, `dev`, `doctor`, `deploy`, `update` (Cliffy).
 - `init` génère **toujours** `tsera.config.ts` **complet** (profil _full_ + commentaires) et compose
-  le projet à partir de `templates/base` + modules sélectionnés.
+  le projet à partir de `templates/base` + modules sélectionnés. Propose la configuration CD à la fin.
 - `dev` = **watch → plan → apply** idempotent: Zod, OpenAPI, migrations Drizzle, docs, tests smoke,
   `.tsera/graph.json`, `.tsera/manifest.json`.
 - `doctor --fix` corrige les cas sûrs; `update` gère `deno install` **et** binaire `deno compile`.
+- `deploy init` configure interactivement les providers de déploiement (Docker, Cloudflare, Deno Deploy, Vercel, GitHub).
+- `deploy sync` synchronise les workflows CD depuis `config/cd/` vers `.github/workflows/` avec protection par hash.
 - **Dépendances autorisées** seulement: Deno std, Cliffy, Zod v4 (JSR), TS‑Morph, Hono, Fresh.
 
 ---
@@ -87,6 +89,16 @@
           update.ts
           update-ui.ts
           update.test.ts
+        deploy/            # deploy command (Continuous Deployment)
+          deploy.ts        # router principal
+          deploy-init.ts   # commande init
+          deploy-init-ui.ts # UI interactive pour sélection providers
+          deploy-sync.ts   # commande sync
+          deploy-sync.test.ts # tests
+          utils/
+            workflow-hash.ts    # calcul hash SHA-256
+            workflow-meta.ts    # gestion workflows-meta.json
+            workflow-sync.ts    # logique synchronisation
         mcp/               # mcp command
           mcp.ts
           mcp.test.ts
@@ -165,9 +177,13 @@
         docker-compose.yml
         Dockerfile
         .dockerignore      # fichiers exclus du build Docker
-      ci-cd/              # Module CI/CD (optionnel, --no-ci)
-        .github/workflows/ci.yml
-        .github/workflows/deploy.yml
+      ci/                 # Module CI (optionnel, --no-ci)
+        ci-lint.yml       # Workflows CI copiés dans .github/workflows/ lors de l'init
+        ci-test.yml
+        ci-build.yml
+        ci-codegen.yml
+        ci-coherence.yml
+        ci-openapi.yml
       secrets/            # Module Secrets (optionnel, --no-secrets)
         env.config.ts
         lib/env.ts
@@ -273,7 +289,7 @@ Affiche le help global avec la liste des commandes disponibles.
 Compose un projet TSera à partir du template de base et des modules sélectionnés. Crée `deno.jsonc`,
 `.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
 
-**Modules inclus par défaut** : Hono (API), Fresh (frontend), Docker, CI/CD, Secrets.
+**Modules inclus par défaut** : Hono (API), Fresh (frontend), Docker, CI, Secrets.
 
 **Options :**
 
@@ -282,7 +298,7 @@ Compose un projet TSera à partir du template de base et des modules sélectionn
 - `--no-hono` : Exclut le module API Hono
 - `--no-fresh` : Exclut le module frontend Fresh
 - `--no-docker` : Exclut le module Docker Compose
-- `--no-ci` : Exclut le module CI/CD GitHub Actions
+- `--no-ci` : Exclut le module CI GitHub Actions (6 workflows générés dans `.github/workflows/`)
 - `--no-secrets` : Exclut le module de gestion des secrets type-safe
 - `-f, --force` : Écrase les fichiers existants
 - `-y, --yes` : Répond automatiquement "oui" aux prompts (mode non-interactif)
@@ -429,11 +445,18 @@ export interface TseraConfig {
 
 ---
 
-## 9) CI/CD (GitHub Actions)
+## 9) CI (GitHub Actions)
 
-- **ci.yml** : jobs `fmt`, `lint`, `test`, `compile` (ubuntu/macos/windows).
-- **release.yml** : sur tag `v*` : compile binaires et upload; (optionnel) `deno publish` du module
-  `tsera`.
+Le module `ci` génère **6 workflows GitHub Actions** directement dans `.github/workflows/` lors de `tsera init` :
+
+- `ci-lint.yml` : Vérification du format et du lint TypeScript/Deno
+- `ci-test.yml` : Exécution des tests
+- `ci-build.yml` : Compilation du backend
+- `ci-codegen.yml` : Validation de la génération TSera (dev engine)
+- `ci-coherence.yml` : Vérification de la cohérence continue TSera
+- `ci-openapi.yml` : Validation du fichier OpenAPI généré
+
+**Important** : Ces workflows sont des **templates de départ** générés une seule fois lors de l'init. TSera ne les régénère pas ni ne les synchronise automatiquement. Ils sont librement modifiables par l'utilisateur après génération. Contrairement au CD (géré par `tsera deploy sync`), la CI est un **bootstrap initial** sans mécanisme de synchronisation.
 
 ---
 

@@ -263,7 +263,7 @@ export async function adaptDrizzleConfigFile(
     // Find the default export statement by searching all statements
     const statements = sourceFile.getStatements();
     let defaultExportStatement: ReturnType<typeof sourceFile.getStatements>[number] | undefined;
-    
+
     for (const statement of statements) {
       const text = statement.getText();
       if (text.includes("export default")) {
@@ -288,7 +288,7 @@ export async function adaptDrizzleConfigFile(
     // The statement should be: export default { ... };
     // We need to extract the object literal and add satisfies
     const fullText = defaultExportStatement.getFullText();
-    
+
     // Extract the object literal from "export default { ... };" or "export default { ... },"
     const objectMatch = fullText.match(/export\s+default\s+(\{[\s\S]*?\})(?:,|;)?/);
     if (!objectMatch) {
@@ -296,7 +296,7 @@ export async function adaptDrizzleConfigFile(
     }
 
     const objectText = objectMatch[1];
-    
+
     // Get indentation from the original statement (first line)
     const firstLine = fullText.split("\n")[0];
     const indentation = firstLine.match(/^(\s*)/)?.[1] || "";
@@ -317,6 +317,70 @@ export async function adaptDrizzleConfigFile(
     // If TS-Morph fails (e.g., syntax errors in template), return original content
     // This can happen if the template has syntax issues, but we don't want to break the init
     console.warn(`Failed to adapt drizzle.config.ts with TS-Morph: ${error instanceof Error ? error.message : String(error)}`);
+    return content;
+  }
+}
+
+/**
+ * Adapts entity files to transform relative imports pointing to src/ into tsera/ imports.
+ * This allows entity files in templates to work locally in the TSera repo with relative imports,
+ * and then be transformed to use tsera/ imports when copied to a new project.
+ *
+ * @param content - Original file content with relative imports.
+ * @param targetDir - Target directory where the project is being created (unused but kept for consistency).
+ * @returns Adapted file content with tsera/ imports.
+ */
+export async function adaptEntityImports(
+  content: string,
+  _targetDir: string,
+): Promise<string> {
+  try {
+    const project = createTSeraProject();
+    const sourceFile = createInMemorySourceFile(project, "entity.ts", content);
+
+    // Get all import declarations
+    const importDeclarations = sourceFile.getImportDeclarations();
+
+    let hasChanges = false;
+
+    for (const importDecl of importDeclarations) {
+      const moduleSpecifier = importDecl.getModuleSpecifierValue();
+
+      // Skip if already using tsera/ imports
+      if (moduleSpecifier.startsWith("tsera/")) {
+        continue;
+      }
+
+      // Check if this is a relative import pointing to src/
+      // Pattern: ../../../../src/... or similar relative paths
+      if (moduleSpecifier.includes("../") && moduleSpecifier.includes("src/")) {
+        // Extract the path after src/
+        const srcIndex = moduleSpecifier.indexOf("src/");
+        if (srcIndex !== -1) {
+          const pathAfterSrc = moduleSpecifier.substring(srcIndex + 4); // +4 for "src/"
+
+          // Transform to tsera/ import
+          const newModuleSpecifier = `tsera/${pathAfterSrc}`;
+
+          // Update the import declaration
+          importDecl.setModuleSpecifier(newModuleSpecifier);
+          hasChanges = true;
+        }
+      }
+    }
+
+    if (!hasChanges) {
+      return content;
+    }
+
+    // Format the code
+    sourceFile.formatText();
+
+    return sourceFile.getFullText();
+  } catch (error) {
+    // If TS-Morph fails (e.g., syntax errors in template), return original content
+    // This can happen if the template has syntax issues, but we don't want to break the init
+    console.warn(`Failed to adapt entity imports with TS-Morph: ${error instanceof Error ? error.message : String(error)}`);
     return content;
   }
 }

@@ -84,9 +84,9 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // CI/CD module
-  if (modules.includes("ci-cd")) {
-    lines.push("# CI/CD Configuration");
+  // CI module
+  if (modules.includes("ci")) {
+    lines.push("# CI Configuration");
     lines.push("DEPLOY_TOKEN=dev-token-not-used-locally");
     lines.push("CI_REGISTRY=");
     lines.push("");
@@ -146,9 +146,9 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // CI/CD module
-  if (modules.includes("ci-cd")) {
-    lines.push("# CI/CD Configuration");
+  // CI module
+  if (modules.includes("ci")) {
+    lines.push("# CI Configuration");
     lines.push("DEPLOY_TOKEN=CHANGE_ME_PREPROD_TOKEN");
     lines.push("CI_REGISTRY=registry.example.com");
     lines.push("");
@@ -209,9 +209,9 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // CI/CD module
-  if (modules.includes("ci-cd")) {
-    lines.push("# CI/CD Configuration");
+  // CI module
+  if (modules.includes("ci")) {
+    lines.push("# CI Configuration");
     lines.push("DEPLOY_TOKEN=CHANGE_ME_PROD_DEPLOY_TOKEN");
     lines.push("CI_REGISTRY=CHANGE_ME_PROD_REGISTRY");
     lines.push("");
@@ -272,9 +272,9 @@ function generateExampleEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // CI/CD module
-  if (modules.includes("ci-cd")) {
-    lines.push("# CI/CD Configuration");
+  // CI module
+  if (modules.includes("ci")) {
+    lines.push("# CI Configuration");
     lines.push("DEPLOY_TOKEN=your-deploy-token-here");
     lines.push("CI_REGISTRY=your-registry.example.com");
     lines.push("");
@@ -378,8 +378,8 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("  },");
   }
 
-  // CI/CD variables
-  if (modules.includes("ci-cd")) {
+  // CI variables
+  if (modules.includes("ci")) {
     lines.push("  DEPLOY_TOKEN: {");
     lines.push('    type: "string",');
     lines.push("    required: true,");

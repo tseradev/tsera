@@ -12,7 +12,7 @@ import { exists } from "std/fs";
 import { walk } from "std/fs/walk";
 import { ensureDir } from "../../../utils/fsx.ts";
 import type { ComposedTemplate } from "./template-composer.ts";
-import { adaptConnectFile, adaptDrizzleConfigFile } from "./file-adapter.ts";
+import { adaptConnectFile, adaptDrizzleConfigFile, adaptEntityImports } from "./file-adapter.ts";
 
 /**
  * Options for copying a directory.
@@ -82,6 +82,18 @@ export async function copyDirectory(
     // Adapt drizzle.config.ts to uncomment drizzle-kit import if drizzle-kit is installed
     if (relativePath === "config/db/drizzle.config.ts" || relativePath.endsWith("/drizzle.config.ts")) {
       content = await adaptDrizzleConfigFile(content, target);
+    }
+
+    // Adapt entity files to transform relative imports to tsera/ imports
+    // Detect entity files: files ending with .entity.ts or in entities/ or domain/ directories
+    const isEntityFile = relativePath.endsWith(".entity.ts") ||
+      relativePath.includes("/entities/") ||
+      relativePath.includes("\\entities\\") ||
+      relativePath.includes("/domain/") ||
+      relativePath.includes("\\domain\\");
+
+    if (isEntityFile) {
+      content = await adaptEntityImports(content, target);
     }
 
     // Write adapted content
