@@ -196,7 +196,7 @@ export class DeploySyncConsole extends BaseConsole {
         `${green("✓")} Workflows synchronized ${dim("│")} ${actions}`,
       );
     } else {
-      this.writeLast(`${dim("·")} ${gray("No changes needed")}`);
+      this.writeLast(`${gray("No changes needed")}`);
     }
 
     if (summary.skipped > 0) {

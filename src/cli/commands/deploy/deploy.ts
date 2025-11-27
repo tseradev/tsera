@@ -3,6 +3,7 @@ import { Command } from "cliffy/command";
 import type { GlobalCLIOptions } from "../../router.ts";
 import { handleDeployInit, type DeployInitContext } from "./deploy-init.ts";
 import { handleDeploySync, type DeploySyncContext } from "./deploy-sync.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /**
  * Context for deployment commands.
@@ -21,16 +22,21 @@ export type DeployCommandHandler = (context: DeployCommandContext) => Promise<vo
 
 /**
  * Options for the init subcommand.
+ * @internal
  */
 interface DeployInitActionOptions {
+  /** Enable JSON output mode. */
   json?: boolean;
 }
 
 /**
  * Options for the sync subcommand.
+ * @internal
  */
 interface DeploySyncActionOptions {
+  /** Enable JSON output mode. */
   json?: boolean;
+  /** Force overwrite of manually modified workflows. */
   force?: boolean;
 }
 
@@ -49,7 +55,50 @@ export function createDeployCommand(handlers: {
 
   const root = new Command()
     .name("deploy")
-    .description("Manage Continuous Deployment (CD) workflows for multiple providers");
+    .description("Manage Continuous Deployment (CD) workflows for multiple providers")
+    .action(() => {
+      // When deploy is called without a subcommand, show help
+      root.showHelp();
+      Deno.exit(0);
+    });
+
+  // Apply modern help rendering
+  const originalShowHelp = root.showHelp.bind(root);
+  root.showHelp = () => {
+    try {
+      console.log(
+        renderCommandHelp({
+          commandName: "deploy",
+          description: "Manage Continuous Deployment (CD) workflows for multiple providers.",
+          usage: "<command>",
+          commands: [
+            {
+              label: "init",
+              description: "Interactive configuration of deployment providers",
+            },
+            {
+              label: "sync",
+              description: "Synchronize CD workflows from config/cd/ to .github/workflows/",
+            },
+          ],
+          options: [
+            {
+              label: "--json",
+              description: "Output machine-readable NDJSON events",
+            },
+          ],
+          examples: [
+            "tsera deploy init",
+            "tsera deploy sync",
+            "tsera deploy sync --force",
+            "tsera deploy sync --json",
+          ],
+        }),
+      );
+    } catch {
+      originalShowHelp();
+    }
+  };
 
   root
     .command("init")

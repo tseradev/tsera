@@ -23,6 +23,8 @@ export interface CommandHelpConfig {
   description: string;
   /** Usage pattern (e.g., "[directory]", "[projectDir]") */
   usage?: string;
+  /** List of subcommands (for commands with subcommands) */
+  commands?: ModernHelpCommand[];
   /** List of available options */
   options: ModernHelpCommand[];
   /** Example commands */
@@ -56,6 +58,15 @@ export function renderCommandHelp(config: CommandHelpConfig): string {
   const usagePart = config.usage ? ` ${config.usage}` : "";
   builder.append(formatUsage(`tsera ${config.commandName}`, usagePart.trim(), palette, 4) + "\n");
   builder.append("\n");
+
+  // Commands section (for commands with subcommands)
+  if (config.commands && config.commands.length > 0) {
+    builder.append(palette.accent("  ◆ ") + palette.heading("COMMANDS") + "\n");
+    for (const line of formatTwoColumn(config.commands, width, palette)) {
+      builder.append(line + "\n");
+    }
+    builder.append("\n");
+  }
 
   // Options section
   if (config.options.length > 0) {
@@ -97,6 +108,8 @@ function getCommandEmoji(commandName: string): string {
     doctor: "🩺",
     update: "📦",
     help: "💡",
+    deploy: "🚢",
+    mcp: "🤖",
   };
   return emojiMap[commandName] || "⚙️";
 }

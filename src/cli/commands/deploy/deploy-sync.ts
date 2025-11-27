@@ -60,7 +60,7 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   // 4. Group workflows by provider for better display
   // Compute workflows per provider to maintain grouping
   const workflowsByProvider = new Map<DeployProvider, Array<{ sourcePath: string; targetPath: string }>>();
-  
+
   for (const provider of enabledProviders) {
     const providerWorkflows = await computeWorkflowsToGenerate(
       absoluteProjectDir,
@@ -70,7 +70,7 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
       workflowsByProvider.set(provider, providerWorkflows);
     }
   }
-  
+
   // Flatten for removal check and total count
   const workflowsToGenerate = Array.from(workflowsByProvider.values()).flat();
 
@@ -96,7 +96,7 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   // Process each provider group
   for (const [provider, workflows] of workflowsByProvider.entries()) {
     const providerName = getProviderName(provider);
-    
+
     if (!jsonMode) {
       human?.startProvider(providerName);
     }
@@ -129,13 +129,43 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   // 8. Remove workflows for disabled providers
   // Note: Only workflows tracked in workflows-meta.json are removed
   // Untracked cd-*.yml files (manually created) are never removed
+  // Group workflows to remove by provider for better display
+  const workflowsToRemoveByProvider = new Map<DeployProvider, string[]>();
+
   for (const workflowPath of workflowsToRemove) {
-    await removeWorkflow(absoluteProjectDir, workflowPath);
-    if (jsonMode) {
-      logger.event("deploy:sync:removed", { workflow: workflowPath });
+    // Extract provider from workflow path: .github/workflows/cd-<provider>-<name>.yml
+    const match = workflowPath.match(/cd-([^-]+)-/);
+    if (match && match[1]) {
+      const provider = match[1] as DeployProvider;
+      if (!workflowsToRemoveByProvider.has(provider)) {
+        workflowsToRemoveByProvider.set(provider, []);
+      }
+      workflowsToRemoveByProvider.get(provider)!.push(workflowPath);
     } else {
-      // workflowPath is already relative, pass it directly
-      human?.trackRemoved(workflowPath);
+      // Fallback: if we can't extract provider, add to a special group
+      if (!workflowsToRemoveByProvider.has("docker" as DeployProvider)) {
+        workflowsToRemoveByProvider.set("docker" as DeployProvider, []);
+      }
+      workflowsToRemoveByProvider.get("docker" as DeployProvider)!.push(workflowPath);
+    }
+  }
+
+  // Process removals grouped by provider
+  for (const [provider, workflowPaths] of workflowsToRemoveByProvider.entries()) {
+    const providerName = getProviderName(provider);
+
+    if (!jsonMode && workflowPaths.length > 0) {
+      human?.startProvider(providerName);
+    }
+
+    for (const workflowPath of workflowPaths) {
+      await removeWorkflow(absoluteProjectDir, workflowPath);
+      if (jsonMode) {
+        logger.event("deploy:sync:removed", { workflow: workflowPath });
+      } else {
+        // workflowPath is already relative, pass it directly
+        human?.trackRemoved(workflowPath);
+      }
     }
   }
 

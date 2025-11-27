@@ -158,7 +158,7 @@ export class InitConsole extends BaseConsole {
         `${green("✓")} Added .gitignore ${dim("→")} ${gray(this.#relative(path))}`,
       );
     } else {
-      writeFn(`${dim("·")} ${gray("Existing .gitignore kept as-is")}`);
+      writeFn(`${gray("Existing .gitignore kept as-is")}`);
     }
   }
 

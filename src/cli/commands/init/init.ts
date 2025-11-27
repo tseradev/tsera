@@ -375,12 +375,25 @@ export function createDefaultInitHandler(
     const gitignorePath = join(targetDir, ".gitignore");
     const gitignoreExisted = await pathExists(gitignorePath);
     await writeIfMissing(gitignorePath, buildGitignore(), context.force);
-    if (!jsonMode) {
+    if (jsonMode) {
+      logger.event("init:gitignore", {
+        path: gitignorePath,
+        created: !gitignoreExisted || context.force,
+      });
+    } else {
       // If CI is enabled, gitignore is not the last item
       // If CI is disabled, gitignore is the last item before artifacts
       const gitignoreIsLast = !ciEnabled || ciWorkflowsCount === 0;
       human?.gitignoreReady(gitignorePath, context.force || !gitignoreExisted, gitignoreIsLast);
-      if (ciEnabled && ciWorkflowsCount > 0) {
+    }
+
+    if (ciEnabled && ciWorkflowsCount > 0) {
+      if (jsonMode) {
+        logger.event("init:ci:workflows", {
+          count: ciWorkflowsCount,
+          path: ".github/workflows/",
+        });
+      } else {
         // CI workflows is always the last item before artifacts section
         human?.ciWorkflowsReady(ciWorkflowsCount, true);
       }
@@ -395,14 +408,21 @@ export function createDefaultInitHandler(
     const previousState = await readEngineState(targetDir);
     const plan = planDag(dag, previousState, { includeUnchanged: true });
     if (jsonMode) {
-      logger.event("init:plan", { summary: plan.summary });
+      logger.event("init:plan", {
+        summary: plan.summary,
+        entities: dagInputs.length,
+      });
     } else {
       human?.planReady(plan.summary, dagInputs.length);
     }
 
     let nextState = previousState;
     if (plan.summary.changed) {
-      if (!jsonMode) {
+      if (jsonMode) {
+        logger.event("init:apply:start", {
+          summary: plan.summary,
+        });
+      } else {
         human?.applyStart(plan.summary);
       }
       nextState = await applyPlan(plan, previousState, {
@@ -471,7 +491,10 @@ export function createDefaultInitHandler(
     }
 
     // Propose CD configuration before showing "Project ready!"
-    if (!jsonMode && !context.yes) {
+    if (jsonMode) {
+      // In JSON mode, log that CD configuration is skipped (interactive only)
+      logger.event("init:cd:prompt", { skipped: true, reason: "interactive-only" });
+    } else if (!context.yes) {
       console.log("");
       const shouldConfigureCd = await Confirm.prompt({
         message: "Do you want to configure deployment targets (CD) now?",
@@ -482,7 +505,11 @@ export function createDefaultInitHandler(
         // Reuse the logic from tsera deploy init
         const current = await readDeployTargets(targetDir);
         const selectedProviders = await promptProviderSelection(current);
+
         await updateDeployTargets(targetDir, selectedProviders);
+
+        // handleDeploySync will emit its own JSON events if jsonMode is enabled
+        // Note: In non-JSON mode, handleDeploySync will use human-friendly output
         await handleDeploySync({
           projectDir: targetDir,
           global: context.global,
