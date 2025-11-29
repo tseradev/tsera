@@ -281,7 +281,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             await processManager.startModule({
               name: "backend",
               command: "deno",
-              args: ["run", "-A", "--watch", "app/back/main.ts"],
+              args: ["run", "-A", "--unstable-kv", "--watch", "app/back/main.ts"],
               cwd: projectRoot,
               showLogs: context.logs,
             });
@@ -291,7 +291,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             await processManager.startModule({
               name: "frontend",
               command: "deno",
-              args: ["run", "-A", "npm:vite@^7.1.3", "--config", "config/front/vite.config.ts"],
+              args: ["task", "dev:front"],
               cwd: projectRoot,
               showLogs: context.logs,
             });
@@ -500,7 +500,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       await processManager.startModule({
         name: "backend",
         command: "deno",
-        args: ["run", "-A", "--watch", "app/back/main.ts"],
+        args: ["run", "-A", "--unstable-kv", "--watch", "app/back/main.ts"],
         cwd: projectRoot,
         showLogs: context.logs,
       });
@@ -654,7 +654,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       }, 2000) as unknown as number; // Check every 2 seconds
 
       // Otherwise, wait indefinitely for file changes
-      await new Promise<void>(() => {});
+      await new Promise<void>(() => { });
     } finally {
       if (periodicCheckInterval !== null) {
         clearInterval(periodicCheckInterval);

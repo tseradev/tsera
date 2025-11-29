@@ -420,6 +420,20 @@ import { fresh } from "@fresh/plugin-vite";
 
 export default defineConfig({
   plugins: [fresh()],
+  resolve: {
+    alias: {
+      "preact/debug": "npm:preact@^10.27.2/debug",
+      "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
+    },
+  },
+  ssr: {
+    resolve: {
+      alias: {
+        "preact/debug": "npm:preact@^10.27.2/debug",
+        "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
+      },
+    },
+  },
 });
 `;
 }

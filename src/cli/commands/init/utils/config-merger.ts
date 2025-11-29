@@ -100,41 +100,22 @@ async function mergeDenoConfig(
     // Change nodeModulesDir from "auto" to "manual" for Fresh/Vite compatibility
     baseConfig.nodeModulesDir = "manual";
 
-    // Remove importMap field if present and move imports to root
-    if (baseConfig.importMap) {
-      delete baseConfig.importMap;
+    // Use importMap to reference import_map.json instead of duplicating imports
+    // This avoids duplication and keeps import_map.json as the single source of truth
+    const importMapPath = join(options.targetDir, "import_map.json");
+    if (await exists(importMapPath)) {
+      baseConfig.importMap = "import_map.json";
+      // Remove imports from deno.jsonc since we're using importMap
+      delete baseConfig.imports;
     }
 
     // Merge Fresh tasks
     if (freshDenoConfig.tasks) {
       baseConfig.tasks = {
         ...baseConfig.tasks,
-        "dev:front": "vite --config config/front/vite.config.ts",
-        "build:front": "vite build --config config/front/vite.config.ts",
+        "dev:front": "deno run -A --import-map=import_map.json npm:vite@^7.1.3 --config config/front/vite.config.ts",
+        "build:front": "deno run -A --import-map=import_map.json npm:vite@^7.1.3 build --config config/front/vite.config.ts",
         "start:front": "deno serve -A _fresh/server.js",
-      };
-    }
-
-    // Import everything from import_map.json and merge with Fresh imports
-    const importMapPath = join(options.targetDir, "import_map.json");
-    if (await exists(importMapPath)) {
-      try {
-        const importMapContent = await Deno.readTextFile(importMapPath);
-        const importMap = parseJsonc(importMapContent) as { imports?: Record<string, string> };
-        baseConfig.imports = {
-          ...baseConfig.imports,
-          ...(importMap.imports || {}),
-        };
-      } catch {
-        // Ignore errors
-      }
-    }
-
-    // Merge Fresh imports into deno.jsonc imports
-    if (freshDenoConfig.imports) {
-      baseConfig.imports = {
-        ...baseConfig.imports,
-        ...freshDenoConfig.imports,
       };
     }
 
@@ -183,7 +164,24 @@ async function mergeImportMap(
   result: ComposedTemplate,
 ): Promise<void> {
   const targetPath = join(options.targetDir, "import_map.json");
-  if (!(await exists(targetPath))) return;
+
+  // If import_map.json doesn't exist, copy it from the base template first
+  if (!(await exists(targetPath))) {
+    const baseImportMapPath = join(options.baseDir, "import_map.json");
+    if (await exists(baseImportMapPath)) {
+      const baseContent = await Deno.readTextFile(baseImportMapPath);
+      await Deno.writeTextFile(targetPath, baseContent);
+      result.copiedFiles.push("import_map.json");
+    } else {
+      // If base template doesn't have import_map.json, create a minimal one
+      const minimalImportMap: ImportMap = { imports: {} };
+      await Deno.writeTextFile(
+        targetPath,
+        JSON.stringify(minimalImportMap, null, 2) + "\n",
+      );
+      result.copiedFiles.push("import_map.json");
+    }
+  }
 
   let baseMap: ImportMap;
   try {
@@ -247,33 +245,43 @@ async function mergeImportMap(
 
   baseMap.imports = sortedImports;
 
-  // If Fresh module is enabled, merge imports into deno.jsonc and delete import_map.json
-  const denoConfigPath = join(options.targetDir, "deno.jsonc");
-  if (options.enabledModules.includes("fresh") && await exists(denoConfigPath)) {
-    try {
-      const denoContent = await Deno.readTextFile(denoConfigPath);
-      const denoConfig = parseJsonc(denoContent) as DenoConfig;
+  // Write merged import map (always, for both Fresh and non-Fresh projects)
+  // For Fresh projects, deno.jsonc will reference this via importMap field
+  // For non-Fresh projects, this is the primary import map
+  await Deno.writeTextFile(
+    targetPath,
+    JSON.stringify(baseMap, null, 2) + "\n",
+  );
+  result.mergedFiles.push("import_map.json");
 
-      // Merge imports into deno.jsonc
-      denoConfig.imports = baseMap.imports;
+  // For Fresh projects, ensure deno.jsonc uses importMap to reference import_map.json
+  // This avoids duplication - imports are only in import_map.json
+  // Note: When using --import-map in command line, Deno will ignore importMap in deno.jsonc
+  // This is fine - importMap in deno.jsonc is for Deno commands without --import-map,
+  // and --import-map is needed for vite to work correctly
+  if (options.enabledModules.includes("fresh")) {
+    const denoConfigPath = join(options.targetDir, "deno.jsonc");
+    if (await exists(denoConfigPath)) {
+      try {
+        const denoContent = await Deno.readTextFile(denoConfigPath);
+        const denoConfig = parseJsonc(denoContent) as DenoConfig;
 
-      // Write merged config
-      await Deno.writeTextFile(
-        denoConfigPath,
-        JSON.stringify(denoConfig, null, 2) + "\n",
-      );
+        // Set importMap to reference import_map.json (avoid duplication)
+        // This will be used by Deno commands that don't specify --import-map
+        denoConfig.importMap = "import_map.json";
+        // Remove imports from deno.jsonc since we're using importMap
+        if (denoConfig.imports) {
+          delete denoConfig.imports;
+        }
 
-      // Delete import_map.json as it's no longer needed with Fresh
-      await Deno.remove(targetPath);
-    } catch (error) {
-      console.error("Failed to merge imports into deno.jsonc:", error);
+        // Write updated config
+        await Deno.writeTextFile(
+          denoConfigPath,
+          JSON.stringify(denoConfig, null, 2) + "\n",
+        );
+      } catch (error) {
+        console.error("Failed to update deno.jsonc with importMap:", error);
+      }
     }
-  } else {
-    // Write merged import map for non-Fresh projects
-    await Deno.writeTextFile(
-      targetPath,
-      JSON.stringify(baseMap, null, 2) + "\n",
-    );
-    result.mergedFiles.push("import_map.json");
   }
 }

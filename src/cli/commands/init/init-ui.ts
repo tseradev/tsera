@@ -70,6 +70,18 @@ export class InitConsole extends BaseConsole {
   #hadChanges = false;
 
   /**
+   * Whether git was initialized during project creation.
+   * @private
+   */
+  #gitInitialized = false;
+
+  /**
+   * Whether an initial git commit was created.
+   * @private
+   */
+  #gitCommitted = false;
+
+  /**
    * Normalized project directory for path comparison.
    * @private
    */
@@ -252,6 +264,37 @@ export class InitConsole extends BaseConsole {
   }
 
   /**
+   * Reports successful git initialization.
+   *
+   * @param committed - Whether an initial commit was created
+   */
+  gitInitSuccess(committed: boolean): void {
+    this.#gitInitialized = true;
+    this.#gitCommitted = committed;
+    this.write("");
+    if (committed) {
+      this.write(
+        `${green("✓")} Git repository initialized ${dim("→")} ${gray("Initial commit created")}`,
+      );
+    } else {
+      this.write(
+        `${green("✓")} Git repository initialized ${dim("→")} ${gray("No files to commit")}`,
+      );
+    }
+  }
+
+  /**
+   * Reports a warning when git initialization fails.
+   *
+   * @param error - Error message from git initialization
+   */
+  gitInitWarning(error: string): void {
+    this.write(
+      `${yellow("⚠")} ${gray("Git initialization skipped")} ${dim("→")} ${gray(error)}`,
+    );
+  }
+
+  /**
    * Provides closing guidance on the next recommended steps.
    *
    * Displays success message and suggests next commands to run.
@@ -267,16 +310,24 @@ export class InitConsole extends BaseConsole {
       ? gray("Generated project assets for you.")
       : gray("Project files were already current.");
     this.write(recap);
+    if (this.#gitInitialized) {
+      const gitStatus = this.#gitCommitted
+        ? gray("Git repository initialized with initial commit.")
+        : gray("Git repository initialized (no files to commit).");
+      this.write(gitStatus);
+    }
     this.write("");
     this.write(`${bold(cyan("→"))} ${bold("Next Steps")}`);
     // Format commands like help examples: "    $ command"
     const prompt = brightMagenta("$");
     this.write(`    ${prompt} ${brightMagenta(`cd ${this.#projectLabel}`)}`);
-    this.write(
-      `    ${prompt} ${
-        brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
-      }`,
-    );
+    if (!this.#gitInitialized) {
+      // Only show git init if it wasn't already done
+      this.write(
+        `    ${prompt} ${brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
+        }`,
+      );
+    }
     this.write(`    ${prompt} ${brightMagenta("tsera dev")}`);
     this.write("");
   }

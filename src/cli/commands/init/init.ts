@@ -22,6 +22,7 @@ import { readDeployTargets, updateDeployTargets } from "../../utils/deploy-confi
 import { promptProviderSelection } from "../deploy/deploy-init-ui.ts";
 import { handleDeploySync } from "../deploy/deploy-sync.ts";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
+import { initializeGitRepository } from "./utils/git-init.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -548,11 +549,37 @@ export function createDefaultInitHandler(
       }
     }
 
+    // Initialize git repository if not already initialized (after CD configuration)
+    const gitResult = await initializeGitRepository(targetDir);
+    if (jsonMode) {
+      logger.event("init:git:init", {
+        initialized: gitResult.initialized,
+        committed: gitResult.committed,
+        error: gitResult.error ?? null,
+      });
+    } else if (gitResult.error) {
+      // Log warning in interactive mode if git initialization failed
+      human?.gitInitWarning(gitResult.error);
+    } else if (gitResult.initialized) {
+      human?.gitInitSuccess(gitResult.committed);
+    }
+
     if (jsonMode) {
       logger.info("Project initialized", { directory: targetDir });
-      logger.info("Tip", {
-        next: 'git init && git add -A && git commit -m "feat: boot tsera"',
-      });
+      if (gitResult.initialized && gitResult.committed) {
+        logger.info("Tip", {
+          next: "Git repository initialized with initial commit",
+        });
+      } else if (gitResult.initialized && !gitResult.committed) {
+        logger.info("Tip", {
+          next: "Git repository initialized (no files to commit)",
+        });
+      } else if (!gitResult.initialized && gitResult.error) {
+        logger.info("Tip", {
+          next: 'git init && git add -A && git commit -m "feat: boot tsera"',
+          note: "Git initialization was skipped",
+        });
+      }
     } else {
       human?.complete();
     }
@@ -681,8 +708,7 @@ export function createInitCommand(
 function buildGitignore(): string {
   const content = [
     "# TSera",
-    ".tsera/graph.json",
-    ".tsera/manifest.json",
+    ".tsera/",
     "drizzle/",
     "dist/",
     "node_modules/",
@@ -694,10 +720,6 @@ function buildGitignore(): string {
     "secrets/.env.staging",
     "secrets/.env.prod",
     "!secrets/.env.example",
-    "",
-    "# KV store and salt (local unless using git-crypt)",
-    ".tsera/kv/",
-    ".tsera/salt",
     "",
     "coverage/",
     "*.log",
