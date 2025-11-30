@@ -59,6 +59,15 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     // projectRoot is the directory containing the config (which is in config/ subdirectory)
     // So we need to go up one level from config/tsera.config.ts to get the project root
     const projectRoot = dirname(dirname(initial.configPath));
+
+    // Change to project directory so Deno can resolve imports from deno.jsonc
+    // This is necessary when running from a compiled binary
+    const originalCwd = Deno.cwd();
+    try {
+      Deno.chdir(projectRoot);
+    } catch {
+      // If chdir fails, continue without changing directory
+    }
     let queue = Promise.resolve();
 
     // Create UI console for human-friendly output (only if not JSON mode)
@@ -669,6 +678,12 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         clearInterval(periodicCheckInterval);
       }
       await processManager.stopAll();
+      // Restore original working directory
+      try {
+        Deno.chdir(originalCwd);
+      } catch {
+        // Ignore errors when restoring directory
+      }
       Deno.exit(0);
     };
 

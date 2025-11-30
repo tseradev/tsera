@@ -1,7 +1,6 @@
-import { TseraConfig } from "tsera/cli/definitions.ts";
-
 // TSera configuration (full profile with comments).
-const config: TseraConfig = {
+// @ts-expect-error - TseraConfig type is available at runtime via tsera CLI
+const config = {
   // Toggle generated artifacts controlled by "tsera dev".
   openapi: true,
   docs: true,

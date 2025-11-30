@@ -63,9 +63,7 @@ export const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
   },
   fresh: {
     "fresh": "jsr:@fresh/core@^2.2.0",
-    "fresh/": "jsr:@fresh/core@^2.2.0/",
     "preact": "npm:preact@^10.27.2",
-    "preact/": "npm:preact@^10.27.2/",
     "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
     "preact/debug": "npm:preact@^10.27.2/debug",
     "@preact/signals": "npm:@preact/signals@^2.5.1",

@@ -1,4 +1,4 @@
-import { join } from "../../../shared/path.ts";
+import { join, resolve } from "../../../shared/path.ts";
 import { createDefaultInitHandler } from "../init/init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
 import { assertEquals } from "std/assert";
@@ -27,8 +27,12 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 async function updateImportMapForTests(projectDir: string): Promise<void> {
-  const srcPath = join(Deno.cwd(), "src");
-  const normalizedSrcPath = srcPath.replace(/\\/g, "/");
+  // Use resolve to get absolute path, matching patchImportMapForEnvironment logic
+  const srcPath = resolve(join(Deno.cwd(), "src"));
+  const normalizedPath = srcPath.replace(/\\/g, "/");
+  // Ensure path starts with / for Windows paths in file:// URLs
+  const pathForUrl = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
+  const fileUrl = `file://${pathForUrl}/`;
   
   // Check if import_map.json exists (non-Fresh projects)
   const importMapPath = join(projectDir, "import_map.json");
@@ -37,9 +41,9 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     if (!importMap.imports) {
       importMap.imports = {};
     }
-    importMap.imports["tsera/"] = `file://${normalizedSrcPath}/`;
-    importMap.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
-    importMap.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+    importMap.imports["tsera/"] = fileUrl;
+    importMap.imports["tsera/core/"] = `${fileUrl}core/`;
+    importMap.imports["tsera/cli/"] = `${fileUrl}cli/`;
     await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
   } else {
     // Fresh projects: imports are in deno.jsonc
@@ -52,9 +56,9 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       if (!denoConfig.imports) {
         denoConfig.imports = {};
       }
-      denoConfig.imports["tsera/"] = `file://${normalizedSrcPath}/`;
-      denoConfig.imports["tsera/core/"] = `file://${normalizedSrcPath}/core/`;
-      denoConfig.imports["tsera/cli/"] = `file://${normalizedSrcPath}/cli/`;
+      denoConfig.imports["tsera/"] = fileUrl;
+      denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
+      denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
       await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig, null, 2) + "\n");
     }
   }

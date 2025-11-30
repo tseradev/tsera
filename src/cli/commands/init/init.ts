@@ -177,7 +177,7 @@ function isInsideTSeraRepo(
 }
 
 /**
- * Patches the import_map.json or deno.jsonc in the target directory based on the environment.
+ * Patches the deno.jsonc in the target directory based on the environment.
  *
  * - If the project is created inside the TSera repo (dev mode):
  *   Replaces JSR imports with local relative paths to the source code.
@@ -200,71 +200,20 @@ async function patchImportMapForEnvironment(
     return;
   }
 
-  // Calculate the path from target directory to the TSera src directory
+  // Calculate the absolute path to the TSera src directory
   // templatesRoot is .../templates, so go up one level to get the repo root, then src/
   const repoRoot = dirname(templatesRoot);
   const srcDir = join(repoRoot, "src");
+  const absoluteSrcDir = resolve(srcDir);
 
-  // Calculate relative path from target to src (using POSIX paths for Deno imports)
-  // Normalize both paths to use forward slashes first
-  const normalizedTarget = targetDir.replace(/\\/g, "/");
-  const normalizedSrc = srcDir.replace(/\\/g, "/");
-  let relativePath = posixPath.relative(normalizedTarget, normalizedSrc);
+  // Convert to file:// URL for Deno imports (works from any context)
+  // Normalize path for Windows (forward slashes)
+  const normalizedPath = absoluteSrcDir.replace(/\\/g, "/");
+  // Ensure path starts with / for Windows paths
+  const pathForUrl = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
+  const fileUrl = `file://${pathForUrl}/`;
 
-  // Ensure the path ends with a slash and starts with ./ or ../
-  if (!relativePath.startsWith(".")) {
-    relativePath = `./${relativePath}`;
-  }
-  if (!relativePath.endsWith("/")) {
-    relativePath = `${relativePath}/`;
-  }
-
-  // Try import_map.json first (non-Fresh projects)
-  const importMapPath = join(targetDir, "import_map.json");
-  if (await pathExists(importMapPath)) {
-    const content = await Deno.readTextFile(importMapPath);
-    let importMap: { imports?: Record<string, string> };
-
-    try {
-      importMap = JSON.parse(content);
-    } catch {
-      // If parsing fails, skip patching
-      return;
-    }
-
-    if (!importMap.imports) {
-      return;
-    }
-
-    // Replace JSR imports with local paths for dev mode
-    // Only patch imports that start with jsr:@tsera/
-    for (const [key, value] of Object.entries(importMap.imports)) {
-      if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
-        if (key === "tsera/") {
-          importMap.imports[key] = relativePath;
-        }
-      }
-    }
-
-    // Write back with sorted keys for consistency
-    const sortedImports = Object.keys(importMap.imports)
-      .sort()
-      .reduce((acc: Record<string, string>, key) => {
-        acc[key] = importMap.imports![key];
-        return acc;
-      }, {});
-
-    const updatedContent = JSON.stringify(
-      { ...importMap, imports: sortedImports },
-      null,
-      2,
-    ) + "\n";
-
-    await safeWrite(importMapPath, normalizeNewlines(updatedContent));
-    return;
-  }
-
-  // Try deno.jsonc (Fresh projects)
+  // Patch deno.jsonc
   const denoConfigPath = join(targetDir, "deno.jsonc");
   if (await pathExists(denoConfigPath)) {
     const content = await Deno.readTextFile(denoConfigPath);
@@ -281,12 +230,13 @@ async function patchImportMapForEnvironment(
       return;
     }
 
-    // Replace JSR imports with local paths for dev mode
+    // Replace JSR imports with absolute file:// URLs for dev mode
+    // This ensures imports resolve correctly when loading config dynamically from the binary
     // Only patch imports that start with jsr:@tsera/
     for (const [key, value] of Object.entries(denoConfig.imports)) {
       if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
         if (key === "tsera/") {
-          denoConfig.imports[key] = relativePath;
+          denoConfig.imports[key] = fileUrl;
         }
       }
     }
@@ -374,7 +324,7 @@ export function createDefaultInitHandler(
       ciWorkflowsCount = await applyCiModule(targetDir, templatesRoot, context.force);
     }
 
-    // Patch import_map.json based on environment (local dev vs production)
+    // Patch deno.jsonc based on environment (local dev vs production)
     await patchImportMapForEnvironment(targetDir, templatesRoot);
 
     if (jsonMode) {

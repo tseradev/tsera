@@ -37,11 +37,6 @@ export function generateConfigFile(
   const project = createTSeraProject();
   const sourceFile = createInMemorySourceFile(project, "tsera.config.ts");
 
-  // Add import for TseraConfig type
-  addImportDeclaration(sourceFile, "tsera/cli/definitions.ts", {
-    namedImports: ["TseraConfig"],
-  });
-
   // Build the modules object if any modules are specified
   const hasModules = Object.keys(modules).length > 0;
   const modulesConfig = hasModules
@@ -56,9 +51,12 @@ export function generateConfigFile(
     : "";
 
   // Add the config constant with proper comments
+  // Note: We don't import TseraConfig type to avoid import resolution issues
+  // when loading config dynamically from a compiled binary
   sourceFile.addStatements(`
 // TSera configuration (full profile with comments).
-const config: TseraConfig = {
+// @ts-expect-error - TseraConfig type is available at runtime via tsera CLI
+const config = {
   // Toggle generated artifacts controlled by "tsera dev".
   openapi: true,
   docs: true,
@@ -97,7 +95,11 @@ export default config;
 
   // Format and get the generated text
   sourceFile.formatText();
-  const text = sourceFile.getFullText();
-  // Remove trailing newline to match golden file
-  return text.endsWith("\n") ? text.slice(0, -1) : text;
+  let text = sourceFile.getFullText();
+  // Remove leading newline if present (TS-Morph sometimes adds one)
+  if (text.startsWith("\n")) {
+    text = text.slice(1);
+  }
+  // Ensure trailing newline to match golden file
+  return text.endsWith("\n") ? text : `${text}\n`;
 }

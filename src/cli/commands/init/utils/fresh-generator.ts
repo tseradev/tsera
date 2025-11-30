@@ -48,7 +48,7 @@ export async function generateFreshProject(
       args: [
         "run",
         "-A",
-        "jsr:@fresh/init@2.2.2",
+        "jsr:@fresh/init",
         ".",
         "--yes",
       ],
@@ -73,7 +73,6 @@ export async function generateFreshProject(
       const entry of walk(tempDir, {
         includeDirs: false,
         skip: [
-          /node_modules/,
           /\.deno/,
           /_fresh/,
           /\.git/,
@@ -141,18 +140,13 @@ export async function generateFreshProject(
     );
     createdFiles.push("README.md");
 
-    // Write vite.config.ts to config/front/ instead of app/front/
-    if (freshDenoConfig) {
-      const projectRoot = dirname(dirname(targetDir)); // Go up from app/front to project root
-      const viteConfigDir = join(projectRoot, "config", "front");
-      await ensureDir(viteConfigDir);
-
-      const viteConfigPath = join(viteConfigDir, "vite.config.ts");
-      await Deno.writeTextFile(
-        viteConfigPath,
-        generateViteConfig(),
-      );
-    }
+    // Generate TSera-specific vite.config.ts (Fresh's default config is skipped)
+    const viteConfigPath = join(targetDir, "vite.config.ts");
+    await Deno.writeTextFile(
+      viteConfigPath,
+      generateViteConfig(),
+    );
+    createdFiles.push("vite.config.ts");
 
     return createdFiles;
   } finally {
@@ -172,18 +166,18 @@ export async function generateFreshProject(
  * @returns True if file should be skipped
  */
 function shouldSkipFile(relativePath: string): boolean {
-  // Skip node_modules, deno.lock, and other generated files
+  // Skip deno.lock and other generated files
   // Also skip deno.json as it will be merged with the base deno.jsonc
   // Also skip README.md as we'll provide our own TSera-specific one
-  // Also skip vite.config.ts as it will be moved to config/vite/
+  // Also skip vite.config.ts as we generate our own TSera-specific configuration
+  // Note: node_modules/ is NOT skipped - Fresh needs it
   const skipPatterns = [
-    "node_modules/",
     "deno.lock",
     "_fresh/",
     ".git/",
     "deno.json", // Will be merged with base deno.jsonc
     "README.md", // Will be replaced with TSera-specific README
-    "vite.config.ts", // Will be moved to config/vite/
+    "vite.config.ts", // Will be replaced with TSera-specific Vite config
   ];
 
   return skipPatterns.some((pattern) => relativePath.includes(pattern) || relativePath === pattern);
@@ -228,29 +222,14 @@ async function adaptFreshFilesWithTSMorph(targetDir: string): Promise<void> {
     const hasSecretsInit = fullText.includes("config/secrets/manager.ts");
 
     if (!hasSecretsInit) {
-      // Find the app export to insert secrets init after imports
-      const appExport = sourceFile.getVariableDeclaration("app") ||
-        sourceFile.getVariableDeclaration((v) => v.getName() === "app");
-
-      if (appExport) {
-        // Insert secrets initialization before app export using insertText on the parent
-        const appStatement = appExport.getParent();
-        if (appStatement) {
-          sourceFile.insertText(
-            appStatement.getStart(),
-            `// Initialize TSera secrets if available\ntry {\n  await import("../../config/secrets/manager.ts");\n} catch {\n  // Secrets module not enabled, will use Deno.env\n}\n\n`,
-          );
-        }
-      } else {
-        // Fallback: insert after last import
-        const imports = sourceFile.getImportDeclarations();
-        const lastImport = imports[imports.length - 1];
-        if (lastImport) {
-          sourceFile.insertText(
-            lastImport.getEnd(),
-            `\n\n// Initialize TSera secrets if available\ntry {\n  await import("../../config/secrets/manager.ts");\n} catch {\n  // Secrets module not enabled, will use Deno.env\n}\n`,
-          );
-        }
+      // Insert secrets initialization after last import
+      const imports = sourceFile.getImportDeclarations();
+      const lastImport = imports[imports.length - 1];
+      if (lastImport) {
+        sourceFile.insertText(
+          lastImport.getEnd(),
+          `\n\n// Initialize TSera secrets if available\ntry {\n  await import("../../config/secrets/manager.ts");\n} catch {\n  // Secrets module not enabled, will use Deno.env\n}\n`,
+        );
       }
     }
 
@@ -283,80 +262,6 @@ async function adaptFreshFilesWithTSMorph(targetDir: string): Promise<void> {
   }
 }
 
-/**
- * Adapts main.ts to integrate TSera secrets (legacy - now handled by TS-Morph).
- * @deprecated Use adaptFreshFilesWithTSMorph instead
- */
-function _adaptMainTs(content: string): string {
-  // Add TSera secrets initialization at the top, after imports
-  const secretsInit = `
-// Initialize TSera secrets if available
-try {
-  await import("../../config/secrets/manager.ts");
-} catch {
-  // Secrets module not enabled, will use Deno.env
-}
-
-`;
-
-  // Insert secrets init after imports but before app definition
-  const appExportIndex = content.indexOf("export const app");
-  if (appExportIndex !== -1) {
-    content = content.slice(0, appExportIndex) + secretsInit + content.slice(appExportIndex);
-  }
-
-  // Add port adaptation at the end if not present
-  if (!content.includes("app.listen") && !content.includes("if (import.meta.main)")) {
-    const portAdaptation = `
-if (import.meta.main) {
-  // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
-  const port = (globalThis as { tsera?: { env: (key: string) => unknown } }).tsera?.env(
-    "FRESH_PORT",
-  ) as number ??
-    Number(Deno.env.get("PORT") ?? 8001);
-  
-  await app.listen({ port });
-  console.log(\`Fresh server listening on http://localhost:\${port}\`);
-}
-`;
-    content = content.trimEnd() + "\n" + portAdaptation;
-  }
-
-  return content;
-}
-
-/**
- * Adapts _app.tsx for TSera branding (legacy - now handled by TS-Morph).
- * @deprecated Use adaptFreshFilesWithTSMorph instead
- */
-function _adaptAppTsx(content: string): string {
-  // Update title to TSera (handles both Fresh generated title and custom titles)
-  content = content.replace(
-    /<title>.*?<\/title>/,
-    "<title>TSera App</title>",
-  );
-
-  return content;
-}
-
-/**
- * Adapts index.tsx for TSera example (legacy - not currently used).
- * @deprecated
- */
-function _adaptIndexTsx(content: string): string {
-  // Keep the structure but update branding
-  content = content.replace(
-    /Welcome to Fresh/g,
-    "Welcome to TSera",
-  );
-
-  content = content.replace(
-    /Fresh counter/g,
-    "TSera Counter",
-  );
-
-  return content;
-}
 
 /**
  * Generates a TSera-specific README.md for the Fresh frontend.
@@ -402,7 +307,7 @@ deno task start:front
 
 ## Configuration
 
-The Vite configuration for the frontend is located at \`config/front/vite.config.ts\`.
+The Vite configuration for the frontend is located at \`app/front/vite.config.ts\`.
 
 ## Learn More
 
@@ -413,6 +318,9 @@ The Vite configuration for the frontend is located at \`config/front/vite.config
 
 /**
  * Generates Vite configuration for TSera Fresh frontend.
+ * 
+ * Uses minimal configuration matching Fresh's standard setup.
+ * The Fresh plugin handles most of the configuration automatically.
  */
 function generateViteConfig(): string {
   return `import { defineConfig } from "vite";
@@ -420,20 +328,6 @@ import { fresh } from "@fresh/plugin-vite";
 
 export default defineConfig({
   plugins: [fresh()],
-  resolve: {
-    alias: {
-      "preact/debug": "npm:preact@^10.27.2/debug",
-      "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
-    },
-  },
-  ssr: {
-    resolve: {
-      alias: {
-        "preact/debug": "npm:preact@^10.27.2/debug",
-        "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
-      },
-    },
-  },
 });
 `;
 }

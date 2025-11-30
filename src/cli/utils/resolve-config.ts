@@ -1,6 +1,7 @@
-import { resolve } from "../../shared/path.ts";
+import { join, resolve } from "../../shared/path.ts";
 import type { ResolvedTseraConfig, TseraConfig } from "../definitions.ts";
 import { resolveProject } from "./project.ts";
+import { pathExists } from "./fsx.ts";
 
 /**
  * Converts a file path to a file:// URL.
@@ -193,16 +194,37 @@ export async function resolveConfig(startDir: string): Promise<ResolvedTseraConf
     ? `${fileUrl.href}&${cacheBust}`
     : `${fileUrl.href}?${cacheBust}`;
 
-  const mod = await import(importUrl);
-  const config: unknown = mod.default ?? mod.config ?? mod.CONFIG;
-  if (!config) {
-    throw new Error(`No configuration exported by ${project.configPath}`);
+  // Change to project directory so Deno can resolve imports from deno.jsonc
+  // This is necessary when loading config dynamically from a binary
+  const originalCwd = Deno.cwd();
+  let changedDir = false;
+  try {
+    // Check if deno.jsonc exists in project root
+    const denoConfigPath = join(project.rootDir, "deno.jsonc");
+    if (await pathExists(denoConfigPath)) {
+      Deno.chdir(project.rootDir);
+      changedDir = true;
+    }
+  } catch {
+    // If pathExists fails or other error, continue without changing directory
   }
 
-  validateConfig(config as TseraConfig);
+  try {
+    const mod = await import(importUrl);
+    const config: unknown = mod.default ?? mod.config ?? mod.CONFIG;
+    if (!config) {
+      throw new Error(`No configuration exported by ${project.configPath}`);
+    }
 
-  return {
-    configPath: project.configPath,
-    config: config as TseraConfig,
-  };
+    validateConfig(config as TseraConfig);
+
+    return {
+      configPath: project.configPath,
+      config: config as TseraConfig,
+    };
+  } finally {
+    if (changedDir) {
+      Deno.chdir(originalCwd);
+    }
+  }
 }

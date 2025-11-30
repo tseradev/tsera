@@ -39,7 +39,7 @@ export interface ActiveModules {
  *
  * A module is considered active if its entry point and configuration exist:
  * - Backend: `app/back/main.ts` exists
- * - Frontend: `app/front/main.ts` and `config/front/vite.config.ts` exist
+ * - Frontend: `app/front/main.ts` and `app/front/vite.config.ts` exist
  *
  * @param projectDir - The root directory of the TSera project
  * @returns Object indicating which modules are active
@@ -58,7 +58,7 @@ export interface ActiveModules {
 export async function detectActiveModules(projectDir: string): Promise<ActiveModules> {
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendEntry = join(projectDir, "app", "front", "main.ts");
-  const frontendConfig = join(projectDir, "config", "front", "vite.config.ts");
+  const frontendConfig = join(projectDir, "app", "front", "vite.config.ts");
 
   const [hasBackend, hasFrontend, hasFrontendConfig] = await Promise.all([
     exists(backendEntry),
