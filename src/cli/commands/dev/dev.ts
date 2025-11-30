@@ -490,11 +490,14 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     await executeCycle("initial");
 
     // Display detected modules after coherence check
-    if (activeModules.backend || activeModules.frontend) {
+    if (
+      activeModules.backend || activeModules.frontend || activeModules.secrets
+    ) {
       if (context.global.json) {
         const modules: Record<string, boolean> = {};
         if (activeModules.backend) modules.backend = true;
         if (activeModules.frontend) modules.frontend = true;
+        if (activeModules.secrets) modules.secrets = true;
         logger.event("modules:detected", { modules });
       } else if (uiConsole) {
         uiConsole.modulesSummary(activeModules);
@@ -509,7 +512,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       await processManager.startModule({
         name: "backend",
         command: "deno",
-        args: ["run", "-A", "--unstable-kv", "--watch", "app/back/main.ts"],
+        args: ["task", "dev:back"],
         cwd: projectRoot,
         showLogs: context.logs,
       });

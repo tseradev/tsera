@@ -101,10 +101,17 @@ export class DevConsole extends BaseConsole {
    *
    * @param modules - Object indicating which modules are active
    */
-  modulesSummary(modules: { backend?: boolean; frontend?: boolean }): void {
+  modulesSummary(
+    modules: {
+      backend?: boolean;
+      frontend?: boolean;
+      secrets?: boolean;
+    },
+  ): void {
     const active: string[] = [];
     if (modules.backend) active.push("Backend");
     if (modules.frontend) active.push("Frontend");
+    if (modules.secrets) active.push("Secrets");
 
     if (active.length > 0) {
       this.write("");
@@ -126,6 +133,8 @@ export class DevConsole extends BaseConsole {
    * @param name - Module name (e.g., "backend", "frontend")
    */
   moduleStarting(name: string): void {
+    // Stop spinner before displaying module messages to avoid formatting issues
+    this.#spinner.stop();
     const label = name.charAt(0).toUpperCase() + name.slice(1);
     // Pad label to 10 characters to align the separator
     const paddedLabel = label.padEnd(10);
@@ -179,6 +188,8 @@ export class DevConsole extends BaseConsole {
    * @param url - Optional URL where the module is running
    */
   moduleReady(name: string, url?: string): void {
+    // Stop spinner before displaying module messages to avoid formatting issues
+    this.#spinner.stop();
     const label = name.charAt(0).toUpperCase() + name.slice(1);
     // Pad label to 10 characters to align the separator
     const paddedLabel = label.padEnd(10);
@@ -252,24 +263,22 @@ export class DevConsole extends BaseConsole {
       if (affectedSteps.length > 0) {
         this.write("");
         this.write(
-          `🔍 ${bold("Change detected")} ${dim("│")} ${
-            yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
+          `🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
           }`,
         );
         for (const step of affectedSteps) {
           const symbol = step.kind === "create"
             ? green("✚")
             : step.kind === "update"
-            ? yellow("↻")
-            : red("✖");
+              ? yellow("↻")
+              : red("✖");
           const action = step.kind === "create"
             ? gray("create")
             : step.kind === "update"
-            ? gray("update")
-            : gray("delete");
+              ? gray("update")
+              : gray("delete");
           this.writeMiddle(
-            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${
-              gray(step.node.id)
+            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)
             }`,
           );
         }
@@ -311,13 +320,14 @@ export class DevConsole extends BaseConsole {
         // No changes were needed or applied
         this.#spinner.stop();
         this.write("");
-        this.#spinner.succeed(
-          `${bold("Project is coherent")} ${dim("│")} ${gray(`${entityInfo} validated`)}`,
+        this.write(
+          `${green("✔")} ${bold("Project is coherent")} ${dim("│")} ${gray(`${entityInfo} validated`)}`,
         );
       }
       // If changes were applied, applyComplete already showed the success message
 
       if (this.#watchEnabled) {
+        this.write("");
         this.writeLast(`${gray("Ready. Watching for file changes…")}`);
       } else if (!appliedChanges) {
         this.write("");
@@ -333,8 +343,10 @@ export class DevConsole extends BaseConsole {
         this.write("");
       }
     } else {
-      this.#spinner.warn(
-        `${bold("Inconsistencies detected")} ${dim("│")} ${gray(`${entityInfo} need sync`)}`,
+      this.#spinner.stop();
+      this.write("");
+      this.write(
+        `${yellow("⚠")} ${bold("Inconsistencies detected")} ${dim("│")} ${gray(`${entityInfo} need sync`)}`,
       );
       this.write("");
       this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
@@ -373,8 +385,7 @@ export class DevConsole extends BaseConsole {
     this.#spinner.stop();
     this.write("");
     this.write(
-      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${
-        gray("Skipping coherence check until modules are fixed")
+      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${gray("Skipping coherence check until modules are fixed")
       }`,
     );
     // Don't add extra blank line - let the next message decide spacing
@@ -410,8 +421,8 @@ export class DevConsole extends BaseConsole {
         const statusText = info.status === "error"
           ? red("Error")
           : info.status === "starting"
-          ? yellow("Starting")
-          : gray(info.status);
+            ? yellow("Starting")
+            : gray(info.status);
         this.writeMiddle(`${cyan(label)} ${dim("│")} ${statusText}`);
       }
     } else {
@@ -457,18 +468,18 @@ export class DevConsole extends BaseConsole {
       const statusIcon = info.status === "ready"
         ? green("✓")
         : info.status === "error"
-        ? red("✗")
-        : info.status === "starting"
-        ? yellow("◆")
-        : gray("○");
+          ? red("✗")
+          : info.status === "starting"
+            ? yellow("◆")
+            : gray("○");
 
       const statusText = info.status === "ready"
         ? green("Ready")
         : info.status === "error"
-        ? red("Error")
-        : info.status === "starting"
-        ? yellow("Starting")
-        : gray("Stopped");
+          ? red("Error")
+          : info.status === "starting"
+            ? yellow("Starting")
+            : gray("Stopped");
 
       if (info.url) {
         const urlInfo = this.formatUrlInfo(info.url);

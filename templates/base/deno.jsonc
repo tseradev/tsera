@@ -5,7 +5,8 @@
     "strict": true
   },
   "tasks": {
-    "dev": "deno run -A app/back/main.ts",
+    "dev": "tsera dev",
+    "dev:back": "deno run -A --unstable-kv --watch app/back/main.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test -A --fail-fast"

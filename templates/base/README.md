@@ -19,7 +19,8 @@ A fullstack TypeScript project powered by TSera - continuous coherence for moder
 
 ```bash
 # Start all active modules (backend + frontend) with TSera dev
-tsera dev
+deno task dev
+# Or use directly: tsera dev
 
 # Show all module logs in real-time
 tsera dev --logs
@@ -45,7 +46,7 @@ deno task lint
 
 ```bash
 # Start backend only
-deno task dev
+deno task dev:back
 
 # Start frontend only
 deno task dev:front

@@ -32,6 +32,8 @@ export interface ActiveModules {
   backend: boolean;
   /** Frontend module (Fresh SSR) is present */
   frontend: boolean;
+  /** Secrets module (type-safe secrets management) is present */
+  secrets: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export interface ActiveModules {
  * A module is considered active if its entry point and configuration exist:
  * - Backend: `app/back/main.ts` exists
  * - Frontend: `app/front/main.ts` and `app/front/vite.config.ts` exist
+ * - Secrets: `config/secrets/manager.ts` exists
  *
  * @param projectDir - The root directory of the TSera project
  * @returns Object indicating which modules are active
@@ -59,25 +62,35 @@ export async function detectActiveModules(projectDir: string): Promise<ActiveMod
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendEntry = join(projectDir, "app", "front", "main.ts");
   const frontendConfig = join(projectDir, "app", "front", "vite.config.ts");
+  const secretsManager = join(projectDir, "config", "secrets", "manager.ts");
 
-  const [hasBackend, hasFrontend, hasFrontendConfig] = await Promise.all([
+  const [
+    hasBackend,
+    hasFrontend,
+    hasFrontendConfig,
+    hasSecrets,
+  ] = await Promise.all([
     exists(backendEntry),
     exists(frontendEntry),
     exists(frontendConfig),
+    exists(secretsManager),
   ]);
 
   return {
     backend: hasBackend,
     frontend: hasFrontend && hasFrontendConfig,
+    secrets: hasSecrets,
   };
 }
 
 /**
  * Gets a human-readable name for a module.
  *
- * @param module - The module identifier ("backend" | "frontend")
+ * @param module - The module identifier
  * @returns Capitalized module name
  */
-export function getModuleName(module: "backend" | "frontend"): string {
+export function getModuleName(
+  module: "backend" | "frontend" | "secrets",
+): string {
   return module.charAt(0).toUpperCase() + module.slice(1);
 }

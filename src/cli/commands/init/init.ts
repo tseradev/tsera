@@ -1,4 +1,4 @@
-import { dirname, join, posixPath, resolve } from "../../../shared/path.ts";
+import { dirname, join, posixPath, relative, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { Command } from "cliffy/command";
 import { Confirm } from "cliffy/prompt";
@@ -200,18 +200,18 @@ async function patchImportMapForEnvironment(
     return;
   }
 
-  // Calculate the absolute path to the TSera src directory
+  // Calculate the relative path from targetDir to the TSera src directory
   // templatesRoot is .../templates, so go up one level to get the repo root, then src/
   const repoRoot = dirname(templatesRoot);
   const srcDir = join(repoRoot, "src");
   const absoluteSrcDir = resolve(srcDir);
+  const absoluteTargetDir = resolve(targetDir);
 
-  // Convert to file:// URL for Deno imports (works from any context)
-  // Normalize path for Windows (forward slashes)
-  const normalizedPath = absoluteSrcDir.replace(/\\/g, "/");
-  // Ensure path starts with / for Windows paths
-  const pathForUrl = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
-  const fileUrl = `file://${pathForUrl}/`;
+  // Calculate relative path from targetDir to srcDir
+  // Use posixPath.relative to ensure forward slashes for Deno imports
+  const relativePath = posixPath.relative(absoluteTargetDir, absoluteSrcDir);
+  // Ensure path ends with / for directory imports
+  const relativeImportPath = relativePath.endsWith("/") ? relativePath : `${relativePath}/`;
 
   // Patch deno.jsonc
   const denoConfigPath = join(targetDir, "deno.jsonc");
@@ -230,14 +230,27 @@ async function patchImportMapForEnvironment(
       return;
     }
 
-    // Replace JSR imports with absolute file:// URLs for dev mode
-    // This ensures imports resolve correctly when loading config dynamically from the binary
+    // Replace JSR imports with relative paths for dev mode
+    // This ensures imports resolve correctly from the project directory
     // Only patch imports that start with jsr:@tsera/
     for (const [key, value] of Object.entries(denoConfig.imports)) {
       if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
         if (key === "tsera/") {
-          denoConfig.imports[key] = fileUrl;
+          denoConfig.imports[key] = relativeImportPath;
         }
+      }
+    }
+
+    // Patch dev task to use deno run from source instead of tsera binary
+    // This ensures the task works when tsera is not installed globally
+    if (denoConfig.tasks && typeof denoConfig.tasks === "object") {
+      const tasks = denoConfig.tasks as Record<string, string>;
+      if (tasks.dev === "tsera dev") {
+        // Calculate relative path from targetDir to src/cli/main.ts
+        const cliMainPath = join(repoRoot, "src", "cli", "main.ts");
+        const absoluteCliMainPath = resolve(cliMainPath);
+        const cliRelativePath = posixPath.relative(absoluteTargetDir, absoluteCliMainPath);
+        tasks.dev = `deno run -A ${cliRelativePath} dev`;
       }
     }
 

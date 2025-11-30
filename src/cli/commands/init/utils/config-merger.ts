@@ -111,11 +111,15 @@ async function mergeDenoConfig(
 
     // Merge Fresh tasks (adapted for TSera structure with app/front/)
     // IMPORTANT: Run Vite from app/front/ directory so it can correctly resolve Fresh's internal modules
+    // Use vite version from MODULE_DEPENDENCIES to ensure consistency
     if (freshDenoConfig.tasks) {
+      // Extract vite version from MODULE_DEPENDENCIES
+      const viteCommand = MODULE_DEPENDENCIES.fresh.vite;
+
       baseConfig.tasks = {
         ...baseConfig.tasks,
-        "dev:front": "cd app/front && deno run -A npm:vite@^7.1.3",
-        "build:front": "cd app/front && deno run -A npm:vite@^7.1.3 build",
+        "dev:front": `cd app/front && deno run -A ${viteCommand}`,
+        "build:front": `cd app/front && deno run -A ${viteCommand} build`,
         "start:front": "deno serve -A _fresh/server.js",
         "update:front": "deno run -A -r jsr:@fresh/update app/front",
       };
