@@ -1,4 +1,4 @@
-import { dirname, join, posixPath, relative, resolve } from "../../../shared/path.ts";
+import { dirname, join, relative, resolve } from "../../../shared/path.ts";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { Command } from "cliffy/command";
 import { Confirm } from "cliffy/prompt";
@@ -208,8 +208,8 @@ async function patchImportMapForEnvironment(
   const absoluteTargetDir = resolve(targetDir);
 
   // Calculate relative path from targetDir to srcDir
-  // Use posixPath.relative to ensure forward slashes for Deno imports
-  const relativePath = posixPath.relative(absoluteTargetDir, absoluteSrcDir);
+  // Use native relative function (handles Windows paths correctly) and convert to POSIX
+  const relativePath = relative(absoluteTargetDir, absoluteSrcDir).replace(/\\/g, "/");
   // Ensure path ends with / for directory imports
   const relativeImportPath = relativePath.endsWith("/") ? relativePath : `${relativePath}/`;
 
@@ -217,10 +217,10 @@ async function patchImportMapForEnvironment(
   const denoConfigPath = join(targetDir, "deno.jsonc");
   if (await pathExists(denoConfigPath)) {
     const content = await Deno.readTextFile(denoConfigPath);
-    let denoConfig: { imports?: Record<string, string> };
+    let denoConfig: { imports?: Record<string, string>; tasks?: Record<string, string> };
 
     try {
-      denoConfig = parseJsonc(content) as { imports?: Record<string, string> };
+      denoConfig = parseJsonc(content) as { imports?: Record<string, string>; tasks?: Record<string, string> };
     } catch {
       // If parsing fails, skip patching
       return;
@@ -249,8 +249,32 @@ async function patchImportMapForEnvironment(
         // Calculate relative path from targetDir to src/cli/main.ts
         const cliMainPath = join(repoRoot, "src", "cli", "main.ts");
         const absoluteCliMainPath = resolve(cliMainPath);
-        const cliRelativePath = posixPath.relative(absoluteTargetDir, absoluteCliMainPath);
-        tasks.dev = `deno run -A ${cliRelativePath} dev`;
+
+        // Normalize paths to forward slashes for consistent comparison
+        const targetNormalized = absoluteTargetDir.replace(/\\/g, "/");
+        const cliNormalized = absoluteCliMainPath.replace(/\\/g, "/");
+        const targetParts = targetNormalized.split("/").filter(p => p && p !== ".");
+        const cliParts = cliNormalized.split("/").filter(p => p && p !== ".");
+
+        // Find common prefix (case-insensitive on Windows)
+        let commonLength = 0;
+        const minLength = Math.min(targetParts.length, cliParts.length);
+        for (let i = 0; i < minLength; i++) {
+          const targetPart = Deno.build.os === "windows" ? targetParts[i].toLowerCase() : targetParts[i];
+          const cliPart = Deno.build.os === "windows" ? cliParts[i].toLowerCase() : cliParts[i];
+          if (targetPart === cliPart) {
+            commonLength++;
+          } else {
+            break;
+          }
+        }
+
+        // Build relative path
+        const upLevels = targetParts.length - commonLength;
+        const downParts = cliParts.slice(commonLength);
+        const cliRelativePath = upLevels > 0 ? "../".repeat(upLevels) + downParts.join("/") : downParts.join("/");
+
+        tasks.dev = `deno run -A --unstable-kv ${cliRelativePath} dev`;
       }
     }
 

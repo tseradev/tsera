@@ -25,8 +25,22 @@ export interface DevConsoleOptions {
   projectDir: string;
   /** Whether watch mode is enabled */
   watchEnabled: boolean;
+  /** Whether logs mode is enabled (shows module logs in real-time) */
+  logsMode?: boolean;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
+}
+
+/**
+ * Status information for a module (secrets, backend, frontend).
+ */
+export interface ModuleStatus {
+  /** Current status of the module */
+  status: "stopped" | "starting" | "ready" | "error";
+  /** URL where the module is accessible (if ready) */
+  url?: string;
+  /** Error message (if status is error) */
+  error?: string;
 }
 
 /**
@@ -35,20 +49,6 @@ export interface DevConsoleOptions {
  * Provides visual feedback during development mode, including file
  * watch events, plan computation, artifact generation, and coherence
  * status updates.
- *
- * @example
- * ```typescript
- * const console = new DevConsole({
- *   projectDir: "/path/to/project",
- *   watchEnabled: true,
- * });
- *
- * console.start();
- * console.cycleStart("initial", []);
- * console.planSummary({ create: 2, update: 1, delete: 0 });
- * console.applyComplete(3, true);
- * console.complete("clean", 5);
- * ```
  */
 export class DevConsole extends BaseConsole {
   /**
@@ -63,11 +63,61 @@ export class DevConsole extends BaseConsole {
    */
   #projectLabel: string;
 
+
   /**
-   * Whether watch mode is enabled.
+   * Whether logs mode is enabled (shows module logs in real-time).
    * @private
    */
-  #watchEnabled: boolean;
+  #logsMode: boolean;
+
+  /**
+   * Number of lines currently occupied by the module list.
+   * Used to clear the list before re-rendering.
+   * @private
+   */
+  #moduleListLines = 0;
+
+  /**
+   * Whether a render is currently in progress.
+   * @private
+   */
+  #rendering = false;
+
+  /**
+   * Debounce timer for renderModules.
+   * @private
+   */
+  #renderTimer?: number;
+
+  /**
+   * Pending modules to render (last state wins).
+   * @private
+   */
+  #pendingModules?: Map<string, ModuleStatus>;
+
+  /**
+   * Last rendered module state (for comparison).
+   * @private
+   */
+  #lastRenderedState?: string;
+
+  /**
+   * Timer for the footer loader animation.
+   * @private
+   */
+  #loaderTimer?: number;
+
+  /**
+   * Current frame index for the loader animation.
+   * @private
+   */
+  #loaderFrame = 0;
+
+  /**
+   * Spinner frames for the loader animation (from TerminalSpinner).
+   * @private
+   */
+  #loaderFrames = [gray("⠋"), gray("⠙"), gray("⠹"), gray("⠸"), gray("⠼"), gray("⠴"), gray("⠦"), gray("⠧"), gray("⠇"), gray("⠏")];
 
   /**
    * Creates a new dev console instance.
@@ -78,220 +128,222 @@ export class DevConsole extends BaseConsole {
     super(options.writer);
     this.#spinner = new TerminalSpinner(options.writer);
     this.#projectLabel = formatProjectLabel(options.projectDir);
-    this.#watchEnabled = options.watchEnabled;
+    this.#logsMode = options.logsMode ?? false;
+  }
+
+  /**
+   * Writes a line to stdout.
+   * Overrides BaseConsole.write to use raw output for better control.
+   */
+  protected override write(line: string): void {
+    this.writeRaw(line + "\n");
   }
 
   /**
    * Announces that dev mode has started.
    */
   start(): void {
-    const mode = this.#watchEnabled ? green("watch") : gray("single run");
     this.write(
-      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${mode}${dim(")")}`,
+      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${green("watch")}${dim(")")}`,
     );
-    if (this.#watchEnabled) {
-      this.writeLast(`${gray("Watching entities for changes…")}`);
-    } else {
-      this.writeLast(`${gray("Verifying project coherence…")}`);
+    this.writeLast(`${gray("Watching entities for changes…")}`);
+  }
+
+  /**
+   * Displays the coherence check spinner.
+   */
+  startCoherenceCheck(): void {
+    this.#spinner.start(gray("Verifying project coherence…"));
+  }
+
+  /**
+   * Displays the coherence check success message.
+   * @param entities Number of validated entities
+   */
+  coherenceSuccess(entities: number): void {
+    const entityInfo = formatCount(entities, "entity", "entities");
+    this.writeRaw(`\x1b[1A\x1b[2K`);
+    this.#spinner.succeed(
+      `${bold("Project is coherent")} ${dim("│")} ${gray(`${entityInfo} validated`)}`,
+    );
+  }
+
+  /**
+   * Displays the coherence check failure message.
+   * @param entities Number of entities needing sync
+   */
+  coherenceFailure(entities: number): void {
+    const entityInfo = formatCount(entities, "entity", "entities");
+    this.#spinner.warn(
+      `${bold("Inconsistencies detected")} ${dim("│")} ${gray(`${entityInfo} need sync`)}`,
+    );
+  }
+
+  /**
+   * Renders the list of modules with their current status.
+   * Uses debouncing to batch rapid updates and clears previous render.
+   * In logs mode, this method does nothing (modules are rendered at the end).
+   *
+   * @param modules Map of module names to their status
+   */
+  renderModules(modules: Map<string, ModuleStatus>): void {
+    if (this.#logsMode) {
+      return;
     }
-  }
 
-  /**
-   * Displays a summary of active modules at startup.
-   *
-   * @param modules - Object indicating which modules are active
-   */
-  modulesSummary(
-    modules: {
-      backend?: boolean;
-      frontend?: boolean;
-      secrets?: boolean;
-    },
-  ): void {
-    const active: string[] = [];
-    if (modules.backend) active.push("Backend");
-    if (modules.frontend) active.push("Frontend");
-    if (modules.secrets) active.push("Secrets");
-
-    if (active.length > 0) {
-      this.write("");
-      this.write(dim("Detected modules: ") + active.join(", "));
+    this.#pendingModules = new Map(modules);
+    if (this.#renderTimer !== undefined) {
+      clearTimeout(this.#renderTimer);
     }
+    this.#renderTimer = setTimeout(() => {
+      this.#renderTimer = undefined;
+      this.#processPendingRender();
+    }, 50) as unknown as number;
   }
 
   /**
-   * Displays a message when configuration changes and modules are restarting.
+   * Processes the pending render if one exists.
+   * Checks state changes and prevents concurrent renders.
+   * @private
    */
-  configChanged(): void {
-    this.write("");
-    this.write(yellow("⚠️  Configuration changed - restarting modules..."));
-  }
+  #processPendingRender(): void {
+    if (!this.#pendingModules || this.#rendering) {
+      return;
+    }
 
-  /**
-   * Displays a module starting message.
-   *
-   * @param name - Module name (e.g., "backend", "frontend")
-   */
-  moduleStarting(name: string): void {
-    // Stop spinner before displaying module messages to avoid formatting issues
-    this.#spinner.stop();
-    const label = name.charAt(0).toUpperCase() + name.slice(1);
-    // Pad label to 10 characters to align the separator
-    const paddedLabel = label.padEnd(10);
-    this.write(dim("◆ ") + cyan(paddedLabel) + dim(" │ Starting..."));
-  }
+    const modules = this.#pendingModules;
+    this.#pendingModules = undefined;
 
-  /**
-   * Parses URL to extract protocol, host, and port information.
-   *
-   * @param url - Full URL string
-   * @returns Object with parsed components or null if parsing fails
-   */
-  private parseUrl(url: string): { protocol: string; host: string; port: string | null } | null {
+    const stateKey = Array.from(modules.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, status]) => `${name}:${status.status}:${status.url || ""}:${status.error || ""}`)
+      .join("|");
+
+    if (this.#lastRenderedState === stateKey) {
+      return;
+    }
+
+    this.#rendering = true;
     try {
-      const urlObj = new URL(url);
-      return {
-        protocol: urlObj.protocol.replace(":", ""),
-        host: urlObj.hostname,
-        port: urlObj.port || null,
-      };
-    } catch {
-      return null;
+      this.#renderModulesSimple(modules, stateKey);
+    } finally {
+      this.#rendering = false;
     }
   }
 
   /**
-   * Formats URL information for display.
+   * Renders modules with proper line clearing.
+   * Clears previous module lines before writing new ones.
    *
-   * @param url - Full URL string
-   * @returns Formatted string with protocol, host, and port
+   * @param modules Map of module names to their status
+   * @param stateKey String representation of the current state (for comparison)
+   * @private
+   */
+  #renderModulesSimple(modules: Map<string, ModuleStatus>, stateKey: string): void {
+    const { lines, allReady, anyError } = this.#buildModuleLines(modules);
+
+    const newLineCount = lines.length;
+
+    // Clear previous lines if we've rendered before
+    if (this.#moduleListLines > 0) {
+      // Go up to first module line, clear all lines, then return to start
+      this.writeRaw(`\x1b[${this.#moduleListLines}A`);
+      for (let i = 0; i < this.#moduleListLines; i++) {
+        this.writeRaw(`\r\x1b[2K`);
+        if (i < this.#moduleListLines - 1) {
+          this.writeRaw(`\x1b[1B`);
+        }
+      }
+      this.writeRaw(`\x1b[${this.#moduleListLines - 1}A\r`);
+    }
+
+    for (const line of lines) {
+      this.write(line);
+    }
+
+    this.#moduleListLines = newLineCount;
+    this.#lastRenderedState = stateKey;
+
+    // Add loader on a new line if everything is ready
+    if (allReady && !anyError && modules.size > 0) {
+      const loader = this.#loaderFrames[this.#loaderFrame % this.#loaderFrames.length];
+      // Write loader at start of line with space after (no newline yet)
+      this.writeRaw(`${dim(loader)} `);
+      this.#startLoaderAnimation();
+    } else {
+      this.#stopLoaderAnimation();
+    }
+  }
+
+  /**
+   * Writes raw text to stdout without newline.
+   */
+  private writeRaw(text: string): void {
+    Deno.stdout.writeSync(new TextEncoder().encode(text));
+  }
+
+  /**
+   * Formats URL information for display with consistent color.
+   *
+   * @param url The URL to format
+   * @returns Formatted URL string with color codes
+   * @private
    */
   private formatUrlInfo(url: string): string {
-    const parsed = this.parseUrl(url);
-    if (!parsed) return cyan(url);
-
-    const parts: string[] = [];
-    parts.push(gray(parsed.protocol));
-    parts.push(dim("@"));
-    parts.push(cyan(parsed.host));
-    if (parsed.port) {
-      parts.push(dim(":"));
-      parts.push(yellow(parsed.port));
-    }
-    return parts.join(" ") + dim(" (") + cyan(url) + dim(")");
+    return magenta(url);
   }
 
   /**
-   * Displays a module ready message.
+   * Displays a fatal error message and stops the spinner.
    *
-   * @param name - Module name
-   * @param url - Optional URL where the module is running
+   * @param message The error message to display
    */
-  moduleReady(name: string, url?: string): void {
-    // Stop spinner before displaying module messages to avoid formatting issues
+  fatalError(message: string): void {
     this.#spinner.stop();
-    const label = name.charAt(0).toUpperCase() + name.slice(1);
-    // Pad label to 10 characters to align the separator
-    const paddedLabel = label.padEnd(10);
-    if (url) {
-      const urlInfo = this.formatUrlInfo(url);
-      this.write(green("✓ ") + cyan(paddedLabel) + dim(" │ Ready") + dim(" at ") + urlInfo);
-    } else {
-      this.write(green("✓ ") + cyan(paddedLabel) + dim(" │ Ready"));
-    }
+    this.write("");
+    this.write(`${red("✖")} ${bold("Fatal Error")}`);
+    this.writeLast(`${red(message)}`);
+    this.write("");
   }
 
   /**
-   * Displays a module error message.
+   * Announces the start of a dev cycle triggered by file changes.
    *
-   * @param name - Module name
-   * @param error - Error message
-   */
-  moduleError(name: string, error: string): void {
-    const label = name.charAt(0).toUpperCase() + name.slice(1);
-    // Pad label to 10 characters to align the separator
-    const paddedLabel = label.padEnd(10);
-    this.write(red("✗ ") + cyan(paddedLabel) + dim(" │ ") + red(error));
-  }
-
-  /**
-   * Announces the start of a dev cycle.
-   *
-   * @param reason - The reason for the cycle (e.g., "initial", "watch")
-   * @param paths - Changed file paths (if applicable)
+   * @param reason Reason for the cycle (e.g., "watch")
+   * @param paths Array of file paths that changed
    */
   cycleStart(reason: string, paths: string[]): void {
-    if (reason === "initial") {
-      this.#spinner.start(
-        `${gray("Checking entities and artifacts…")}`,
-      );
-    } else if (paths.length > 0) {
+    if (paths.length > 0) {
       const fileCount = formatCount(paths.length, "file");
       this.#spinner.start(
         `${bold("Change detected")} ${dim("│")} ${yellow(`${fileCount} modified`)}`,
       );
-    } else {
-      this.#spinner.start(
-        `${gray("Analyzing project state…")}`,
-      );
+    } else if (reason === "watch") {
+      this.#spinner.start(gray("Checking for changes..."));
     }
   }
 
   /**
-   * Displays the plan summary with details of affected artifacts.
+   * Displays the plan summary showing what artifacts will be regenerated.
    *
-   * @param summary - The plan summary with operation counts
-   * @param steps - The plan steps with node details
+   * @param summary Plan summary containing change information
    */
-  planSummary(
-    summary: PlanSummary,
-    steps: Array<{ kind: string; node: { id: string; kind: string } }>,
-  ): void {
-    if (!summary.changed) {
-      this.#spinner.update(
-        `${gray("Everything is in sync")}`,
-      );
-    } else {
+  planSummary(summary: PlanSummary): void {
+    if (summary.changed) {
       const actions = formatActionSummaryWithSymbols(summary);
       this.#spinner.update(
         `${yellow("Regenerating artifacts")} ${dim("│")} ${actions}`,
       );
-
-      // Show affected artifacts
+    } else {
       this.#spinner.stop();
-      const affectedSteps = steps.filter((s) => s.kind !== "noop");
-      if (affectedSteps.length > 0) {
-        this.write("");
-        this.write(
-          `🔍 ${bold("Change detected")} ${dim("│")} ${yellow(`${formatCount(affectedSteps.length, "artifact")} to sync`)
-          }`,
-        );
-        for (const step of affectedSteps) {
-          const symbol = step.kind === "create"
-            ? green("✚")
-            : step.kind === "update"
-              ? yellow("↻")
-              : red("✖");
-          const action = step.kind === "create"
-            ? gray("create")
-            : step.kind === "update"
-              ? gray("update")
-              : gray("delete");
-          this.writeMiddle(
-            `${symbol} ${action} ${dim("│")} ${cyan(step.node.kind)} ${dim("│")} ${gray(step.node.id)
-            }`,
-          );
-        }
-      }
-      this.#spinner.start(`${yellow("Applying changes…")}`);
     }
   }
 
   /**
    * Reports that artifact application is complete.
    *
-   * @param steps - Number of steps applied
-   * @param changed - Whether any changes were made
+   * @param steps Number of artifacts that were refreshed
+   * @param changed Whether any artifacts were actually changed
    */
   applyComplete(steps: number, changed: boolean): void {
     if (changed) {
@@ -299,197 +351,131 @@ export class DevConsole extends BaseConsole {
       this.#spinner.succeed(
         `${bold(`${label} refreshed`)} ${dim("│")} ${gray("Project synchronized")}`,
       );
-    } else {
-      this.#spinner.succeed(
-        `${gray("No changes applied")}`,
-      );
     }
   }
 
   /**
-   * Displays the final coherence status and next steps.
+   * Renders the final state of modules (used in logs mode or on completion/error).
+   * This method always renders, even in logs mode, and doesn't clear previous lines.
    *
-   * @param status - The coherence status ("clean" or "pending")
-   * @param entities - The number of entities in the project
-   * @param appliedChanges - Whether changes were applied in this cycle
+   * @param modules Map of module names to their status
    */
-  complete(status: "clean" | "pending", entities: number, appliedChanges = false): void {
-    const entityInfo = formatCount(entities, "entity", "entities");
-    if (status === "clean") {
-      if (!appliedChanges) {
-        // No changes were needed or applied
-        this.#spinner.stop();
-        this.write("");
-        this.write(
-          `${green("✔")} ${bold("Project is coherent")} ${dim("│")} ${gray(`${entityInfo} validated`)}`,
-        );
-      }
-      // If changes were applied, applyComplete already showed the success message
-
-      if (this.#watchEnabled) {
-        this.write("");
-        this.writeLast(`${gray("Ready. Watching for file changes…")}`);
-      } else if (!appliedChanges) {
-        this.write("");
-        this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
-        this.writeMiddle(
-          `${dim("→")} ${gray("Run ")}${cyan("tsera dev")}${gray(" to start watch mode")}`,
-        );
-        this.writeMiddle(
-          `${dim("→")} ${gray("Or ")}${cyan("deno task dev")}${gray(" to launch your app")}`,
-        );
-        this.write("");
-      } else {
-        this.write("");
-      }
-    } else {
-      this.#spinner.stop();
-      this.write("");
-      this.write(
-        `${yellow("⚠")} ${bold("Inconsistencies detected")} ${dim("│")} ${gray(`${entityInfo} need sync`)}`,
-      );
-      this.write("");
-      this.writeMiddle(`${magenta("◆")} ${bold("Next Steps")}`);
-      this.writeMiddle(
-        `${dim("→")} ${gray("Run ")}${cyan("tsera dev --apply")}${gray(" to force regeneration")}`,
-      );
-      this.writeMiddle(
-        `${dim("→")} ${gray("Or ")}${cyan("tsera doctor --fix")}${gray(" to auto-repair issues")}`,
-      );
+  renderModulesFinal(modules: Map<string, ModuleStatus>): void {
+    if (this.#logsMode) {
       this.write("");
     }
+    const { lines } = this.#buildModuleLines(modules);
+
+    // Write all lines directly (they already contain the branch characters)
+    for (const line of lines) {
+      this.write(line);
+    }
   }
 
   /**
-   * Reports an error during a dev cycle.
+   * Builds the module lines for display.
+   * Creates formatted lines with status icons, labels, and footer message.
    *
-   * @param message - The error message
+   * @param modules Map of module names to their status
+   * @returns Object containing lines array, sorted modules, and status flags
+   * @private
    */
-  cycleError(message: string): void {
-    this.#spinner.fail(`${bold("Error")} ${dim("│")} ${gray(message)}`);
-    this.write("");
-    this.write(`${magenta("◆")} ${bold("What to do")}`);
-    this.writeMiddle(`${yellow("Fix the error in your code")}`);
-    if (this.#watchEnabled) {
-      this.writeLast(`${gray("Save the file to retry automatically")}`);
-    } else {
-      this.writeLast(`${gray("Run ")}${cyan("tsera dev")}${gray(" again to retry")}`);
+  #buildModuleLines(modules: Map<string, ModuleStatus>) {
+    const lines: string[] = [];
+    lines.push("");
+    lines.push(`${magenta("◆")} ${bold("Modules")}`);
+
+    const order = ["secrets", "backend", "frontend"];
+    const sortedModules = Array.from(modules.entries()).sort((a, b) => {
+      const indexA = order.indexOf(a[0]);
+      const indexB = order.indexOf(b[0]);
+      return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+    });
+
+    let allReady = true;
+    let anyError = false;
+    for (const [_, info] of sortedModules) {
+      if (info.status === "error") anyError = true;
+      if (info.status !== "ready") allReady = false;
     }
-    this.write("");
-  }
 
-  /**
-   * Displays a warning when module errors are detected.
-   */
-  moduleErrorsWarning(): void {
-    this.#spinner.stop();
-    this.write("");
-    this.write(
-      `${yellow("⚠️  Module errors detected")} ${dim("│")} ${gray("Skipping coherence check until modules are fixed")
-      }`,
-    );
-    // Don't add extra blank line - let the next message decide spacing
-  }
+    for (const [name, info] of sortedModules) {
+      const label = name === "secrets" ? "Secrets Manager" : name.charAt(0).toUpperCase() + name.slice(1);
+      const paddedLabel = label.padEnd(15);
 
-  /**
-   * Displays a message indicating that the system is checking if all modules have failed.
-   */
-  checkingModulesStatus(): void {
-    this.#spinner.start(
-      `${gray("Checking module status…")}`,
-    );
-  }
+      let statusIcon = gray("○");
+      let statusText = gray("Stopped");
+      let details = "";
 
-  /**
-   * Stops the spinner if it's running.
-   */
-  stopSpinner(): void {
-    this.#spinner.stop();
-  }
-
-  /**
-   * Displays a message when all modules have failed and the process is exiting.
-   * Optionally shows a summary of module statuses.
-   */
-  allModulesFailed(modules?: Map<string, { status: string; url?: string }>): void {
-    this.write("");
-    if (modules && modules.size > 0) {
-      // Show summary without header for cleaner display
-      this.write(`${red("✗ Module loading failed")} ${dim("│")} ${gray("Status:")}`);
-      for (const [name, info] of modules.entries()) {
-        const label = name.charAt(0).toUpperCase() + name.slice(1);
-        const statusText = info.status === "error"
-          ? red("Error")
-          : info.status === "starting"
-            ? yellow("Starting")
-            : gray(info.status);
-        this.writeMiddle(`${cyan(label)} ${dim("│")} ${statusText}`);
+      switch (info.status) {
+        case "starting":
+          statusIcon = yellow("⠋");
+          statusText = yellow("Starting...");
+          break;
+        case "ready":
+          statusIcon = green("✓");
+          statusText = green("Ready");
+          if (info.url) {
+            details = `${dim("│")} ${this.formatUrlInfo(info.url)}`;
+          }
+          break;
+        case "error":
+          statusIcon = red("✗");
+          statusText = red("Error");
+          if (info.error) {
+            details = `${dim("│")} ${red(info.error)}`;
+          }
+          break;
+        case "stopped":
+        default:
+          statusIcon = gray("○");
+          statusText = gray("Stopped");
+          break;
       }
-    } else {
-      this.write(
-        `${red("✗ Module loading failed")}`,
-      );
+
+      lines.push(`${dim("├─")} ${statusIcon} ${cyan(paddedLabel)} ${dim("│")} ${statusText} ${details}`);
     }
-    this.writeLast(`${gray("Exiting...")}`);
+
+    let footerMessage = "";
+    if (anyError) {
+      footerMessage = `${red("Error detected.")} ${gray("Check logs for details.")}`;
+    } else if (allReady && sortedModules.length > 0) {
+      footerMessage = `${green("Ready.")} ${gray("Watching for file changes…")}`;
+    } else {
+      footerMessage = `${yellow("Starting services…")}`;
+    }
+    lines.push(`${dim("└─")} ${footerMessage}`);
+
+    return { lines, sortedModules, allReady, anyError };
   }
 
   /**
-   * Displays a summary of all modules with their status and connection info.
-   *
-   * @param modules - Map of module names to their status and URLs
-   * @param showHeader - Whether to show the "Services" header (default: true)
+   * Starts the loader animation on the last line.
+   * Updates only the loader character in place without re-rendering everything.
+   * @private
    */
-  modulesStatus(
-    modules: Map<string, { status: string; url?: string }>,
-    showHeader: boolean = true,
-  ): void {
-    if (modules.size === 0) return;
-
-    // Only show summary if at least one module has a meaningful status (not "stopped")
-    const hasActiveStatus = Array.from(modules.values()).some(
-      (info) => info.status !== "stopped",
-    );
-    if (!hasActiveStatus) return;
-
-    // Only show summary if at least one module is ready (not just errors)
-    // This prevents showing the summary when all modules are failing
-    const hasReadyModule = Array.from(modules.values()).some(
-      (info) => info.status === "ready",
-    );
-    if (!hasReadyModule) return; // Don't show summary if no module is ready
-
-    this.write("");
-    if (showHeader) {
-      this.write(`${magenta("◆")} ${bold("Services")}`);
+  #startLoaderAnimation(): void {
+    if (this.#loaderTimer !== undefined) {
+      return; // Already running
     }
 
-    for (const [name, info] of modules.entries()) {
-      const label = name.charAt(0).toUpperCase() + name.slice(1);
-      const statusIcon = info.status === "ready"
-        ? green("✓")
-        : info.status === "error"
-          ? red("✗")
-          : info.status === "starting"
-            ? yellow("◆")
-            : gray("○");
+    this.#loaderTimer = setInterval(() => {
+      this.#loaderFrame = (this.#loaderFrame + 1) % this.#loaderFrames.length;
+      const loader = this.#loaderFrames[this.#loaderFrame % this.#loaderFrames.length];
+      // Update only the last line (loader line) in place
+      // Go to start of current line, clear it, write new loader with space before cursor
+      this.writeRaw(`\r\x1b[2K${dim(loader)} `);
+    }, 100) as unknown as number;
+  }
 
-      const statusText = info.status === "ready"
-        ? green("Ready")
-        : info.status === "error"
-          ? red("Error")
-          : info.status === "starting"
-            ? yellow("Starting")
-            : gray("Stopped");
-
-      if (info.url) {
-        const urlInfo = this.formatUrlInfo(info.url);
-        this.writeMiddle(
-          `${statusIcon} ${cyan(label)} ${dim("│")} ${statusText} ${dim("│")} ${urlInfo}`,
-        );
-      } else {
-        this.writeMiddle(`${statusIcon} ${cyan(label)} ${dim("│")} ${statusText}`);
-      }
+  /**
+   * Stops the loader animation.
+   * @private
+   */
+  #stopLoaderAnimation(): void {
+    if (this.#loaderTimer !== undefined) {
+      clearInterval(this.#loaderTimer);
+      this.#loaderTimer = undefined;
     }
-    this.write("");
   }
 }

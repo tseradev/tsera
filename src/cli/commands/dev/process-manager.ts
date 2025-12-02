@@ -171,30 +171,64 @@ export class ProcessManager {
 
     try {
       process.status = "stopped";
-      process.child.kill("SIGTERM");
+      const child = process.child;
 
-      // Wait a bit for graceful shutdown
-      const timeout = setTimeout(() => {
-        if (process.child) {
-          process.child.kill("SIGKILL");
-        }
-      }, 5000);
+      // Try graceful shutdown first
+      child.kill("SIGTERM");
 
-      await process.child.status;
-      clearTimeout(timeout);
+      // Wait for graceful shutdown with timeout
+      const shutdownPromise = child.status;
+      const timeoutPromise = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          // Force kill if still running after timeout
+          try {
+            if (child) {
+              child.kill("SIGKILL");
+            }
+          } catch {
+            // Ignore errors during force kill
+          }
+          resolve();
+        }, 3000); // 3 second timeout
+      });
+
+      await Promise.race([shutdownPromise, timeoutPromise]);
 
       this.notifyStatusChange(name, "stopped");
     } catch {
       // Process already stopped or killed
+      try {
+        const process = this.processes.get(name);
+        if (process?.child) {
+          process.child.kill("SIGKILL");
+        }
+      } catch {
+        // Ignore errors
+      }
     }
   }
 
   /**
    * Stops all running processes.
+   * Forces shutdown of all processes, using SIGKILL if necessary.
    */
   async stopAll(): Promise<void> {
     const stops = Array.from(this.processes.keys()).map((name) => this.stopModule(name));
-    await Promise.all(stops);
+
+    // Wait for all graceful shutdowns
+    await Promise.allSettled(stops);
+
+    // Force kill any remaining processes
+    for (const [name, process] of this.processes) {
+      if (process.child && process.status !== "stopped") {
+        try {
+          process.child.kill("SIGKILL");
+          process.status = "stopped";
+        } catch {
+          // Ignore errors
+        }
+      }
+    }
   }
 
   /**
@@ -295,7 +329,7 @@ export class ProcessManager {
    */
   private detectReadyState(name: string, line: string): void {
     const process = this.processes.get(name);
-    if (!process || process.status === "ready") return;
+    if (!process) return;
 
     const readyPatterns = [
       /listening on/i,
@@ -308,11 +342,16 @@ export class ProcessManager {
       /deno.*(?:listening|running)/i,
     ];
 
+    let wasReady = process.status === "ready";
+    let urlExtracted = false;
+
     for (const pattern of readyPatterns) {
       if (pattern.test(line)) {
-        process.status = "ready";
+        if (!wasReady) {
+          process.status = "ready";
+        }
 
-        // Try to extract URL with improved patterns
+        // Try to extract URL with improved patterns (even if already ready)
         let urlMatch = line.match(/https?:\/\/[^\s\)]+/i);
 
         // If no full URL found, try to extract port and construct URL
@@ -335,12 +374,16 @@ export class ProcessManager {
           }
         }
 
-        if (urlMatch) {
+        if (urlMatch && !process.url) {
           // Clean up URL (remove trailing punctuation)
           process.url = urlMatch[0].replace(/[.,;\)\]\}]+$/, "");
+          urlExtracted = true;
         }
 
-        this.notifyStatusChange(name, "ready", process.url);
+        // Notify status change if we just became ready or extracted a new URL
+        if (!wasReady || urlExtracted) {
+          this.notifyStatusChange(name, "ready", process.url);
+        }
         break;
       }
     }

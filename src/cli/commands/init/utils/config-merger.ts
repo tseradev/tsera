@@ -106,8 +106,9 @@ async function mergeDenoConfig(
 
   // Merge Fresh deno.json if Fresh module is enabled
   if (options.enabledModules.includes("fresh") && freshDenoConfig) {
-    // Fresh uses "manual" nodeModules Dir (matching Fresh standard)
-    baseConfig.nodeModulesDir = "manual";
+    // Fresh needs npm dependencies (Preact/Vite). Use auto to ensure node_modules
+    // is populated without requiring a manual deno install step.
+    baseConfig.nodeModulesDir = "auto";
 
     // Merge Fresh tasks (adapted for TSera structure with app/front/)
     // IMPORTANT: Run Vite from app/front/ directory so it can correctly resolve Fresh's internal modules
