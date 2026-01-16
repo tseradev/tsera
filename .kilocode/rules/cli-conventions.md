@@ -2,443 +2,258 @@
 
 ## CLI Architecture
 
-TSera CLI is built with **Cliffy** framework and follows modular command structure. Each command is
-self-contained with its own UI, logic, and tests.
+CLI tools should follow **modular command structure** with clear separation of concerns. Each
+command should be self-contained with its own logic, user interface components, and tests.
 
 ## Command Structure
 
-### Basic Command Template
+### Command Organization Principles
 
-```typescript
-import { Command } from "cliffy/command";
-import { TseraConfig } from "tsera/cli/definitions.ts";
+Commands should be organized in hierarchical directories that reflect their functionality and
+relationships. Each command should have dedicated space for:
 
-const command = new Command()
-  .name("my-command")
-  .description("Description of what the command does")
-  .option("--option", "Option description", { default: defaultValue })
-  .option("-f, --flag", "Flag description")
-  .action(async (options) => {
-    // Command implementation
-  });
+- Core logic implementation
+- User interface components
+- Test suites
+- Command-specific utilities
 
-export default command;
-```
+### Command Design Patterns
 
-### Command File Organization
+Commands should follow consistent structural patterns that promote:
 
-```
-src/cli/commands/
-├── init/
-│   ├── init.ts           # Main command logic
-│   ├── init-ui.ts        # User interface components
-│   ├── init.test.ts      # Tests
-│   └── utils/           # Command-specific utilities
-├── dev/
-├── doctor/
-├── deploy/
-├── update/
-├── mcp/
-└── help/
-```
+- **Modularity**: Each command operates independently
+- **Testability**: Clear separation allows for comprehensive testing
+- **Maintainability**: Organized structure supports easy modifications
+- **Extensibility**: Framework should support adding new commands
 
 ## Global Options
 
-### Standard Global Options
+### Global Option Categories
 
-All TSera commands must support these global options:
+All CLI commands should support standardized global options that provide consistent behavior across
+the entire tool:
 
-#### `--json` - NDJSON Output
+#### Machine-Readable Output
 
-- **Purpose**: Enable machine-readable output for CI/automation
-- **Format**: NDJSON (one JSON object per line)
-- **Usage**: `tsera command --json`
-- **Implementation**: Wrap all console output in NDJSON format
+- **Purpose**: Enable structured output for automation and CI/CD integration
+- **Format**: Stream-based structured data format for processing
+- **Behavior**: All console output should be wrapped in structured format when enabled
+- **Use Case**: Programmatic consumption, logging, and pipeline integration
 
-#### `-h, --help` - Help Display
+#### Help and Documentation
 
-- **Purpose**: Show command help and usage
-- **Format**: Consistent help formatting across all commands
-- **Implementation**: Use Cliffy's built-in help system
+- **Purpose**: Provide consistent help and usage information
+- **Format**: Standardized help formatting across all commands
+- **Behavior**: Display command-specific help with consistent structure and examples
+- **Use Case**: User guidance, documentation generation, and discovery
 
-#### `-V, --version` - Version Display
+#### Version Information
 
-- **Purpose**: Display CLI version
-- **Format**: `TSera CLI X.Y.Z`
-- **Implementation**: Exit after displaying version
+- **Purpose**: Display CLI version information
+- **Format**: Consistent version string format
+- **Behavior**: Exit after displaying version information
+- **Use Case**: Compatibility checking, debugging, and support
 
-### Global Option Implementation
+### Global Option Design Principles
 
-```typescript
-const JSON_OPTION_DESC = "Enable NDJSON output for automation";
-
-const root = new Command()
-  .name(CLI_NAME)
-  .description("TSera CLI — The next era of fullstack TypeScript starts here.")
-  .globalOption("--json", JSON_OPTION_DESC, { default: false })
-  .globalOption("-v, -V, --version", "Display CLI version.", {
-    override: true,
-    action: () => {
-      console.log(`TSera CLI ${metadata.version}`);
-      Deno.exit(0);
-    },
-  });
-```
+- **Consistency**: Same option names and behavior across all commands
+- **Backward Compatibility**: Global options should not break existing workflows
+- **Minimal Overhead**: Global options should not significantly impact performance
+- **Clear Purpose**: Each global option should have a well-defined use case
 
 ## Command Implementation Patterns
 
-### Error Handling
-
-```typescript
-// Standard error handling pattern
-try {
-  // Command logic
-  await executeCommand(options);
-} catch (error) {
-  if (error instanceof ValidationError) {
-    console.error(`Error: ${error.message}`);
-    Deno.exit(2); // Usage error
-  } else if (error instanceof FileSystemError) {
-    console.error(`File system error: ${error.message}`);
-    Deno.exit(1); // General error
-  } else {
-    console.error(`Unexpected error: ${error.message}`);
-    Deno.exit(1);
-  }
-}
-```
-
-### Exit Codes
-
-- **0**: Success
-- **1**: General error (file system, network, validation)
-- **2**: Usage error (invalid arguments, missing required options)
-
-### Progress Indicators
-
-```typescript
-// Use spinner for long operations
-import { spinner } from "tsera/ui/spinner.ts";
-
-const s = spinner("Generating artifacts...");
-try {
-  await generateArtifacts();
-  s.succeed("Artifacts generated successfully");
-} catch (error) {
-  s.fail(`Generation failed: ${error.message}`);
-}
-```
-
-## Command-Specific Conventions
-
-### `tsera init` Command
-
-#### Purpose
-
-Initialize a new TSera project from templates with selected modules.
-
-#### Options
-
-- `[directory]`: Target directory (default: `.`)
-- `--template <name>`: Base template to use (default: "base")
-- `--no-hono`: Exclude Hono API framework
-- `--no-fresh`: Exclude Fresh frontend framework
-- `--no-docker`: Exclude Docker configuration
-- `--no-ci`: Exclude CI/CD workflows
-- `--no-secrets`: Exclude secrets management
-- `-f, --force`: Overwrite existing files
-- `-y, --yes`: Non-interactive mode
-
-#### Implementation Pattern
-
-```typescript
-.action(async (options) => {
-  const projectDir = resolve(options.directory || ".");
-  
-  // Check for existing project
-  if (await exists(join(projectDir, "tsera.config.ts")) {
-    if (!options.force) {
-      console.error("Project already exists. Use --force to overwrite.");
-      Deno.exit(2);
-    }
-  }
-  
-  // Generate project
-  await initializeProject(projectDir, options);
-  console.log(`Project initialized in ${projectDir}`);
-});
-```
-
-### `tsera dev` Command
-
-#### Purpose
-
-Run continuous coherence loop with watch → plan → apply cycle.
-
-#### Options
-
-- `[projectDir]`: Project directory (default: `.`)
-- `--apply`: Force application even if plan is empty
-
-#### Implementation Pattern
-
-```typescript
-.action(async (options) => {
-  const projectDir = resolve(options.projectDir || ".");
-  const config = await loadConfig(projectDir);
-  
-  if (!config) {
-    console.error("No TSera project found.");
-    Deno.exit(2);
-  }
-  
-  // Start watch loop
-  await startDevServer(projectDir, config, options);
-});
-```
-
-### `tsera doctor` Command
-
-#### Purpose
-
-Diagnose project coherence and optionally fix issues.
-
-#### Options
-
-- `--cwd <path>`: Project directory (default: `.`)
-- `--quick`: Quick validation mode
-- `--fix`: Apply automatic fixes
-
-#### Implementation Pattern
-
-```typescript
-.action(async (options) => {
-  const projectDir = resolve(options.cwd || ".");
-  const diagnosis = await diagnoseProject(projectDir);
-  
-  if (options.quick) {
-    console.log(formatQuickDiagnosis(diagnosis));
-    Deno.exit(diagnosis.issues.length > 0 ? 1 : 0);
-  }
-  
-  console.log(formatFullDiagnosis(diagnosis));
-  
-  if (options.fix) {
-    await applyFixes(projectDir, diagnosis.fixableIssues);
-    console.log("Applied automatic fixes.");
-  }
-  
-  Deno.exit(diagnosis.criticalIssues.length > 0 ? 2 : 0);
-});
-```
-
-### `tsera update` Command
-
-#### Purpose
-
-Update TSera CLI tool (install vs binary).
-
-#### Options
-
-- `--channel <channel>`: Release channel (stable|beta|canary)
-- `--binary`: Install binary instead of deno install
-- `--dry-run`: Show steps without applying
-
-#### Implementation Pattern
-
-```typescript
-.action(async (options) => {
-  const updatePlan = await createUpdatePlan(options);
-  
-  if (options.dryRun) {
-    console.log(formatDryRun(updatePlan));
-    return;
-  }
-  
-  await executeUpdate(updatePlan);
-  console.log("TSera updated successfully");
-});
-```
-
-## UI Conventions
-
-### Console Output
-
-```typescript
-// Use consistent formatting
-import { colors } from "tsera/ui/colors.ts";
-
-console.log(colors.blue("✓") + " Operation completed");
-console.log(colors.red("✗") + " Operation failed");
-console.log(colors.yellow("⚠") + " Warning message");
-```
-
-### User Interaction
-
-```typescript
-// Use Cliffy prompts for interactive input
-import { Confirm, Input, Select } from "cliffy/prompt";
-
-const projectName = await Input.prompt({
-  message: "Project name:",
-  validate: (input) => input.length > 0,
-});
-
-const useTypeScript = await Confirm.ask({
-  message: "Use TypeScript?",
-  default: true,
-});
-```
-
-### Progress Reporting
-
-```typescript
-// Structured progress reporting
-interface ProgressStep {
-  step: string;
-  status: "running" | "completed" | "failed";
-  message?: string;
-}
-
-function reportProgress(step: ProgressStep) {
-  if (options.json) {
-    console.log(JSON.stringify(step));
-  } else {
-    const icon = step.status === "completed" ? "✓" : step.status === "failed" ? "✗" : "⟳";
-    console.log(`${icon} ${step.step}${step.message ? `: ${step.message}` : ""}`);
-  }
-}
-```
-
-## File Operations
-
-### Configuration Resolution
-
-```typescript
-// Standard config loading pattern
-export async function loadConfig(projectDir: string): Promise<TseraConfig | null> {
-  const configPath = join(projectDir, "config", "tsera.config.ts");
-
-  if (!await exists(configPath)) {
-    return null;
-  }
-
-  try {
-    const configContent = await Deno.readTextFile(configPath);
-    return validateConfig(configContent);
-  } catch (error) {
-    throw new Error(`Failed to load config: ${error.message}`);
-  }
-}
-```
-
-### Safe File Writing
-
-```typescript
-// Atomic file operations
-export async function safeWrite(path: string, content: string): Promise<void> {
-  const tempPath = `${path}.tmp.${Date.now()}`;
-
-  try {
-    await Deno.writeTextFile(tempPath, content);
-    await Deno.rename(tempPath, path);
-  } catch (error) {
-    await Deno.remove(tempPath).catch(() => {});
-    throw error;
-  }
-}
-```
-
-## Testing Conventions
-
-### Command Testing
-
-```typescript
-// Standard test structure
-Deno.test("init command creates project", async () => {
-  const tempDir = await Deno.makeTempDir();
-
-  try {
-    await runCommand(["init", "test-project"], { cwd: tempDir });
-
-    // Verify generated files
-    assert(await exists(join(tempDir, "test-project", "config", "tsera.config.ts")));
-    assert(await exists(join(tempDir, "test-project", "core", "entities")));
-  } finally {
-    await Deno.remove(tempDir, { recursive: true });
-  }
-});
-```
-
-### Golden Files
-
-```typescript
-// Snapshot testing for generated content
-const goldenConfig = await Deno.readTextFile(
-  join(import.meta.dirname!, "__golden__", "tsera.config.ts"),
-);
-
-const generatedConfig = await generateConfig(options);
-assertEquals(
-  normalizeConfig(generatedConfig),
-  normalizeConfig(goldenConfig),
-);
-```
-
-## Help System
-
-### Command Help Structure
-
-```typescript
-// Consistent help formatting
-function formatCommandHelp(command: Command): string {
-  const options = command.getOptions();
-  const optionsText = options.map((opt) =>
-    `  ${opt.flags.join(", ")}${opt.description ? ` - ${opt.description}` : ""}`
-  ).join("\n");
-
-  return `
-Usage: tsera ${command.getName()} [options]
-
-Options:
-${optionsText}
-
-Examples:
-  tsera ${command.getName()} --help
-  tsera ${command.getName()} --option value
-  `.trim();
-}
-```
-
-### Global Help
-
-```typescript
-// Main help command showing all available commands
-function showGlobalHelp() {
-  const commands = [
-    { name: "init", description: "Initialize new project" },
-    { name: "dev", description: "Start development server" },
-    { name: "doctor", description: "Diagnose project issues" },
-    { name: "update", description: "Update CLI tool" },
-  ];
-
-  console.log("TSera CLI — The next era of fullstack TypeScript starts here.\n");
-  console.log("Commands:");
-
-  commands.forEach((cmd) => {
-    console.log(`  ${cmd.name.padEnd(12)} ${cmd.description}`);
-  });
-
-  console.log("\nUse 'tsera <command> --help' for more information on a specific command.");
-}
-```
+### Error Handling Principles
+
+- **Structured Error Handling**: Use consistent error handling patterns with proper classification
+- **Error Classification**: Distinguish between user errors, system errors, and validation failures
+- **Actionable Messages**: Provide clear, actionable error messages that guide users toward
+  resolution
+- **Error Context**: Include relevant context information without exposing sensitive data
+
+### Exit Code Standards
+
+- **Success (0)**: Command completed successfully
+- **General Error (1)**: Runtime errors, file system issues, network failures, validation errors
+- **Usage Error (2)**: Invalid arguments, missing required options, malformed input
+- **Consistency**: Use same exit codes across all commands for automation reliability
+
+### Progress Reporting Principles
+
+- **Structured Progress**: Use consistent event-based progress reporting
+- **Dual Format**: Support both human-readable and machine-readable output formats
+- **Operation Tracking**: Track operation start, progress, completion, and failure states
+- **Context Preservation**: Maintain operation context throughout progress reporting
+
+## Command Categories
+
+### Project Initialization Commands
+
+**Purpose**: Scaffold new projects from templates with configurable module selection
+
+**Design Principles**:
+
+- **Template-Based**: Use template composition for project generation
+- **Modular Selection**: Allow selective inclusion of framework modules
+- **Non-Interactive Mode**: Support automated usage with sensible defaults
+- **Conflict Resolution**: Handle existing projects gracefully with overwrite options
+- **Directory Management**: Support both current and target directory initialization
+
+### Development Commands
+
+**Purpose**: Enable iterative development with automatic artifact generation
+
+**Design Principles**:
+
+- **Watch-Based**: Monitor file system changes for automatic regeneration
+- **Incremental Updates**: Only regenerate affected artifacts
+- **Plan-Apply Separation**: Separate change detection from artifact application
+- **Multi-Module Support**: Handle both backend and frontend module coordination
+- **Real-Time Feedback**: Provide immediate feedback on generation status
+
+### Diagnostic Commands
+
+**Purpose**: Analyze project coherence and provide corrective actions
+
+**Design Principles**:
+
+- **Comprehensive Analysis**: Check all aspects of project coherence
+- **Issue Classification**: Categorize issues by severity and safety of automatic fixes
+- **Selective Application**: Allow users to choose which fixes to apply
+- **Validation Mode**: Support quick validation for CI/CD integration
+- **Actionable Guidance**: Provide clear steps for manual resolution
+
+### Maintenance Commands
+
+**Purpose**: Manage CLI tooling and deployment configurations
+
+**Design Principles**:
+
+- **Multiple Update Channels**: Support stable, beta, and canary releases
+- **Installation Flexibility**: Support both source and binary installation methods
+- **Preview Capability**: Allow dry-run operations for safety
+- **Provider Abstraction**: Support multiple deployment providers through unified interface
+- **Configuration Synchronization**: Maintain consistency between local and remote configurations
+
+### Subcommand Architecture
+
+**Design Principles**:
+
+- **Logical Grouping**: Group related functionality under parent commands
+- **Consistent Interface**: Use similar option patterns across subcommands
+- **Independent Operation**: Each subcommand should be independently usable
+- **Shared Configuration**: Leverage common configuration patterns
+- **Extensibility**: Design for easy addition of new subcommands
+
+## User Interface Conventions
+
+### Output Format Principles
+
+- **Dual Format Support**: Support both human-readable and machine-readable output
+- **Structured Logging**: Use consistent event-based logging for all operations
+- **Status Indication**: Provide clear visual indicators for operation states
+- **Context Preservation**: Maintain operation context throughout output streams
+- **Error Formatting**: Format errors consistently with actionable guidance
+
+### Interactive Input Patterns
+
+- **Progressive Disclosure**: Request information in logical sequence
+- **Validation**: Provide real-time validation for user input
+- **Default Values**: Offer sensible defaults to reduce user burden
+- **Confirmation**: Require confirmation for destructive operations
+- **Help Integration**: Provide context-sensitive help during input
+
+### Progress Communication
+
+- **Event-Based Reporting**: Use structured events for progress tracking
+- **Status States**: Clearly indicate running, completed, and failed states
+- **Visual Indicators**: Use consistent icons or symbols for status representation
+- **Contextual Messages**: Provide relevant context for each progress step
+- **Error Integration**: Integrate error reporting into progress flow
+
+## File System Operations
+
+### Configuration Management Principles
+
+- **Standardized Locations**: Use consistent paths for configuration files
+- **Graceful Degradation**: Handle missing configuration files gracefully
+- **Validation**: Validate configuration structure and content
+- **Error Context**: Provide clear error messages for configuration issues
+- **Default Fallbacks**: Use sensible defaults when configuration is absent
+
+### File Operation Safety
+
+- **Atomic Operations**: Use temporary files with atomic rename operations
+- **Error Recovery**: Clean up temporary files on failure
+- **Permission Handling**: Check and handle file system permissions appropriately
+- **Path Validation**: Sanitize and validate file paths to prevent security issues
+- **Backup Strategy**: Create backups before modifying important files
+
+### File System Boundaries
+
+- **Project Scoping**: Restrict operations to project directory boundaries
+- **Permission Awareness**: Respect file system permissions and access rights
+- **Resource Management**: Properly manage file handles and resources
+- **Cross-Platform Compatibility**: Handle path differences across operating systems
+
+## Testing Patterns
+
+### Command Testing Principles
+
+- **Isolation**: Each test should run in isolation with temporary directories
+- **Cleanup**: Ensure proper cleanup of temporary resources
+- **Verification**: Verify both file creation and content correctness
+- **Edge Cases**: Test error conditions and edge cases
+- **Integration**: Test command integration with file system and configuration
+
+### Snapshot Testing Approach
+
+- **Golden Files**: Use reference files for expected output comparison
+- **Normalization**: Normalize platform-specific differences for comparison
+- **Content Validation**: Verify generated content structure and semantics
+- **Regression Prevention**: Detect unintended changes in generated output
+- **Update Process**: Provide clear process for updating golden files when needed
+
+### Test Organization
+
+- **Co-location**: Place tests near code they test
+- **Naming Consistency**: Use consistent naming patterns for test files
+- **Test Categories**: Organize tests by functionality (unit, integration, e2e)
+- **Mock Strategy**: Use consistent mocking patterns for external dependencies
+- **Test Data**: Use standardized test data across test suites
+
+## Help System Design
+
+### Help Structure Principles
+
+- **Hierarchical Organization**: Structure help content from general to specific
+- **Consistent Formatting**: Use uniform formatting across all help content
+- **Contextual Relevance**: Provide help specific to current command context
+- **Practical Examples**: Include realistic usage examples for common scenarios
+- **Progressive Disclosure**: Reveal complexity gradually from basic to advanced usage
+
+### Help Content Categories
+
+- **Command Overview**: Brief description of command purpose and scope
+- **Usage Patterns**: Common usage patterns and command combinations
+- **Option Documentation**: Clear description of all available options
+- **Example Scenarios**: Practical examples for different use cases
+- **Related Commands**: References to related commands for workflow guidance
+
+### Help Accessibility
+
+- **Multiple Formats**: Support both detailed and condensed help formats
+- **Error Integration**: Provide contextual help when commands fail
+- **Discovery**: Help users discover relevant commands and options
+- **Navigation**: Enable easy navigation between related help topics
+- **Consistency**: Maintain consistent help structure across all commands
 
 ## Performance Guidelines
 
 ### Startup Performance
 
 - Minimize imports on command initialization
-- Lazy load heavy dependencies
+- Lazy load heavy dependencies when possible
 - Use conditional imports for optional features
 - Cache expensive operations
 
@@ -456,34 +271,32 @@ function showGlobalHelp() {
 - Use appropriate exit codes for automation
 - Log errors for debugging without exposing sensitive data
 
-## Integration Patterns
+## Command Integration Architecture
 
-### Command Registration
+### Command Registration Principles
 
-```typescript
-// Register all commands in router
-import initCommand from "./commands/init/init.ts";
-import devCommand from "./commands/dev/dev.ts";
-import doctorCommand from "./commands/doctor/doctor.ts";
+- **Centralized Router**: Use a centralized router for command registration and global option
+  handling
+- **Consistent Application**: Apply global options uniformly across all commands
+- **Modular Loading**: Load commands dynamically to support extensibility
+- **Dependency Injection**: Use dependency injection for shared services and configuration
+- **Handler Abstraction**: Abstract command handlers to support testing and customization
 
-export function registerCommands(): Command {
-  return new Command()
-    .name("tsera")
-    .description("TSera CLI")
-    .command(initCommand)
-    .command(devCommand)
-    .command(doctorCommand)
-    // ... other commands
-    .action(() => showGlobalHelp());
-}
-```
+### Extensibility Patterns
 
-### Plugin System
+- **Plugin Architecture**: Design for easy addition of new commands and functionality
+- **Interface Consistency**: Provide clear interfaces for command extensions
+- **Discovery Mechanism**: Support automatic discovery of available commands
+- **Configuration Integration**: Integrate plugin configuration with main configuration system
+- **Backward Compatibility**: Ensure new extensions don't break existing functionality
 
-- Commands should be self-contained and modular
-- Use dependency injection for shared services
-- Provide clear interfaces for command extensions
-- Support command discovery and registration
+### Command Composition
+
+- **Reusable Components**: Create reusable UI and utility components
+- **Shared Services**: Leverage common services across commands
+- **Consistent Patterns**: Use consistent patterns for similar functionality
+- **State Management**: Manage command state consistently across the CLI
+- **Error Handling**: Provide unified error handling across all commands
 
 ## Security Considerations
 
@@ -507,3 +320,10 @@ export function registerCommands(): Command {
 - Check file permissions before reading/writing
 - Use atomic operations to prevent corruption
 - Backup important files before modification
+
+### Configuration Security
+
+- Store configuration files in standardized, secure locations
+- Manage secrets through dedicated secure directories
+- Use environment-specific configurations for different deployment contexts
+- Never expose secrets in logs or error messages

@@ -4,247 +4,203 @@
 
 TSera follows **defense-in-depth** security principles with minimal attack surface, explicit
 permissions, and type-safe operations. All security considerations apply to both the CLI tool and
-generated projects.
+generated projects. The security approach emphasizes proactive threat mitigation, secure by default
+configurations, and continuous validation of security controls.
 
-## CLI Security
+## Threat Modeling Strategy
 
-### Permission Management
+### Core Security Principles
 
-- **Principle of Least Privilege**: Request minimum required permissions
-- **Explicit Permission Requests**: Clearly document why each permission is needed
-- **Scope Limitation**: Restrict file system access to project directories only
-- **Network Access**: Only for explicit operations (updates, template fetching)
+- **Defense in Depth**: Implement multiple layers of security controls to protect against various
+  attack vectors
+- **Least Privilege**: Grant only the minimum permissions necessary for operations to function
+- **Secure by Default**: Design systems with security as the default configuration, not an add-on
+- **Fail Securely**: Ensure systems fail to a secure state rather than exposing vulnerabilities
+- **Minimal Attack Surface**: Reduce the exposure of potential attack vectors through careful design
 
-### File System Security
+### Risk Assessment Framework
 
-- **Path Validation**: Sanitize all file paths to prevent directory traversal
-- **Project Boundaries**: Never access files outside project root
-- **Atomic Operations**: Use temporary files + rename to prevent corruption
-- **Permission Checks**: Verify permissions before file operations
+- **Threat Identification**: Systematically identify potential threats to system components and data
+- **Vulnerability Analysis**: Assess weaknesses that could be exploited by identified threats
+- **Impact Evaluation**: Determine potential consequences of security breaches
+- **Likelihood Assessment**: Evaluate the probability of threat realization
+- **Risk Prioritization**: Focus resources on highest-risk scenarios first
 
-### Input Validation
+## Security Architecture Principles
 
-- **Parameter Validation**: Validate all user inputs before processing
-- **Path Sanitization**: Prevent `../` and absolute path attacks
-- **Command Injection Prevention**: Never execute arbitrary user commands
-- **Option Validation**: Validate command-line options against allowed values
+### System Design Security
 
-### Sensitive Data Handling
+- **Security by Design**: Integrate security considerations from the earliest design phases
+- **Separation of Concerns**: Isolate security-critical components from less sensitive functionality
+- **Trust Boundary Definition**: Clearly establish boundaries between trusted and untrusted
+  components
+- **Data Classification**: Categorize data by sensitivity and apply appropriate protection levels
+- **Secure Communication Channels**: Ensure all data transmission occurs over protected channels
 
-- **No Secret Logging**: Never log passwords, tokens, or API keys
-- **Masking**: Mask sensitive values in error messages and logs
-- **Secure Prompts**: Use secure prompts for sensitive input
-- **Memory Cleanup**: Clear sensitive data from memory when done
+### Access Control Philosophy
 
-## Generated Project Security
+- **Identity Verification**: Implement robust mechanisms to verify user and system identities
+- **Authorization Framework**: Establish granular controls over what authenticated entities can
+  access
+- **Session Management**: Maintain secure session lifecycle management with appropriate timeouts
+- **Privilege Escalation Prevention**: Implement controls to prevent unauthorized privilege
+  elevation
+- **Audit Trail Maintenance**: Create comprehensive logs of access and modification events
 
-### Web Application Security
+## Data Protection Principles
 
-- **Input Validation**: Use Zod schemas for all API inputs
-- **SQL Injection Prevention**: Use parameterized queries only
-- **XSS Prevention**: Sanitize user-generated content
-- **CSRF Protection**: Include CSRF tokens for state-changing operations
-- **Authentication**: Implement proper authentication and authorization
+### Information Security Fundamentals
 
-### Database Security
+- **Data Minimization**: Collect and retain only the minimum data necessary for functionality
+- **Encryption at Rest and in Transit**: Apply strong encryption to sensitive data in all states
+- **Data Integrity Assurance**: Implement mechanisms to detect and prevent unauthorized data
+  modification
+- **Secure Data Lifecycle**: Maintain security throughout data creation, storage, processing, and
+  disposal
+- **Privacy by Design**: Incorporate privacy considerations into system architecture
 
-- **Connection Security**: Use SSL/TLS for database connections
-- **Credential Management**: Never hard-code database credentials
-- **Query Parameterization**: Use parameterized queries to prevent injection
-- **Access Control**: Implement proper user permissions and row-level security
+### Secrets Management Strategy
 
-### Environment Variable Security
+- **Centralized Secret Storage**: Consolidate secrets in secure, access-controlled storage systems
+- **Secret Rotation**: Implement regular rotation of cryptographic keys and credentials
+- **Secure Distribution**: Ensure secrets are transmitted securely to authorized systems
+- **Access Auditability**: Maintain comprehensive logs of secret access and usage
+- **Emergency Revocation**: Establish processes for rapid secret revocation when compromise is
+  suspected
 
-- **Validation**: Validate required environment variables on startup
-- **Type-Safe Access**: Use typed environment variable access
-- **Default Values**: Provide secure defaults for optional variables
-- **No Secret Exposure**: Never log or expose environment secrets
+## Input Validation and Sanitization
 
-## Template Security
+### Input Security Framework
 
-### Template Injection Prevention
+- **Strict Validation**: Validate all inputs against well-defined schemas and constraints
+- **Sanitization Principles**: Remove or neutralize potentially malicious content from inputs
+- **Length and Format Restrictions**: Enforce appropriate limits on input size and format
+- **Type Safety**: Ensure inputs match expected types before processing
+- **Context-Aware Validation**: Apply validation rules appropriate to specific usage contexts
 
-- **Static Templates**: Use static template files with variable substitution
-- **Code Injection Prevention**: Sanitize all template variables
-- **Template Validation**: Validate template syntax before processing
-- **Safe Rendering**: Use secure template rendering engines
+### Injection Prevention Strategy
 
-### Dependency Security
+- **Parameterized Operations**: Use parameterized interfaces to prevent injection attacks
+- **Output Encoding**: Properly encode data based on output context to prevent injection
+- **Command Separation**: Never construct executable commands from user input
+- **Query Structure Validation**: Validate the structure of database queries before execution
+- **Content Security Policies**: Implement policies to control resource loading and execution
 
-- **Vetted Dependencies**: Only use approved, audited dependencies
-- **Version Pinning**: Pin specific versions to prevent supply chain attacks
-- **Integrity Checking**: Verify dependency checksums when available
-- **Minimal Dependencies**: Use the fewest dependencies necessary
+## Security Testing and Validation
 
-## Code Generation Security
+### Security Testing Philosophy
 
-### Generated Code Security
+- **Threat-Based Testing**: Design tests based on identified threats and attack scenarios
+- **Negative Testing**: Explicitly test for security failures and edge cases
+- **Penetration Testing**: Regularly conduct authorized attacks to identify vulnerabilities
+- **Security Regression Testing**: Ensure security controls remain effective after changes
+- **Continuous Validation**: Implement ongoing security verification processes
 
-- **Type Safety**: All generated code must be type-safe
-- **Validation Runtime**: Include runtime validation in generated code
-- **No Dynamic Code**: Avoid eval() or dynamic code generation
-- **Secure Defaults**: Generate secure default configurations
+### Security Assessment Framework
 
-### Artifact Security
+- **Vulnerability Scanning**: Regularly scan systems for known vulnerabilities
+- **Security Code Review**: Systematically review code for security issues
+- **Configuration Auditing**: Verify security configurations meet established standards
+- **Compliance Validation**: Ensure adherence to security regulations and standards
+- **Risk Reassessment**: Periodically re-evaluate security risks as threats evolve
 
-- **Permission Preservation**: Generated artifacts inherit project permissions
-- **Secure File Paths**: Use safe file paths for generated content
-- **Backup Safety**: Create backups before overwriting existing files
-- **Integrity Verification**: Verify generated artifacts are tamper-free
+## Incident Response and Recovery
 
-## Network Security
+### Incident Management Principles
 
-### HTTPS Enforcement
+- **Preparedness Planning**: Establish comprehensive incident response plans before incidents occur
+- **Rapid Detection**: Implement systems to quickly identify security incidents
+- **Containment Strategy**: Develop procedures to limit incident impact and spread
+- **Eradication Planning**: Establish methods to completely remove threats from systems
+- **Recovery Procedures**: Create processes to restore secure system operation
 
-- **TLS Required**: Enforce HTTPS for all network communications
-- **Certificate Validation**: Validate SSL certificates properly
-- **Secure Protocols**: Use secure communication protocols only
-- **Timeout Configuration**: Implement reasonable timeouts for network operations
+### Post-Incident Learning
 
-### API Security
+- **Root Cause Analysis**: Thoroughly investigate incidents to understand underlying causes
+- **Lessons Learned Documentation**: Capture insights from incidents to prevent recurrence
+- **Process Improvement**: Update security practices based on incident findings
+- **Communication Protocols**: Establish clear procedures for incident communication
+- **Knowledge Sharing**: Distribute incident insights across relevant teams
 
-- **Rate Limiting**: Implement rate limiting for API endpoints
-- **Input Validation**: Validate all API inputs using generated schemas
-- **Authentication**: Require proper authentication for sensitive operations
-- **CORS Configuration**: Configure CORS properly for web applications
+## Security Governance
 
-## Error Handling Security
+### Security Policy Framework
 
-### Secure Error Messages
+- **Security Standards**: Establish clear, documented security standards and procedures
+- **Responsibility Definition**: Clearly assign security responsibilities across teams
+- **Compliance Requirements**: Ensure adherence to relevant security regulations and standards
+- **Security Metrics**: Develop metrics to measure security effectiveness and improvement
+- **Regular Review**: Periodically review and update security policies and procedures
 
-- **Information Disclosure**: Avoid exposing sensitive information in errors
-- **Generic Messages**: Use generic error messages for security failures
-- **Error Logging**: Log security events without exposing sensitive data
-- **Attack Detection**: Log potential security attacks for monitoring
+### Security Culture Development
 
-### Exception Handling
-
-- **Secure Defaults**: Fail securely by default
-- **Exception Sanitization**: Sanitize exception data before logging
-- **No Stack Traces**: Avoid exposing stack traces in production
-- **Secure Cleanup**: Clean up resources on security failures
-
-## Development Security
-
-### Development Environment
-
-- **Local Development**: Use secure development practices
-- **No Production Data**: Never use real production data in development
-- **Debug Security**: Disable debug modes in production
-- **Environment Isolation**: Isolate development from production systems
-
-### Code Review Security
-
-- **Security Review**: All code changes must pass security review
-- **Dependency Review**: Review all dependency changes for security impact
-- **Static Analysis**: Use static analysis tools for security vulnerability detection
-- **Penetration Testing**: Conduct security testing for critical components
-
-## Compliance and Standards
-
-### Security Standards Compliance
-
-- **OWASP Top 10**: Address OWASP Top 10 security risks
-- **Security Headers**: Implement recommended security headers
-- **Data Protection**: Comply with data protection regulations (GDPR, etc.)
-- **Accessibility**: Ensure security measures don't break accessibility
-
-### Security Testing
-
-- **Vulnerability Scanning**: Regular security vulnerability scanning
-- **Penetration Testing**: Regular penetration testing
-- **Dependency Scanning**: Scan dependencies for known vulnerabilities
-- **Security Audits**: Regular security audits of code and infrastructure
-
-## Monitoring and Logging
-
-### Security Monitoring
-
-- **Access Logging**: Log access to sensitive resources
-- **Security Events**: Log security-relevant events
-- **Anomaly Detection**: Monitor for unusual activity patterns
-- **Alerting**: Implement alerting for security incidents
-
-### Secure Logging
-
-- **No Secret Logging**: Never log passwords, tokens, or sensitive data
-- **Log Sanitization**: Sanitize logs to prevent injection attacks
-- **Secure Storage**: Store logs securely with appropriate access controls
-- **Log Rotation**: Implement log rotation to prevent disk space issues
+- **Security Awareness**: Foster organization-wide understanding of security importance
+- **Security Training**: Provide regular training on security best practices and threats
+- **Security Champions**: Identify and empower security advocates within teams
+- **Security Communication**: Maintain open channels for security concerns and discussions
+- **Continuous Learning**: Stay informed about emerging threats and security innovations
 
 ## Best Practices
 
-### Secure Development Practices
+### Security Development Principles
 
-1. **Input Validation**: Validate all inputs at entry points
-2. **Least Privilege**: Run with minimum required permissions
-3. **Secure Defaults**: Choose secure default configurations
-4. **Defense in Depth**: Implement multiple layers of security controls
-5. **Regular Updates**: Keep dependencies updated for security patches
+1. **Input Validation**: Validate all inputs at system boundaries against strict schemas
+2. **Least Privilege**: Operate with minimum required permissions for all operations
+3. **Secure Defaults**: Choose secure default configurations that require explicit changes to reduce
+   security
+4. **Defense in Depth**: Implement multiple layers of security controls to protect against various
+   attack vectors
+5. **Regular Updates**: Maintain current security patches and updates for all components
+6. **Fail Securely**: Design systems to fail to secure states rather than exposing vulnerabilities
+7. **Data Minimization**: Collect and retain only the minimum data necessary for functionality
 
-### Security Checklist
+### Security Validation Framework
 
-- [ ] All user inputs are validated
-- [ ] File operations use atomic writes
-- [ ] Sensitive data is never logged or exposed
-- [ ] Network communications use HTTPS
-- [ ] Database queries use parameterization
-- [ ] Generated code includes runtime validation
-- [ ] Error messages don't expose sensitive information
-- [ ] Dependencies are regularly updated for security
+- **Input Validation**: All user inputs are validated against strict schemas before processing
+- **Secure Operations**: File operations use atomic patterns to prevent corruption and race
+  conditions
+- **Secret Protection**: Sensitive data is never logged, displayed, or transmitted inappropriately
+- **Secure Communications**: All network communications enforce encrypted protocols
+- **Secure Database Access**: Database operations use parameterized patterns to prevent injection
+- **Generated Code Security**: All generated code includes runtime validation and security controls
+- **Error Handling**: Error messages avoid information disclosure that could aid attackers
+- **Dependency Security**: Dependencies are regularly updated and monitored for security
+  vulnerabilities
 
-### Incident Response
+### Incident Response Framework
 
-- **Security Incidents**: Have a plan for security incidents
-- **Vulnerability Disclosure**: Have a process for responsible disclosure
-- **Security Updates**: Process for emergency security updates
-- **Communication Plan**: Plan for communicating security issues
-- **Post-Mortem Analysis**: Analyze security incidents after resolution
+- **Preparedness**: Maintain comprehensive security incident response plans with clear roles and
+  responsibilities
+- **Detection**: Implement systems and processes for rapid identification of security incidents
+- **Response**: Establish clear procedures for containing, eradicating, and recovering from
+  incidents
+- **Communication**: Plan for appropriate internal and external communication during security
+  incidents
+- **Learning**: Conduct thorough post-incident analysis to improve security posture and prevent
+  recurrence
+- **Continuous Improvement**: Regularly update incident response capabilities based on lessons
+  learned and evolving threats
 
-## Tool-Specific Security
+## Security Assurance
 
-### TSera CLI Security
+### Security Quality Framework
 
-- **Template Security**: Validate templates before use
-- **Code Generation Security**: Ensure generated code is secure
-- **Project Initialization Security**: Secure default project configurations
-- **Artifact Generation Security**: Secure generation of all artifact types
+- **Security Coverage**: Measure and maintain comprehensive coverage of security controls across all
+  system components
+- **Vulnerability Metrics**: Track vulnerability discovery, resolution time, and recurrence patterns
+- **Security Testing Effectiveness**: Measure the ability of security testing to identify real
+  threats
+- **Configuration Compliance**: Monitor adherence to security configuration standards and best
+  practices
+- **Security Performance**: Assess the impact of security controls on system performance and
+  usability
 
-### Generated Application Security
+### Continuous Security Improvement
 
-- **Web Application Security**: Secure generated web applications
-- **API Security**: Secure generated API endpoints
-- **Database Security**: Secure generated database operations
-- **Infrastructure Security**: Secure deployment configurations
-
-## Security Resources
-
-### Security Documentation
-
-- **Security Guidelines**: Document all security practices
-- **Threat Modeling**: Document potential threats and mitigations
-- **Security Architecture**: Document security controls and their purposes
-- **Incident Response**: Document security incident procedures
-
-### Security Training
-
-- **Developer Education**: Train developers on secure coding practices
-- **Security Awareness**: Regular security awareness training
-- **Tool Training**: Training on security tools and techniques
-- **Threat Intelligence**: Stay informed about current security threats
-
-## Validation and Testing
-
-### Security Testing Requirements
-
-- **Security Unit Tests**: Test security controls in unit tests
-- **Integration Security Tests**: Test security in integration scenarios
-- **Penetration Testing**: Regular penetration testing of applications
-- **Vulnerability Scanning**: Automated vulnerability scanning
-
-### Security Validation
-
-- **Static Analysis Security**: Use SAST tools for security analysis
-- **Dynamic Analysis Security**: Use DAST tools for runtime security testing
-- **Dependency Security**: Regular dependency vulnerability scanning
-- **Configuration Security**: Validate security configurations regularly
+- **Pattern Recognition**: Identify and analyze common security issues and attack patterns
+- **Preventive Measures**: Implement proactive measures to prevent security issues before they occur
+- **Learning from Incidents**: Systematically improve security posture based on incident analysis
+- **Feedback Integration**: Incorporate security feedback from all sources to continuously improve
+  controls
+- **Threat Intelligence Integration**: Stay informed about emerging threats and adapt security
+  measures accordingly
