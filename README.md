@@ -71,6 +71,59 @@ This approach:
 - ✅ Resolves imports correctly from `deno.jsonc`
 - ✅ Avoids path resolution issues with global installation
 
+### Development vs Deployment: Execution Modes
+
+TSera automatically detects whether you're working **inside the TSera repository** (local
+development) or **outside** (production deployment), and configures the project accordingly.
+
+#### Local Development Mode
+
+When you run `tsera init` **inside the TSera repository** (e.g., `tsera init demo` from the repo
+root):
+
+- **Import map** is patched to use relative paths:
+  ```jsonc
+  "tsera/": "../src/"  // Points to local source code
+  ```
+
+- **Dev task** is configured to run directly from source:
+  ```jsonc
+  "tasks": {
+    "dev": "deno run -A --unstable-kv ../src/cli/main.ts dev"
+  }
+  ```
+
+This enables:
+
+- ✅ Instant development without installing TSera globally
+- ✅ Real-time testing of changes to TSera core
+- ✅ No need to rebuild or reinstall after modifications
+
+#### Production/Deployment Mode
+
+When you run `tsera init` **outside the TSera repository** (e.g., in a new directory):
+
+- **Import map** uses published JSR package:
+  ```jsonc
+  "tsera/": "jsr:@tsera/tsera@^1.0.0/"
+  ```
+
+- **Dev task** uses the installed TSera binary:
+  ```jsonc
+  "tasks": {
+    "dev": "tsera dev"
+  }
+  ```
+
+This ensures:
+
+- ✅ Stable, versioned dependencies for production
+- ✅ Consistent behavior across all environments
+- ✅ No dependency on local TSera repository structure
+
+**Key Principle**: TSera is a **development tool**. Once artifacts are generated and committed,
+deployments use only the generated code, not TSera itself.
+
 ### Hello world walkthrough
 
 ```bash

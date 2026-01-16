@@ -16,6 +16,7 @@ import type { ZodType } from "../../../core/utils/zod.ts";
  */
 interface ZodInternalDef {
   type: string;
+  checks?: Array<{ def?: { format?: string; min?: number; max?: number } }>;
   element?: ZodType;
   innerType?: ZodType;
   defaultValue?: unknown;
@@ -77,6 +78,17 @@ function generateSampleValue(zodSchema: ZodType, field: FieldDef): string {
 
   // Handle ZodString
   if (def.type === "string") {
+    // Check for UUID validator
+    if (def.checks) {
+      for (const check of def.checks) {
+        const checkDef = check.def;
+        if (checkDef?.format === "uuid") {
+          return '"b1c2d3e4-f5a6-4890-1234-56789abcdef0"';
+        } else if (checkDef?.format === "email") {
+          return '"user@example.com"';
+        }
+      }
+    }
     return '"example"';
   }
 
