@@ -82,7 +82,7 @@ export const User = defineEntity({
     examples: {
       public: {
         minimal: {
-          id: "uuid-example",
+          id: "b1c2d3e4-f5a6-7890-1234-56789abcdef0",
           email: "user@example.com",
         },
       },
