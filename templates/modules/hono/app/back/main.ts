@@ -8,16 +8,8 @@
  * @module
  */
 
-// Install dependencies first: deno add jsr:@hono/hono@^4.10.7
 import { Hono } from "hono";
 import registerHealthRoutes from "./routes/health.ts";
-
-// Initialize secrets if available
-try {
-  await import("../../config/secrets/manager.ts");
-} catch {
-  // Secrets module not enabled, will use Deno.env
-}
 
 /**
  * Hono application instance with registered routes.
