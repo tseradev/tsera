@@ -64,6 +64,19 @@ export async function copyDirectory(
       targetPath = join(target, "config", "secrets", lastPart);
     }
 
+    // Special handling for Fresh module: assets/ directory should be copied as static/
+    const isFreshModule = source.includes("fresh");
+    const isAssetsPath = relativePath.startsWith("assets/") || relativePath.startsWith("assets\\");
+    if (isFreshModule && isAssetsPath) {
+      // Replace assets/ or assets\ with static/ in the target path
+      // Use string replace instead of regex to avoid escaping issues
+      if (relativePath.startsWith("assets/")) {
+        targetPath = join(target, relativePath.replace("assets/", "static/"));
+      } else {
+        targetPath = join(target, relativePath.replace("assets\\", "static\\"));
+      }
+    }
+
     // Skip deps files if they already exist (shared between modules)
     if (relativePath.startsWith("deps/") || relativePath.startsWith("deps\\")) {
       if (await exists(targetPath) && !force) {
@@ -112,9 +125,18 @@ export async function copyDirectory(
     await Deno.writeTextFile(targetPath, content);
 
     // Use the actual target path relative to project root for copiedFiles
-    const copiedPath = isSecretsModule && isManagerFile && relativePath === lastPart
-      ? `config/secrets/${lastPart}`
-      : relativePath;
+    let copiedPath = relativePath;
+    if (isSecretsModule && isManagerFile && relativePath === lastPart) {
+      copiedPath = `config/secrets/${lastPart}`;
+    } else if (isFreshModule && isAssetsPath) {
+      // Record as static/ instead of assets/
+      // Use string replace instead of regex to avoid escaping issues
+      if (relativePath.startsWith("assets/")) {
+        copiedPath = relativePath.replace("assets/", "static/");
+      } else {
+        copiedPath = relativePath.replace("assets\\", "static\\");
+      }
+    }
     result.copiedFiles.push(copiedPath);
   }
 }

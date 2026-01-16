@@ -54,7 +54,6 @@ export function generateConfigFile(
   // when loading config dynamically from a compiled binary
   sourceFile.addStatements(`
 // TSera configuration (full profile with comments).
-// @ts-expect-error - TseraConfig type is available at runtime via tsera CLI
 const config = {
   // Toggle generated artifacts controlled by "tsera dev".
   openapi: true,

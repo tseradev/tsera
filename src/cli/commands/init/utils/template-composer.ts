@@ -26,6 +26,26 @@ import { generateGitAttributes } from "./gitattributes-generator.ts";
 export type { MergeStrategy, TemplateModule } from "./module-definitions.ts";
 
 /**
+ * Clears a directory by removing all files and subdirectories.
+ *
+ * @param dir - Directory path to clear.
+ */
+async function clearDirectory(dir: string): Promise<void> {
+  if (!(await exists(dir))) {
+    return;
+  }
+
+  for await (const entry of Deno.readDir(dir)) {
+    const entryPath = join(dir, entry.name);
+    if (entry.isDirectory) {
+      await Deno.remove(entryPath, { recursive: true });
+    } else {
+      await Deno.remove(entryPath);
+    }
+  }
+}
+
+/**
  * Options for template composition.
  */
 export interface ComposeOptions {
@@ -129,6 +149,25 @@ export async function composeTemplate(
       } catch {
         // Ignore errors
       }
+    }
+
+    // Copy TSera-specific Fresh template files from templates/modules/fresh/
+    // These files contain custom components, islands, routes, and static assets
+    // Files are copied directly to app/front/ to match Fresh's default structure
+    const freshTemplateDir = join(options.modulesDir, "fresh");
+    if (await exists(freshTemplateDir)) {
+      // Clear target directories before copying to ensure clean state
+      await clearDirectory(join(freshTargetDir, "components"));
+      await clearDirectory(join(freshTargetDir, "islands"));
+      await clearDirectory(join(freshTargetDir, "routes"));
+      await clearDirectory(join(freshTargetDir, "static"));
+
+      await copyDirectory({
+        source: freshTemplateDir,
+        target: freshTargetDir,
+        result,
+        force: options.force,
+      });
     }
   }
 
