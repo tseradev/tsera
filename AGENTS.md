@@ -28,7 +28,7 @@
   Deploy, Vercel, GitHub).
 - `deploy sync` synchronise les workflows CD depuis `config/cd/` vers `.github/workflows/` avec
   protection par hash.
-- **Dépendances autorisées** seulement: Deno std, Cliffy, Zod v4 (JSR), TS‑Morph, Hono, Fresh.
+- **Dépendances autorisées** seulement: Deno std, Cliffy, Zod v4 (JSR), TS‑Morph, Hono, Lume.
 
 ---
 
@@ -168,11 +168,11 @@
         routes/health.ts
         deps/hono.ts
         tests/health.test.ts
-      fresh/              # Module Frontend (optionnel, --no-fresh)
+      lume/               # Module Frontend (optionnel, --no-lume)
         deps/
           preact.ts       # Centralisation version Preact
         web/
-          main.ts         # Fresh app entry
+          main.ts         # Lume app entry
           routes/index.tsx
           islands/Counter.tsx
           static/styles.css
@@ -207,8 +207,7 @@
 - **Deno v2**, ESM only, TS `strict`. **Aucun Node/npm/pnpm** sauf pour les dépendances non
   disponibles sur JSR (Preact).
 - Dépendances autorisées : Deno std (`@std/path`, `@std/fs`, `@std/assert`), **Cliffy** (JSR), **Zod
-  v4** (JSR: `jsr:@zod/zod@^4.0.0`), **TS‑Morph** (JSR), **Hono**, **Fresh** (SSR + islands via
-  JSR), **Preact** (via npm, utilisé par Fresh).
+  v4** (JSR: `jsr:@zod/zod@^4.0.0`), **TS‑Morph** (JSR), **Hono**, **Lume** (static MPA framework).
 - **Pas de polyfills**. Les dépendances doivent être utilisées directement. Si une dépendance n'est
   pas disponible, le code doit échouer de manière explicite (pas de fallback silencieux).
 - **Pas de MCP**. **Pas d'HTTP** dans le CLI.
@@ -293,14 +292,14 @@ Affiche le help global avec la liste des commandes disponibles.
 Compose un projet TSera à partir du template de base et des modules sélectionnés. Crée `deno.jsonc`,
 `.gitignore`, `README.md`, **écrit** `tsera.config.ts` **complet** (profil _full_ commenté).
 
-**Modules inclus par défaut** : Hono (API), Fresh (frontend), Docker, CI, Secrets.
+**Modules inclus par défaut** : Hono (API), Lume (frontend), Docker, CI, Secrets.
 
 **Options :**
 
 - `[directory]` : Répertoire cible (défaut: `.`)
 - `--template <name>` : Template de base à utiliser (défaut: `base`)
 - `--no-hono` : Exclut le module API Hono
-- `--no-fresh` : Exclut le module frontend Fresh
+- `--no-lume` : Exclut le module frontend Lume
 - `--no-docker` : Exclut le module Docker Compose
 - `--no-ci` : Exclut le module CI GitHub Actions (6 workflows générés dans `.github/workflows/`)
 - `--no-secrets` : Exclut le module de gestion des secrets type-safe
@@ -403,11 +402,10 @@ export interface TseraConfig {
 
 ## 5) Template app‑minimal
 
-- Projet Deno minimal avec **Hono** (API `/health`), **Fresh** (frontend SSR avec islands), une
-  entité `User`, `tsera.config.ts` complet, `deno.jsonc`, `import_map.json`, README court.
-- Dossier `web/` (Fresh) pour le frontend SSR avec architecture islands.
-- Page racine affichant le component Fresh avec partage direct des types backend/frontend.
-- **Fresh est inclus par défaut** et peut être désactivé via `--no-fresh` lors de l'init.
+- Projet Deno minimal avec **Hono** (API `/health`), **Lume** (frontend static MPA), une entité
+  `User`, `tsera.config.ts` complet, `deno.jsonc`, `import_map.json`, README court.
+- Page racine affichant une page d'accueil Lume avec partage direct des types backend/frontend.
+- **Lume est inclus par défaut** et peut être désactivé via `--no-lume` lors de l'init.
 
 ---
 
@@ -492,12 +490,11 @@ la CI est un **bootstrap initial** sans mécanisme de synchronisation.
 ## 12) Roadmap (post‑MVP)
 
 1. Types enrichis (enums, relations, index/unique) → migrations plus riches.
-2. Détection de routes (Hono/Fresh) avancée → OpenAPI plus complet avec partage de types.
+2. Détection de routes (Hono/Lume) avancée → OpenAPI plus complet avec partage de types.
 3. **Policies CC** (ex. `requireValidationSchema`, `forbidUntypedQuery`) + blocages configurables.
 4. Observabilité : export métriques (temps d'incohérence) ; badge public.
 5. Providers optionnels (GraphQL/gRPC/RBAC) **hors cœur**.
 6. **MCP** (plus tard) : interface agents ; **non inclus** ici.
-7. **Fresh islands avancées** : hydratation sélective, partage d'état backend/frontend type-safe.
 
 ---
 
@@ -507,7 +504,7 @@ la CI est un **bootstrap initial** sans mécanisme de synchronisation.
 - [ ] **Noyau** entités + helpers (zod/openapi/drizzle) testés et prêts à l’usage.
 - [ ] **CLI** : 4 commandes stables; `init` écrit `tsera.config.ts` _full_; `dev` maintient les
       artefacts; `doctor --fix` et `update` OK.
-- [ ] **Template** base + modules (Hono, Fresh, Docker, CI, Secrets) fonctionnels; `tsera dev`
+- [ ] **Template** base + modules (Hono, Lume, Docker, CI, Secrets) fonctionnels; `tsera dev`
       régénère bien; `--no-*` flags opérationnels.
 - [ ] **Tests** unit + golden + e2e verts en CI 3 OS.
 - [ ] **Release** : tags → binaires (et JSR optionnel); README à jour.

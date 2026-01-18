@@ -29,7 +29,7 @@ interface InitCommandOptions extends GlobalCLIOptions {
   force: boolean;
   yes: boolean;
   noHono: boolean;
-  noFresh: boolean;
+  noLume: boolean;
   noDocker: boolean;
   noCi: boolean;
   noSecrets: boolean;
@@ -42,8 +42,8 @@ interface InitActionOptions {
   yes?: boolean;
   /** True if Hono is enabled (default: true unless --no-hono is passed). */
   hono?: boolean;
-  /** True if Fresh is enabled (default: true unless --no-fresh is passed). */
-  fresh?: boolean;
+  /** True if Lume is enabled (default: true unless --no-lume is passed). */
+  lume?: boolean;
   /** True if Docker is enabled (default: true unless --no-docker is passed). */
   docker?: boolean;
   /** True if CI is enabled (default: true unless --no-ci is passed). */
@@ -65,7 +65,7 @@ export interface InitCommandContext {
   /** Enabled modules configuration. */
   modules: {
     hono: boolean;
-    fresh: boolean;
+    lume: boolean;
     docker: boolean;
     ci: boolean;
     secrets: boolean;
@@ -326,7 +326,7 @@ export function createDefaultInitHandler(
     // of the code to know that CI is present
     const enabledModules: string[] = [];
     if (context.modules.hono) enabledModules.push("hono");
-    if (context.modules.fresh) enabledModules.push("fresh");
+    if (context.modules.lume) enabledModules.push("lume");
     if (context.modules.docker) enabledModules.push("docker");
     const ciEnabled = context.modules.ci;
     if (ciEnabled) enabledModules.push("ci"); // Inclure pour env-generator et autres
@@ -593,7 +593,7 @@ export function createInitCommand(
     .option("-f, --force", "Overwrite existing files.", { default: false })
     .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
     .option("--no-hono", "Disable Hono API module.")
-    .option("--no-fresh", "Disable Fresh frontend module.")
+    .option("--no-lume", "Disable Lume frontend module.")
     .option("--no-docker", "Disable Docker Compose module.")
     .option("--no-ci", "Disable CI/CD workflows.")
     .option("--no-secrets", "Disable type-safe secrets management.")
@@ -603,7 +603,7 @@ export function createInitCommand(
         force = false,
         yes = false,
         hono = true,
-        fresh = true,
+        lume = true,
         docker = true,
         ci = true,
         secrets = true,
@@ -614,7 +614,7 @@ export function createInitCommand(
         yes,
         modules: {
           hono,
-          fresh,
+          lume,
           docker,
           ci,
           secrets,
@@ -650,8 +650,8 @@ export function createInitCommand(
               description: "Disable Hono API module (enabled by default)",
             },
             {
-              label: "--no-fresh",
-              description: "Disable Fresh frontend module (enabled by default)",
+              label: "--no-lume",
+              description: "Disable Lume frontend module (enabled by default)",
             },
             {
               label: "--no-docker",
@@ -673,7 +673,7 @@ export function createInitCommand(
           examples: [
             "tsera init",
             "tsera init my-app",
-            "tsera init my-app --no-fresh --no-docker",
+            "tsera init my-app --no-lume --no-docker",
             "tsera init --no-hono --no-ci",
             "tsera init --force --yes",
           ],

@@ -16,7 +16,7 @@ export type MergeStrategy = "copy" | "merge" | "skip";
  * Definition of a template module.
  */
 export interface TemplateModule {
-  /** Module name (e.g., "hono", "fresh"). */
+  /** Module name (e.g., "hono", "lume"). */
   name: string;
   /** Strategy for handling file conflicts. */
   mergeStrategy: MergeStrategy;
@@ -34,8 +34,8 @@ export const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
     name: "hono",
     mergeStrategy: "copy",
   },
-  fresh: {
-    name: "fresh",
+  lume: {
+    name: "lume",
     mergeStrategy: "copy",
     dependencies: [],
   },
@@ -61,14 +61,8 @@ export const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
   hono: {
     "hono": "jsr:@hono/hono@^4.10.7",
   },
-  fresh: {
-    "fresh": "jsr:@fresh/core@^2.2.0",
-    "preact": "npm:preact@^10.27.2",
-    "preact/jsx-runtime": "npm:preact@^10.27.2/jsx-runtime",
-    "preact/debug": "npm:preact@^10.27.2/debug",
-    "@preact/signals": "npm:@preact/signals@^2.5.1",
-    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.0.8",
-    "vite": "npm:vite@^7.2.4",
+  lume: {
+    "lume": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/",
   },
 };
 

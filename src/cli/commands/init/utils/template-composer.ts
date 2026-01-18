@@ -2,7 +2,7 @@
  * Template composition system for TSera projects.
  *
  * This module handles the composition of modular templates, allowing users
- * to enable or disable specific features (Hono, Fresh, Docker, CI, Secrets)
+ * to enable or disable specific features (Hono, Lume, Docker, CI, Secrets)
  * through command-line flags.
  *
  * @module
@@ -87,7 +87,7 @@ export interface ComposedTemplate {
  *   targetDir: "/path/to/project",
  *   baseDir: "/templates/base",
  *   modulesDir: "/templates/modules",
- *   enabledModules: ["hono", "fresh", "docker"],
+ *   enabledModules: ["hono", "lume", "docker"],
  * });
  * console.log(`Copied ${result.copiedFiles.length} files`);
  * ```
@@ -112,10 +112,10 @@ export async function composeTemplate(
     force: options.force,
   });
 
-  // Copy enabled modules (except Fresh which is generated dynamically)
+  // Copy enabled modules (except Lume which is generated dynamically)
   for (const moduleName of options.enabledModules) {
-    if (moduleName === "fresh") {
-      // Fresh is generated dynamically via fresh init
+    if (moduleName === "lume") {
+      // Lume is generated dynamically via lume init
       continue;
     }
     const moduleDir = join(options.modulesDir, moduleName);
@@ -129,32 +129,32 @@ export async function composeTemplate(
     }
   }
 
-  // Generate Fresh project if enabled (before merging configs so we can read deno.json)
-  let freshDenoConfig: DenoConfig | null = null;
-  if (options.enabledModules.includes("fresh")) {
+  // Generate Lume project if enabled (before merging configs so we can read deno.json)
+  let lumeDenoConfig: DenoConfig | null = null;
+  if (options.enabledModules.includes("lume")) {
     const freshTargetDir = join(options.targetDir, "app", "front");
     await ensureDir(freshTargetDir);
     const freshFiles = await generateFreshProject({
       targetDir: freshTargetDir,
       force: options.force,
     });
-    result.copiedFiles.push(...freshFiles.map((f) => `app/front/${f}`));
+    result.copiedFiles.push(...freshFiles.map((f: string) => `app/front/${f}`));
 
-    // Read Fresh deno.json before it gets removed
+    // Read Lume deno.json before it gets removed
     const freshDenoPath = join(freshTargetDir, "deno.json");
     if (await exists(freshDenoPath)) {
       try {
         const freshContent = await Deno.readTextFile(freshDenoPath);
-        freshDenoConfig = parseJsonc(freshContent) as DenoConfig;
+        lumeDenoConfig = parseJsonc(freshContent) as DenoConfig;
       } catch {
         // Ignore errors
       }
     }
 
-    // Copy TSera-specific Fresh template files from templates/modules/fresh/
-    // These files contain custom components, islands, routes, and static assets
-    // Files are copied directly to app/front/ to match Fresh's default structure
-    const freshTemplateDir = join(options.modulesDir, "fresh");
+    // Copy TSera-specific Lume template files from templates/modules/lume/
+    // These files contain custom components, pages, and static assets
+    // Files are copied directly to app/front/ to match Lume's default structure
+    const freshTemplateDir = join(options.modulesDir, "lume");
     if (await exists(freshTemplateDir)) {
       // Clear target directories before copying to ensure clean state
       await clearDirectory(join(freshTargetDir, "components"));
@@ -172,7 +172,7 @@ export async function composeTemplate(
   }
 
   // Merge special files that need intelligent merging
-  await mergeConfigFiles(options, result, freshDenoConfig);
+  await mergeConfigFiles(options, result, lumeDenoConfig);
 
   // Generate environment files if secrets module is enabled
   if (options.enabledModules.includes("secrets") && options.dbConfig) {

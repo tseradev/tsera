@@ -69,10 +69,10 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // Fresh module
-  if (modules.includes("fresh")) {
-    lines.push("# Frontend Server (Fresh)");
-    lines.push("FRESH_PORT=8000");
+  // Lume module
+  if (modules.includes("lume")) {
+    lines.push("# Frontend Server (Lume)");
+    lines.push("LUME_PORT=8000");
     lines.push("");
   }
 
@@ -131,10 +131,10 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // Fresh module
-  if (modules.includes("fresh")) {
-    lines.push("# Frontend Server (Fresh)");
-    lines.push("FRESH_PORT=8080");
+  // Lume module
+  if (modules.includes("lume")) {
+    lines.push("# Frontend Server (Lume)");
+    lines.push("LUME_PORT=8080");
     lines.push("");
   }
 
@@ -194,10 +194,10 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // Fresh module
-  if (modules.includes("fresh")) {
-    lines.push("# Frontend Server (Fresh)");
-    lines.push("FRESH_PORT=8080");
+  // Lume module
+  if (modules.includes("lume")) {
+    lines.push("# Frontend Server (Lume)");
+    lines.push("LUME_PORT=8080");
     lines.push("");
   }
 
@@ -257,10 +257,10 @@ function generateExampleEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
-  // Fresh module
-  if (modules.includes("fresh")) {
-    lines.push("# Frontend Server (Fresh)");
-    lines.push("FRESH_PORT=8000");
+  // Lume module
+  if (modules.includes("lume")) {
+    lines.push("# Frontend Server (Lume)");
+    lines.push("LUME_PORT=8000");
     lines.push("");
   }
 
@@ -352,13 +352,13 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("  },");
   }
 
-  // Fresh variables
-  if (modules.includes("fresh")) {
-    lines.push("  FRESH_PORT: {");
+  // Lume variables
+  if (modules.includes("lume")) {
+    lines.push("  LUME_PORT: {");
     lines.push('    type: "number",');
     lines.push("    required: false,");
     lines.push("    default: 8000,");
-    lines.push('    description: "Fresh frontend server port",');
+    lines.push('    description: "Lume frontend server port",');
     lines.push("  },");
   }
 

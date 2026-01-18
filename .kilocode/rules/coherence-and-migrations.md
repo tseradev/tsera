@@ -328,7 +328,7 @@ Every coherence failure should be a learning opportunity:
 Quality should be measured through comprehensive metrics:
 
 - **Coherence Score**: Overall measure of system coherence across all dimensions
-- **Artifact Freshness**: How current generated artifacts are compared to their sources
+- **Artifact Lumeness**: How current generated artifacts are compared to their sources
 - **Migration Success Rate**: Percentage of migrations that complete successfully
 - **Resolution Effectiveness**: Success rate of automated coherence issue resolution
 

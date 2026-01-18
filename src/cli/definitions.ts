@@ -64,8 +64,8 @@ export interface PathsConfig {
 export interface ModulesConfig {
   /** Enable Hono API framework. */
   hono?: boolean;
-  /** Enable Fresh frontend framework. */
-  fresh?: boolean;
+  /** Enable Lume frontend framework. */
+  lume?: boolean;
   /** Enable Docker Compose configuration. */
   docker?: boolean;
   /** Enable CI/CD workflows. */

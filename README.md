@@ -23,7 +23,7 @@ team-facing documentation.
 - **Zod**, **zod-to-openapi**, and **Drizzle** to project entities.
 - **TS-Morph** (via JSR) for AST-based TypeScript code generation.
 - **Hono** API framework (optional module).
-- **Fresh** SSR frontend framework (optional module).
+- **Lume** static frontend framework (optional module).
 - **Docker Compose** for local development (optional module).
 - **GitHub Actions** CI workflows (optional module, generates 6 workflows in `.github/workflows/`).
 - **Type-safe secrets management** with environment validation (optional module).
@@ -131,7 +131,7 @@ deployments use only the generated code, not TSera itself.
 tsera init demo
 
 # Or create a minimal project with only specific modules
-tsera init demo --no-fresh --no-docker --no-ci
+tsera init demo --no-lume --no-docker --no-ci
 
 # Note: The CI module generates 6 workflows in .github/workflows/:
 # - ci-lint.yml, ci-test.yml, ci-build.yml, ci-codegen.yml, ci-coherence.yml, ci-openapi.yml
@@ -139,7 +139,7 @@ tsera init demo --no-fresh --no-docker --no-ci
 # TSera does not regenerate or synchronize them (unlike CD workflows managed by 'tsera deploy sync').
 
 # Or create a backend-only project
-tsera init demo --no-fresh
+tsera init demo --no-lume
 
 # 2. Move into the generated project and inspect the structure
 cd demo
@@ -199,7 +199,8 @@ TSera uses a modular architecture where you can enable or disable specific featu
 **Available modules (all enabled by default):**
 
 - **Hono**: Fast and minimal API framework (Hono v4 via JSR/npm)
-- **Fresh**: Server-side rendering with islands architecture (Fresh v2 via JSR + Preact v10 via npm)
+- **Lume**: Static site generator for Deno, focused on simplicity and performance, with multiple
+  template engines and a plugin-based architecture.
 - **Docker**: Docker Compose configuration with PostgreSQL
 - **CI**: GitHub Actions workflows (6 workflows: lint, test, build, codegen, coherence, openapi)
 - **Secrets**: Type-safe environment variable management with Zod validation
@@ -208,9 +209,9 @@ TSera uses a modular architecture where you can enable or disable specific featu
 
 ```bash
 # Minimal backend-only project
-tsera init my-app --no-fresh --no-docker --no-ci
+tsera init my-app --no-lume --no-docker --no-ci
 
-# API + Fresh frontend only
+# API + Lume frontend only
 tsera init my-app --no-docker --no-ci
 
 # Full stack without CI
@@ -231,7 +232,7 @@ When `tsera init` completes you will find:
   and smoke tests as soon as entities are introduced.
 - `domain/User.entity.ts` — an example entity to explore.
 - **Hono module** (if enabled): `main.ts`, `routes/health.ts`, and API infrastructure.
-- **Fresh module** (if enabled): `web/` directory with routes, islands, and static assets.
+- **Lume module** (if enabled): `front/` directory with routes and static assets.
 - **Docker module** (if enabled): `docker-compose.yml` and `Dockerfile` for containerized
   development.
 - **CI module** (if enabled): `.github/workflows/` with 6 CI workflows (`ci-lint.yml`,

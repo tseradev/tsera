@@ -33,7 +33,7 @@ const config = {
   deployTargets: [],
   modules: {
     hono: true,
-    fresh: true,
+    lume: true,
     docker: true,
     ci: true,
     secrets: true,

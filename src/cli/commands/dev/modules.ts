@@ -30,7 +30,7 @@ async function exists(path: string): Promise<boolean> {
 export interface ActiveModules {
   /** Backend module (Hono API) is present */
   backend: boolean;
-  /** Frontend module (Fresh SSR) is present */
+  /** Frontend module (Lume MPA) is present */
   frontend: boolean;
   /** Secrets module (type-safe secrets management) is present */
   secrets: boolean;

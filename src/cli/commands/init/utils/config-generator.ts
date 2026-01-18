@@ -9,8 +9,8 @@ import {
 export interface ModuleOptions {
   /** Enable Hono API module. */
   hono?: boolean;
-  /** Enable Fresh frontend module. */
-  fresh?: boolean;
+  /** Enable Lume frontend module. */
+  lume?: boolean;
   /** Enable Docker Compose module. */
   docker?: boolean;
   /** Enable CI/CD module. */
@@ -42,7 +42,7 @@ export function generateConfigFile(
     ? `
   modules: {
     hono: ${modules.hono !== false},
-    fresh: ${modules.fresh !== false},
+    lume: ${modules.lume !== false},
     docker: ${modules.docker !== false},
     ci: ${modules.ci !== false},
     secrets: ${modules.secrets !== false},

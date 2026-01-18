@@ -3,7 +3,7 @@ import { createDefaultInitHandler } from "../init/init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
 import { assertEquals } from "std/assert";
 
-const NOOP_WRITER = () => {};
+const NOOP_WRITER = () => { };
 
 function createExitCollector() {
   const codes: number[] = [];
@@ -33,8 +33,8 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
   // Ensure path starts with / for Windows paths in file:// URLs
   const pathForUrl = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
   const fileUrl = `file://${pathForUrl}/`;
-  
-  // Check if import_map.json exists (non-Fresh projects)
+
+  // Check if import_map.json exists (non-Lume projects)
   const importMapPath = join(projectDir, "import_map.json");
   if (await fileExists(importMapPath)) {
     const importMap = JSON.parse(await Deno.readTextFile(importMapPath));
@@ -46,7 +46,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     importMap.imports["tsera/cli/"] = `${fileUrl}cli/`;
     await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
   } else {
-    // Fresh projects: imports are in deno.jsonc
+    // Lume projects: imports are in deno.jsonc
     const denoConfigPath = join(projectDir, "deno.jsonc");
     if (await fileExists(denoConfigPath)) {
       const { parse } = await import("jsr:@std/jsonc@1");
@@ -76,7 +76,7 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
       global: { json: false },
       modules: {
         hono: true,
-        fresh: true,
+        lume: true,
         docker: true,
         ci: true,
         secrets: true,
@@ -131,7 +131,7 @@ Deno.test("doctor --quick exits with code 0 even when issues found", async () =>
       global: { json: false },
       modules: {
         hono: true,
-        fresh: true,
+        lume: true,
         docker: true,
         ci: true,
         secrets: true,
@@ -187,7 +187,7 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
       global: { json: false },
       modules: {
         hono: true,
-        fresh: true,
+        lume: true,
         docker: true,
         ci: true,
         secrets: true,

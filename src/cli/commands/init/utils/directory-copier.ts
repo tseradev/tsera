@@ -64,10 +64,10 @@ export async function copyDirectory(
       targetPath = join(target, "config", "secrets", lastPart);
     }
 
-    // Special handling for Fresh module: assets/ directory should be copied as static/
-    const isFreshModule = source.includes("fresh");
+    // Special handling for Lume module: assets/ directory should be copied as static/
+    const isLumeModule = source.includes("lume");
     const isAssetsPath = relativePath.startsWith("assets/") || relativePath.startsWith("assets\\");
-    if (isFreshModule && isAssetsPath) {
+    if (isLumeModule && isAssetsPath) {
       // Replace assets/ or assets\ with static/ in the target path
       // Use string replace instead of regex to avoid escaping issues
       if (relativePath.startsWith("assets/")) {
@@ -128,7 +128,7 @@ export async function copyDirectory(
     let copiedPath = relativePath;
     if (isSecretsModule && isManagerFile && relativePath === lastPart) {
       copiedPath = `config/secrets/${lastPart}`;
-    } else if (isFreshModule && isAssetsPath) {
+    } else if (isLumeModule && isAssetsPath) {
       // Record as static/ instead of assets/
       // Use string replace instead of regex to avoid escaping issues
       if (relativePath.startsWith("assets/")) {

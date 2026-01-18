@@ -39,15 +39,15 @@ export interface ImportMap {
  *
  * @param options - Composition options.
  * @param result - Composition result to update.
- * @param freshDenoConfig - Optional Fresh deno.json configuration to merge.
+ * @param lumeDenoConfig - Optional Lume deno.json configuration to merge.
  */
 export async function mergeConfigFiles(
   options: ComposeOptions,
   result: ComposedTemplate,
-  freshDenoConfig?: DenoConfig | null,
+  lumeDenoConfig?: DenoConfig | null,
 ): Promise<void> {
   // Merge deno.jsonc tasks and imports
-  await mergeDenoConfig(options, result, freshDenoConfig);
+  await mergeDenoConfig(options, result, lumeDenoConfig);
 
   // Merge module dependencies into deno.jsonc imports
   await mergeImportsIntoDenoConfig(options, result);
@@ -68,12 +68,12 @@ export async function mergeConfigFiles(
  *
  * @param options - Composition options.
  * @param result - Composition result to update.
- * @param freshDenoConfig - Optional Fresh deno.json configuration to merge.
+ * @param lumeDenoConfig - Optional Lume deno.json configuration to merge.
  */
 async function mergeDenoConfig(
   options: ComposeOptions,
   result: ComposedTemplate,
-  freshDenoConfig?: DenoConfig | null,
+  lumeDenoConfig?: DenoConfig | null,
 ): Promise<void> {
   const targetPath = join(options.targetDir, "deno.jsonc");
   if (!(await exists(targetPath))) return;
@@ -104,56 +104,18 @@ async function mergeDenoConfig(
     }
   }
 
-  // Merge Fresh deno.json if Fresh module is enabled
-  if (options.enabledModules.includes("fresh") && freshDenoConfig) {
-    // Fresh needs npm dependencies (Preact/Vite). Use auto to ensure node_modules
-    // is populated without requiring a manual deno install step.
-    baseConfig.nodeModulesDir = "auto";
-
-    // Merge Fresh tasks (adapted for TSera structure with app/front/)
-    // IMPORTANT: Run Vite from app/front/ directory so it can correctly resolve Fresh's internal modules
-    // Use vite version from MODULE_DEPENDENCIES to ensure consistency
-    if (freshDenoConfig.tasks) {
-      // Extract vite version from MODULE_DEPENDENCIES
-      const viteCommand = MODULE_DEPENDENCIES.fresh.vite;
-
-      baseConfig.tasks = {
-        ...baseConfig.tasks,
-        "dev:front": `cd app/front && deno run -A ${viteCommand}`,
-        "build:front": `cd app/front && deno run -A ${viteCommand} build`,
-        "start:front": "deno serve -A _fresh/server.js",
-        "update:front": "deno run -A -r jsr:@fresh/update app/front",
-      };
-    }
-
-    // Merge compiler options (Fresh uses jsx: "precompile") and add vite/client types
-    if (freshDenoConfig.compilerOptions) {
-      baseConfig.compilerOptions = {
-        ...baseConfig.compilerOptions,
-        ...freshDenoConfig.compilerOptions,
-        types: ["vite/client"],
-      };
-    }
-
+  // Merge Lume deno.json if Lume module is enabled
+  if (options.enabledModules.includes("lume") && lumeDenoConfig) {
     // Merge lint rules
-    if (freshDenoConfig.lint) {
-      baseConfig.lint = freshDenoConfig.lint;
+    if (lumeDenoConfig.lint) {
+      baseConfig.lint = lumeDenoConfig.lint;
     }
 
-    // Add exclude for _fresh directory (matching Fresh standard)
-    const exclude = baseConfig.exclude as string[] | undefined;
-    if (!exclude) {
-      baseConfig.exclude = ["**/_fresh/*"];
-    } else if (!exclude.includes("**/_fresh/*")) {
-      exclude.push("**/_fresh/*");
-      baseConfig.exclude = exclude;
-    }
-
-    // Remove Fresh deno.json after merging (it's not needed in app/front/)
-    const freshDenoPath = join(options.targetDir, "app", "front", "deno.json");
-    if (await exists(freshDenoPath)) {
+    // Remove Lume deno.json after merging (it's not needed in app/front/)
+    const lumeDenoPath = join(options.targetDir, "app", "front", "deno.json");
+    if (await exists(lumeDenoPath)) {
       try {
-        await Deno.remove(freshDenoPath);
+        await Deno.remove(lumeDenoPath);
       } catch {
         // Ignore errors
       }

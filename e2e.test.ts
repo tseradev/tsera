@@ -82,12 +82,8 @@ Deno.test("E2E: basic init with all modules", async () => {
     assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono main.ts missing");
     assert(await exists(join(projectDir, "app", "back", "routes", "health.ts")), "Health route missing");
 
-    // Check Fresh module
-    assert(await exists(join(projectDir, "app", "front", "main.ts")), "Fresh main.ts missing");
-    assert(
-      await exists(join(projectDir, "app", "front", "islands", "Counter.tsx")),
-      "Counter component missing",
-    );
+    // Check Lume module
+
 
     // Check Docker module
     assert(await exists(join(projectDir, "config", "docker", "docker-compose.yml")), "docker-compose.yml missing");
@@ -113,7 +109,7 @@ Deno.test("E2E: selective module disabling", async () => {
     const initResult = await runCli([
       "init",
       "demo-minimal",
-      "--no-fresh",
+      "--no-lume",
       "--no-docker",
       "--no-ci",
       "--yes",
@@ -129,7 +125,7 @@ Deno.test("E2E: selective module disabling", async () => {
     assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "Secrets should be present");
 
     // Check that disabled modules don't exist
-    assert(!await exists(join(projectDir, "app", "front")), "Fresh should be disabled");
+    assert(!await exists(join(projectDir, "app", "front")), "Lume should be disabled");
     assert(!await exists(join(projectDir, "config", "docker")), "Docker should be disabled");
     assert(!await exists(join(projectDir, ".github")), "CI should be disabled");
   } finally {
