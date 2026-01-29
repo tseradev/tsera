@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TSera • The Next Era of TypeScript Fullstack</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="/assets/global.css" />
+  </head>
+
+  <body>
+    {{ content }}
+
+    <script>
+      (function () {
+        const root = document;
+
+        function flash(el) {
+          el.classList.add("copied");
+          window.setTimeout(() => el.classList.remove("copied"), 900);
+        }
+
+        root.addEventListener("click", async (e) => {
+          const btn = e.target && e.target.closest
+            ? e.target.closest("[data-copy]")
+            : null;
+          if (!btn) return;
+
+          const value = btn.getAttribute("data-copy") || "";
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(value);
+            } else {
+              const ta = document.createElement("textarea");
+              ta.value = value;
+              ta.style.position = "fixed";
+              ta.style.top = "-1000px";
+              document.body.appendChild(ta);
+              ta.focus();
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
+            }
+            flash(btn);
+          } catch (_) {
+            // Silent fail (no toast). Keep UX clean.
+          }
+        }, { passive: true });
+      })();
+    </script>
+  </body>
+</html>
