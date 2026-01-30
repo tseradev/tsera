@@ -141,24 +141,11 @@ export async function composeTemplate(
     });
     result.copiedFiles.push(...lumeFiles.map((f: string) => `app/front/${f}`));
 
-    // Copy .vscode/ directory to project root
-    const vscodeSourceDir = join(options.modulesDir, "lume", ".vscode");
-    if (await exists(vscodeSourceDir)) {
-      const vscodeTargetDir = join(options.targetDir, ".vscode");
-      await ensureDir(vscodeTargetDir);
-      await copyDirectory({
-        source: vscodeSourceDir,
-        target: vscodeTargetDir,
-        result,
-        force: options.force,
-      });
-      result.copiedFiles.push(".vscode/settings.json");
 
-      // Remove .vscode/ directory from app/front/ if it exists
-      const vscodeFrontDir = join(lumeTargetDir, ".vscode");
-      if (await exists(vscodeFrontDir)) {
-        await Deno.remove(vscodeFrontDir, { recursive: true });
-      }
+    // Remove .vscode/ directory from app/front/ if it exists
+    const vscodeFrontDir = join(lumeTargetDir, ".vscode");
+    if (await exists(vscodeFrontDir)) {
+      await Deno.remove(vscodeFrontDir, { recursive: true });
     }
 
     // Read Lume deno.jsonc directly from template (not from generated files)

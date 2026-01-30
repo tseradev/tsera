@@ -23,6 +23,7 @@ import { promptProviderSelection } from "../deploy/deploy-init-ui.ts";
 import { handleDeploySync } from "../deploy/deploy-sync.ts";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
 import { initializeGitRepository } from "./utils/git-init.ts";
+import { generateVscodeConfig } from "./utils/vscode-generator.ts";
 
 /** CLI options accepted by the {@code init} command. */
 interface InitCommandOptions extends GlobalCLIOptions {
@@ -363,6 +364,19 @@ export function createDefaultInitHandler(
 
     // Patch deno.jsonc based on environment (local dev vs production)
     await patchImportMapForEnvironment(targetDir, templatesRoot);
+
+    // Generate VSCode configuration files (always generated, independent of modules)
+    const vscodeResult = await generateVscodeConfig({
+      targetDir,
+      force: context.force,
+    });
+
+    if (jsonMode) {
+      logger.event("init:vscode", {
+        created: vscodeResult.createdFiles.length,
+        skipped: vscodeResult.skippedFiles.length,
+      });
+    }
 
     if (jsonMode) {
       logger.event("init:copy", {

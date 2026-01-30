@@ -53,16 +53,6 @@ function toUint8(value: string | Uint8Array): Uint8Array {
 }
 
 /**
- * Returns a TextDecoder for string inputs, or null for binary inputs.
- *
- * @param input - Input value to check.
- * @returns TextDecoder if input is a string; otherwise null.
- */
-function decoderFor(input: string | Uint8Array): TextDecoder | null {
-  return typeof input === "string" ? new TextDecoder() : null;
-}
-
-/**
  * Reads a file if it exists, returning null if not found.
  *
  * @param path - File path to read.
@@ -133,11 +123,9 @@ function compareContent(
   }
 
   if (typeof rawIncoming === "string") {
-    const decoder = decoderFor(rawIncoming);
-    if (decoder) {
-      const current = decoder.decode(existing);
-      return current === rawIncoming;
-    }
+    const decoder = new TextDecoder();
+    const current = decoder.decode(existing);
+    return current === rawIncoming;
   }
 
   for (let index = 0; index < existing.length; index++) {
