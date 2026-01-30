@@ -8,8 +8,12 @@ import type { TseraConfig } from "../../definitions.ts";
 /**
  * Recursively sorts object keys for deterministic JSON output.
  *
+ * This function ensures that JSON output is stable across different runs
+ * by sorting object keys alphabetically. This is important for
+ * reproducible builds and consistent artifact generation.
+ *
  * @param value - Value to sort.
- * @returns Sorted value.
+ * @returns Sorted value with deterministic key order.
  */
 function sortObject<T>(value: T): T {
   if (Array.isArray(value)) {
@@ -30,11 +34,18 @@ function sortObject<T>(value: T): T {
 /**
  * Builds dependency identifiers for OpenAPI artifact based on schema artifacts.
  *
+ * This function creates dependency node identifiers that link the OpenAPI
+ * artifact to the schema artifacts it depends on. Each schema artifact
+ * is identified by its kind, entity slug, and file path.
+ *
  * @param entities - Array of entity runtimes.
- * @param outDir - Output directory.
+ * @param outDir - Output directory for schema artifacts.
  * @returns Array of dependency node identifiers.
  */
-function buildDependencies(entities: readonly EntityRuntime[], outDir: string): string[] {
+function buildDependencies(
+  entities: readonly EntityRuntime[],
+  outDir: string,
+): string[] {
   const dependencies: string[] = [];
   for (const entity of entities) {
     const slug = pascalToSnakeCase(entity.name);
@@ -45,8 +56,15 @@ function buildDependencies(entities: readonly EntityRuntime[], outDir: string): 
 }
 
 /**
- * Builds the project-level OpenAPI artifact from all entities.
- * Uses only entity.public for schemas (visibility filtering).
+ * Builds project-level OpenAPI artifact from all entities.
+ *
+ * This function generates a single OpenAPI specification document that
+ * aggregates schemas from all entities with OpenAPI generation enabled.
+ * The document is sorted deterministically and written to the docs directory.
+ *
+ * Only entities with `openapi.enabled !== false` are included in the
+ * generated specification. The generated document uses only the `public`
+ * schema for each entity to filter out internal and secret fields.
  *
  * @param entities - Array of entity runtimes.
  * @param config - TSera configuration.
@@ -61,7 +79,9 @@ export function buildProjectOpenAPIArtifact(
   }
 
   // Filter entities with openapi.enabled !== false
-  const enabledEntities = entities.filter((entity) => entity.openapi?.enabled !== false);
+  const enabledEntities = entities.filter(
+    (entity) => entity.openapi?.enabled !== false,
+  );
 
   const document = generateOpenAPIDocument(enabledEntities, {
     title: "TSera API",

@@ -10,7 +10,7 @@ import type { ZodType } from "../../../core/utils/zod.ts";
 
 /**
  * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
+ * This is used to access Zod's internal API which is not part of public types.
  */
 interface ZodInternalDef {
   type: string;
@@ -34,7 +34,7 @@ type ZodWithInternal = {
 
 /**
  * Converts a Zod schema to a TypeScript expression.
- * This function analyzes the Zod schema to generate the corresponding TypeScript code.
+ * This function analyzes Zod schema to generate corresponding TypeScript code.
  *
  * @param zodSchema - Zod schema to convert.
  * @returns TypeScript expression representing the schema.
@@ -144,7 +144,9 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
   if (def.type === "default") {
     if (def.innerType) {
       const defaultValue = def.defaultValue;
-      const defaultValueStr = defaultValue !== undefined ? toTsLiteral(defaultValue) : "undefined";
+      const defaultValueStr = defaultValue !== undefined
+        ? toTsLiteral(defaultValue)
+        : "undefined";
       return `${zodSchemaToTsExpression(def.innerType)}.default(${defaultValueStr})`;
     }
     return "z.any()";
@@ -171,7 +173,7 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
  * Converts a value to a TypeScript literal.
  *
  * @param value - Value to convert.
- * @returns TypeScript literal.
+ * @returns TypeScript literal string representation.
  */
 function toTsLiteral(value: unknown): string {
   if (value instanceof Date) {
@@ -198,23 +200,121 @@ function toTsLiteral(value: unknown): string {
  */
 function escapeReservedWord(name: string): string {
   const reservedWords = new Set([
-    "abstract", "any", "as", "asserts", "assert", "async", "await",
-    "boolean", "break", "case", "catch", "class", "const", "constructor",
-    "continue", "debugger", "declare", "default", "delete", "do", "else",
-    "enum", "export", "extends", "false", "finally", "for", "from", "function",
-    "if", "implements", "import", "in", "infer", "instanceof", "interface",
-    "is", "keyof", "let", "module", "namespace", "never", "new", "null",
-    "number", "object", "of", "package", "private", "protected", "public",
-    "readonly", "return", "satisfies", "static", "string", "super", "switch",
-    "symbol", "this", "throw", "true", "try", "type", "typeof", "undefined",
-    "unique", "unknown", "using", "var", "void", "while", "with", "yield",
+    "abstract",
+    "any",
+    "as",
+    "asserts",
+    "assert",
+    "async",
+    "await",
+    "boolean",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "const",
+    "constructor",
+    "continue",
+    "debugger",
+    "declare",
+    "default",
+    "delete",
+    "do",
+    "else",
+    "enum",
+    "export",
+    "extends",
+    "false",
+    "finally",
+    "for",
+    "from",
+    "function",
+    "if",
+    "implements",
+    "import",
+    "in",
+    "infer",
+    "instanceof",
+    "interface",
+    "is",
+    "keyof",
+    "let",
+    "module",
+    "namespace",
+    "never",
+    "new",
+    "null",
+    "number",
+    "object",
+    "of",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "readonly",
+    "return",
+    "satisfies",
+    "static",
+    "string",
+    "super",
+    "switch",
+    "symbol",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "type",
+    "typeof",
+    "undefined",
+    "unique",
+    "unknown",
+    "using",
+    "var",
+    "void",
+    "while",
+    "with",
+    "yield",
   ]);
   return reservedWords.has(name) ? `${name}_` : name;
 }
 
 /**
- * Generates Zod artifacts for an entity.
- * Generates the User super-object with schema, public, input, and the User namespace with types.
+ * Builds Zod schema artifacts for an entity.
+ *
+ * Generates a TypeScript file containing:
+ * - Individual schema exports (schema, public, input.create, input.update)
+ * - A super-object grouping all schemas
+ * - A namespace with inferred types (type, public, input_create, input_update, id)
+ *
+ * The generated file follows this structure:
+ * ```ts
+ * export const EntitySchema = z.object({...}).strict();
+ * export const EntityPublicSchema = z.object({...}).strict();
+ * export const EntityInputCreateSchema = z.object({...}).strict();
+ * export const EntityInputUpdateSchema = z.object({...}).strict();
+ *
+ * export const Entity = {
+ *   schema: EntitySchema,
+ *   public: EntityPublicSchema,
+ *   input: {
+ *     create: EntityInputCreateSchema,
+ *     update: EntityInputUpdateSchema,
+ *   },
+ * } as const;
+ *
+ * export namespace Entity {
+ *   export type type = z.infer<typeof EntitySchema>;
+ *   export type public = z.infer<typeof EntityPublicSchema>;
+ *   export type input_create = z.input<typeof EntityInputCreateSchema>;
+ *   export type input_update = z.input<typeof EntityInputUpdateSchema>;
+ *   export type id = type["id"];
+ * }
+ * ```
+ *
+ * @param context - Artifact context containing entity and configuration.
+ * @param context.entity - Entity runtime with schema definitions.
+ * @param context.config - TSera configuration.
+ * @returns Array of artifact descriptors containing the generated schema file.
  */
 export const buildZodArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
@@ -275,7 +375,7 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
     }],
   });
 
-  // Export the User super-object
+  // Export entity super-object
   sourceFile.addVariableStatement({
     isExported: true,
     declarationKind: VariableDeclarationKind.Const,
@@ -292,7 +392,7 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
     }],
   });
 
-  // Export the User namespace with types
+  // Export entity namespace with types
   // Escape reserved words to avoid TypeScript errors
   const typeName = escapeReservedWord("type");
   const publicName = escapeReservedWord("public");

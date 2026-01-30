@@ -39,7 +39,6 @@ export default function (): string {
             </div>
 
             <div class="terminal-b" role="list">
-              ${termLine("tsera init <name>", "tsera init demo", "Scaffold a new project")}
               ${termLine("tsera dev", "tsera dev", "Start dev watcher (plan → apply)")}
               ${termLine("tsera doctor", "tsera doctor", "Validate environment & artifacts")}
               ${termLine("tsera update", "tsera update", "Update the CLI")}

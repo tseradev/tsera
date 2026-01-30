@@ -54,7 +54,7 @@ body {
   margin: 0;
   color: var(--txt);
   font:
-    14px/1.55 ui-sans-serif,
+    17px/1.55 ui-sans-serif,
     system-ui,
     -apple-system,
     Segoe UI,
@@ -197,7 +197,7 @@ code {
 
 .headline {
   margin: 0;
-  font-size: clamp(39px, 6.1vw, 80px);
+  font-size: clamp(48px, 7.4vw, 96px);
   line-height: 1.0;
   letter-spacing: -0.035em;
   color: rgba(255, 255, 255, 0.96);
@@ -215,7 +215,7 @@ code {
   font-weight: 950;
   letter-spacing: 0.11rem;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.80);
   padding: 9px 14px;
   border: 1px solid rgba(49, 120, 198, 0.35);
@@ -236,7 +236,7 @@ code {
   margin: 12px auto 0;
   max-width: 70ch;
   color: rgba(255, 255, 255, 0.70);
-  font-size: clamp(14px, 1.5vw, 16px);
+  font-size: clamp(17px, 1.8vw, 20px);
 }
 
 @media (prefers-color-scheme: light) {
@@ -262,7 +262,7 @@ code {
   align-items: center;
   justify-content: center;
   font-weight: 950;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.02em;
   transition:
     transform 0.15s ease,
@@ -355,7 +355,7 @@ code {
 
 .terminal-hint {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -435,7 +435,7 @@ code {
 
 .desc {
   color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -446,7 +446,7 @@ code {
 
 .copy {
   justify-self: end;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 950;
   color: rgba(255, 255, 255, 0.70);
 }
@@ -481,7 +481,7 @@ code {
 
 .section-h h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 22px;
   letter-spacing: -0.01em;
 }
 
@@ -523,7 +523,7 @@ code {
   gap: 10px;
   color: var(--mut);
   font-weight: 950;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.10em;
   text-transform: uppercase;
 }
@@ -544,14 +544,14 @@ code {
 
 .card-v {
   margin-top: 10px;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 950;
 }
 
 .card-s {
   margin-top: 6px;
   color: var(--mut);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 /* -----------------------------
@@ -581,7 +581,7 @@ code {
   font-weight: 950;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 14px;
   color: rgba(49, 120, 198, 0.95);
   margin-bottom: 10px;
 }
@@ -597,7 +597,7 @@ code {
 
 .about-title {
   margin: 0;
-  font-size: clamp(20px, 2.2vw, 26px);
+  font-size: clamp(24px, 2.7vw, 32px);
   letter-spacing: -0.02em;
 }
 
@@ -605,7 +605,7 @@ code {
   margin: 10px 0 0;
   max-width: 70ch;
   color: var(--mut);
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.7;
 }
 
@@ -647,7 +647,7 @@ code {
 .point-v {
   margin-top: 6px;
   color: var(--mut);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.6;
 }
 
@@ -675,7 +675,7 @@ code {
   padding: 0 10px;
   border-radius: 999px;
   font-weight: 950;
-  font-size: 11px;
+  font-size: 14px;
   letter-spacing: 0.10em;
   text-transform: uppercase;
   border: 1px solid rgba(49, 120, 198, 0.35);
@@ -728,7 +728,7 @@ code {
 .cc-sub {
   margin-top: 4px;
   color: var(--mut);
-  font-size: 12.5px;
+  font-size: 15px;
 }
 
 .cc-kpis {
@@ -757,7 +757,7 @@ code {
 .kpi-k {
   color: var(--mut);
   font-weight: 900;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -777,7 +777,7 @@ code {
 .cc-rulebox-h {
   color: var(--mut);
   font-weight: 900;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -798,7 +798,7 @@ code {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.18);
   font-weight: 950;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 @media (prefers-color-scheme: light) {
@@ -823,7 +823,7 @@ code {
 .cc-files-h {
   color: var(--mut);
   font-weight: 900;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -863,14 +863,14 @@ code {
 
 .cc-file span {
   color: var(--mut);
-  font-size: 12.5px;
+  font-size: 15px;
 }
 
 .cc-note {
   margin-top: 12px;
   padding: 12px 14px 14px;
   color: var(--mut);
-  font-size: 12.5px;
+  font-size: 15px;
   border-top: 1px solid rgba(255, 255, 255, 0.10);
 }
 

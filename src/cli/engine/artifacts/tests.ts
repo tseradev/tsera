@@ -12,7 +12,7 @@ import type { ZodType } from "../../../core/utils/zod.ts";
 
 /**
  * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
+ * This is used to access Zod's internal API which is not part of public types.
  */
 interface ZodInternalDef {
   type: string;
@@ -38,6 +38,9 @@ const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posi
 /**
  * Normalises an import path for use in generated test files.
  *
+ * This function ensures that import paths are in POSIX format
+ * (forward slashes) and are relative paths starting with "./".
+ *
  * @param path - Import path to normalise.
  * @returns Normalised import path.
  */
@@ -52,8 +55,11 @@ function normaliseImport(path: string): string {
 /**
  * Normalises a path by converting backslashes to forward slashes.
  *
+ * This function converts Windows-style paths to POSIX-style paths
+ * for consistency across platforms.
+ *
  * @param path - Path to normalise.
- * @returns Normalised path.
+ * @returns Normalised path with forward slashes.
  */
 function normalise(path: string): string {
   return path.replace(/\\/g, "/");
@@ -62,9 +68,13 @@ function normalise(path: string): string {
 /**
  * Generates a sample value from a Zod schema and a FieldDef.
  *
- * @param zodSchema - Zod schema.
- * @param field - FieldDef with example if available.
- * @returns Sample value as TypeScript string.
+ * This function creates a sample value for testing purposes.
+ * It uses the field's example value if available, otherwise
+ * generates a reasonable default based on the Zod type.
+ *
+ * @param zodSchema - Zod schema to generate sample from.
+ * @param field - Field definition with optional example value.
+ * @returns Sample value as TypeScript string literal.
  */
 function generateSampleValue(zodSchema: ZodType, field: FieldDef): string {
   // Use field.example if available
@@ -72,7 +82,7 @@ function generateSampleValue(zodSchema: ZodType, field: FieldDef): string {
     return toTsLiteral(field.example);
   }
 
-  // Otherwise, generate from the Zod type
+  // Otherwise, generate from Zod type
   const zodWithInternal = zodSchema as unknown as ZodWithInternal;
   const def = zodWithInternal._zod.def;
 
@@ -150,8 +160,11 @@ function generateSampleValue(zodSchema: ZodType, field: FieldDef): string {
 /**
  * Converts a value to a TypeScript literal.
  *
+ * This function converts various value types to their string
+ * representation for use in generated code.
+ *
  * @param value - Value to convert.
- * @returns TypeScript literal.
+ * @returns TypeScript literal string representation.
  */
 function toTsLiteral(value: unknown): string {
   if (value instanceof Date) {
@@ -171,11 +184,14 @@ function toTsLiteral(value: unknown): string {
 
 /**
  * Builds a TypeScript object literal from fields.
- * Masks values of fields with visibility === "secret".
  *
- * @param entity - Entity runtime.
+ * This function generates a sample object literal for testing purposes.
+ * It masks values of fields with `visibility === "secret"` to
+ * prevent sensitive data from appearing in test files.
+ *
+ * @param entity - Entity runtime with field definitions.
  * @param usePublic - If true, uses only public fields.
- * @returns TypeScript object literal.
+ * @returns TypeScript object literal string.
  */
 function buildSampleObject(entity: EntityRuntime, usePublic: boolean): string {
   const fields = usePublic ? filterPublicFields(entity.fields) : entity.fields;
@@ -215,11 +231,17 @@ function buildSampleObject(entity: EntityRuntime, usePublic: boolean): string {
 
 /**
  * Builds a TypeScript object literal for input.create schema.
- * Excludes id, immutable fields, and auto-generated fields (db.defaultNow).
- * Masks values of fields with visibility === "secret".
  *
- * @param entity - Entity runtime.
- * @returns TypeScript object literal.
+ * This function generates a sample object literal for the input.create
+ * schema. It excludes id, immutable fields, and auto-generated
+ * fields (db.defaultNow) as these should not be provided during
+ * entity creation.
+ *
+ * Values of fields with `visibility === "secret"` are masked to
+ * prevent sensitive data from appearing in test files.
+ *
+ * @param entity - Entity runtime with field definitions.
+ * @returns TypeScript object literal string.
  */
 function buildInputCreateSample(entity: EntityRuntime): string {
   const fields = entity.fields;
@@ -234,7 +256,7 @@ function buildInputCreateSample(entity: EntityRuntime): string {
   const shape = schemaDef.shape;
   const lines: string[] = ["{"];
   const entries = Object.entries(fields).filter(([name]) => {
-    // Only include fields that are in the input.create schema
+    // Only include fields that are in input.create schema
     return name in shape;
   });
 
@@ -262,9 +284,25 @@ function buildInputCreateSample(entity: EntityRuntime): string {
 
 /**
  * Generates test artifacts for an entity.
- * Public tests: use entity.public (fields with visibility === "public").
- * Internal tests: use filtered entity.schema (fields with visibility === "public" or "internal").
- * visibility === "secret": values masked/replaced in tests.
+ *
+ * This function generates Deno test files that validate entity schemas.
+ * The generated tests include:
+ *
+ * - **Schema validation test**: Validates the main schema with a sample object
+ * - **Public schema test**: Validates the public schema (only public fields)
+ * - **Input.create test**: Validates the input.create schema (excludes id, immutable, defaultNow)
+ *
+ * Tests are generated next to entity files in the `core/entities` directory.
+ * Fields with `visibility === "secret"` have their values masked as `"***"`
+ * to prevent sensitive data from appearing in test files.
+ *
+ * If `entity.test === false`, no tests are generated and an empty array
+ * is returned.
+ *
+ * @param context - Artifact context containing entity and configuration.
+ * @param context.entity - Entity runtime with schema definitions.
+ * @param context.config - TSera configuration.
+ * @returns Array of artifact descriptors containing test files.
  */
 export const buildTestArtifacts: ArtifactBuilder = (context) => {
   const { entity, config } = context;
@@ -339,7 +377,7 @@ Deno.test("${entityName} input.create valide un exemple minimal", () => {
 });
 `);
 
-  // Format and get the generated text
+  // Format and get generated text
   sourceFile.formatText();
   let content = sourceFile.getFullText();
 

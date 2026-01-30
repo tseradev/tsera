@@ -5,7 +5,7 @@ import type { ZodType } from "../../../core/utils/zod.ts";
 
 /**
  * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
+ * This is used to access Zod's internal API which is not part of public types.
  */
 interface ZodInternalDef {
   type: string;
@@ -26,10 +26,14 @@ type ZodWithInternal = {
 } & ZodType;
 
 /**
- * Extracts the type from a Zod schema for documentation.
+ * Extracts type from a Zod schema for documentation.
+ *
+ * This function analyzes Zod schema structure to determine the
+ * TypeScript type representation for documentation purposes. It handles
+ * primitive types, arrays, and optional/nullable wrappers.
  *
  * @param zodSchema - Zod schema to analyze.
- * @returns Type string for documentation.
+ * @returns Type string for documentation (e.g., "string", "number", "Array<string>").
  */
 function extractTypeFromZod(zodSchema: ZodType): string {
   const zodWithInternal = zodSchema as unknown as ZodWithInternal;
@@ -97,8 +101,11 @@ function extractTypeFromZod(zodSchema: ZodType): string {
 /**
  * Formats a default value for documentation.
  *
- * @param value - Default value.
- * @returns Formatted string representation.
+ * This function converts various value types to their string
+ * representation for use in Markdown documentation tables.
+ *
+ * @param value - Default value to format.
+ * @returns Formatted string representation (e.g., `"example"`, `"null"`, `"CURRENT_TIMESTAMP"`).
  */
 function formatDefault(value: unknown): string {
   if (value === null) {
@@ -117,10 +124,27 @@ function formatDefault(value: unknown): string {
 }
 
 /**
- * Generates Markdown documentation artifacts for an entity.
- * Public docs: only fields with visibility === "public".
- * Internal docs: fields with visibility === "public" or "internal".
- * visibility === "secret": field NEVER in docs.
+ * Builds Markdown documentation artifacts for an entity.
+ *
+ * This function generates Markdown documentation files that describe
+ * entity structure, fields, and their properties. The documentation
+ * is organized into sections:
+ *
+ * - **Public Fields**: Fields with `visibility === "public"` that are
+ *   exposed in APIs and external interfaces.
+ * - **Internal Fields**: Fields with `visibility === "internal"` that are
+ *   used internally but not exposed publicly.
+ * - **Secret Fields**: Fields with `visibility === "secret"` are NEVER
+ *   included in documentation for security reasons.
+ *
+ * The documentation includes:
+ * - Entity description (from `docs.description` or `openapi.description`)
+ * - Field properties table (Property, Type, Optional, Nullable, Default, Description)
+ * - Warning for internal fields that they are not exposed in public API
+ *
+ * @param context - Artifact context containing entity and configuration.
+ * @param context.entity - Entity runtime with field definitions.
+ * @returns Array of artifact descriptors containing Markdown documentation file.
  */
 export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   const { entity } = context;
@@ -149,7 +173,7 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
       "| --- | --- | --- | --- | --- | --- |",
     );
 
-    // Extract the shape from the public schema
+    // Extract shape from public schema
     const publicWithInternal = entity.public as unknown as ZodWithInternal;
     const schemaDef = publicWithInternal._zod.def;
     if (schemaDef.type === "object" && schemaDef.shape) {
