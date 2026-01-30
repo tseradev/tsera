@@ -7,8 +7,6 @@
  * @module
  */
 
-// import { join } from "../../../shared/path.ts";
-
 /**
  * Status of a managed process.
  */
@@ -79,6 +77,65 @@ export class ProcessManager {
   private processes = new Map<string, ModuleProcess>();
   private statusCallbacks: StatusChangeCallback[] = [];
   private textDecoder = new TextDecoder();
+  private portCheckIntervals = new Map<string, number>();
+
+  /**
+   * Checks if a port is open and accepting connections.
+   *
+   * @param port - Port number to check
+   * @returns True if port is open, false otherwise
+   */
+  private async isPortOpen(port: number): Promise<boolean> {
+    try {
+      const conn = await Deno.connect({
+        hostname: "localhost",
+        port,
+        transport: "tcp",
+      });
+      conn.close();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Starts periodic port checking for a module.
+   *
+   * @param name - Module name
+   * @param port - Port to check
+   */
+  private startPortCheck(name: string, port: number): void {
+    const checkInterval = setInterval(async () => {
+      const process = this.processes.get(name);
+      if (!process || process.status !== "starting") {
+        // Stop checking if process is no longer starting
+        const interval = this.portCheckIntervals.get(name);
+        if (interval !== undefined) {
+          clearInterval(interval);
+          this.portCheckIntervals.delete(name);
+        }
+        return;
+      }
+
+      const isOpen = await this.isPortOpen(port);
+      if (isOpen) {
+        // Port is open, mark as ready
+        process.status = "ready";
+        process.url = `http://localhost:${port}`;
+        this.notifyStatusChange(name, "ready", process.url);
+
+        // Stop checking
+        const interval = this.portCheckIntervals.get(name);
+        if (interval !== undefined) {
+          clearInterval(interval);
+          this.portCheckIntervals.delete(name);
+        }
+      }
+    }, 500); // Check every 500ms
+
+    this.portCheckIntervals.set(name, checkInterval);
+  }
 
   /**
    * Starts a module process.
@@ -133,8 +190,20 @@ export class ProcessManager {
         this.detectErrorState(name, line);
       });
 
+      // Start port checking for frontend (Lume)
+      if (name === "frontend") {
+        this.startPortCheck(name, 8001);
+      }
+
       // Monitor process exit
       child.status.then((status) => {
+        // Stop port checking if running
+        const interval = this.portCheckIntervals.get(name);
+        if (interval !== undefined) {
+          clearInterval(interval);
+          this.portCheckIntervals.delete(name);
+        }
+
         if (process.status !== "stopped") {
           if (status.success) {
             process.status = "stopped";
@@ -145,6 +214,13 @@ export class ProcessManager {
           this.notifyStatusChange(name, process.status);
         }
       }).catch((error) => {
+        // Stop port checking if running
+        const interval = this.portCheckIntervals.get(name);
+        if (interval !== undefined) {
+          clearInterval(interval);
+          this.portCheckIntervals.delete(name);
+        }
+
         process.status = "error";
         process.errors.push(`Process error: ${error.message}`);
         this.notifyStatusChange(name, "error");
@@ -167,6 +243,13 @@ export class ProcessManager {
     const process = this.processes.get(name);
     if (!process || !process.child) {
       return;
+    }
+
+    // Stop port checking if running
+    const interval = this.portCheckIntervals.get(name);
+    if (interval !== undefined) {
+      clearInterval(interval);
+      this.portCheckIntervals.delete(name);
     }
 
     try {
@@ -213,6 +296,12 @@ export class ProcessManager {
    * Forces shutdown of all processes, using SIGKILL if necessary.
    */
   async stopAll(): Promise<void> {
+    // Stop all port checking intervals
+    for (const [name, interval] of this.portCheckIntervals) {
+      clearInterval(interval);
+      this.portCheckIntervals.delete(name);
+    }
+
     const stops = Array.from(this.processes.keys()).map((name) => this.stopModule(name));
 
     // Wait for all graceful shutdowns
@@ -332,6 +421,7 @@ export class ProcessManager {
     if (!process) return;
 
     const readyPatterns = [
+      /deno\s+serve:.*listening\s+on\s+https?:\/\/[^\s]+/i,
       /listening on/i,
       /server (?:running|started|listening)/i,
       /ready in/i,
@@ -342,7 +432,7 @@ export class ProcessManager {
       /deno.*(?:listening|running)/i,
     ];
 
-    let wasReady = process.status === "ready";
+    const wasReady = process.status === "ready";
     let urlExtracted = false;
 
     for (const pattern of readyPatterns) {

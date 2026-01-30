@@ -14,7 +14,7 @@ import { exists } from "std/fs";
 import { ensureDir } from "../../../utils/fsx.ts";
 import type { DbConfig } from "../../../definitions.ts";
 import { generateEnvFiles } from "./env-generator.ts";
-import { generateFreshProject } from "./fresh-generator.ts";
+import { generateLumeProject } from "./lume-generator.ts";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
 import { getAvailableModules, validateModuleDependencies } from "./module-definitions.ts";
 import { copyDirectory } from "./directory-copier.ts";
@@ -129,42 +129,63 @@ export async function composeTemplate(
     }
   }
 
-  // Generate Lume project if enabled (before merging configs so we can read deno.json)
+  // Generate Lume project if enabled (before merging configs so we can read deno.jsonc)
   let lumeDenoConfig: DenoConfig | null = null;
   if (options.enabledModules.includes("lume")) {
-    const freshTargetDir = join(options.targetDir, "app", "front");
-    await ensureDir(freshTargetDir);
-    const freshFiles = await generateFreshProject({
-      targetDir: freshTargetDir,
+    const lumeTargetDir = join(options.targetDir, "app", "front");
+    await ensureDir(lumeTargetDir);
+    const lumeFiles = await generateLumeProject({
+      targetDir: lumeTargetDir,
+      projectRootDir: options.targetDir,
       force: options.force,
     });
-    result.copiedFiles.push(...freshFiles.map((f: string) => `app/front/${f}`));
+    result.copiedFiles.push(...lumeFiles.map((f: string) => `app/front/${f}`));
 
-    // Read Lume deno.json before it gets removed
-    const freshDenoPath = join(freshTargetDir, "deno.json");
-    if (await exists(freshDenoPath)) {
+    // Copy .vscode/ directory to project root
+    const vscodeSourceDir = join(options.modulesDir, "lume", ".vscode");
+    if (await exists(vscodeSourceDir)) {
+      const vscodeTargetDir = join(options.targetDir, ".vscode");
+      await ensureDir(vscodeTargetDir);
+      await copyDirectory({
+        source: vscodeSourceDir,
+        target: vscodeTargetDir,
+        result,
+        force: options.force,
+      });
+      result.copiedFiles.push(".vscode/settings.json");
+
+      // Remove .vscode/ directory from app/front/ if it exists
+      const vscodeFrontDir = join(lumeTargetDir, ".vscode");
+      if (await exists(vscodeFrontDir)) {
+        await Deno.remove(vscodeFrontDir, { recursive: true });
+      }
+    }
+
+    // Read Lume deno.jsonc directly from template (not from generated files)
+    const lumeTemplateDenoPath = join(options.modulesDir, "lume", "deno.jsonc");
+    if (await exists(lumeTemplateDenoPath)) {
       try {
-        const freshContent = await Deno.readTextFile(freshDenoPath);
-        lumeDenoConfig = parseJsonc(freshContent) as DenoConfig;
+        const lumeContent = await Deno.readTextFile(lumeTemplateDenoPath);
+        lumeDenoConfig = parseJsonc(lumeContent) as DenoConfig;
       } catch {
         // Ignore errors
       }
     }
 
     // Copy TSera-specific Lume template files from templates/modules/lume/
-    // These files contain custom components, pages, and static assets
+    // These files contain custom pages, layouts, and static assets
     // Files are copied directly to app/front/ to match Lume's default structure
-    const freshTemplateDir = join(options.modulesDir, "lume");
-    if (await exists(freshTemplateDir)) {
+    const lumeTemplateDir = join(options.modulesDir, "lume");
+    if (await exists(lumeTemplateDir)) {
       // Clear target directories before copying to ensure clean state
-      await clearDirectory(join(freshTargetDir, "components"));
-      await clearDirectory(join(freshTargetDir, "islands"));
-      await clearDirectory(join(freshTargetDir, "routes"));
-      await clearDirectory(join(freshTargetDir, "static"));
+      // Lume uses src/ for pages, components, and assets
+      await clearDirectory(join(lumeTargetDir, "src"));
+      await clearDirectory(join(lumeTargetDir, "assets"));
+      await clearDirectory(join(lumeTargetDir, "_includes"));
 
       await copyDirectory({
-        source: freshTemplateDir,
-        target: freshTargetDir,
+        source: lumeTemplateDir,
+        target: lumeTargetDir,
         result,
         force: options.force,
       });

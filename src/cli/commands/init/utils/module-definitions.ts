@@ -60,10 +60,7 @@ export const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
 export const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
   hono: {
     "hono": "jsr:@hono/hono@^4.10.7",
-  },
-  lume: {
-    "lume": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/",
-  },
+  }
 };
 
 /**

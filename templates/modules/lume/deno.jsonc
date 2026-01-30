@@ -31,18 +31,9 @@
     }
   },
   "tasks": {
-    "lume": {
-      "description": "Run Lume command",
-      "command": "deno run -P=lume lume/cli.ts"
-    },
-    "build": {
-      "description": "Build the site for production",
-      "command": "deno task lume"
-    },
-    "serve": {
-      "description": "Run and serve the site for development",
-      "command": "deno task lume -s"
-    }
+    "lume": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts",
+    "build": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts",
+    "serve": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts -s"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

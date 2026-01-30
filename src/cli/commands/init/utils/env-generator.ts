@@ -72,7 +72,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
   // Lume module
   if (modules.includes("lume")) {
     lines.push("# Frontend Server (Lume)");
-    lines.push("LUME_PORT=8000");
+    lines.push("LUME_PORT=8001");
     lines.push("");
   }
 
@@ -260,7 +260,7 @@ function generateExampleEnv(db: DbConfig, modules: string[]): string {
   // Lume module
   if (modules.includes("lume")) {
     lines.push("# Frontend Server (Lume)");
-    lines.push("LUME_PORT=8000");
+    lines.push("LUME_PORT=8001");
     lines.push("");
   }
 
@@ -357,7 +357,7 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("  LUME_PORT: {");
     lines.push('    type: "number",');
     lines.push("    required: false,");
-    lines.push("    default: 8000,");
+    lines.push("    default: 8001,");
     lines.push('    description: "Lume frontend server port",');
     lines.push("  },");
   }

@@ -21,17 +21,17 @@ export const envSchema = defineEnvSchema({
     required: true,
     description: "Database connection URL",
   },
+  LUME_PORT: {
+    type: "number",
+    required: false,
+    default: 8000,
+    description: "Lume frontend server port",
+  },
   PORT: {
     type: "number",
     required: false,
     default: 8000,
     description: "Backend server port",
-  },
-  FRESH_PORT: {
-    type: "number",
-    required: false,
-    default: 8001,
-    description: "Frontend server port",
   },
   DEBUG: {
     type: "boolean",

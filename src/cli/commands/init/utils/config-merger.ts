@@ -106,19 +106,48 @@ async function mergeDenoConfig(
 
   // Merge Lume deno.json if Lume module is enabled
   if (options.enabledModules.includes("lume") && lumeDenoConfig) {
+    // Merge imports (critical for Lume module resolution)
+    if (lumeDenoConfig.imports) {
+      baseConfig.imports = {
+        ...(baseConfig.imports || {}),
+        ...lumeDenoConfig.imports,
+      };
+    }
+
+    // Merge permissions (critical for -P=lume flag)
+    if (lumeDenoConfig.permissions) {
+      baseConfig.permissions = {
+        ...(baseConfig.permissions || {}),
+        ...lumeDenoConfig.permissions,
+      };
+    }
+
+    // Merge compilerOptions (JSX configuration)
+    if (lumeDenoConfig.compilerOptions) {
+      baseConfig.compilerOptions = {
+        ...(baseConfig.compilerOptions || {}),
+        ...lumeDenoConfig.compilerOptions,
+      };
+    }
+
+    // Merge tasks Lume
+    if (lumeDenoConfig.tasks) {
+      baseConfig.tasks = { ...baseConfig.tasks, ...lumeDenoConfig.tasks };
+    }
+
+    // Merge unstable flags
+    if (lumeDenoConfig.unstable) {
+      baseConfig.unstable = lumeDenoConfig.unstable;
+    }
+
     // Merge lint rules
     if (lumeDenoConfig.lint) {
       baseConfig.lint = lumeDenoConfig.lint;
     }
 
-    // Remove Lume deno.json after merging (it's not needed in app/front/)
-    const lumeDenoPath = join(options.targetDir, "app", "front", "deno.json");
-    if (await exists(lumeDenoPath)) {
-      try {
-        await Deno.remove(lumeDenoPath);
-      } catch {
-        // Ignore errors
-      }
+    // Merge lock configuration
+    if (lumeDenoConfig.lock !== undefined) {
+      baseConfig.lock = lumeDenoConfig.lock;
     }
   }
 

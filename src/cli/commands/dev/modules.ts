@@ -25,7 +25,7 @@ async function exists(path: string): Promise<boolean> {
 }
 
 /**
- * Represents the active modules in a TSera project.
+ * Represents active modules in a TSera project.
  */
 export interface ActiveModules {
   /** Backend module (Hono API) is present */
@@ -37,14 +37,14 @@ export interface ActiveModules {
 }
 
 /**
- * Detects which modules are active in the given project directory.
+ * Detects which modules are active in given project directory.
  *
  * A module is considered active if its entry point and configuration exist:
  * - Backend: `app/back/main.ts` exists
- * - Frontend: `app/front/main.ts` and `app/front/vite.config.ts` exist
+ * - Frontend: `app/front/main.ts` exists (Fresh) OR `app/front/_config.ts` exists (Lume) OR `app/front/src/` exists (Lume)
  * - Secrets: `config/secrets/manager.ts` exists
  *
- * @param projectDir - The root directory of the TSera project
+ * @param projectDir - The root directory of TSera project
  * @returns Object indicating which modules are active
  *
  * @example
@@ -61,24 +61,32 @@ export interface ActiveModules {
 export async function detectActiveModules(projectDir: string): Promise<ActiveModules> {
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendEntry = join(projectDir, "app", "front", "main.ts");
-  const frontendConfig = join(projectDir, "app", "front", "vite.config.ts");
+  const frontendConfig = join(projectDir, "app", "front", "_config.ts"); // Lume entry point
+  const frontendSrcDir = join(projectDir, "app", "front", "src"); // Lume pages directory
   const secretsManager = join(projectDir, "config", "secrets", "manager.ts");
 
   const [
     hasBackend,
-    hasFrontend,
+    hasFrontendEntry,
     hasFrontendConfig,
+    hasFrontendSrc,
     hasSecrets,
   ] = await Promise.all([
     exists(backendEntry),
     exists(frontendEntry),
     exists(frontendConfig),
+    exists(frontendSrcDir),
     exists(secretsManager),
   ]);
 
+  // Frontend is active if:
+  // - Fresh-style: main.ts exists
+  // - Lume-style: _config.ts or src/ exists
+  const hasFrontend = hasFrontendEntry || hasFrontendConfig || hasFrontendSrc;
+
   return {
     backend: hasBackend,
-    frontend: hasFrontend && hasFrontendConfig,
+    frontend: hasFrontend,
     secrets: hasSecrets,
   };
 }

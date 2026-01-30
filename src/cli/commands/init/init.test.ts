@@ -113,3 +113,90 @@ async function fileExists(path: string): Promise<boolean> {
     throw error;
   }
 }
+
+Deno.test("init generates Lume frontend structure", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const projectDir = join(tempDir, "demo-app");
+    const handler = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+
+    await handler({
+      directory: projectDir,
+      force: false,
+      yes: true,
+      global: { json: false },
+      modules: {
+        hono: true,
+        lume: true,
+        docker: false,
+        ci: false,
+        secrets: false,
+      },
+    });
+
+    await updateImportMapForTests(projectDir);
+
+    // Verify Lume frontend structure exists
+    const frontDir = join(projectDir, "app", "front");
+    const lumeConfigPath = join(frontDir, "_config.ts");
+    const lumeSrcDir = join(frontDir, "src");
+    const lumeIncludesDir = join(frontDir, "_includes");
+    const lumeAssetsDir = join(frontDir, "assets");
+    const lumeReadmePath = join(frontDir, "README.md");
+
+    // Check that Lume directories exist
+    assert(await fileExists(lumeSrcDir), "Lume src/ directory should exist");
+    assert(await fileExists(lumeIncludesDir), "Lume _includes/ directory should exist");
+    assert(await fileExists(lumeAssetsDir), "Lume assets/ directory should exist");
+
+    // Check that Lume files exist
+    assert(await fileExists(lumeConfigPath), "Lume _config.ts should exist");
+    assert(await fileExists(lumeReadmePath), "Lume README.md should exist");
+
+    // Verify README content mentions Lume
+    const readmeContent = await Deno.readTextFile(lumeReadmePath);
+    assert(readmeContent.includes("Lume"), "Lume README should mention Lume");
+    assert(readmeContent.includes("TSera"), "Lume README should mention TSera");
+
+    // Verify _config.ts has expected structure
+    const configContent = await Deno.readTextFile(lumeConfigPath);
+    assert(configContent.length > 0, "Lume _config.ts should have content");
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("init skips Lume when --no-lume is passed", async () => {
+  const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
+  try {
+    const projectDir = join(tempDir, "demo-app");
+    const handler = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+
+    await handler({
+      directory: projectDir,
+      force: false,
+      yes: true,
+      global: { json: false },
+      modules: {
+        hono: true,
+        lume: false,
+        docker: false,
+        ci: false,
+        secrets: false,
+      },
+    });
+
+    await updateImportMapForTests(projectDir);
+
+    // Verify Lume frontend structure does NOT exist
+    const frontDir = join(projectDir, "app", "front");
+    const lumeConfigPath = join(frontDir, "_config.ts");
+
+    assert(
+      !(await fileExists(lumeConfigPath)),
+      "Lume _config.ts should not exist when --no-lume is passed",
+    );
+  } finally {
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
