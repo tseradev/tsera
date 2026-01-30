@@ -180,7 +180,8 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
+          gray(`PID ${existingPid}`)
         }`,
       );
       console.error("");
@@ -194,7 +195,8 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
   // Display startup message on stderr (stdout is reserved for JSON-RPC responses)
   console.error("");
   console.error(
-    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${gray("Server started. Waiting for JSON-RPC requests on stdin…")
+    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${
+      gray("Server started. Waiting for JSON-RPC requests on stdin…")
     }`,
   );
   console.error(`  ${dim("Project:")} ${cyan(projectDir)}`);
@@ -238,7 +240,8 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
+          gray(`PID ${existingPid}`)
         }`,
       );
       console.error("");
@@ -262,7 +265,8 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       const psCommand = new Deno.Command("powershell", {
         args: [
           "-Command",
-          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${getPidFilePath(projectRoot)
+          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${
+            getPidFilePath(projectRoot)
           }" -Encoding ASCII`,
         ],
         stdout: "piped",
@@ -285,7 +289,8 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
+          gray(`PID ${pid}`)
         }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);
@@ -311,7 +316,8 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
+          gray(`PID ${pid}`)
         }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);

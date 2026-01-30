@@ -63,7 +63,6 @@ export class DevConsole extends BaseConsole {
    */
   #projectLabel: string;
 
-
   /**
    * Whether logs mode is enabled (shows module logs in real-time).
    * @private
@@ -117,7 +116,18 @@ export class DevConsole extends BaseConsole {
    * Spinner frames for the loader animation (from TerminalSpinner).
    * @private
    */
-  #loaderFrames = [gray("⠋"), gray("⠙"), gray("⠹"), gray("⠸"), gray("⠼"), gray("⠴"), gray("⠦"), gray("⠧"), gray("⠇"), gray("⠏")];
+  #loaderFrames = [
+    gray("⠋"),
+    gray("⠙"),
+    gray("⠹"),
+    gray("⠸"),
+    gray("⠼"),
+    gray("⠴"),
+    gray("⠦"),
+    gray("⠧"),
+    gray("⠇"),
+    gray("⠏"),
+  ];
 
   /**
    * Creates a new dev console instance.
@@ -144,7 +154,9 @@ export class DevConsole extends BaseConsole {
    */
   start(): void {
     this.write(
-      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${green("watch")}${dim(")")}`,
+      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${green("watch")}${
+        dim(")")
+      }`,
     );
     this.writeLast(`${gray("Watching entities for changes…")}`);
   }
@@ -400,7 +412,9 @@ export class DevConsole extends BaseConsole {
     }
 
     for (const [name, info] of sortedModules) {
-      const label = name === "secrets" ? "Secrets Manager" : name.charAt(0).toUpperCase() + name.slice(1);
+      const label = name === "secrets"
+        ? "Secrets Manager"
+        : name.charAt(0).toUpperCase() + name.slice(1);
       const paddedLabel = label.padEnd(15);
 
       let statusIcon = gray("○");
@@ -433,7 +447,9 @@ export class DevConsole extends BaseConsole {
           break;
       }
 
-      lines.push(`${dim("├─")} ${statusIcon} ${cyan(paddedLabel)} ${dim("│")} ${statusText} ${details}`);
+      lines.push(
+        `${dim("├─")} ${statusIcon} ${cyan(paddedLabel)} ${dim("│")} ${statusText} ${details}`,
+      );
     }
 
     let footerMessage = "";

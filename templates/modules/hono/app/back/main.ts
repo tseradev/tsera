@@ -24,9 +24,7 @@ if (import.meta.main) {
   // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
   const tseraPort = globalThis.tsera?.env("PORT");
   const envPort = Deno.env.get("PORT");
-  const port = typeof tseraPort === "number" ? tseraPort
-    : envPort ? Number(envPort)
-      : 8000;
+  const port = typeof tseraPort === "number" ? tseraPort : envPort ? Number(envPort) : 8000;
   console.log(`Listening on http://localhost:${port}`);
   Deno.serve({ port }, app.fetch);
 }

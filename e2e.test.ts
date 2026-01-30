@@ -80,19 +80,36 @@ Deno.test("E2E: basic init with all modules", async () => {
 
     // Check Hono module
     assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono main.ts missing");
-    assert(await exists(join(projectDir, "app", "back", "routes", "health.ts")), "Health route missing");
+    assert(
+      await exists(join(projectDir, "app", "back", "routes", "health.ts")),
+      "Health route missing",
+    );
 
     // Check Lume module
 
-
     // Check Docker module
-    assert(await exists(join(projectDir, "config", "docker", "docker-compose.yml")), "docker-compose.yml missing");
-    assert(await exists(join(projectDir, "config", "docker", "Dockerfile.back")), "Dockerfile.back missing");
-    assert(await exists(join(projectDir, "config", "docker", "Dockerfile.front")), "Dockerfile.front missing");
+    assert(
+      await exists(join(projectDir, "config", "docker", "docker-compose.yml")),
+      "docker-compose.yml missing",
+    );
+    assert(
+      await exists(join(projectDir, "config", "docker", "Dockerfile.back")),
+      "Dockerfile.back missing",
+    );
+    assert(
+      await exists(join(projectDir, "config", "docker", "Dockerfile.front")),
+      "Dockerfile.front missing",
+    );
 
     // Check CI module
-    assert(await exists(join(projectDir, ".github", "workflows", "ci-lint.yml")), "CI lint workflow missing");
-    assert(await exists(join(projectDir, ".github", "workflows", "ci-test.yml")), "CI test workflow missing");
+    assert(
+      await exists(join(projectDir, ".github", "workflows", "ci-lint.yml")),
+      "CI lint workflow missing",
+    );
+    assert(
+      await exists(join(projectDir, ".github", "workflows", "ci-test.yml")),
+      "CI test workflow missing",
+    );
 
     // Check Secrets module
     assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "manager.ts missing");
@@ -122,7 +139,10 @@ Deno.test("E2E: selective module disabling", async () => {
     // Check that base and enabled modules exist
     assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
     assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono should be present");
-    assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "Secrets should be present");
+    assert(
+      await exists(join(projectDir, "config", "secrets", "manager.ts")),
+      "Secrets should be present",
+    );
 
     // Check that disabled modules don't exist
     assert(!await exists(join(projectDir, "app", "front")), "Lume should be disabled");
@@ -163,7 +183,9 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     if (summary.changed !== false) {
       const summaryStr = JSON.stringify(summary, null, 2);
       throw new Error(
-        `First cycle should be clean but found changes:\n${summaryStr}\n\nFull events:\n${JSON.stringify(events, null, 2)}`,
+        `First cycle should be clean but found changes:\n${summaryStr}\n\nFull events:\n${
+          JSON.stringify(events, null, 2)
+        }`,
       );
     }
     assert(summary.changed === false, "First cycle should be clean");

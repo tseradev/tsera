@@ -221,7 +221,10 @@ async function patchImportMapForEnvironment(
     let denoConfig: { imports?: Record<string, string>; tasks?: Record<string, string> };
 
     try {
-      denoConfig = parseJsonc(content) as { imports?: Record<string, string>; tasks?: Record<string, string> };
+      denoConfig = parseJsonc(content) as {
+        imports?: Record<string, string>;
+        tasks?: Record<string, string>;
+      };
     } catch {
       // If parsing fails, skip patching
       return;
@@ -254,14 +257,16 @@ async function patchImportMapForEnvironment(
         // Normalize paths to forward slashes for consistent comparison
         const targetNormalized = absoluteTargetDir.replace(/\\/g, "/");
         const cliNormalized = absoluteCliMainPath.replace(/\\/g, "/");
-        const targetParts = targetNormalized.split("/").filter(p => p && p !== ".");
-        const cliParts = cliNormalized.split("/").filter(p => p && p !== ".");
+        const targetParts = targetNormalized.split("/").filter((p) => p && p !== ".");
+        const cliParts = cliNormalized.split("/").filter((p) => p && p !== ".");
 
         // Find common prefix (case-insensitive on Windows)
         let commonLength = 0;
         const minLength = Math.min(targetParts.length, cliParts.length);
         for (let i = 0; i < minLength; i++) {
-          const targetPart = Deno.build.os === "windows" ? targetParts[i].toLowerCase() : targetParts[i];
+          const targetPart = Deno.build.os === "windows"
+            ? targetParts[i].toLowerCase()
+            : targetParts[i];
           const cliPart = Deno.build.os === "windows" ? cliParts[i].toLowerCase() : cliParts[i];
           if (targetPart === cliPart) {
             commonLength++;
@@ -273,7 +278,9 @@ async function patchImportMapForEnvironment(
         // Build relative path
         const upLevels = targetParts.length - commonLength;
         const downParts = cliParts.slice(commonLength);
-        const cliRelativePath = upLevels > 0 ? "../".repeat(upLevels) + downParts.join("/") : downParts.join("/");
+        const cliRelativePath = upLevels > 0
+          ? "../".repeat(upLevels) + downParts.join("/")
+          : downParts.join("/");
 
         tasks.dev = `deno run -A --unstable-kv ${cliRelativePath} dev`;
       }

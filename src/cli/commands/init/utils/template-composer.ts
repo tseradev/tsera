@@ -141,7 +141,6 @@ export async function composeTemplate(
     });
     result.copiedFiles.push(...lumeFiles.map((f: string) => `app/front/${f}`));
 
-
     // Remove .vscode/ directory from app/front/ if it exists
     const vscodeFrontDir = join(lumeTargetDir, ".vscode");
     if (await exists(vscodeFrontDir)) {

@@ -19,15 +19,43 @@ import { adaptConnectFile, adaptDrizzleConfigFile, adaptEntityImports } from "./
  */
 const BINARY_EXTENSIONS = [
   // Images
-  ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".bmp", ".tiff",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".ico",
+  ".webp",
+  ".bmp",
+  ".tiff",
   // Fonts
-  ".woff", ".woff2", ".ttf", ".eot", ".otf",
+  ".woff",
+  ".woff2",
+  ".ttf",
+  ".eot",
+  ".otf",
   // Archives
-  ".zip", ".tar", ".gz", ".7z", ".rar",
+  ".zip",
+  ".tar",
+  ".gz",
+  ".7z",
+  ".rar",
   // Documents
-  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
   // Media
-  ".mp3", ".mp4", ".avi", ".mov", ".wav", ".ogg", ".webm",
+  ".mp3",
+  ".mp4",
+  ".avi",
+  ".mov",
+  ".wav",
+  ".ogg",
+  ".webm",
 ];
 
 /**
@@ -87,7 +115,8 @@ export async function copyDirectory(
     }
 
     // Skip .vscode/ from Lume module - it's copied to project root by generateLumeProject
-    const isVscodeFile = relativePath.startsWith(".vscode/") || relativePath.startsWith(".vscode\\");
+    const isVscodeFile = relativePath.startsWith(".vscode/") ||
+      relativePath.startsWith(".vscode\\");
     if (source.includes("lume") && isVscodeFile) {
       continue;
     }
@@ -106,7 +135,6 @@ export async function copyDirectory(
       // File is at root of secrets module, place it in config/secrets/
       targetPath = join(target, "config", "secrets", lastPart);
     }
-
 
     // Skip deps files if they already exist (shared between modules)
     if (relativePath.startsWith("deps/") || relativePath.startsWith("deps\\")) {
@@ -141,7 +169,8 @@ export async function copyDirectory(
 
       // Adapt drizzle.config.ts to uncomment drizzle-kit import if drizzle-kit is installed
       if (
-        relativePath === "config/db/drizzle.config.ts" || relativePath.endsWith("/drizzle.config.ts")
+        relativePath === "config/db/drizzle.config.ts" ||
+        relativePath.endsWith("/drizzle.config.ts")
       ) {
         content = await adaptDrizzleConfigFile(content, target);
       }

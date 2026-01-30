@@ -262,7 +262,6 @@ async function adaptFreshFilesWithTSMorph(targetDir: string): Promise<void> {
   }
 }
 
-
 /**
  * Generates a TSera-specific README.md for the Fresh frontend.
  */
@@ -318,7 +317,7 @@ The Vite configuration for the frontend is located at \`app/front/vite.config.ts
 
 /**
  * Generates Vite configuration for TSera Fresh frontend.
- * 
+ *
  * Uses minimal configuration matching Fresh's standard setup.
  * The Fresh plugin handles most of the configuration automatically.
  */

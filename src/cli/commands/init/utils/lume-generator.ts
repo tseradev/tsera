@@ -19,15 +19,43 @@ import { ensureDir } from "../../../utils/fsx.ts";
  */
 const BINARY_EXTENSIONS = [
   // Images
-  ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".bmp", ".tiff",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".ico",
+  ".webp",
+  ".bmp",
+  ".tiff",
   // Fonts
-  ".woff", ".woff2", ".ttf", ".eot", ".otf",
+  ".woff",
+  ".woff2",
+  ".ttf",
+  ".eot",
+  ".otf",
   // Archives
-  ".zip", ".tar", ".gz", ".7z", ".rar",
+  ".zip",
+  ".tar",
+  ".gz",
+  ".7z",
+  ".rar",
   // Documents
-  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
   // Media
-  ".mp3", ".mp4", ".avi", ".mov", ".wav", ".ogg", ".webm",
+  ".mp3",
+  ".mp4",
+  ".avi",
+  ".mov",
+  ".wav",
+  ".ogg",
+  ".webm",
 ];
 
 /**
@@ -169,9 +197,7 @@ function shouldSkipFile(relativePath: string): boolean {
     "README.md", // There is already a README at project root
   ];
 
-  return skipPatterns.some((pattern) =>
-    relativePath.includes(pattern) || relativePath === pattern
-  );
+  return skipPatterns.some((pattern) => relativePath.includes(pattern) || relativePath === pattern);
 }
 
 /**

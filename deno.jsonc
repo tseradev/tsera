@@ -22,8 +22,6 @@
   },
   "tasks": {
     "tsera": "deno run -A src/cli/main.ts",
-    "fmt": "deno fmt",
-    "lint": "deno lint",
     "test": "deno test -A --unstable-kv",
     "e2e": "deno test -A --unstable-kv e2e.test.ts",
     "compile": "deno compile -A --output dist/tsera src/cli/main.ts",

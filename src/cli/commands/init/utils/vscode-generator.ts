@@ -112,7 +112,7 @@ export async function generateVscodeConfig(
     {
       name: "extensions.json",
       content: generateExtensionsJson(),
-    }
+    },
   ];
 
   for (const file of filesToGenerate) {

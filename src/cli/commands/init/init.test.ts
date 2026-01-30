@@ -3,7 +3,7 @@ import { normalizeNewlines } from "../../../shared/newline.ts";
 import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "std/assert";
 
-const NOOP_WRITER = () => { };
+const NOOP_WRITER = () => {};
 
 async function readGoldenFile(name: string): Promise<string> {
   const url = new URL(`./__golden__/${name}`, import.meta.url);
@@ -152,8 +152,14 @@ Deno.test("init generates Lume frontend structure", async () => {
     // Verify _config.ts has expected structure
     const configContent = await Deno.readTextFile(lumeConfigPath);
     assert(configContent.length > 0, "Lume _config.ts should have content");
-    assert(configContent.includes('site.copy("assets")'), "Lume _config.ts should use site.copy('assets')");
-    assert(configContent.includes('src: "../../app/front/"'), "Lume _config.ts should point to ../../app/front/");
+    assert(
+      configContent.includes('site.copy("assets")'),
+      "Lume _config.ts should use site.copy('assets')",
+    );
+    assert(
+      configContent.includes('src: "../../app/front/"'),
+      "Lume _config.ts should point to ../../app/front/",
+    );
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }

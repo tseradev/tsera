@@ -148,12 +148,14 @@ export default function (): string {
         <a class="link" href="https://tsera.dev">tsera.dev</a>
       </footer>
     </main>
-  `
+  `;
 }
 
 function termLine(label: string, cmd: string, desc: string): string {
   return /* html */ `
-    <button class="tline" type="button" data-copy="${escapeAttr(cmd)}" role="listitem" aria-label="Copy: ${escapeAttr(cmd)}">
+    <button class="tline" type="button" data-copy="${
+    escapeAttr(cmd)
+  }" role="listitem" aria-label="Copy: ${escapeAttr(cmd)}">
       <span class="prompt" aria-hidden="true">$</span>
       <span class="cmd">${escapeHtml(label)}</span>
       <span class="desc">${escapeHtml(desc)}</span>

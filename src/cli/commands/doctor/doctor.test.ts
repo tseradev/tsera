@@ -3,7 +3,7 @@ import { createDefaultInitHandler } from "../init/init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
 import { assertEquals } from "std/assert";
 
-const NOOP_WRITER = (): void => { };
+const NOOP_WRITER = (): void => {};
 
 function createExitCollector(): {
   codes: number[];

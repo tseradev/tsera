@@ -1,7 +1,4 @@
-import {
-  createInMemorySourceFile,
-  createTSeraProject,
-} from "../../../utils/ts-morph.ts";
+import { createInMemorySourceFile, createTSeraProject } from "../../../utils/ts-morph.ts";
 
 /**
  * Module configuration options passed during template initialization.

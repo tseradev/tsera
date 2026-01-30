@@ -324,7 +324,8 @@ export class InitConsole extends BaseConsole {
     if (!this.#gitInitialized) {
       // Only show git init if it wasn't already done
       this.write(
-        `    ${prompt} ${brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
+        `    ${prompt} ${
+          brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
         }`,
       );
     }

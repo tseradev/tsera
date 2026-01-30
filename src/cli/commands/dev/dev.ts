@@ -14,7 +14,6 @@ import { DevConsole, type ModuleStatus } from "./dev-ui.ts";
 import { detectActiveModules } from "./modules.ts";
 import { ProcessManager } from "./process-manager.ts";
 
-
 /**
  * Options passed to the dev action handler by Cliffy.
  */
@@ -140,7 +139,9 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         }
       }
     } catch (error) {
-      await fatalExit(`Coherence check failed: ${error instanceof Error ? error.message : String(error)}`);
+      await fatalExit(
+        `Coherence check failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
     if (activeModules.secrets) {
       modulesStatus.set("secrets", { status: "starting" });
@@ -158,8 +159,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         // Suppress logs during import to prevent UI disruption
         const originalLog = console.log;
         const originalWarn = console.warn;
-        console.log = () => { };
-        console.warn = () => { };
+        console.log = () => {};
+        console.warn = () => {};
 
         try {
           await import(importUrl);
@@ -180,8 +181,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     const checkAllModulesFinal = (): boolean => {
       for (const [name, status] of modulesStatus) {
-        const shouldBeActive =
-          (name === "secrets" && activeModules.secrets) ||
+        const shouldBeActive = (name === "secrets" && activeModules.secrets) ||
           (name === "backend" && activeModules.backend) ||
           (name === "frontend" && activeModules.frontend);
         if (shouldBeActive && status.status !== "ready" && status.status !== "error") {
@@ -196,10 +196,13 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       const current = modulesStatus.get(name);
       if (!current) return;
 
-      const newStatus: ModuleStatus["status"] =
-        status === "ready" ? "ready" :
-          status === "error" ? "error" :
-            status === "stopped" ? "stopped" : "starting";
+      const newStatus: ModuleStatus["status"] = status === "ready"
+        ? "ready"
+        : status === "error"
+        ? "error"
+        : status === "stopped"
+        ? "stopped"
+        : "starting";
 
       const errorMsg = status === "error" ? processManager.getErrors(name).pop() : undefined;
 
@@ -289,7 +292,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       if (plan.summary.changed) {
         const nextState = await applyPlan(plan, state, {
           projectDir: projectRoot,
-          onStep: () => { },
+          onStep: () => {},
         });
         await writeEngineState(projectRoot, nextState);
         if (uiConsole) {
@@ -300,7 +303,6 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       }
 
       updateUI();
-
     }, { debounceMs: WATCH_DEBOUNCE_MS });
 
     // Keep alive - wait indefinitely for SIGINT or cleanup

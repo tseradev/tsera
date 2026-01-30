@@ -108,7 +108,7 @@ Deno.test("mcp stop fails when no server is running", async () => {
     const errorOutput = errors.join("\n");
     assertStringIncludes(errorOutput, "No MCP server found");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
   }
 });
 
@@ -193,7 +193,7 @@ Deno.test("mcp stop handles stale PID file", async () => {
     const pidFileAfter = await Deno.stat(join(tempDir, ".tsera", "mcp.pid")).catch(() => null);
     assert(pidFileAfter === null, "PID file should be removed after handling stale PID");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
   }
 });
 
@@ -229,7 +229,7 @@ Deno.test("mcp background start creates PID file", async () => {
     assert(backgroundOption !== undefined, "--background option should exist");
   } finally {
     Deno.chdir(originalCwd);
-    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
   }
 });
 
@@ -287,7 +287,7 @@ Deno.test("mcp background start prevents duplicate servers", async () => {
     const errorOutput = errors.join("\n");
     assertStringIncludes(errorOutput, "already running");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
   }
 });
 
@@ -339,7 +339,10 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
       await Promise.race([
         mcpCommand.parse([]),
         new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error("Test timeout: command blocked too long")), 2000);
+          timeoutId = setTimeout(
+            () => reject(new Error("Test timeout: command blocked too long")),
+            2000,
+          );
         }),
       ]);
     } catch (error) {
@@ -374,6 +377,6 @@ Deno.test("mcp foreground start prevents duplicate servers when background serve
     assertStringIncludes(errorOutput, "already running");
     assertStringIncludes(errorOutput, "background");
   } finally {
-    await Deno.remove(tempDir, { recursive: true }).catch(() => { });
+    await Deno.remove(tempDir, { recursive: true }).catch(() => {});
   }
 });

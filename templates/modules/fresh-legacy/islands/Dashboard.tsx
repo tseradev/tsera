@@ -141,39 +141,41 @@ export default function Dashboard() {
             }`}
           >
             <span class="flex items-center gap-2">
-              {isRefreshing ? (
-                <svg
-                  class="animate-spin"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                </svg>
-              ) : (
-                <svg
-                  class="transition-transform duration-300 group-hover:rotate-180"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M23 4v6h-6" />
-                  <path d="M1 20v-6h6" />
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                </svg>
-              )}
+              {isRefreshing
+                ? (
+                  <svg
+                    class="animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                )
+                : (
+                  <svg
+                    class="transition-transform duration-300 group-hover:rotate-180"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M23 4v6h-6" />
+                    <path d="M1 20v-6h6" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                )}
               {isRefreshing ? "Refreshing..." : "Refresh Now"}
             </span>
           </button>
@@ -192,94 +194,95 @@ export default function Dashboard() {
         )}
 
         {/* Health Cards */}
-        {isLoading ? (
-          <div class="flex justify-center py-20">
-            <div class="w-12 h-12 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* API Health Card */}
-            <HealthCard
-              title="Backend API"
-              icon={
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-              }
-              health={healthData?.api}
-              getStatusConfig={getStatusConfig}
-              formatLatency={formatLatency}
-              formatTime={formatTime}
-            />
+        {isLoading
+          ? (
+            <div class="flex justify-center py-20">
+              <div class="w-12 h-12 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          )
+          : (
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* API Health Card */}
+              <HealthCard
+                title="Backend API"
+                icon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                  </svg>
+                }
+                health={healthData?.api}
+                getStatusConfig={getStatusConfig}
+                formatLatency={formatLatency}
+                formatTime={formatTime}
+              />
 
-            {/* Database Health Card */}
-            <HealthCard
-              title="Database"
-              icon={
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <ellipse cx="12" cy="5" rx="9" ry="3" />
-                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                </svg>
-              }
-              health={healthData?.database}
-              getStatusConfig={getStatusConfig}
-              formatLatency={formatLatency}
-              formatTime={formatTime}
-            />
+              {/* Database Health Card */}
+              <HealthCard
+                title="Database"
+                icon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                  </svg>
+                }
+                health={healthData?.database}
+                getStatusConfig={getStatusConfig}
+                formatLatency={formatLatency}
+                formatTime={formatTime}
+              />
 
-            {/* Secrets Health Card */}
-            <HealthCard
-              title="Secret Manager"
-              icon={
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              }
-              health={healthData?.secrets}
-              getStatusConfig={getStatusConfig}
-              formatLatency={formatLatency}
-              formatTime={formatTime}
-            />
-          </div>
-        )}
+              {/* Secrets Health Card */}
+              <HealthCard
+                title="Secret Manager"
+                icon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                }
+                health={healthData?.secrets}
+                getStatusConfig={getStatusConfig}
+                formatLatency={formatLatency}
+                formatTime={formatTime}
+              />
+            </div>
+          )}
 
         {/* System Status Summary */}
         {healthData && (() => {
-          const isAllOperational =
-            healthData.api.status === "operational" &&
+          const isAllOperational = healthData.api.status === "operational" &&
             healthData.database.status === "operational" &&
             healthData.secrets.status === "operational";
           const overallStatus = isAllOperational ? "operational" : "down";
@@ -287,11 +290,17 @@ export default function Dashboard() {
 
           return (
             <div class="mt-16 text-center">
-              <div class={`inline-flex items-center gap-4 px-8 py-4 rounded-2xl ${statusConfig.bg} ${statusConfig.border} border`}>
+              <div
+                class={`inline-flex items-center gap-4 px-8 py-4 rounded-2xl ${statusConfig.bg} ${statusConfig.border} border`}
+              >
                 <span class="text-slate-400 font-medium">Overall Status:</span>
-                <span class={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${statusConfig.color}`}>
+                <span
+                  class={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${statusConfig.color}`}
+                >
                   <span class={`relative flex h-3 w-3`}>
-                    <span class={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusConfig.dot} opacity-75`} />
+                    <span
+                      class={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusConfig.dot} opacity-75`}
+                    />
                     <span class={`relative inline-flex rounded-full h-3 w-3 ${statusConfig.dot}`} />
                   </span>
                   {isAllOperational ? "All Systems Operational" : "System Degraded"}
@@ -309,7 +318,9 @@ interface HealthCardProps {
   title: string;
   icon: JSX.Element;
   health?: HealthStatus;
-  getStatusConfig: (status: HealthStatus["status"]) => ReturnType<typeof Dashboard.prototype.getStatusConfig>;
+  getStatusConfig: (
+    status: HealthStatus["status"],
+  ) => ReturnType<typeof Dashboard.prototype.getStatusConfig>;
   formatLatency: (latency: number) => string;
   formatTime: (isoString: string) => string;
 }
@@ -324,7 +335,9 @@ function HealthCard(props: HealthCardProps) {
   const statusConfig = getStatusConfig(health.status);
 
   return (
-    <div class={`bg-slate-900/50 border border-slate-800 rounded-2xl p-6 transition-all duration-300 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/10`}>
+    <div
+      class={`bg-slate-900/50 border border-slate-800 rounded-2xl p-6 transition-all duration-300 hover:border-slate-700 hover:shadow-xl hover:shadow-slate-900/10`}
+    >
       {/* Card Header */}
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
