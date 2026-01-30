@@ -11,8 +11,14 @@ export default function Home() {
     <>
       <head>
         <title>TSera - Entity-Driven Development Framework</title>
-        <meta name="description" content="Build future-ready applications with TSera. Entity-driven development with automatic code generation, type-safe everything, and modern Deno v2 stack." />
-        <meta name="keywords" content="TSera, Deno, Fresh, Hono, Entity-Driven, Code Generation, TypeScript" />
+        <meta
+          name="description"
+          content="Build future-ready applications with TSera. Entity-driven development with automatic code generation, type-safe everything, and modern Deno v2 stack."
+        />
+        <meta
+          name="keywords"
+          content="TSera, Deno, Fresh, Hono, Entity-Driven, Code Generation, TypeScript"
+        />
         <link rel="stylesheet" href="/static/styles.css" />
         <link rel="stylesheet" href="/static/animations.css" />
       </head>
@@ -32,7 +38,8 @@ export default function Home() {
               Why TSera?
             </h2>
             <p class="text-lg text-gray-400 max-w-2xl mx-auto">
-              A modern framework that combines entity-driven development with automatic code generation
+              A modern framework that combines entity-driven development with automatic code
+              generation
             </p>
           </div>
 
@@ -174,7 +181,8 @@ export default function Home() {
           </div>
         </div>
 
-        <style>{`
+        <style>
+          {`
           .features-section {
             background: linear-gradient(135deg, #12121a 0%, #0a0a0f 100%);
           }
@@ -196,7 +204,8 @@ export default function Home() {
               grid-template-columns: 1fr;
             }
           }
-        `}</style>
+        `}
+        </style>
       </section>
 
       {/* CTA Section */}
@@ -228,7 +237,8 @@ export default function Home() {
           </div>
         </div>
 
-        <style>{`
+        <style>
+          {`
           .cta-section {
             background: linear-gradient(135deg, #0a0a0f 0%, #12121a 100%);
           }
@@ -254,7 +264,8 @@ export default function Home() {
               width: 100%;
             }
           }
-        `}</style>
+        `}
+        </style>
       </section>
 
       {/* Footer */}
@@ -293,7 +304,8 @@ export default function Home() {
           </div>
         </div>
 
-        <style>{`
+        <style>
+          {`
           .footer {
             background: #0a0a0f;
           }
@@ -316,14 +328,15 @@ export default function Home() {
               gap: 0.5rem;
             }
           }
-        `}</style>
+        `}
+        </style>
       </footer>
     </>
   );
 }
 
 interface FeatureCardProps {
-  icon: any;
+  icon: JSX.Element;
   title: string;
   description: string;
 }

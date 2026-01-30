@@ -22,8 +22,11 @@ registerHealthRoutes(app);
 // Start server when run directly
 if (import.meta.main) {
   // Use tsera.env if secrets module is enabled, otherwise fall back to Deno.env
-  const port = (globalThis.tsera?.env("PORT") as number) ??
-    Number(Deno.env.get("PORT") ?? 8000);
+  const tseraPort = globalThis.tsera?.env("PORT");
+  const envPort = Deno.env.get("PORT");
+  const port = typeof tseraPort === "number" ? tseraPort
+    : envPort ? Number(envPort)
+      : 8000;
   console.log(`Listening on http://localhost:${port}`);
   Deno.serve({ port }, app.fetch);
 }

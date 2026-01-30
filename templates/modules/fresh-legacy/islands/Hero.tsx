@@ -20,13 +20,15 @@ export default function Hero(props: HeroProps) {
     setIsVisible(true);
 
     const handleMouseMove = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const win = target.ownerDocument?.defaultView || window;
-      setMousePosition({
-        x: (rect.left / win.innerWidth) * 100,
-        y: (rect.top / win.innerHeight) * 100,
-      });
+      const target = e.target;
+      if (target instanceof HTMLElement) {
+        const rect = target.getBoundingClientRect();
+        const win = target.ownerDocument?.defaultView || window;
+        setMousePosition({
+          x: (rect.left / win.innerWidth) * 100,
+          y: (rect.top / win.innerHeight) * 100,
+        });
+      }
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -45,7 +47,8 @@ export default function Hero(props: HeroProps) {
       <div
         class="hero-bg absolute inset-0 grid-bg"
         style={{
-          background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(0, 212, 255, 0.1) 0%, transparent 50%)`,
+          background:
+            `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(0, 212, 255, 0.1) 0%, transparent 50%)`,
         }}
       />
 
@@ -70,7 +73,11 @@ export default function Hero(props: HeroProps) {
 
       {/* Content */}
       <div class="container relative z-10">
-        <div class={`hero-content text-center max-w-4xl mx-auto ${isVisible ? "animate-fade-in-up" : ""}`}>
+        <div
+          class={`hero-content text-center max-w-4xl mx-auto ${
+            isVisible ? "animate-fade-in-up" : ""
+          }`}
+        >
           {/* Title */}
           <h1 class="hero-title text-6xl md:text-7xl font-bold mb-6 text-gradient">
             {title}
@@ -162,7 +169,8 @@ export default function Hero(props: HeroProps) {
         </svg>
       </div>
 
-      <style>{`
+      <style>
+        {`
         .hero-section {
           background: linear-gradient(135deg, #0a0a0f 0%, #12121a 100%);
         }
@@ -237,7 +245,8 @@ export default function Hero(props: HeroProps) {
             background-position: 0% 50%;
           }
         }
-      `}</style>
+      `}
+      </style>
     </section>
   );
 }

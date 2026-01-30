@@ -15,7 +15,7 @@
  *
  * This is a template - adapt it to your actual schema once entities are defined.
  */
-function seedUsers() {
+async function seedUsers(): Promise<void> {
   console.log("Seeding users...");
 
   // Example: Insert users (adapt to your actual schema)
@@ -44,10 +44,10 @@ function seedUsers() {
 /**
  * Main seed function.
  */
-function main() {
+async function main(): Promise<void> {
   try {
     console.log("Starting database seed...");
-    seedUsers();
+    await seedUsers();
     console.log("Seed completed successfully!");
   } catch (error) {
     console.error("Seed failed:", error);
