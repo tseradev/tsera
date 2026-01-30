@@ -187,7 +187,7 @@ function shouldSkipFile(relativePath: string): boolean {
 /**
  * Adapts file content for TSera integration.
  *
- * @param relativePath - Relative path of file
+ * @param _relativePath - Relative path of file
  * @param content - Original file content
  * @param _targetDir - Target directory path
  * @returns Adapted file content

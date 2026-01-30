@@ -85,25 +85,23 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     // Track module status
     const modulesStatus = new Map<string, ModuleStatus>();
-    // deno-lint-ignore no-explicit-any
-    const modules = activeModules as any;
-    if (modules.secrets) modulesStatus.set("secrets", { status: "stopped" });
-    if (modules.backend) modulesStatus.set("backend", { status: "stopped" });
-    if (modules.frontend) modulesStatus.set("frontend", { status: "stopped" });
+    if (activeModules.secrets) modulesStatus.set("secrets", { status: "stopped" });
+    if (activeModules.backend) modulesStatus.set("backend", { status: "stopped" });
+    if (activeModules.frontend) modulesStatus.set("frontend", { status: "stopped" });
 
-    const updateUI = () => {
+    const updateUI = (): void => {
       if (uiConsole && !context.logs) {
         uiConsole.renderModules(modulesStatus);
       }
     };
 
-    const renderFinalState = () => {
+    const renderFinalState = (): void => {
       if (uiConsole) {
         uiConsole.renderModulesFinal(modulesStatus);
       }
     };
 
-    const fatalExit = async (message: string) => {
+    const fatalExit = async (message: string): Promise<never> => {
       renderFinalState();
       if (uiConsole) {
         uiConsole.fatalError(message);
@@ -265,7 +263,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     }
 
     // Watch for file changes
-    const controller = watchProject(projectRoot, async (events) => {
+    const controller = watchProject(projectRoot, async (events: Array<{ paths: string[] }>) => {
       const paths = events.flatMap((event) => event.paths);
 
       if (paths.some((p) => p === configWatchPath)) {
@@ -285,8 +283,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       const plan = planDag(dag, state);
 
       if (uiConsole) {
-        // deno-lint-ignore no-explicit-any
-        uiConsole.planSummary(plan.summary as any);
+        uiConsole.planSummary(plan.summary);
       }
 
       if (plan.summary.changed) {
@@ -306,10 +303,13 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     }, { debounceMs: WATCH_DEBOUNCE_MS });
 
-    // Keep alive
-    await new Promise(() => { });
+    // Keep alive - wait indefinitely for SIGINT or cleanup
+    await new Promise<never>((_resolve, _reject) => {
+      // This promise never resolves intentionally
+      // The process will be terminated by SIGINT or fatalExit
+    });
 
-    // Cleanup
+    // Cleanup (unreachable in normal flow, but here for completeness)
     controller.close();
     await processManager.stopAll();
   };

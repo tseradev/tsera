@@ -180,8 +180,7 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
-          gray(`PID ${existingPid}`)
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)
         }`,
       );
       console.error("");
@@ -195,8 +194,7 @@ async function startMcpServerForeground(projectDir: string): Promise<void> {
   // Display startup message on stderr (stdout is reserved for JSON-RPC responses)
   console.error("");
   console.error(
-    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${
-      gray("Server started. Waiting for JSON-RPC requests on stdin…")
+    `${magenta("◆")} ${bold("MCP")} ${dim("│")} ${gray("Server started. Waiting for JSON-RPC requests on stdin…")
     }`,
   );
   console.error(`  ${dim("Project:")} ${cyan(projectDir)}`);
@@ -240,8 +238,7 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
     if (isRunning) {
       console.error("");
       console.error(
-        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${
-          gray(`PID ${existingPid}`)
+        `${yellow("⚠")} ${yellow("MCP server is already running in background")} ${dim("│")} ${gray(`PID ${existingPid}`)
         }`,
       );
       console.error("");
@@ -265,8 +262,7 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       const psCommand = new Deno.Command("powershell", {
         args: [
           "-Command",
-          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${
-            getPidFilePath(projectRoot)
+          `Start-Process -FilePath "${cliScript}" -ArgumentList "mcp" -WorkingDirectory "${projectRoot}" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id | Out-File -FilePath "${getPidFilePath(projectRoot)
           }" -Encoding ASCII`,
         ],
         stdout: "piped",
@@ -289,8 +285,7 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
-          gray(`PID ${pid}`)
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)
         }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);
@@ -316,8 +311,7 @@ async function startMcpServerBackground(projectDir: string): Promise<void> {
       // Display success message
       console.error("");
       console.error(
-        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${
-          gray(`PID ${pid}`)
+        `${green("✓")} ${bold("MCP server started in background")} ${dim("│")} ${gray(`PID ${pid}`)
         }`,
       );
       console.error(`  ${dim("Project:")} ${cyan(projectRoot)}`);
@@ -434,7 +428,7 @@ if (stopCommand) {
  * @param request - The JSON-RPC request object.
  * @param projectDir - The project directory path.
  */
-async function handleRequest(request: JsonRpcRequest, projectDir: string) {
+async function handleRequest(request: JsonRpcRequest, projectDir: string): Promise<void> {
   const { id, method, params } = request;
 
   try {
@@ -456,10 +450,14 @@ async function handleRequest(request: JsonRpcRequest, projectDir: string) {
       case "resources/list":
         result = await listResources();
         break;
-      case "resources/read":
-        // @ts-ignore: params is unknown
-        result = await readResource(projectDir, params?.uri as string);
+      case "resources/read": {
+        const uri = typeof params?.uri === "string" ? params.uri : undefined;
+        if (!uri) {
+          throw new Error("Missing required parameter: uri");
+        }
+        result = await readResource(projectDir, uri);
         break;
+      }
       default:
         throw new Error(`Method not found: ${method}`);
     }
@@ -488,7 +486,11 @@ async function handleRequest(request: JsonRpcRequest, projectDir: string) {
  *
  * @returns Array of resource definitions.
  */
-function listResources() {
+function listResources(): Array<{
+  uri: string;
+  name: string;
+  mimeType: string;
+}> {
   // We don't need state here for just listing static resource definitions
   return [
     {

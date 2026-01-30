@@ -3,9 +3,12 @@ import { createDefaultInitHandler } from "../init/init.ts";
 import { createDefaultDoctorHandler } from "./doctor.ts";
 import { assertEquals } from "std/assert";
 
-const NOOP_WRITER = () => { };
+const NOOP_WRITER = (): void => { };
 
-function createExitCollector() {
+function createExitCollector(): {
+  codes: number[];
+  exit: (code: number) => never;
+} {
   const codes: number[] = [];
   const exit = (code: number): never => {
     codes.push(code);
