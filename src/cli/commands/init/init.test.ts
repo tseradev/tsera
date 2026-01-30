@@ -138,29 +138,22 @@ Deno.test("init generates Lume frontend structure", async () => {
 
     // Verify Lume frontend structure exists
     const frontDir = join(projectDir, "app", "front");
-    const lumeConfigPath = join(frontDir, "_config.ts");
-    const lumeSrcDir = join(frontDir, "src");
+    const lumeConfigPath = join(projectDir, "config", "front", "_config.ts");
     const lumeIncludesDir = join(frontDir, "_includes");
     const lumeAssetsDir = join(frontDir, "assets");
-    const lumeReadmePath = join(frontDir, "README.md");
 
     // Check that Lume directories exist
-    assert(await fileExists(lumeSrcDir), "Lume src/ directory should exist");
     assert(await fileExists(lumeIncludesDir), "Lume _includes/ directory should exist");
     assert(await fileExists(lumeAssetsDir), "Lume assets/ directory should exist");
 
     // Check that Lume files exist
     assert(await fileExists(lumeConfigPath), "Lume _config.ts should exist");
-    assert(await fileExists(lumeReadmePath), "Lume README.md should exist");
-
-    // Verify README content mentions Lume
-    const readmeContent = await Deno.readTextFile(lumeReadmePath);
-    assert(readmeContent.includes("Lume"), "Lume README should mention Lume");
-    assert(readmeContent.includes("TSera"), "Lume README should mention TSera");
 
     // Verify _config.ts has expected structure
     const configContent = await Deno.readTextFile(lumeConfigPath);
     assert(configContent.length > 0, "Lume _config.ts should have content");
+    assert(configContent.includes('site.copy("assets")'), "Lume _config.ts should use site.copy('assets')");
+    assert(configContent.includes('src: "../../app/front/"'), "Lume _config.ts should point to ../../app/front/");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }

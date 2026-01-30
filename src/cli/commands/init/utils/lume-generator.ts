@@ -2,13 +2,14 @@
  * Lume project generator for TSera.
  *
  * This module generates a Lume project structure by copying files directly
- * from the Lume template module and adapting them to integrate with TSera's
+ * from of Lume template module and adapting them to integrate with TSera's
  * project structure.
  *
  * @module
  */
 
 import { dirname, join, relative } from "../../../../shared/path.ts";
+import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { exists } from "std/fs";
 import { walk } from "std/fs/walk";
 import { ensureDir } from "../../../utils/fsx.ts";
@@ -46,7 +47,7 @@ function isBinaryFile(filePath: string): boolean {
 export interface LumeGeneratorOptions {
   /** Target directory where Lume should be generated (app/front/) */
   targetDir: string;
-  /** Root directory of the TSera project (for .vscode/ and other project-level files) */
+  /** Root directory of TSera project (for .vscode/ and other project-level files) */
   projectRootDir?: string;
   /** Whether to overwrite existing files */
   force?: boolean;
@@ -68,12 +69,9 @@ export async function generateLumeProject(
 ): Promise<string[]> {
   const { targetDir, projectRootDir, force = false } = options;
 
-  // Path to Lume template module
-  const lumeTemplatePath = join(
-    Deno.cwd(),
-    "templates",
-    "modules",
-    "lume",
+  // Path to Lume template module (using import.meta.url for reliable path resolution)
+  const lumeTemplatePath = fromFileUrl(
+    new URL("../../../../../templates/modules/lume", import.meta.url),
   );
 
   // Verify template exists
@@ -150,14 +148,6 @@ export async function generateLumeProject(
     }
   }
 
-  // Write TSera-specific README.md for front module
-  const readmePath = join(targetDir, "README.md");
-  await Deno.writeTextFile(
-    readmePath,
-    generateLumeReadme(),
-  );
-  createdFiles.push("README.md");
-
   return createdFiles;
 }
 
@@ -169,14 +159,14 @@ export async function generateLumeProject(
  */
 function shouldSkipFile(relativePath: string): boolean {
   // Skip deno.jsonc as it will be merged with base deno.jsonc
-  // Skip README.md as we'll provide our own TSera-specific one
+  // Skip README.md as there is already a README at project root
   const skipPatterns = [
     "_site/",
     "_cache/",
     ".env/",
     ".git/",
     "deno.jsonc", // Will be merged with base deno.jsonc
-    "README.md", // Will be replaced with TSera-specific README
+    "README.md", // There is already a README at project root
   ];
 
   return skipPatterns.some((pattern) =>
@@ -187,66 +177,33 @@ function shouldSkipFile(relativePath: string): boolean {
 /**
  * Adapts file content for TSera integration.
  *
- * @param _relativePath - Relative path of file
+ * @param relativePath - Relative path of file
  * @param content - Original file content
- * @param _targetDir - Target directory path
+ * @param targetDir - Target directory path
  * @returns Adapted file content
  */
 function adaptFileContent(
-  _relativePath: string,
+  relativePath: string,
   content: string,
-  _targetDir: string,
+  targetDir: string,
 ): string {
-  // Lume templates are designed for TSera integration
-  // No complex adaptation needed at this time
+  // Adapt _config.ts to point to correct source directory
+  // When _config.ts is moved to config/front/, it needs to point to app/front/
+  if (relativePath === "_config.ts") {
+    let adaptedContent = content;
+
+    // Check if targetDir is config/front (where _config.ts is placed)
+    // Handle both forward slashes and backslashes for Windows compatibility
+    const normalizedTargetDir = targetDir.replace(/\\/g, "/");
+    if (normalizedTargetDir.endsWith("config/front")) {
+      // Replace src: "./" with src: "../../app/front/"
+      // This makes Lume look for source files in app/front/ from config/front/_config.ts
+      adaptedContent = adaptedContent.replace(
+        /src:\s*"\.\//,
+        'src: "../../app/front/',
+      );
+    }
+    return adaptedContent;
+  }
   return content;
-}
-
-/**
- * Generates a TSera-specific README.md for Lume frontend.
- */
-function generateLumeReadme(): string {
-  return `# TSera Lume Frontend
-
-This directory contains a Lume static site generator application.
-
-## Development
-
-From the project root, run:
-
-\`\`\`bash
-deno task dev:front
-\`\`\`
-
-This starts the Lume development server with live reloading.
-
-## Production Build
-
-Build the site for production:
-
-\`\`\`bash
-deno task build:front
-\`\`\`
-
-The static site will be generated in the \`_site/\` directory.
-
-## Structure
-
-- \`_config.ts\` - Lume configuration file
-- \`src/\` - Source files for pages and components
-  - \`*.page.ts\` - Page files (auto-routed)
-  - \`_includes/\` - Layouts and partials
-  - \`assets/\` - CSS, images, and other static assets
-- \`_site/\` - Generated static site (build output)
-- \`_cache/\` - Lume build cache
-
-## Configuration
-
-Lume configuration is located at \`config/front/_config.ts\`.
-
-## Learn More
-
-- [Lume Documentation](https://lume.land)
-- [TSera Documentation](https://github.com/yourusername/tsera)
-`;
 }

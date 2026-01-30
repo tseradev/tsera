@@ -2,7 +2,7 @@
  * Directory copying utilities for template composition.
  *
  * This module handles recursive directory copying with file exclusions
- * and file adaptation during the copy process.
+ * and file adaptation during copy process.
  *
  * @module
  */
@@ -33,8 +33,8 @@ const BINARY_EXTENSIONS = [
 /**
  * Determines if a file is binary based on its extension.
  *
- * @param filePath - Path to the file
- * @returns True if the file is binary
+ * @param filePath - Path to file
+ * @returns True if file is binary
  */
 function isBinaryFile(filePath: string): boolean {
   const ext = filePath.toLowerCase().slice(filePath.lastIndexOf("."));
@@ -56,7 +56,7 @@ export interface CopyDirectoryOptions {
 }
 
 /**
- * Copies a directory recursively to the target.
+ * Copies a directory recursively to target.
  *
  * @param options - Copy options.
  */
@@ -107,18 +107,6 @@ export async function copyDirectory(
       targetPath = join(target, "config", "secrets", lastPart);
     }
 
-    // Special handling for Lume module: assets/ directory should be copied as static/
-    const isLumeModule = source.includes("lume");
-    const isAssetsPath = relativePath.startsWith("assets/") || relativePath.startsWith("assets\\");
-    if (isLumeModule && isAssetsPath) {
-      // Replace assets/ or assets\ with static/ in the target path
-      // Use string replace instead of regex to avoid escaping issues
-      if (relativePath.startsWith("assets/")) {
-        targetPath = join(target, relativePath.replace("assets/", "static/"));
-      } else {
-        targetPath = join(target, relativePath.replace("assets\\", "static\\"));
-      }
-    }
 
     // Skip deps files if they already exist (shared between modules)
     if (relativePath.startsWith("deps/") || relativePath.startsWith("deps\\")) {
@@ -174,18 +162,10 @@ export async function copyDirectory(
       await Deno.writeTextFile(targetPath, content);
     }
 
-    // Use the actual target path relative to project root for copiedFiles
+    // Use actual target path relative to project root for copiedFiles
     let copiedPath = relativePath;
     if (isSecretsModule && isManagerFile && relativePath === lastPart) {
       copiedPath = `config/secrets/${lastPart}`;
-    } else if (isLumeModule && isAssetsPath) {
-      // Record as static/ instead of assets/
-      // Use string replace instead of regex to avoid escaping issues
-      if (relativePath.startsWith("assets/")) {
-        copiedPath = relativePath.replace("assets/", "static/");
-      } else {
-        copiedPath = relativePath.replace("assets\\", "static\\");
-      }
     }
     result.copiedFiles.push(copiedPath);
   }
