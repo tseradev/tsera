@@ -108,9 +108,17 @@ export async function generateLumeProject(
 
     // Determine target path based on file type
     // .vscode/ files should be copied to project root, not app/front/
+    // _config.ts should be copied to config/front/ for centralized configuration
     const isVscodeFile = relativePath.startsWith(".vscode/");
-    const actualTargetDir = isVscodeFile && projectRootDir ? projectRootDir : targetDir;
-    const targetPath = join(actualTargetDir, relativePath);
+    const isConfigFile = relativePath === "_config.ts";
+    let actualTargetDir = isVscodeFile && projectRootDir ? projectRootDir : targetDir;
+    let targetPath = join(actualTargetDir, relativePath);
+
+    // Special handling for _config.ts: move to config/front/
+    if (isConfigFile && projectRootDir) {
+      actualTargetDir = join(projectRootDir, "config", "front");
+      targetPath = join(actualTargetDir, relativePath);
+    }
 
     // Check if file already exists
     if (await exists(targetPath) && !force) {
@@ -234,7 +242,7 @@ The static site will be generated in the \`_site/\` directory.
 
 ## Configuration
 
-Lume configuration is located at \`app/front/_config.ts\`.
+Lume configuration is located at \`config/front/_config.ts\`.
 
 ## Learn More
 

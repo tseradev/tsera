@@ -92,6 +92,11 @@ export async function copyDirectory(
       continue;
     }
 
+    // Skip _config.ts from Lume module - it's copied to config/front/ by generateLumeProject
+    if (source.includes("lume") && lastPart === "_config.ts") {
+      continue;
+    }
+
     // Special handling for secrets module: manager.ts and manager.test.ts should go to config/secrets/
     let targetPath = join(target, relativePath);
     const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");

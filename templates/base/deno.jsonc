@@ -1,6 +1,6 @@
 {
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
-  "nodeModulesDir": "auto",
+  "nodeModulesDir": "none",
   "compilerOptions": {
     "strict": true
   },
@@ -10,9 +10,9 @@
     // Backend dev server (Hono) - runs on port 8000
     "dev:back": "deno run -A --unstable-kv --watch app/back/main.ts",
     // Frontend dev server (Lume) - runs on port 8001
-    "dev:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config app/front/_config.ts --src app/front/src -s",
+    "dev:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config config/front/_config.ts --src app/front/src -s",
     // Frontend build command - generates static site
-    "build:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config app/front/_config.ts --src app/front/src",
+    "build:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config config/front/_config.ts --src app/front/src",
     // Code formatting
     "fmt": "deno fmt",
     // Linting

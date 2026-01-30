@@ -701,6 +701,8 @@ function buildGitignore(): string {
     "node_modules/",
     ".env",
     ".env.*",
+    "_site",
+    "_cache",
     "",
     "# TSera secrets (local unless using git-crypt)",
     "secrets/.env.dev",
