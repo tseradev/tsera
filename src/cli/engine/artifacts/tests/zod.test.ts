@@ -26,8 +26,8 @@ Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async
   const entity = defineEntity({
     name: "User",
     fields: {
-      id: { validator: z.string().uuid(), visibility: "public" },
-      email: { validator: z.string().email(), visibility: "public" },
+      id: { validator: z.uuid(), visibility: "public" },
+      email: { validator: z.email(), visibility: "public" },
       password: { validator: z.string(), visibility: "secret" },
     },
   });

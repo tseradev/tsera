@@ -28,7 +28,7 @@ Deno.test("buildTestArtifacts - génère un test smoke basique", async () => {
     test: "smoke",
     fields: {
       id: { validator: z.string(), visibility: "public" },
-      email: { validator: z.string().email(), visibility: "public" },
+      email: { validator: z.email(), visibility: "public" },
     },
   });
 
@@ -87,7 +87,7 @@ Deno.test("buildTestArtifacts - génère des tests pour input.create", async () 
     name: "Order",
     test: "smoke",
     fields: {
-      id: { validator: z.string().uuid(), visibility: "public", immutable: true },
+      id: { validator: z.uuid(), visibility: "public", immutable: true },
       total: { validator: z.number(), visibility: "public" },
     },
   });

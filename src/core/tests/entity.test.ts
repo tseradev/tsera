@@ -79,7 +79,7 @@ Deno.test("defineEntity generates schema from fields", () => {
   const entity = defineEntity({
     name: "Test",
     fields: {
-      id: { validator: z.string().uuid() },
+      id: { validator: z.uuid() },
       email: { validator: z.string().email() },
     },
   });
@@ -93,7 +93,7 @@ Deno.test("defineEntity generates public schema with visibility filtering", () =
   const entity = defineEntity({
     name: "Test",
     fields: {
-      id: { validator: z.string().uuid(), visibility: "public" },
+      id: { validator: z.uuid(), visibility: "public" },
       email: { validator: z.string().email(), visibility: "public" },
       password: { validator: z.string(), visibility: "secret" },
       internal: { validator: z.string(), visibility: "internal" },
@@ -114,8 +114,8 @@ Deno.test("defineEntity generates input schemas", () => {
   const entity = defineEntity({
     name: "Test",
     fields: {
-      id: { validator: z.string().uuid(), immutable: true },
-      email: { validator: z.string().email() },
+      id: { validator: z.uuid(), immutable: true },
+      email: { validator: z.email() },
       createdAt: { validator: z.date(), db: { defaultNow: true } },
     },
   });

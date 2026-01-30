@@ -1,3 +1,7 @@
+// NOTE: Ces imports relatifs pointent vers le code source du CLI TSera.
+// Dans un projet généré, ces imports seront remplacés par des imports JSR
+// (ex: import { defineEntity, z } from "tsera/core";)
+// Une fois TSera publié sur JSR, ce problème sera résolu automatiquement.
 import { defineEntity } from "../../../../src/core/entity.ts";
 import { z } from "../../../../src/core/utils/zod.ts";
 
@@ -16,7 +20,7 @@ export const User = defineEntity({
 
   fields: {
     id: {
-      validator: z.string().uuid(),
+      validator: z.uuid(),
       visibility: "public",
       immutable: true,
       description: "Identifiant unique de l'utilisateur.",
@@ -27,7 +31,7 @@ export const User = defineEntity({
     },
 
     email: {
-      validator: z.string().email(),
+      validator: z.email(),
       visibility: "public",
       description: "Adresse e-mail de l'utilisateur, supposée unique.",
       example: "user@example.com",
