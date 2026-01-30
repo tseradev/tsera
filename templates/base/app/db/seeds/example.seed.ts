@@ -15,7 +15,7 @@
  *
  * This is a template - adapt it to your actual schema once entities are defined.
  */
-async function seedUsers(): Promise<void> {
+function seedUsers(): void {
   console.log("Seeding users...");
 
   // Example: Insert users (adapt to your actual schema)

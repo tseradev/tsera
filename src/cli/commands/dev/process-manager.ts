@@ -308,7 +308,7 @@ export class ProcessManager {
     await Promise.allSettled(stops);
 
     // Force kill any remaining processes
-    for (const [name, process] of this.processes) {
+    for (const [_name, process] of this.processes) {
       if (process.child && process.status !== "stopped") {
         try {
           process.child.kill("SIGKILL");

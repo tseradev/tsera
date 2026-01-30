@@ -13,10 +13,6 @@
     "dev:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config config/front/_config.ts --src app/front -s",
     // Frontend build command - generates static site
     "build:front": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts --config config/front/_config.ts --src app/front",
-    // Code formatting
-    "fmt": "deno fmt",
-    // Linting
-    "lint": "deno lint",
     // Test execution
     "test": "deno test -A --fail-fast"
   },
