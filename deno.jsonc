@@ -1,8 +1,16 @@
 {
-  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/v2.6.8/cli/schemas/config-file.v1.json",
   "compilerOptions": {
     "strict": true
   },
+  "unstable": [
+    "kv"
+  ],
+  "lock": {
+    "path": "./deno.lock",
+    "frozen": true
+  },
+  "nodeModulesDir": "none",
   "fmt": {
     "useTabs": false,
     "lineWidth": 100,
@@ -22,8 +30,8 @@
   },
   "tasks": {
     "tsera": "deno run -A src/cli/main.ts",
-    "test": "deno test -A --unstable-kv",
-    "e2e": "deno test -A --unstable-kv e2e.test.ts",
+    "test": "deno test -A",
+    "e2e": "deno test -A e2e.test.ts",
     "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
     "publish": "deno publish"
   },
