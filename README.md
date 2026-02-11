@@ -263,7 +263,7 @@ export const envSchema = defineEnvSchema({
   API_KEY: {
     type: "string",
     // Environment-specific requirements
-    required: { dev: false, preprod: true, prod: true },
+    required: { dev: false, staging: true, prod: true },
   },
   DEBUG: {
     type: "boolean",

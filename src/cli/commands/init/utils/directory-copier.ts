@@ -7,12 +7,12 @@
  * @module
  */
 
-import { dirname, join, relative } from "../../../../shared/path.ts";
 import { exists } from "std/fs";
 import { walk } from "std/fs/walk";
+import { dirname, join, relative } from "../../../../shared/path.ts";
 import { ensureDir } from "../../../utils/fsx.ts";
-import type { ComposedTemplate } from "./template-composer.ts";
 import { adaptConnectFile, adaptDrizzleConfigFile, adaptEntityImports } from "./file-adapter.ts";
+import type { ComposedTemplate } from "./template-composer.ts";
 
 /**
  * Extensions of binary files that should be copied as binary data.
@@ -126,14 +126,27 @@ export async function copyDirectory(
       continue;
     }
 
-    // Special handling for secrets module: manager.ts and manager.test.ts should go to config/secrets/
+    // Special handling for env.config.ts from base template: should go to config/
     let targetPath = join(target, relativePath);
-    const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");
-    const isManagerFile = lastPart === "manager.ts" || lastPart === "manager.test.ts";
+    if (lastPart === "env.config.ts" && relativePath === lastPart) {
+      // File is at root of base template, place it in config/
+      targetPath = join(target, "config", "env.config.ts");
+    }
 
-    if (isSecretsModule && isManagerFile && relativePath === lastPart) {
-      // File is at root of secrets module, place it in config/secrets/
-      targetPath = join(target, "config", "secrets", lastPart);
+    // Special handling for docker module: all files should go to config/docker/
+    const isDockerModule = source.includes("docker") && !source.includes("config/docker");
+    if (isDockerModule) {
+      // File is from docker module, place it in config/docker/
+      targetPath = join(target, "config", "docker", lastPart);
+    }
+
+    // Special handling for secrets module: env.config.ts should go to config/secret/
+    const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");
+    const isEnvConfigFile = lastPart === "env.config.ts";
+
+    if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
+      // File is at root of secrets module, place it in config/secret/
+      targetPath = join(target, "config", "secret", lastPart);
     }
 
     // Skip deps files if they already exist (shared between modules)
@@ -193,8 +206,12 @@ export async function copyDirectory(
 
     // Use actual target path relative to project root for copiedFiles
     let copiedPath = relativePath;
-    if (isSecretsModule && isManagerFile && relativePath === lastPart) {
-      copiedPath = `config/secrets/${lastPart}`;
+    if (lastPart === "env.config.ts" && relativePath === lastPart) {
+      copiedPath = `config/env.config.ts`;
+    } else if (isDockerModule) {
+      copiedPath = `config/docker/${lastPart}`;
+    } else if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
+      copiedPath = `config/secret/${lastPart}`;
     }
     result.copiedFiles.push(copiedPath);
   }

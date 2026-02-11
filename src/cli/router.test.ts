@@ -1,9 +1,9 @@
-import { createRouter } from "./router.ts";
-import type { CliMetadata } from "./main.ts";
 import type { DevCommandContext } from "./commands/dev/dev.ts";
 import type { DoctorCommandContext } from "./commands/doctor/doctor.ts";
 import type { InitCommandContext } from "./commands/init/init.ts";
 import type { UpdateCommandContext } from "./commands/update/update.ts";
+import type { CliMetadata } from "./main.ts";
+import { createRouter } from "./router.ts";
 
 const TEST_METADATA: CliMetadata = { version: "test" };
 
@@ -186,4 +186,14 @@ Deno.test("main shows help when no arguments are provided", async () => {
   if (!output.includes("COMMANDS")) {
     throw new Error("Commands section is missing when no arguments are provided.");
   }
+});
+
+Deno.test("router: export-env command can be executed", async () => {
+  const router = createRouter(TEST_METADATA);
+
+  // Test that export-env command can be parsed (basic smoke test)
+  const result = await router.parse(["export-env", "--help"]);
+
+  // If we reach here without throwing, the command is properly registered
+  // The help output will be shown, which is sufficient for a basic test
 });

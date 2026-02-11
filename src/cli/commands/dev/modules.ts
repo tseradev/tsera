@@ -42,7 +42,7 @@ export interface ActiveModules {
  * A module is considered active if its entry point and configuration exist:
  * - Backend: `app/back/main.ts` exists
  * - Frontend: ``config/front/_config.ts` exists (Lume) OR `app/front/` exists (Lume)
- * - Secrets: `config/secrets/manager.ts` exists
+ * - Secrets: `config/secret/env.config.ts` exists
  *
  * @param projectDir - The root directory of TSera project
  * @returns Object indicating which modules are active
@@ -62,7 +62,7 @@ export async function detectActiveModules(projectDir: string): Promise<ActiveMod
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendConfig = join(projectDir, "config", "front", "_config.ts"); // Lume entry point
   const frontendSrcDir = join(projectDir, "app", "front"); // Lume pages directory
-  const secretsManager = join(projectDir, "config", "secrets", "manager.ts");
+  const secretsConfig = join(projectDir, "config", "secret", "env.config.ts");
 
   const [
     hasBackend,
@@ -73,7 +73,7 @@ export async function detectActiveModules(projectDir: string): Promise<ActiveMod
     exists(backendEntry),
     exists(frontendConfig),
     exists(frontendSrcDir),
-    exists(secretsManager),
+    exists(secretsConfig),
   ]);
 
   // Frontend is active if:

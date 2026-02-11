@@ -1,5 +1,5 @@
-import { join } from "./src/shared/path.ts";
 import { assert } from "std/assert";
+import { join } from "./src/shared/path.ts";
 
 interface RunCliOptions {
   cwd: string;
@@ -110,9 +110,6 @@ Deno.test("E2E: basic init with all modules", async () => {
       await exists(join(projectDir, ".github", "workflows", "ci-test.yml")),
       "CI test workflow missing",
     );
-
-    // Check Secrets module
-    assert(await exists(join(projectDir, "config", "secrets", "manager.ts")), "manager.ts missing");
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }
@@ -194,77 +191,97 @@ Deno.test("E2E: coherence and artifact generation", async () => {
   }
 });
 
-Deno.test("E2E: secrets with KV store and encryption", async () => {
+Deno.test("E2E: export-env command works", async () => {
   const workspace = await Deno.makeTempDir({ dir: Deno.cwd() });
-  const projectDir = join(workspace, "demo-secrets");
+  const projectDir = join(workspace, "demo-export-env");
 
   try {
     // Initialize project
-    const initResult = await runCli(["init", "demo-secrets", "--yes"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-export-env", "--yes"], { cwd: workspace });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
-    // Check secrets files were generated
-    const secretsDir = join(projectDir, "config", "secrets");
-    assert(await exists(join(secretsDir, ".env.dev")), ".env.dev missing");
-    assert(await exists(join(secretsDir, ".env.staging")), ".env.staging missing");
-    assert(await exists(join(secretsDir, ".env.prod")), ".env.prod missing");
-    assert(await exists(join(secretsDir, ".env.example")), ".env.example missing");
-    assert(await exists(join(secretsDir, "manager.ts")), "manager.ts missing");
+    // Create a minimal environment schema
+    const schemaContent = `
+export const envSchema = {
+  TEST_API_KEY: {
+    type: "string",
+    required: true,
+  },
+  TEST_PORT: {
+    type: "number",
+    required: false,
+    default: 3000,
+  },
+};
+`;
 
-    // Check .gitattributes was generated for git-crypt
-    const gitattributesPath = join(projectDir, ".gitattributes");
-    assert(await exists(gitattributesPath), ".gitattributes missing");
-    const gitattributesContent = await Deno.readTextFile(gitattributesPath);
-    assert(
-      gitattributesContent.includes("secrets/.env.* filter=git-crypt"),
-      "git-crypt config for secrets missing",
-    );
-    assert(
-      gitattributesContent.includes(".tsera/kv/** filter=git-crypt"),
-      "git-crypt config for KV missing",
-    );
-    assert(
-      gitattributesContent.includes(".tsera/salt filter=git-crypt"),
-      "git-crypt config for salt missing",
-    );
+    await Deno.writeTextFile(join(projectDir, "env.config.ts"), schemaContent);
 
-    // Check .gitignore has proper patterns
-    const gitignorePath = join(projectDir, ".gitignore");
-    assert(await exists(gitignorePath), ".gitignore missing");
-    const gitignoreContent = await Deno.readTextFile(gitignorePath);
-    assert(gitignoreContent.match(/secrets\/.env\.dev/), ".gitignore should include .env.dev");
-    assert(
-      gitignoreContent.match(/secrets\/.env\.staging/),
-      ".gitignore should include .env.staging",
-    );
-    assert(gitignoreContent.match(/secrets\/.env\.prod/), ".gitignore should include .env.prod");
-    assert(
-      gitignoreContent.match(/!secrets\/.env\.example/),
-      ".gitignore should NOT ignore .env.example",
-    );
-    assert(gitignoreContent.match(/\.tsera\/kv\//), ".gitignore should include KV store");
-    assert(gitignoreContent.match(/\.tsera\/salt/), ".gitignore should include salt");
+    // Test sh format
+    const shCommand = new Deno.Command(Deno.execPath(), {
+      args: [
+        "run",
+        "-A",
+        CLI_ENTRY,
+        "export-env",
+        "--env=dev",
+        "--format=sh",
+        "--prefix=TEST_",
+      ],
+      cwd: projectDir,
+      env: {
+        ...Deno.env.toObject(),
+        TEST_API_KEY: "test-secret-key",
+      },
+      stdout: "piped",
+      stderr: "piped",
+    });
 
-    // Verify manager.ts has proper schema and calls initializeSecrets
-    const managerPath = join(secretsDir, "manager.ts");
-    const managerContent = await Deno.readTextFile(managerPath);
-    assert(
-      managerContent.includes("defineEnvSchema"),
-      "manager.ts should use defineEnvSchema",
-    );
-    assert(
-      managerContent.includes("DATABASE_URL"),
-      "manager.ts should define DATABASE_URL",
-    );
-    assert(
-      managerContent.includes("initializeSecrets"),
-      "manager.ts should call initializeSecrets",
-    );
+    const { code: shCode, stdout: shStdout, stderr: shStderr } = await shCommand.output();
 
-    // Note: Detailed KV store functionality is tested in src/core/secrets/store.test.ts
-    // This E2E test verifies that all files are generated correctly
+    if (shCode !== 0) {
+      throw new Error(`sh export failed: ${new TextDecoder().decode(shStderr)}`);
+    }
+
+    const shOutput = new TextDecoder().decode(shStdout);
+    if (!shOutput.includes("export TEST_TEST_API_KEY='test-secret-key'")) {
+      throw new Error(`sh output missing expected export. Got: ${shOutput}`);
+    }
+
+    // Test json format
+    const jsonCommand = new Deno.Command(Deno.execPath(), {
+      args: [
+        "run",
+        "-A",
+        CLI_ENTRY,
+        "export-env",
+        "--env=dev",
+        "--format=json",
+        "--prefix=TEST_",
+      ],
+      cwd: projectDir,
+      env: {
+        ...Deno.env.toObject(),
+        TEST_API_KEY: "test-secret-key",
+      },
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const { code: jsonCode, stdout: jsonStdout, stderr: jsonStderr } = await jsonCommand.output();
+
+    if (jsonCode !== 0) {
+      throw new Error(`json export failed: ${new TextDecoder().decode(jsonStderr)}`);
+    }
+
+    const jsonOutput = new TextDecoder().decode(jsonStdout);
+    const secrets = JSON.parse(jsonOutput) as Record<string, unknown>;
+
+    if (secrets.TEST_TEST_API_KEY !== "test-secret-key") {
+      throw new Error(`json output missing expected secret. Got: ${JSON.stringify(secrets)}`);
+    }
   } finally {
     await Deno.remove(workspace, { recursive: true });
   }

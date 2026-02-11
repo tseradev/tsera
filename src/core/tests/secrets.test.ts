@@ -1,11 +1,11 @@
 /**
- * Tests for the secrets management system.
+ * Tests for secrets management system.
  *
  * @module
  */
 
 import { assertEquals, assertExists, assertRejects } from "std/assert";
-import { defineEnvSchema, initializeSecrets, parseEnvFile } from "../secrets.ts";
+import { defineEnvSchema, initializeSecrets, parseEnvFile, resetSecrets } from "../secrets.ts";
 
 Deno.test("parseEnvFile - parses simple key=value format", () => {
   const content = `
@@ -56,7 +56,10 @@ CONNECTION_STRING=postgresql://user:pass=word@localhost:5432/db
 
   const result = parseEnvFile(content);
 
-  assertEquals(result.CONNECTION_STRING, "postgresql://user:pass=word@localhost:5432/db");
+  assertEquals(
+    result.CONNECTION_STRING,
+    "postgresql://user:pass=word@localhost:5432/db",
+  );
 });
 
 Deno.test("defineEnvSchema - creates schema with default environments", () => {
@@ -68,7 +71,7 @@ Deno.test("defineEnvSchema - creates schema with default environments", () => {
     },
   });
 
-  assertEquals(schema.environments, ["dev", "preprod", "prod"]);
+  assertEquals(schema.environments, ["dev", "staging", "prod"]);
   assertEquals(schema.vars.PORT.type, "number");
 });
 
@@ -128,10 +131,14 @@ DEBUG=true
   assertExists(globalThis.tsera);
   assertEquals(globalThis.tsera.currentEnvironment, "dev");
   assertEquals(globalThis.tsera.env("PORT"), 3000);
-  assertEquals(globalThis.tsera.env("DATABASE_URL"), "postgresql://localhost:5432/test_db");
+  assertEquals(
+    globalThis.tsera.env("DATABASE_URL"),
+    "postgresql://localhost:5432/test_db",
+  );
   assertEquals(globalThis.tsera.env("DEBUG"), true);
 
   // Cleanup
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -175,6 +182,7 @@ Deno.test("initializeSecrets - uses default environment from TSERA_ENV", async (
   } else {
     Deno.env.delete("TSERA_ENV");
   }
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -287,6 +295,7 @@ Deno.test("initializeSecrets - uses default values for optional variables", asyn
   assertEquals(globalThis.tsera.env("PORT"), 8000);
   assertEquals(globalThis.tsera.env("DEBUG"), false);
 
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -321,6 +330,7 @@ DEBUG_ZERO=0
   assertEquals(globalThis.tsera.env("DEBUG_ONE"), true);
   assertEquals(globalThis.tsera.env("DEBUG_ZERO"), false);
 
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -394,6 +404,7 @@ Deno.test("initializeSecrets - persists to KV store when enabled", async () => {
   assertEquals(storedPort, 8080);
   store.close();
 
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -418,6 +429,7 @@ Deno.test("initializeSecrets - works without KV store", async () => {
   // Verify value is still accessible (from memory)
   assertEquals(globalThis.tsera.env("TEST_VAR"), "test123");
 
+  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
@@ -449,8 +461,175 @@ Deno.test("initializeSecrets - global API reads from memory, not KV", async () =
   await store.set("dev", "VALUE", "modified");
   store.close();
 
-  // Global API should still return the original value from memory
+  // Global API should still return original value from memory
   assertEquals(globalThis.tsera.env("VALUE"), "original");
+
+  resetSecrets();
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - loads from system environment variables", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  // Set system environment variable
+  const originalEnv = Deno.env.get("SYSTEM_VAR");
+  Deno.env.set("SYSTEM_VAR", "from-system");
+
+  const schema = defineEnvSchema({
+    SYSTEM_VAR: { type: "string", required: true },
+  });
+
+  // Initialize without .env file (should load from system env)
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: false,
+  });
+
+  assertEquals(globalThis.tsera.env("SYSTEM_VAR"), "from-system");
+
+  // Cleanup
+  if (originalEnv !== undefined) {
+    Deno.env.set("SYSTEM_VAR", originalEnv);
+  } else {
+    Deno.env.delete("SYSTEM_VAR");
+  }
+  resetSecrets();
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - .env file overrides system env", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  // Set system environment variable
+  const originalEnv = Deno.env.get("OVERRIDE_VAR");
+  Deno.env.set("OVERRIDE_VAR", "from-system");
+
+  // Create .env file with different value
+  await Deno.writeTextFile(
+    `${secretsDir}/.env.dev`,
+    "OVERRIDE_VAR=from-file",
+  );
+
+  const schema = defineEnvSchema({
+    OVERRIDE_VAR: { type: "string", required: true },
+  });
+
+  // Initialize
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: false,
+  });
+
+  // File should override system env
+  assertEquals(globalThis.tsera.env("OVERRIDE_VAR"), "from-file");
+
+  // Cleanup
+  if (originalEnv !== undefined) {
+    Deno.env.set("OVERRIDE_VAR", originalEnv);
+  } else {
+    Deno.env.delete("OVERRIDE_VAR");
+  }
+  resetSecrets();
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - KV store overrides .env file", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  const kvPath = `${tempDir}/kv`;
+  await Deno.mkdir(secretsDir);
+
+  // Create .env file
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "KV_VAR=from-file");
+
+  const schema = defineEnvSchema({
+    KV_VAR: { type: "string", required: true },
+  });
+
+  // Pre-populate KV store with different value
+  const { createSecretStore } = await import("../secrets/store.ts");
+  const store = await createSecretStore({ kvPath });
+  await store.set("dev", "KV_VAR", "from-kv");
+  store.close();
+
+  // Initialize (KV should override file)
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: true,
+    kvPath,
+  });
+
+  // KV should override file
+  assertEquals(globalThis.tsera.env("KV_VAR"), "from-kv");
+
+  resetSecrets();
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("initializeSecrets - works when .env file is missing", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  await Deno.mkdir(secretsDir);
+
+  // Don't create .env file
+
+  const schema = defineEnvSchema({
+    OPTIONAL_VAR: {
+      type: "string",
+      required: false,
+      default: "default-value",
+    },
+  });
+
+  // Initialize (should work without .env file)
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: false,
+  });
+
+  assertEquals(globalThis.tsera.env("OPTIONAL_VAR"), "default-value");
+
+  resetSecrets();
+  await Deno.remove(tempDir, { recursive: true });
+});
+
+Deno.test("resetSecrets - clears in-memory state and closes KV", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const secretsDir = `${tempDir}/secrets`;
+  const kvPath = `${tempDir}/kv`;
+  await Deno.mkdir(secretsDir);
+
+  const schema = defineEnvSchema({
+    TEST_VAR: { type: "string", required: true },
+  });
+
+  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "TEST_VAR=test123");
+
+  // Initialize
+  await initializeSecrets(schema, {
+    secretsDir,
+    environment: "dev",
+    useStore: true,
+    kvPath,
+  });
+
+  // Verify value is accessible
+  assertEquals(globalThis.tsera.env("TEST_VAR"), "test123");
+
+  // Reset
+  resetSecrets();
+
+  // Verify globalThis.tsera is still defined but values are cleared
+  assertEquals(globalThis.tsera.env("TEST_VAR"), undefined);
+  assertEquals(globalThis.tsera.currentEnvironment, "dev");
 
   await Deno.remove(tempDir, { recursive: true });
 });

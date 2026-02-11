@@ -8,19 +8,19 @@
  * @module
  */
 
-import { join } from "../../../../shared/path.ts";
-import { fromFileUrl } from "../../../../shared/file-url.ts";
-import { exists } from "std/fs";
-import { ensureDir } from "../../../utils/fsx.ts";
-import type { DbConfig } from "../../../definitions.ts";
-import { generateEnvFiles } from "./env-generator.ts";
-import { generateLumeProject } from "./lume-generator.ts";
 import { parse as parseJsonc } from "jsr:@std/jsonc@1";
-import { getAvailableModules, validateModuleDependencies } from "./module-definitions.ts";
-import { copyDirectory } from "./directory-copier.ts";
-import { mergeConfigFiles } from "./config-merger.ts";
+import { exists } from "std/fs";
+import { fromFileUrl } from "../../../../shared/file-url.ts";
+import { join } from "../../../../shared/path.ts";
+import type { DbConfig } from "../../../definitions.ts";
+import { ensureDir } from "../../../utils/fsx.ts";
 import type { DenoConfig } from "./config-merger.ts";
+import { mergeConfigFiles } from "./config-merger.ts";
+import { copyDirectory } from "./directory-copier.ts";
+import { generateEnvFiles } from "./env-generator.ts";
 import { generateGitAttributes } from "./gitattributes-generator.ts";
+import { generateLumeProject } from "./lume-generator.ts";
+import { getAvailableModules, validateModuleDependencies } from "./module-definitions.ts";
 
 // Re-export types for backward compatibility
 export type { MergeStrategy, TemplateModule } from "./module-definitions.ts";
@@ -112,10 +112,14 @@ export async function composeTemplate(
     force: options.force,
   });
 
-  // Copy enabled modules (except Lume which is generated dynamically)
+  // Copy enabled modules (except Lume which is generated dynamically, and secrets which is handled specially)
   for (const moduleName of options.enabledModules) {
     if (moduleName === "lume") {
       // Lume is generated dynamically via lume init
+      continue;
+    }
+    if (moduleName === "secrets") {
+      // Secrets module is handled separately in generateEnvironmentFiles
       continue;
     }
     const moduleDir = join(options.modulesDir, moduleName);
@@ -225,9 +229,9 @@ async function generateEnvironmentFiles(
 ): Promise<void> {
   if (!options.dbConfig) return;
 
-  // Create secrets directory in config
-  const secretsDir = join(options.targetDir, "config", "secrets");
-  await ensureDir(secretsDir);
+  // Create secret directory in config (singular "secret" with 's' at the end)
+  const secretDir = join(options.targetDir, "config", "secret");
+  await ensureDir(secretDir);
 
   // Generate .env files
   const envFiles = generateEnvFiles({
@@ -236,10 +240,30 @@ async function generateEnvironmentFiles(
   });
 
   for (const [fileName, content] of Object.entries(envFiles)) {
-    const filePath = join(secretsDir, fileName);
+    const filePath = join(secretDir, fileName);
     await Deno.writeTextFile(filePath, content + "\n");
-    result.copiedFiles.push(`config/secrets/${fileName}`);
+    result.copiedFiles.push(`config/secret/${fileName}`);
   }
 
-  // The env schema is now in config/secrets/manager.ts (no need to generate separately)
+  // Copy env.config.ts from templates/modules/secrets/ to config/secret/
+  const envConfigSource = join(options.modulesDir, "secrets", "env.config.ts");
+  const envConfigTarget = join(secretDir, "env.config.ts");
+  if (await exists(envConfigSource)) {
+    let content = await Deno.readTextFile(envConfigSource);
+    // Replace local import with JSR import for generated projects
+    content = content.replace(
+      /from ["']\.\.\/\.\.\/\.\.\/src\/core\/secrets\.ts["']/,
+      'from "tsera/core"',
+    );
+    await Deno.writeTextFile(envConfigTarget, content);
+    result.copiedFiles.push("config/secret/env.config.ts");
+  }
+
+  // Copy defineEnvConfig.ts from templates/modules/secrets/ to config/secret/
+  const defineEnvConfigSource = join(options.modulesDir, "secrets", "defineEnvConfig.ts");
+  const defineEnvConfigTarget = join(secretDir, "defineEnvConfig.ts");
+  if (await exists(defineEnvConfigSource)) {
+    await Deno.copyFile(defineEnvConfigSource, defineEnvConfigTarget);
+    result.copiedFiles.push("config/secret/defineEnvConfig.ts");
+  }
 }

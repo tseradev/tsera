@@ -34,9 +34,7 @@ export async function generateGitAttributes(
 #   git-crypt init
 #   git-crypt add-gpg-user <GPG_KEY_ID>
 
-config/secrets/.env.* filter=git-crypt diff=git-crypt
-.tsera/kv/** filter=git-crypt diff=git-crypt
-.tsera/salt filter=git-crypt diff=git-crypt
+config/secret/.env.* filter=git-crypt diff=git-crypt
 `;
 
   const gitattributesPath = join(options.targetDir, ".gitattributes");

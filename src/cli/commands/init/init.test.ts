@@ -1,7 +1,7 @@
-import { join, resolve } from "../../../shared/path.ts";
-import { normalizeNewlines } from "../../../shared/newline.ts";
-import { createDefaultInitHandler } from "./init.ts";
 import { assert, assertEquals } from "std/assert";
+import { normalizeNewlines } from "../../../shared/newline.ts";
+import { join, resolve } from "../../../shared/path.ts";
+import { createDefaultInitHandler } from "./init.ts";
 
 const NOOP_WRITER = () => {};
 
@@ -97,6 +97,26 @@ Deno.test("init generates the full skeleton and manifest", async () => {
 
     const templateReadme = await Deno.readTextFile(join(projectDir, "README.md"));
     assert(templateReadme.length > 0);
+
+    // Verify env.config.ts was generated in config/secret/
+    const envConfigPath = join(projectDir, "config", "secret", "env.config.ts");
+    assert(await fileExists(envConfigPath), "config/secret/env.config.ts should be generated");
+    const envConfig = await Deno.readTextFile(envConfigPath);
+    assert(
+      envConfig.includes('import { defineEnvConfig } from "tsera/core"'),
+      "env.config.ts should import defineEnvConfig from tsera/core",
+    );
+    assert(
+      envConfig.includes("export default defineEnvConfig"),
+      "env.config.ts should export default defineEnvConfig",
+    );
+
+    // Verify Docker files are in config/docker/
+    const dockerComposePath = join(projectDir, "config", "docker", "docker-compose.yml");
+    assert(
+      await fileExists(dockerComposePath),
+      "config/docker/docker-compose.yml should be generated",
+    );
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }

@@ -1,151 +1,224 @@
 /**
- * Type-safe environment variable management for TSera projects.
+ * @module core/secrets
+ * Environment variable schema definition and validation for TSera.
  *
- * This module provides a schema-based approach to defining and validating
- * environment variables from .env files, ensuring all required configuration
- * is present before the application starts.
- *
- * @module
+ * This module provides type-safe environment variable configuration
+ * with compile-time validation and runtime type checking.
  */
-
-import { SchemaError, z } from "./utils/zod.ts";
 
 /**
- * Primitive types supported for environment variables.
+ * Valid environment variable types.
  */
-export type EnvVarType = "string" | "number" | "boolean";
+export type EnvVarType = "string" | "number" | "boolean" | "url";
+
+/**
+ * Valid environment names.
+ */
+export type EnvName = "dev" | "staging" | "prod";
 
 /**
  * Configuration for a single environment variable.
  */
-export interface EnvVarDefinition<T extends EnvVarType = EnvVarType> {
-  /** Type of the environment variable. */
-  type: T;
-  /** Whether the variable is required. */
-  required: boolean;
-  /** Default value if not provided. */
-  default?: T extends "string" ? string
-    : T extends "number" ? number
-    : T extends "boolean" ? boolean
-    : never;
-  /** Human-readable description. */
+export type EnvVarDefinition = {
+  /** Variable type (REQUIRED) */
+  type: EnvVarType;
+  /** Required specification (REQUIRED) */
+  required: boolean | EnvName[];
+  /** Human-readable description (optional but recommended) */
   description?: string;
-  /** Validation function for custom checks. */
-  validate?: (value: unknown) => boolean;
-}
+};
 
 /**
- * Schema definition with variables and available environments.
+ * Environment schema type.
  */
-export interface EnvSchema<
-  T extends Record<string, EnvVarDefinition> = Record<string, EnvVarDefinition>,
-> {
-  vars: T;
-  environments: readonly string[];
-}
+export type EnvSchema = Record<string, EnvVarDefinition>;
 
 /**
- * TSera global API for accessing environment variables.
- */
-export interface TseraAPI {
-  /**
-   * Get an environment variable value.
-   * @param key - The variable name.
-   * @returns The typed value.
-   */
-  env(key: string): string | number | boolean | undefined;
-
-  /**
-   * The currently active environment (dev, preprod, prod, etc.).
-   */
-  currentEnvironment: string;
-}
-
-/**
- * Global type declaration for tsera API.
- */
-declare global {
-  var tsera: TseraAPI;
-}
-
-/**
- * Internal storage for validated environment variables.
- */
-const envStore: Record<string, unknown> = {};
-let currentEnv = "dev";
-
-/**
- * Defines a type-safe environment variable schema.
+ * Type-safe environment variable schema definition helper.
  *
- * @param vars - Environment variable definitions.
- * @param environments - List of available environments (defaults to dev, preprod, prod).
- * @returns Schema object.
+ * This function provides VSCode autocomplete and strong typing for
+ * environment variable schemas. It enforces required fields at compile time.
  *
  * @example
- * ```typescript
- * export const envSchema = defineEnvSchema({
+ * ```ts
+ * import { defineEnvConfig } from "tsera/core";
+ *
+ * export default defineEnvConfig({
  *   DATABASE_URL: {
- *     type: "string",
+ *     type: "url",
  *     required: true,
- *     description: "PostgreSQL connection string",
+ *     description: "Database connection URL",
  *   },
  *   PORT: {
  *     type: "number",
  *     required: false,
- *     default: 8000,
+ *     description: "API server port",
+ *   },
+ *   DEBUG: {
+ *     type: "boolean",
+ *     required: ["dev", "staging"],
  *   },
  * });
  * ```
+ *
+ * @param schema - Environment variable schema definition
+ * @returns Readonly schema with enforced types
  */
-export function defineEnvSchema<T extends Record<string, EnvVarDefinition>>(
-  vars: T,
-  environments: readonly string[] = ["dev", "preprod", "prod"],
-): EnvSchema<T> {
-  return { vars, environments };
+export function defineEnvConfig<T extends EnvSchema>(
+  schema: T,
+): Readonly<T> {
+  return Object.freeze(schema);
 }
 
 /**
- * Parses a .env file content into a key-value object.
+ * Validates a value against its type.
  *
- * @param content - The .env file content.
- * @returns Parsed environment variables.
- *
- * @example
- * ```typescript
- * const content = "PORT=8000\nDATABASE_URL=postgres://localhost";
- * const vars = parseEnvFile(content);
- * // { PORT: "8000", DATABASE_URL: "postgres://localhost" }
- * ```
+ * @param value - Raw string value from environment
+ * @param type - Expected type
+ * @returns Validation result with optional reason
  */
-export function parseEnvFile(content: string): Record<string, string> {
+export function validateType(
+  value: string,
+  type: EnvVarType,
+): { valid: boolean; reason?: string } {
+  switch (type) {
+    case "string":
+      return { valid: typeof value === "string" };
+    case "number":
+      const num = Number(value);
+      return { valid: !isNaN(num) && isFinite(num), reason: "must be a number" };
+    case "boolean":
+      const boolValue = value.toLowerCase();
+      return {
+        valid: boolValue === "true" || boolValue === "false",
+        reason: "must be 'true' or 'false'",
+      };
+    case "url":
+      try {
+        new URL(value);
+        return { valid: true };
+      } catch {
+        return { valid: false, reason: "must be a valid URL" };
+      }
+  }
+}
+
+/**
+ * Validates environment variables against schema.
+ *
+ * @param secrets - All environment variables (including undefined for missing)
+ * @param schema - Environment schema
+ * @param env - Current environment name
+ * @returns Validation errors array
+ */
+export function validateSecrets(
+  secrets: Record<string, string | undefined>,
+  schema: EnvSchema,
+  env: EnvName,
+): string[] {
+  const errors: string[] = [];
+
+  for (const [key, keyConfig] of Object.entries(schema)) {
+    const value = secrets[key];
+
+    // Check if key is required for this environment
+    let isRequired = false;
+    if (keyConfig.required === true) {
+      isRequired = true;
+    } else if (Array.isArray(keyConfig.required) && keyConfig.required.includes(env)) {
+      isRequired = true;
+    }
+
+    if (value === undefined) {
+      if (isRequired) {
+        errors.push(
+          `[${env}] Missing required env var "${key}". Set it in config/secret/.env.${env}.`,
+        );
+      }
+      continue;
+    }
+
+    // Validate type
+    const typeValidation = validateType(value, keyConfig.type);
+    if (!typeValidation.valid && typeValidation.reason) {
+      errors.push(
+        `[${env}] Invalid env var "${key}": expected ${keyConfig.type}, got "${value}". Fix in config/secret/.env.${env}.`,
+      );
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Loads environment variables from a .env file.
+ *
+ * @param filePath - Path to .env file
+ * @returns Parsed environment variables
+ */
+export async function parseEnvFile(
+  filePath: string,
+): Promise<Record<string, string>> {
+  try {
+    const content = await Deno.readTextFile(filePath);
+    const env: Record<string, string> = {};
+
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      // Skip empty lines and comments
+      if (!trimmed || trimmed.startsWith("#")) {
+        continue;
+      }
+
+      const eqIndex = trimmed.indexOf("=");
+      if (eqIndex === -1) {
+        continue;
+      }
+
+      const key = trimmed.slice(0, eqIndex).trim();
+      const value = trimmed.slice(eqIndex + 1).trim();
+      env[key] = value;
+    }
+
+    return env;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return {};
+    }
+    throw error;
+  }
+}
+
+/**
+ * Gets environment variables with validation.
+ *
+ * @param schema - Environment schema
+ * @param env - Current environment name
+ * @returns Validated environment variables
+ * @throws Error if validation fails
+ */
+export async function getEnv(
+  schema: EnvSchema,
+  env: EnvName = "dev",
+): Promise<Record<string, string>> {
+  // Build secrets for ALL schema keys (including undefined for missing)
+  const secrets: Record<string, string | undefined> = {};
+  for (const key of Object.keys(schema)) {
+    secrets[key] = Deno.env.get(key);
+  }
+
+  // Validate
+  const errors = validateSecrets(secrets, schema, env);
+  if (errors.length > 0) {
+    throw new Error(
+      `Environment validation failed:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
+    );
+  }
+
+  // Return only defined values
   const result: Record<string, string> = {};
-  const lines = content.split(/\r?\n/);
-
-  for (const line of lines) {
-    // Skip empty lines and comments
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    // Parse KEY=value format
-    const equalsIndex = trimmed.indexOf("=");
-    if (equalsIndex === -1) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, equalsIndex).trim();
-    let value = trimmed.slice(equalsIndex + 1).trim();
-
-    // Remove surrounding quotes if present
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    if (key) {
+  for (const [key, value] of Object.entries(secrets)) {
+    if (value !== undefined) {
       result[key] = value;
     }
   }
@@ -154,268 +227,36 @@ export function parseEnvFile(content: string): Record<string, string> {
 }
 
 /**
- * Validates and parses a string value as a number.
+ * Initializes secrets from environment and optional .env file.
  *
- * @param val - String value to parse.
- * @returns Parsed number.
- * @throws {SchemaError} If parsing fails.
+ * @param schema - Environment schema
+ * @param env - Current environment name
+ * @param envFilePath - Optional path to .env file
+ * @returns Validated environment variables
+ * @throws Error if validation fails
  */
-function parseNumber(val: string): number {
-  const num = Number(val);
-  if (isNaN(num)) {
-    throw new SchemaError([{
-      code: "custom",
-      path: [],
-      message: `Cannot parse "${val}" as number`,
-    }]);
-  }
-  return num;
-}
-
-/**
- * Validates and parses a string value as a boolean.
- *
- * @param val - String value to parse.
- * @returns Parsed boolean.
- * @throws {SchemaError} If parsing fails.
- */
-function parseBoolean(val: string): boolean {
-  if (val === "true" || val === "1") return true;
-  if (val === "false" || val === "0") return false;
-  throw new SchemaError([{
-    code: "custom",
-    path: [],
-    message: `Cannot parse "${val}" as boolean (expected "true", "false", "1", or "0")`,
-  }]);
-}
-
-/**
- * Parses a raw environment variable value to its expected type.
- *
- * @param value - Raw string value from environment.
- * @param type - Expected type.
- * @returns Parsed value.
- * @throws {SchemaError} If parsing or validation fails.
- */
-function parseEnvValue(value: string | undefined, type: EnvVarType): unknown {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  // Use Zod string schema as base, then apply type-specific parsing
-  const stringSchema = z.string();
-  const validatedString = stringSchema.parse(value);
-
-  switch (type) {
-    case "string":
-      return validatedString;
-    case "number":
-      return parseNumber(validatedString);
-    case "boolean":
-      return parseBoolean(validatedString);
-    default: {
-      const exhaustiveCheck: never = type;
-      throw new SchemaError([{
-        code: "custom",
-        path: [],
-        message: `Unsupported type: ${exhaustiveCheck}`,
-      }]);
-    }
-  }
-}
-
-/**
- * Initializes the secrets system by loading and validating environment variables.
- *
- * @param schema - Environment schema to validate against.
- * @param options - Initialization options.
- * @returns Promise that resolves when initialization is complete.
- * @throws {Error} If validation fails or environment is unknown.
- *
- * @example
- * ```typescript
- * import { initializeSecrets } from "tsera/core/secrets";
- * import { envSchema } from "./env.config.ts";
- *
- * await initializeSecrets(envSchema, {
- *   secretsDir: "./secrets"
- * });
- *
- * // Now use globally
- * const dbUrl = tsera.env("DATABASE_URL");
- * ```
- */
-export async function initializeSecrets<T extends Record<string, EnvVarDefinition>>(
-  schema: EnvSchema<T>,
-  options?: {
-    secretsDir?: string;
-    environment?: string;
-    useStore?: boolean; // default: true
-    kvPath?: string; // default: ".tsera/kv"
-  },
-): Promise<void> {
-  const secretsDir = options?.secretsDir || "./secrets";
-
-  // Determine current environment from system variable or option
-  const environment = options?.environment || Deno.env.get("TSERA_ENV") || "dev";
-
-  // Validate that the environment exists in schema
-  if (!schema.environments.includes(environment)) {
-    throw new Error(
-      `[TSera Secrets] Error: Unknown environment "${environment}"\n` +
-        `Available: ${schema.environments.join(", ")}\n` +
-        `Set TSERA_ENV to one of these values.`,
-    );
-  }
-
-  // Construct path to the .env file for this environment
-  const envFilePath = `${secretsDir}/.env.${environment}`.replace(/\\/g, "/");
-
-  // Read and parse the .env file
-  let envFileContent: string;
-  try {
-    envFileContent = await Deno.readTextFile(envFilePath);
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      throw new Error(
-        `[TSera Secrets] Error: Environment file not found: ${envFilePath}\n` +
-          `Create this file with required variables for "${environment}" environment.`,
-      );
-    }
-    throw error;
-  }
-
-  const parsedEnv = parseEnvFile(envFileContent);
-  const errors: string[] = [];
-  const values: Record<string, unknown> = {};
-
-  // Validate each variable in the schema
-  for (const [key, definition] of Object.entries(schema.vars)) {
-    const rawValue = parsedEnv[key];
-
-    // Check for missing required variables
-    if (definition.required && !rawValue && definition.default === undefined) {
-      errors.push(`Missing required variable: ${key}`);
-      continue;
-    }
-
-    // Use default if no value provided
-    const valueToUse = rawValue ??
-      (definition.default !== undefined ? String(definition.default) : undefined);
-
-    if (valueToUse === undefined) {
-      // Optional variable not provided and no default
-      continue;
-    }
-
-    // Parse and validate the value
-    try {
-      const parsedValue = parseEnvValue(valueToUse, definition.type);
-
-      // Run custom validation if provided
-      if (definition.validate && !definition.validate(parsedValue)) {
-        errors.push(`${key}: custom validator rejected value`);
-        continue;
+export async function initializeSecrets(
+  schema: EnvSchema,
+  env: EnvName = "dev",
+  envFilePath?: string,
+): Promise<Record<string, string>> {
+  // Load from .env file if provided
+  if (envFilePath) {
+    const fileEnv = await parseEnvFile(envFilePath);
+    for (const [key, value] of Object.entries(fileEnv)) {
+      if (Deno.env.get(key) === undefined) {
+        Deno.env.set(key, value);
       }
-
-      values[key] = parsedValue;
-    } catch (error: unknown) {
-      let errorMessage = `${key}: expected ${definition.type}, got "${valueToUse}"`;
-
-      if (error instanceof SchemaError) {
-        errorMessage = `${key}: ${error.message}`;
-      } else if (error instanceof Error) {
-        errorMessage = `${key}: ${error.message}`;
-      }
-
-      errors.push(errorMessage);
     }
   }
 
-  // If there are validation errors, throw
-  if (errors.length > 0) {
-    throw new Error(
-      `[TSera Secrets] Validation failed for environment "${environment}":\n` +
-        errors.map((e) => `  - ${e}`).join("\n") + "\n" +
-        `Check ${envFilePath}`,
-    );
-  }
-
-  // Store validated values in memory
-  Object.assign(envStore, values);
-  currentEnv = environment;
-
-  // Optionally persist to KV store
-  const useStore = options?.useStore !== false; // Default: true
-  if (useStore) {
-    try {
-      const { createSecretStore } = await import("./secrets/store.ts");
-      const kvPath = options?.kvPath || ".tsera/kv";
-      const store = await createSecretStore({ kvPath });
-
-      // Persist validated values to KV
-      for (const [key, value] of Object.entries(values)) {
-        await store.set(environment, key, value);
-      }
-
-      store.close();
-    } catch (error) {
-      // If KV store fails, log a warning but don't fail initialization
-      console.warn(
-        `\x1b[33m[TSera Secrets]\x1b[0m Failed to persist to KV store: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-  }
-
-  // Expose global API (always reads from memory, not KV)
-  globalThis.tsera = {
-    env: (key: string) => envStore[key] as string | number | boolean | undefined,
-    currentEnvironment: currentEnv,
-  };
+  return getEnv(schema, env);
 }
 
 /**
- * Gets a single environment variable with type checking (legacy API).
- * Prefer using `tsera.env()` after `initializeSecrets()`.
- *
- * @param key - Environment variable name.
- * @param type - Expected type.
- * @param defaultValue - Optional default value.
- * @returns Parsed environment variable value.
- *
- * @example
- * ```typescript
- * const port = getEnv("PORT", "number", 8000);
- * const debug = getEnv("DEBUG", "boolean", false);
- * ```
+ * Type-safe API for accessing environment variables.
  */
-export function getEnv<T extends EnvVarType>(
-  key: string,
-  type: T,
-  defaultValue?: T extends "string" ? string
-    : T extends "number" ? number
-    : T extends "boolean" ? boolean
-    : never,
-): T extends "string" ? string
-  : T extends "number" ? number
-  : T extends "boolean" ? boolean
-  : never {
-  const rawValue = Deno.env.get(key);
-
-  if (rawValue === undefined) {
-    if (defaultValue !== undefined) {
-      return defaultValue as T extends "string" ? string
-        : T extends "number" ? number
-        : T extends "boolean" ? boolean
-        : never;
-    }
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-
-  return parseEnvValue(rawValue, type) as T extends "string" ? string
-    : T extends "number" ? number
-    : T extends "boolean" ? boolean
-    : never;
+export interface TseraAPI {
+  getEnv(): Record<string, string>;
+  getEnvVar<T extends string>(key: string): T | undefined;
 }

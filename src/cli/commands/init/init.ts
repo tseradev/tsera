@@ -1,28 +1,27 @@
-import { dirname, join, relative, resolve } from "../../../shared/path.ts";
-import { normalizeNewlines } from "../../../shared/newline.ts";
 import { Command } from "cliffy/command";
 import { Confirm } from "cliffy/prompt";
-import { createLogger } from "../../utils/log.ts";
-import { ensureDir, pathExists, safeWrite } from "../../utils/fsx.ts";
-import { resolveConfig } from "../../utils/resolve-config.ts";
-import { determineCliVersion } from "../../utils/version.ts";
+import { parse as parseJsonc } from "jsr:@std/jsonc@1";
+import { normalizeNewlines } from "../../../shared/newline.ts";
+import { dirname, join, relative, resolve } from "../../../shared/path.ts";
 import { applyPlan } from "../../engine/applier.ts";
 import { createDag } from "../../engine/dag.ts";
 import { prepareDagInputs } from "../../engine/entities.ts";
 import { planDag } from "../../engine/planner.ts";
 import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
-import { InitConsole } from "./init-ui.ts";
-import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/file-ops.ts";
-import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts";
-import { generateConfigFile } from "./utils/config-generator.ts";
-import { renderCommandHelp } from "../help/command-help-renderer.ts";
-import { copyDirectory } from "./utils/directory-copier.ts";
 import { readDeployTargets, updateDeployTargets } from "../../utils/deploy-config.ts";
+import { ensureDir, pathExists, safeWrite } from "../../utils/fsx.ts";
+import { createLogger } from "../../utils/log.ts";
+import { resolveConfig } from "../../utils/resolve-config.ts";
+import { determineCliVersion } from "../../utils/version.ts";
 import { promptProviderSelection } from "../deploy/deploy-init-ui.ts";
 import { handleDeploySync } from "../deploy/deploy-sync.ts";
-import { parse as parseJsonc } from "jsr:@std/jsonc@1";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
+import { InitConsole } from "./init-ui.ts";
+import { generateConfigFile } from "./utils/config-generator.ts";
+import { ensureDirectoryReady, ensureWritable, writeIfMissing } from "./utils/file-ops.ts";
 import { initializeGitRepository } from "./utils/git-init.ts";
+import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts";
 import { generateVscodeConfig } from "./utils/vscode-generator.ts";
 
 /** CLI options accepted by the {@code init} command. */
@@ -495,39 +494,7 @@ export function createDefaultInitHandler(
 
     await writeEngineState(targetDir, nextState);
 
-    // Copy CD templates if CI module is enabled
-    if (context.modules.ci) {
-      const cdTemplatesDir = join(templatesRoot, "modules", "cd");
-      const targetCdDir = join(targetDir, "config", "cd");
-      try {
-        const cdTemplatesExist = await pathExists(cdTemplatesDir);
-        if (cdTemplatesExist) {
-          await ensureDir(targetCdDir);
-          // Copy each provider's templates
-          const providers = ["docker", "cloudflare", "deno-deploy", "vercel", "github"];
-          for (const provider of providers) {
-            const providerSource = join(cdTemplatesDir, provider);
-            const providerTarget = join(targetCdDir, provider);
-            if (await pathExists(providerSource)) {
-              await copyDirectory({
-                source: providerSource,
-                target: providerTarget,
-                result: { copiedFiles: [], mergedFiles: [], skippedFiles: [] },
-                force: context.force,
-              });
-            }
-          }
-          if (jsonMode) {
-            logger.event("init:cd:templates", { copied: true });
-          }
-        }
-      } catch (error) {
-        // Log but don't fail if CD templates can't be copied
-        if (jsonMode) {
-          logger.event("init:cd:templates", { error: String(error) });
-        }
-      }
-    }
+    // CD templates are no longer copied - use tsera deploy init instead
 
     // Propose CD configuration before showing "Project ready!"
     if (jsonMode) {
@@ -726,10 +693,9 @@ function buildGitignore(): string {
     "_cache",
     "",
     "# TSera secrets (local unless using git-crypt)",
-    "secrets/.env.dev",
-    "secrets/.env.staging",
-    "secrets/.env.prod",
-    "!secrets/.env.example",
+    "config/secret/.env.dev",
+    "config/secret/.env.staging",
+    "config/secret/.env.prod",
     "",
     "coverage/",
     "*.log",

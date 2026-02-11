@@ -1,7 +1,7 @@
 {
   "imports": {
     "lume/": "https://deno.land/x/lume@v3.1.4/",
-    "lume/jsx-runtime": "https://deno.land/x/lume@v3.1.4/jsx-runtime.ts"
+    "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts"
   },
   "permissions": {
     "lume": {
@@ -31,7 +31,6 @@
     }
   },
   "tasks": {
-    "lume": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts",
     "build": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts",
     "serve": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts -s"
   },

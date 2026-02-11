@@ -1,3 +1,4 @@
+export { type Dialect, entityToDDL } from "./drizzle.ts";
 export {
   type ActionsConfig,
   defineEntity,
@@ -13,11 +14,11 @@ export {
   type OpenAPIConfig,
   type RelationsConfig,
 } from "./entity.ts";
-export { type Dialect, entityToDDL } from "./drizzle.ts";
 export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
 export { getEntityInputSchemas, getEntityPublicSchema, getEntitySchema } from "./schema.ts";
 export {
-  defineEnvSchema,
+  defineEnvConfig,
+  type EnvName,
   type EnvSchema,
   type EnvVarDefinition,
   type EnvVarType,
@@ -25,4 +26,6 @@ export {
   initializeSecrets,
   parseEnvFile,
   type TseraAPI,
+  validateSecrets,
+  validateType,
 } from "./secrets.ts";

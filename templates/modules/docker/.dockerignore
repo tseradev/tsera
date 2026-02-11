@@ -1,36 +1,31 @@
-# Dependencies and generated files
-node_modules/
-.tsera/
-dist/
-coverage/
-
-# Environment files
-.env
-.env.*
-
-# Logs
-*.log
-npm-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Git
+# Version control
 .git/
 .gitignore
+.gitattributes
+
+# TSera generated files
+.tsera/
 
 # Documentation
 docs/
-README.md
+*.md
 
 # Tests
 tests/
 *.test.ts
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment (secrets should be passed via docker-compose env)
+config/secrets/.env.*
+!config/secrets/.env.example
 

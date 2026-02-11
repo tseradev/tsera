@@ -19,18 +19,22 @@ jobs:
         with:
           deno-version: v2.x
 
-      # TODO: Install TSera CLI
-      # Option 1: Via JSR (when available)
-      #   deno install --global -A --name tsera jsr:@tsera/cli
-      # Option 2: Via direct URL
-      #   deno install --global -A --name tsera https://deno.land/x/tsera/cli/main.ts
-      - name: Install TSera CLI
+      - name: Export environment variables
         run: |
-          echo "⚠️  TODO: Configure TSera CLI installation"
-          # deno install --global -A --name tsera <CLI_URL>
+          # Map branch name to environment
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ENV="prod"
+          elif [ "${{ github.ref_name }}" = "develop" ]; then
+            ENV="staging"
+          else
+            ENV="dev"
+          fi
+          deno run -A src/cli/main.ts export-env --env=$ENV --format=github-env --prefix=APP_
+        env:
+      # Add your secrets here (from GitHub repository settings)
+      # DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # API_KEY: ${{ secrets.API_KEY }}
 
       - name: Run TSera doctor (quick validation)
         run: |
-          # TODO: Uncomment when TSera CLI is installed
-          # tsera doctor --quick
-          echo "⚠️  TODO: Run 'tsera doctor --quick' to validate codegen"
+          deno run -A src/cli/main.ts doctor --quick

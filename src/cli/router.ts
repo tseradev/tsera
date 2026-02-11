@@ -1,11 +1,12 @@
 import { Command } from "cliffy/command";
+import { createDeployCommand } from "./commands/deploy/deploy.ts";
 import { createDevCommand, type DevCommandHandler } from "./commands/dev/dev.ts";
 import { createDoctorCommand, type DoctorCommandHandler } from "./commands/doctor/doctor.ts";
-import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
-import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
-import { mcpCommand } from "./commands/mcp/mcp.ts";
-import { createDeployCommand } from "./commands/deploy/deploy.ts";
+import { exportEnvCommand } from "./commands/export-env/export-env.ts";
 import { applyModernHelp, type ModernHelpCommand } from "./commands/help/help.ts";
+import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
+import { mcpCommand } from "./commands/mcp/mcp.ts";
+import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
 import type { CliMetadata } from "./main.ts";
 
 /** A subcommand instance with global options applied. */
@@ -19,7 +20,7 @@ const JSON_OPTION_DESC = "Enable machine-readable NDJSON output.";
 const GLOBAL_OPTION_HELP: ModernHelpCommand[] = [
   { label: "--json", description: JSON_OPTION_DESC },
   { label: "-h, --help", description: "Show this help message." },
-  { label: "-v, -V, --version", description: "Display the CLI version." },
+  { label: "-v, -V, --version", description: "Display CLI version." },
 ];
 
 const COMMAND_HELP: ModernHelpCommand[] = [
@@ -41,11 +42,15 @@ const COMMAND_HELP: ModernHelpCommand[] = [
   },
   {
     label: "update",
-    description: "Upgrade the TSera CLI via deno install or compiled binaries.",
+    description: "Upgrade TSera CLI via deno install or compiled binaries.",
   },
   {
     label: "mcp",
-    description: "Start the Model Context Protocol server for AI agents.",
+    description: "Start Model Context Protocol server for AI agents.",
+  },
+  {
+    label: "export-env",
+    description: "Export environment variables for runtime or CI/CD.",
   },
 ];
 
@@ -82,9 +87,9 @@ export interface RouterHandlers {
 }
 
 /**
- * Constructs the root Cliffy command with all TSera subcommands attached.
+ * Constructs root Cliffy command with all TSera subcommands attached.
  *
- * @param metadata - CLI metadata, primarily providing the version string.
+ * @param metadata - CLI metadata, primarily providing a version string.
  * @param handlers - Optional overrides for individual command handlers.
  * @returns A configured Cliffy {@link Command} ready for parsing.
  */
@@ -96,7 +101,7 @@ export function createRouter(
     .name(CLI_NAME)
     .description("TSera CLI — The next era of fullstack TypeScript starts here.")
     .globalOption("--json", JSON_OPTION_DESC, { default: false })
-    .globalOption("-v, -V, --version", "Display the CLI version.", {
+    .globalOption("-v, -V, --version", "Display CLI version.", {
       override: true,
       action: () => {
         console.log(`TSera CLI ${metadata.version}`);
@@ -113,6 +118,7 @@ export function createRouter(
   root.command("deploy", withGlobalOpts(createDeployCommand(handlers.deploy)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
   root.command("mcp", withGlobalOpts(mcpCommand));
+  root.command("export-env", withGlobalOpts(exportEnvCommand));
 
   applyModernHelp(root, {
     cliName: CLI_NAME,

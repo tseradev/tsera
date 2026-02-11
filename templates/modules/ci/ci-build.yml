@@ -30,6 +30,22 @@ jobs:
             echo "⚠️  app/back/main.ts not found, skipping cache step"
           fi
 
+      - name: Export environment variables
+        run: |
+          # Map branch name to environment
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            ENV="prod"
+          elif [ "${{ github.ref_name }}" = "develop" ]; then
+            ENV="staging"
+          else
+            ENV="dev"
+          fi
+          deno run -A src/cli/main.ts export-env --env=$ENV --format=github-env --prefix=APP_
+        env:
+      # Add your secrets here (from GitHub repository settings)
+      # DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # API_KEY: ${{ secrets.API_KEY }}
+
       - name: Build backend
         run: |
           if [ -f "app/back/main.ts" ]; then
