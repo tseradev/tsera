@@ -2,8 +2,37 @@
  * @module export-env
  * Export environment variables command for TSera CLI.
  *
- * This module provides a simplified CLI command for exporting environment
- * variables in various formats (GitHub Actions, shell, GitLab CI, JSON).
+ * This module provides a CLI command for exporting environment variables
+ * in various formats suitable for CI/CD pipelines and runtime configuration.
+ *
+ * ## Supported Formats
+ *
+ * - **github-env**: GitHub Actions environment file format with auto-masking
+ * - **sh**: Shell export format for sourcing in bash/zsh
+ * - **gitlab-dotenv**: GitLab CI dotenv format for job variables
+ * - **json**: JSON format for programmatic consumption
+ *
+ * ## Security Considerations
+ *
+ * - GitHub Actions format automatically masks all exported values
+ * - Values are never logged in plain text (only written to files or stdout)
+ * - Validation errors show only variable names, not values
+ *
+ * ## Usage Examples
+ *
+ * ```bash
+ * # Export to GitHub Actions environment file
+ * tsera export-env --format github-env --env prod
+ *
+ * # Export to shell format with prefix
+ * tsera export-env --format sh --prefix APP_
+ *
+ * # Export to JSON for programmatic use
+ * tsera export-env --format json
+ *
+ * # Export to GitLab CI dotenv file
+ * tsera export-env --format gitlab-dotenv --out .env.ci
+ * ```
  */
 
 import { Command } from "cliffy/command";
@@ -12,7 +41,33 @@ import { join } from "std/path";
 import { EnvName, EnvSchema, isValidEnvName, validateSecrets } from "../../../core/secrets.ts";
 
 /**
+ * Supported export formats for environment variables.
+ *
+ * Each format has specific requirements and output destinations:
+ * - `github-env`: Writes to GITHUB_ENV file, requires GitHub Actions environment
+ * - `sh`: Outputs to stdout, suitable for sourcing in shell scripts
+ * - `gitlab-dotenv`: Writes to specified output file, requires --out option
+ * - `json`: Outputs to stdout, suitable for programmatic parsing
+ */
+export type ExportFormat = "github-env" | "sh" | "gitlab-dotenv" | "json";
+
+/**
  * Loads environment schema from config/secret/env.config.ts.
+ *
+ * Attempts to load the environment schema from the default location.
+ * Returns null if the file does not exist (graceful degradation).
+ *
+ * @returns The loaded environment schema or null if not found
+ * @throws Error for file system errors other than NotFound
+ *
+ * @example
+ * ```ts
+ * const schema = await loadSchema();
+ * if (!schema) {
+ *   console.error("Schema not found");
+ *   Deno.exit(1);
+ * }
+ * ```
  */
 export async function loadSchema(): Promise<EnvSchema | null> {
   try {
@@ -28,7 +83,21 @@ export async function loadSchema(): Promise<EnvSchema | null> {
 }
 
 /**
- * Exports to GitHub Actions format.
+ * Exports environment variables to GitHub Actions format.
+ *
+ * Writes environment variables to the GITHUB_ENV file with proper escaping
+ * and automatic value masking. Supports multi-line values using heredoc syntax.
+ *
+ * The function automatically masks all exported values when running in GitHub
+ * Actions to prevent sensitive data from appearing in logs.
+ *
+ * @param secrets - Environment variables to export
+ * @throws Error if GITHUB_ENV environment variable is not set
+ *
+ * @example
+ * ```ts
+ * await exportToGithubEnv({ DATABASE_URL: "postgres://...", PORT: "5432" });
+ * ```
  */
 async function exportToGithubEnv(secrets: Record<string, string>): Promise<void> {
   const githubEnvPath = Deno.env.get("GITHUB_ENV");
@@ -68,7 +137,21 @@ async function exportToGithubEnv(secrets: Record<string, string>): Promise<void>
 }
 
 /**
- * Exports to shell format.
+ * Exports environment variables to shell format.
+ *
+ * Outputs shell export statements to stdout, suitable for sourcing in
+ * bash, zsh, or other POSIX-compliant shells. Values are properly escaped
+ * to handle special characters including single quotes.
+ *
+ * @param secrets - Environment variables to export
+ *
+ * @example
+ * ```ts
+ * exportToSh({ DATABASE_URL: "postgres://...", PORT: "5432" });
+ * // Output:
+ * // export DATABASE_URL='postgres://...'
+ * // export PORT='5432'
+ * ```
  */
 function exportToSh(secrets: Record<string, string>): void {
   for (const [key, value] of Object.entries(secrets)) {
@@ -79,7 +162,23 @@ function exportToSh(secrets: Record<string, string>): void {
 }
 
 /**
- * Exports to GitLab CI dotenv format.
+ * Exports environment variables to GitLab CI dotenv format.
+ *
+ * Writes environment variables to a file in GitLab CI dotenv format.
+ * This format does not support multi-line values and will reject values
+ * containing newlines or NUL characters.
+ *
+ * @param secrets - Environment variables to export
+ * @param outputPath - Path to the output file
+ * @throws Error if any value contains invalid characters for the format
+ *
+ * @example
+ * ```ts
+ * await exportToGitlabDotenv(
+ *   { DATABASE_URL: "postgres://...", PORT: "5432" },
+ *   ".env.ci"
+ * );
+ * ```
  */
 async function exportToGitlabDotenv(
   secrets: Record<string, string>,
@@ -103,7 +202,22 @@ async function exportToGitlabDotenv(
 }
 
 /**
- * Exports to JSON format.
+ * Exports environment variables to JSON format.
+ *
+ * Outputs environment variables as a formatted JSON object to stdout.
+ * Suitable for programmatic parsing and API consumption.
+ *
+ * @param secrets - Environment variables to export
+ *
+ * @example
+ * ```ts
+ * exportToJson({ DATABASE_URL: "postgres://...", PORT: "5432" });
+ * // Output:
+ * // {
+ * //   "DATABASE_URL": "postgres://...",
+ * //   "PORT": "5432"
+ * // }
+ * ```
  */
 function exportToJson(secrets: Record<string, string>): void {
   console.log(JSON.stringify(secrets, null, 2));
@@ -112,14 +226,40 @@ function exportToJson(secrets: Record<string, string>): void {
 /**
  * Export environment variables command.
  *
- * Exports environment variables from config/secret/env.config.ts in various formats
- * for use in CI/CD pipelines or runtime configuration.
+ * This CLI command exports validated environment variables from the
+ * configured schema in various formats for use in CI/CD pipelines or
+ * runtime configuration.
+ *
+ * ## Command Options
+ *
+ * - `--env <env>`: Target environment (dev|staging|prod), defaults to TSERA_ENV or "dev"
+ * - `--format <format>`: Export format (github-env|sh|gitlab-dotenv|json), required
+ * - `--prefix <prefix>`: Optional prefix to add to all exported variable names
+ * - `--out <path>`: Output file path (required only for gitlab-dotenv format)
+ *
+ * ## Validation
+ *
+ * The command validates all environment variables against the schema before
+ * export. Validation errors are reported with actionable guidance.
+ *
+ * ## Exit Codes
+ *
+ * - 0: Successful export
+ * - 1: Validation error, missing schema, or other error
  *
  * @example
  * ```bash
+ * # Export to GitHub Actions for production
  * tsera export-env --format github-env --env prod
+ *
+ * # Export to shell with custom prefix
  * tsera export-env --format sh --prefix APP_
+ *
+ * # Export to JSON for parsing
  * tsera export-env --format json
+ *
+ * # Export to GitLab CI dotenv file
+ * tsera export-env --format gitlab-dotenv --out .env.ci
  * ```
  */
 export const exportEnvCommand = new Command()

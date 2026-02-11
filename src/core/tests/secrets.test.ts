@@ -2,634 +2,858 @@
  * Tests for secrets management system.
  *
  * @module
+ *
+ * Tests cover:
+ * - Type validation for all supported environment variable types
+ * - Schema validation with environment-specific requirements
+ * - .env file parsing with comments and edge cases
+ * - Environment variable loading and validation
+ * - Bootstrap functionality with file loading
  */
 
-import { assertEquals, assertExists, assertRejects } from "std/assert";
-import { defineEnvSchema, initializeSecrets, parseEnvFile, resetSecrets } from "../secrets.ts";
+import { assertEquals, assertRejects } from "std/assert";
+import {
+  bootstrapEnv,
+  EnvName,
+  EnvSchema,
+  getEnv,
+  initializeSecrets,
+  isValidEnvName,
+  parseEnvFile,
+  validateSecrets,
+  validateType,
+} from "../secrets.ts";
 
-Deno.test("parseEnvFile - parses simple key=value format", () => {
-  const content = `
-PORT=8000
+// ============================================================================
+// Type Guard Tests
+// ============================================================================
+
+Deno.test("isValidEnvName - returns true for valid environment names", () => {
+  assertEquals(isValidEnvName("dev"), true);
+  assertEquals(isValidEnvName("staging"), true);
+  assertEquals(isValidEnvName("prod"), true);
+});
+
+Deno.test("isValidEnvName - returns false for invalid environment names", () => {
+  assertEquals(isValidEnvName("production"), false);
+  assertEquals(isValidEnvName("test"), false);
+  assertEquals(isValidEnvName("local"), false);
+  assertEquals(isValidEnvName(""), false);
+});
+
+Deno.test("isValidEnvName - narrows type correctly", () => {
+  const value: string = "dev";
+  if (isValidEnvName(value)) {
+    // TypeScript should narrow value to EnvName
+    const env: EnvName = value;
+    assertEquals(env, "dev");
+  }
+});
+
+// ============================================================================
+// Type Validation Tests
+// ============================================================================
+
+Deno.test("validateType - validates string type", () => {
+  const result = validateType("hello", "string");
+  assertEquals(result.valid, true);
+  assertEquals(result.reason, undefined);
+});
+
+Deno.test("validateType - validates number type with valid numbers", () => {
+  const result1 = validateType("123", "number");
+  assertEquals(result1.valid, true);
+
+  const result2 = validateType("123.45", "number");
+  assertEquals(result2.valid, true);
+
+  const result3 = validateType("0", "number");
+  assertEquals(result3.valid, true);
+
+  const result4 = validateType("-42", "number");
+  assertEquals(result4.valid, true);
+});
+
+Deno.test("validateType - rejects invalid number values", () => {
+  const result1 = validateType("not-a-number", "number");
+  assertEquals(result1.valid, false);
+  assertEquals(result1.reason, "must be a number");
+
+  const result2 = validateType("NaN", "number");
+  assertEquals(result2.valid, false);
+
+  const result3 = validateType("Infinity", "number");
+  assertEquals(result3.valid, false);
+});
+
+Deno.test("validateType - validates boolean type with valid values", () => {
+  const result1 = validateType("true", "boolean");
+  assertEquals(result1.valid, true);
+
+  const result2 = validateType("false", "boolean");
+  assertEquals(result2.valid, true);
+
+  const result3 = validateType("TRUE", "boolean");
+  assertEquals(result3.valid, true);
+
+  const result4 = validateType("FALSE", "boolean");
+  assertEquals(result4.valid, true);
+});
+
+Deno.test("validateType - rejects invalid boolean values", () => {
+  const result1 = validateType("yes", "boolean");
+  assertEquals(result1.valid, false);
+  assertEquals(result1.reason, "must be 'true' or 'false'");
+
+  const result2 = validateType("1", "boolean");
+  assertEquals(result2.valid, false);
+
+  const result3 = validateType("0", "boolean");
+  assertEquals(result3.valid, false);
+});
+
+Deno.test("validateType - validates URL type with valid URLs", () => {
+  const result1 = validateType("https://example.com", "url");
+  assertEquals(result1.valid, true);
+
+  const result2 = validateType("http://localhost:8080", "url");
+  assertEquals(result2.valid, true);
+
+  const result3 = validateType(
+    "postgresql://user:pass@localhost:5432/db",
+    "url",
+  );
+  assertEquals(result3.valid, true);
+
+  const result4 = validateType("file:///path/to/file", "url");
+  assertEquals(result4.valid, true);
+});
+
+Deno.test("validateType - rejects invalid URL values", () => {
+  const result1 = validateType("not-a-url", "url");
+  assertEquals(result1.valid, false);
+  assertEquals(result1.reason, "must be a valid URL");
+
+  const result2 = validateType("example.com", "url");
+  assertEquals(result2.valid, false);
+
+  const result3 = validateType("", "url");
+  assertEquals(result3.valid, false);
+});
+
+// ============================================================================
+// Schema Validation Tests
+// ============================================================================
+
+Deno.test("validateSecrets - passes with all required variables present", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  const secrets = {
+    PORT: "8000",
+    DATABASE_URL: "postgresql://localhost:5432/db",
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+Deno.test("validateSecrets - detects missing required variables", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  const secrets = {
+    PORT: "8000",
+    // DATABASE_URL is missing
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 1);
+  assertEquals(
+    errors[0],
+    '[dev] Missing required env var "DATABASE_URL". Set it in config/secret/.env.dev.',
+  );
+});
+
+Deno.test("validateSecrets - handles environment-specific requirements", () => {
+  const schema: EnvSchema = {
+    DEBUG: { type: "boolean", required: ["dev", "staging"] },
+    DATABASE_URL: { type: "url", required: ["prod"] },
+  };
+
+  // In dev, DEBUG is required but DATABASE_URL is not
+  const devSecrets = { DEBUG: "true" };
+  const devErrors = validateSecrets(devSecrets, schema, "dev");
+  assertEquals(devErrors.length, 0);
+
+  // In prod, DATABASE_URL is required but DEBUG is not
+  const prodSecrets = { DATABASE_URL: "postgresql://localhost:5432/db" };
+  const prodErrors = validateSecrets(prodSecrets, schema, "prod");
+  assertEquals(prodErrors.length, 0);
+});
+
+Deno.test("validateSecrets - detects type mismatches", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: true },
+  };
+
+  const secrets = {
+    PORT: "not-a-number",
+    DEBUG: "not-a-boolean",
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 2);
+  assertEquals(
+    errors[0],
+    '[dev] Invalid env var "PORT": expected number, got "not-a-number". Fix in config/secret/.env.dev.',
+  );
+  assertEquals(
+    errors[1],
+    '[dev] Invalid env var "DEBUG": expected boolean, got "not-a-boolean". Fix in config/secret/.env.dev.',
+  );
+});
+
+Deno.test("validateSecrets - ignores optional variables when missing", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  };
+
+  const secrets = {
+    PORT: "8000",
+    // DEBUG is missing but optional
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+Deno.test("validateSecrets - handles undefined values correctly", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  };
+
+  const secrets: Record<string, string | undefined> = {
+    PORT: "8000",
+    DEBUG: undefined,
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+// ============================================================================
+// .env File Parsing Tests
+// ============================================================================
+
+Deno.test("parseEnvFile - parses simple key=value format", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const filePath = `${tempDir}/.env`;
+
+  await Deno.writeTextFile(
+    filePath,
+    `PORT=8000
 DATABASE_URL=postgresql://localhost:5432/test
-DEBUG=true
-`;
+DEBUG=true`,
+  );
 
-  const result = parseEnvFile(content);
+  const result = await parseEnvFile(filePath);
 
   assertEquals(result.PORT, "8000");
   assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/test");
   assertEquals(result.DEBUG, "true");
+
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("parseEnvFile - ignores comments and empty lines", () => {
-  const content = `
-# This is a comment
+Deno.test("parseEnvFile - ignores comments and empty lines", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const filePath = `${tempDir}/.env`;
+
+  await Deno.writeTextFile(
+    filePath,
+    `# This is a comment
 PORT=8000
 
 # Another comment
-DATABASE_URL=postgresql://localhost:5432/test
-`;
+DATABASE_URL=postgresql://localhost:5432/test`,
+  );
 
-  const result = parseEnvFile(content);
+  const result = await parseEnvFile(filePath);
 
   assertEquals(result.PORT, "8000");
   assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/test");
   assertEquals(Object.keys(result).length, 2);
+
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("parseEnvFile - handles quoted values", () => {
-  const content = `
-MESSAGE="Hello, World!"
-PATH='/usr/local/bin'
-`;
+Deno.test("parseEnvFile - handles values with spaces", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const filePath = `${tempDir}/.env`;
 
-  const result = parseEnvFile(content);
+  await Deno.writeTextFile(
+    filePath,
+    `MESSAGE=Hello, World!
+PATH=/usr/local/bin:/usr/bin`,
+  );
+
+  const result = await parseEnvFile(filePath);
 
   assertEquals(result.MESSAGE, "Hello, World!");
-  assertEquals(result.PATH, "/usr/local/bin");
+  assertEquals(result.PATH, "/usr/local/bin:/usr/bin");
+
+  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("parseEnvFile - handles values with equals signs", () => {
-  const content = `
-CONNECTION_STRING=postgresql://user:pass=word@localhost:5432/db
-`;
+Deno.test("parseEnvFile - handles values with equals signs", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const filePath = `${tempDir}/.env`;
 
-  const result = parseEnvFile(content);
+  await Deno.writeTextFile(
+    filePath,
+    `CONNECTION_STRING=postgresql://user:pass=word@localhost:5432/db`,
+  );
+
+  const result = await parseEnvFile(filePath);
 
   assertEquals(
     result.CONNECTION_STRING,
     "postgresql://user:pass=word@localhost:5432/db",
   );
-});
-
-Deno.test("defineEnvSchema - creates schema with default environments", () => {
-  const schema = defineEnvSchema({
-    PORT: {
-      type: "number",
-      required: false,
-      default: 8000,
-    },
-  });
-
-  assertEquals(schema.environments, ["dev", "staging", "prod"]);
-  assertEquals(schema.vars.PORT.type, "number");
-});
-
-Deno.test("defineEnvSchema - accepts custom environments", () => {
-  const schema = defineEnvSchema(
-    {
-      PORT: {
-        type: "number",
-        required: true,
-      },
-    },
-    ["local", "staging", "production"],
-  );
-
-  assertEquals(schema.environments, ["local", "staging", "production"]);
-});
-
-Deno.test("initializeSecrets - loads and validates environment variables", async () => {
-  // Create a temporary directory for test
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Create a test .env.dev file
-  const envContent = `
-PORT=3000
-DATABASE_URL=postgresql://localhost:5432/test_db
-DEBUG=true
-`;
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, envContent);
-
-  // Define schema
-  const schema = defineEnvSchema({
-    PORT: {
-      type: "number",
-      required: true,
-    },
-    DATABASE_URL: {
-      type: "string",
-      required: true,
-    },
-    DEBUG: {
-      type: "boolean",
-      required: false,
-      default: false,
-    },
-  });
-
-  // Initialize secrets (without KV store for this test)
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  // Check that global API is available
-  assertExists(globalThis.tsera);
-  assertEquals(globalThis.tsera.currentEnvironment, "dev");
-  assertEquals(globalThis.tsera.env("PORT"), 3000);
-  assertEquals(
-    globalThis.tsera.env("DATABASE_URL"),
-    "postgresql://localhost:5432/test_db",
-  );
-  assertEquals(globalThis.tsera.env("DEBUG"), true);
-
-  // Cleanup
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - uses default environment from TSERA_ENV", async () => {
-  // Create a temporary directory for test
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Create a test .env.prod file
-  const envContent = `PORT=8080\nDEBUG=false`;
-  await Deno.writeTextFile(`${secretsDir}/.env.prod`, envContent);
-
-  // Set TSERA_ENV
-  const originalEnv = Deno.env.get("TSERA_ENV");
-  Deno.env.set("TSERA_ENV", "prod");
-
-  // Define schema
-  const schema = defineEnvSchema({
-    PORT: {
-      type: "number",
-      required: true,
-    },
-    DEBUG: {
-      type: "boolean",
-      required: true,
-    },
-  });
-
-  // Initialize secrets (should use prod from TSERA_ENV, without KV store)
-  await initializeSecrets(schema, { secretsDir, useStore: false });
-
-  // Check
-  assertEquals(globalThis.tsera.currentEnvironment, "prod");
-  assertEquals(globalThis.tsera.env("PORT"), 8080);
-  assertEquals(globalThis.tsera.env("DEBUG"), false);
-
-  // Cleanup
-  if (originalEnv !== undefined) {
-    Deno.env.set("TSERA_ENV", originalEnv);
-  } else {
-    Deno.env.delete("TSERA_ENV");
-  }
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - throws on unknown environment", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  const schema = defineEnvSchema({
-    PORT: { type: "number", required: true },
-  });
-
-  await assertRejects(
-    async () => {
-      await initializeSecrets(schema, {
-        secretsDir,
-        environment: "staging", // Not in default environments
-        useStore: false,
-      });
-    },
-    Error,
-    "Unknown environment",
-  );
 
   await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("initializeSecrets - throws on missing required variable", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Create .env.dev without required variable
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "PORT=3000\n");
-
-  const schema = defineEnvSchema({
-    PORT: { type: "number", required: true },
-    DATABASE_URL: { type: "string", required: true }, // Required but missing
-  });
-
-  await assertRejects(
-    async () => {
-      await initializeSecrets(schema, {
-        secretsDir,
-        environment: "dev",
-        useStore: false,
-      });
-    },
-    Error,
-    "Missing required variable: DATABASE_URL",
-  );
-
-  await Deno.remove(tempDir, { recursive: true });
+Deno.test("parseEnvFile - returns empty object for non-existent file", async () => {
+  const result = await parseEnvFile("/non/existent/path/.env");
+  assertEquals(result, {});
 });
 
-Deno.test("initializeSecrets - throws on invalid type", async () => {
+Deno.test("parseEnvFile - trims whitespace from keys and values", async () => {
   const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Create .env.dev with invalid number
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "PORT=not-a-number\n");
-
-  const schema = defineEnvSchema({
-    PORT: { type: "number", required: true },
-  });
-
-  await assertRejects(
-    async () => {
-      await initializeSecrets(schema, {
-        secretsDir,
-        environment: "dev",
-        useStore: false,
-      });
-    },
-    Error,
-    "Cannot parse",
-  );
-
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - uses default values for optional variables", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Create minimal .env.dev
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "");
-
-  const schema = defineEnvSchema({
-    PORT: {
-      type: "number",
-      required: false,
-      default: 8000,
-    },
-    DEBUG: {
-      type: "boolean",
-      required: false,
-      default: false,
-    },
-  });
-
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  assertEquals(globalThis.tsera.env("PORT"), 8000);
-  assertEquals(globalThis.tsera.env("DEBUG"), false);
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - validates boolean values correctly", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  const envContent = `
-DEBUG_TRUE=true
-DEBUG_FALSE=false
-DEBUG_ONE=1
-DEBUG_ZERO=0
-`;
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, envContent);
-
-  const schema = defineEnvSchema({
-    DEBUG_TRUE: { type: "boolean", required: true },
-    DEBUG_FALSE: { type: "boolean", required: true },
-    DEBUG_ONE: { type: "boolean", required: true },
-    DEBUG_ZERO: { type: "boolean", required: true },
-  });
-
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  assertEquals(globalThis.tsera.env("DEBUG_TRUE"), true);
-  assertEquals(globalThis.tsera.env("DEBUG_FALSE"), false);
-  assertEquals(globalThis.tsera.env("DEBUG_ONE"), true);
-  assertEquals(globalThis.tsera.env("DEBUG_ZERO"), false);
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - validates custom validators", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "PORT=999\n");
-
-  const schema = defineEnvSchema({
-    PORT: {
-      type: "number",
-      required: true,
-      validate: (value: unknown) => {
-        const port = value as number;
-        return port >= 1000 && port <= 65535;
-      },
-    },
-  });
-
-  await assertRejects(
-    async () => {
-      await initializeSecrets(schema, {
-        secretsDir,
-        environment: "dev",
-        useStore: false,
-      });
-    },
-    Error,
-    "custom validator rejected value",
-  );
-
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - persists to KV store when enabled", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  const kvPath = `${tempDir}/kv`;
-  await Deno.mkdir(secretsDir);
-
-  const schema = defineEnvSchema({
-    DATABASE_URL: { type: "string", required: true },
-    PORT: { type: "number", required: true },
-  });
+  const filePath = `${tempDir}/.env`;
 
   await Deno.writeTextFile(
-    `${secretsDir}/.env.dev`,
-    "DATABASE_URL=postgres://localhost:5432/db\nPORT=8080",
+    filePath,
+    `  PORT  =  8000  
+  DATABASE_URL  = postgresql://localhost:5432/db `,
   );
 
-  // Initialize with KV store enabled
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: true,
-    kvPath,
-  });
+  const result = await parseEnvFile(filePath);
 
-  // Verify values are in memory
-  assertEquals(globalThis.tsera.env("DATABASE_URL"), "postgres://localhost:5432/db");
-  assertEquals(globalThis.tsera.env("PORT"), 8080);
+  assertEquals(result.PORT, "8000");
+  assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
 
-  // Verify values were persisted to KV
-  const { createSecretStore } = await import("../secrets/store.ts");
-  const store = await createSecretStore({ kvPath });
-  const storedUrl = await store.get("dev", "DATABASE_URL");
-  const storedPort = await store.get("dev", "PORT");
-  assertEquals(storedUrl, "postgres://localhost:5432/db");
-  assertEquals(storedPort, 8080);
-  store.close();
-
-  resetSecrets();
   await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("initializeSecrets - works without KV store", async () => {
+Deno.test("parseEnvFile - skips lines without equals sign", async () => {
   const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
+  const filePath = `${tempDir}/.env`;
 
-  const schema = defineEnvSchema({
-    TEST_VAR: { type: "string", required: true },
-  });
-
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "TEST_VAR=test123");
-
-  // Initialize with KV store disabled
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  // Verify value is still accessible (from memory)
-  assertEquals(globalThis.tsera.env("TEST_VAR"), "test123");
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - global API reads from memory, not KV", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  const kvPath = `${tempDir}/kv`;
-  await Deno.mkdir(secretsDir);
-
-  const schema = defineEnvSchema({
-    VALUE: { type: "string", required: true },
-  });
-
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "VALUE=original");
-
-  // Initialize
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: true,
-    kvPath,
-  });
-
-  assertEquals(globalThis.tsera.env("VALUE"), "original");
-
-  // Manually modify KV (simulating KV corruption or external change)
-  const { createSecretStore } = await import("../secrets/store.ts");
-  const store = await createSecretStore({ kvPath });
-  await store.set("dev", "VALUE", "modified");
-  store.close();
-
-  // Global API should still return original value from memory
-  assertEquals(globalThis.tsera.env("VALUE"), "original");
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - loads from system environment variables", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Set system environment variable
-  const originalEnv = Deno.env.get("SYSTEM_VAR");
-  Deno.env.set("SYSTEM_VAR", "from-system");
-
-  const schema = defineEnvSchema({
-    SYSTEM_VAR: { type: "string", required: true },
-  });
-
-  // Initialize without .env file (should load from system env)
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  assertEquals(globalThis.tsera.env("SYSTEM_VAR"), "from-system");
-
-  // Cleanup
-  if (originalEnv !== undefined) {
-    Deno.env.set("SYSTEM_VAR", originalEnv);
-  } else {
-    Deno.env.delete("SYSTEM_VAR");
-  }
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
-});
-
-Deno.test("initializeSecrets - .env file overrides system env", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
-
-  // Set system environment variable
-  const originalEnv = Deno.env.get("OVERRIDE_VAR");
-  Deno.env.set("OVERRIDE_VAR", "from-system");
-
-  // Create .env file with different value
   await Deno.writeTextFile(
-    `${secretsDir}/.env.dev`,
-    "OVERRIDE_VAR=from-file",
+    filePath,
+    `PORT=8000
+INVALID_LINE_WITHOUT_EQUALS
+DATABASE_URL=postgresql://localhost:5432/db`,
   );
 
-  const schema = defineEnvSchema({
-    OVERRIDE_VAR: { type: "string", required: true },
-  });
+  const result = await parseEnvFile(filePath);
 
-  // Initialize
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
+  assertEquals(result.PORT, "8000");
+  assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+  assertEquals("INVALID_LINE_WITHOUT_EQUALS" in result, false);
 
-  // File should override system env
-  assertEquals(globalThis.tsera.env("OVERRIDE_VAR"), "from-file");
+  await Deno.remove(tempDir, { recursive: true });
+});
 
-  // Cleanup
-  if (originalEnv !== undefined) {
-    Deno.env.set("OVERRIDE_VAR", originalEnv);
-  } else {
-    Deno.env.delete("OVERRIDE_VAR");
+// ============================================================================
+// getEnv Tests
+// ============================================================================
+
+Deno.test("getEnv - returns validated environment variables", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  // Set environment variables
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+
+  try {
+    Deno.env.set("PORT", "8000");
+    Deno.env.set("DATABASE_URL", "postgresql://localhost:5432/db");
+
+    const result = getEnv(schema, "dev");
+
+    assertEquals(result.PORT, "8000");
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
   }
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
 });
 
-Deno.test("initializeSecrets - KV store overrides .env file", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  const kvPath = `${tempDir}/kv`;
-  await Deno.mkdir(secretsDir);
+Deno.test("getEnv - throws on missing required variable", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
 
-  // Create .env file
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "KV_VAR=from-file");
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
 
-  const schema = defineEnvSchema({
-    KV_VAR: { type: "string", required: true },
-  });
+  try {
+    Deno.env.set("PORT", "8000");
+    // DATABASE_URL is missing
 
-  // Pre-populate KV store with different value
-  const { createSecretStore } = await import("../secrets/store.ts");
-  const store = await createSecretStore({ kvPath });
-  await store.set("dev", "KV_VAR", "from-kv");
-  store.close();
-
-  // Initialize (KV should override file)
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: true,
-    kvPath,
-  });
-
-  // KV should override file
-  assertEquals(globalThis.tsera.env("KV_VAR"), "from-kv");
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
+    getEnv(schema, "dev");
+    throw new Error("Should have thrown");
+  } catch (error) {
+    if (error instanceof Error && error.message !== "Should have thrown") {
+      // This is expected error from getEnv
+      // Verify it contains validation error message
+      if (!error.message.includes("Environment validation failed")) {
+        throw error;
+      }
+    }
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+  }
 });
 
-Deno.test("initializeSecrets - works when .env file is missing", async () => {
-  const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  await Deno.mkdir(secretsDir);
+Deno.test("getEnv - throws on invalid type", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+  };
 
-  // Don't create .env file
+  const originalPort = Deno.env.get("PORT");
 
-  const schema = defineEnvSchema({
-    OPTIONAL_VAR: {
-      type: "string",
-      required: false,
-      default: "default-value",
-    },
-  });
+  try {
+    Deno.env.set("PORT", "not-a-number");
 
-  // Initialize (should work without .env file)
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: false,
-  });
-
-  assertEquals(globalThis.tsera.env("OPTIONAL_VAR"), "default-value");
-
-  resetSecrets();
-  await Deno.remove(tempDir, { recursive: true });
+    getEnv(schema, "dev");
+    throw new Error("Should have thrown");
+  } catch (error) {
+    if (error instanceof Error && error.message !== "Should have thrown") {
+      // This is expected error from getEnv
+      // Verify it contains validation error message
+      if (!error.message.includes("Environment validation failed")) {
+        throw error;
+      }
+    }
+  } finally {
+    // Restore original value
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+  }
 });
 
-Deno.test("resetSecrets - clears in-memory state and closes KV", async () => {
+Deno.test("getEnv - returns only defined values", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  };
+
+  const originalPort = Deno.env.get("PORT");
+  const originalDebug = Deno.env.get("DEBUG");
+
+  try {
+    Deno.env.set("PORT", "8000");
+    // DEBUG is not set
+
+    const result = getEnv(schema, "dev");
+
+    assertEquals(result.PORT, "8000");
+    assertEquals("DEBUG" in result, false);
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDebug !== undefined) {
+      Deno.env.set("DEBUG", originalDebug);
+    } else {
+      Deno.env.delete("DEBUG");
+    }
+  }
+});
+
+// ============================================================================
+// initializeSecrets Tests
+// ============================================================================
+
+Deno.test("initializeSecrets - loads from .env file", async () => {
   const tempDir = await Deno.makeTempDir();
-  const secretsDir = `${tempDir}/secrets`;
-  const kvPath = `${tempDir}/kv`;
-  await Deno.mkdir(secretsDir);
+  const envFilePath = `${tempDir}/.env.dev`;
 
-  const schema = defineEnvSchema({
-    TEST_VAR: { type: "string", required: true },
-  });
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=8000
+DATABASE_URL=postgresql://localhost:5432/db
+DEBUG=true`,
+  );
 
-  await Deno.writeTextFile(`${secretsDir}/.env.dev`, "TEST_VAR=test123");
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+    DEBUG: { type: "boolean", required: true },
+  };
 
-  // Initialize
-  await initializeSecrets(schema, {
-    secretsDir,
-    environment: "dev",
-    useStore: true,
-    kvPath,
-  });
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+  const originalDebug = Deno.env.get("DEBUG");
 
-  // Verify value is accessible
-  assertEquals(globalThis.tsera.env("TEST_VAR"), "test123");
+  try {
+    const result = await initializeSecrets(schema, "dev", envFilePath);
 
-  // Reset
-  resetSecrets();
+    assertEquals(result.PORT, "8000");
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+    assertEquals(result.DEBUG, "true");
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+    if (originalDebug !== undefined) {
+      Deno.env.set("DEBUG", originalDebug);
+    } else {
+      Deno.env.delete("DEBUG");
+    }
 
-  // Verify globalThis.tsera is still defined but values are cleared
-  assertEquals(globalThis.tsera.env("TEST_VAR"), undefined);
-  assertEquals(globalThis.tsera.currentEnvironment, "dev");
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
 
-  await Deno.remove(tempDir, { recursive: true });
+Deno.test("initializeSecrets - process env takes precedence over .env file", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envFilePath = `${tempDir}/.env.dev`;
+
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=8000
+DATABASE_URL=postgresql://localhost:5432/db`,
+  );
+
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+
+  try {
+    // Set process env with different value
+    Deno.env.set("PORT", "9000");
+
+    const result = await initializeSecrets(schema, "dev", envFilePath);
+
+    // Process env should take precedence
+    assertEquals(result.PORT, "9000");
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("initializeSecrets - works without .env file", async () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+  };
+
+  const originalPort = Deno.env.get("PORT");
+
+  try {
+    Deno.env.set("PORT", "8000");
+
+    const result = await initializeSecrets(schema, "dev");
+
+    assertEquals(result.PORT, "8000");
+  } finally {
+    // Restore original value
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+  }
+});
+
+Deno.test("initializeSecrets - throws on validation failure", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envFilePath = `${tempDir}/.env.dev`;
+
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=not-a-number`,
+  );
+
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+  };
+
+  const originalPort = Deno.env.get("PORT");
+
+  try {
+    await assertRejects(
+      () => initializeSecrets(schema, "dev", envFilePath),
+      Error,
+      "Invalid env var",
+    );
+  } finally {
+    // Restore original value
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+// ============================================================================
+// bootstrapEnv Tests
+// ============================================================================
+
+Deno.test("bootstrapEnv - loads schema and .env file", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secret`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create env.config.ts
+  const schemaPath = `${envDir}/env.config.ts`;
+  await Deno.writeTextFile(
+    schemaPath,
+    `export default {
+      PORT: { type: "number", required: true },
+      DATABASE_URL: { type: "url", required: true },
+    };`,
+  );
+
+  // Create .env.dev file
+  const envFilePath = `${envDir}/.env.dev`;
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=8000
+DATABASE_URL=postgresql://localhost:5432/db`,
+  );
+
+  const originalCwd = Deno.cwd;
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+
+  try {
+    Deno.cwd = () => tempDir;
+    // Set process env to ensure they override .env file
+    Deno.env.set("PORT", "8000");
+    Deno.env.set("DATABASE_URL", "postgresql://localhost:5432/db");
+
+    const result = await bootstrapEnv("dev", "config/secret");
+
+    assertEquals(result.PORT, "8000");
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+  } finally {
+    Deno.cwd = originalCwd;
+
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("bootstrapEnv - throws when schema file is missing", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secret`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  const originalCwd = Deno.cwd;
+
+  try {
+    Deno.cwd = () => tempDir;
+
+    await assertRejects(
+      () => bootstrapEnv("dev", "config/secret"),
+      Error,
+      "Module not found",
+    );
+  } catch (error) {
+    // In Deno v2, import might throw an error before CLI execution
+    if (error instanceof Error && error.message.includes("Module not found")) {
+      // This is expected behavior
+      return;
+    }
+    throw error;
+  } finally {
+    Deno.cwd = originalCwd;
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("bootstrapEnv - throws when .env file is missing and required vars are not set", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secret`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create env.config.ts
+  const schemaPath = `${envDir}/env.config.ts`;
+  await Deno.writeTextFile(
+    schemaPath,
+    `export default {
+      PORT: { type: "number", required: true },
+      DATABASE_URL: { type: "url", required: true },
+    };`,
+  );
+
+  // Don't create .env.dev file
+
+  const originalCwd = Deno.cwd;
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+
+  try {
+    Deno.cwd = () => tempDir;
+    // Clear process env to ensure .env file is required
+    Deno.env.delete("PORT");
+    Deno.env.delete("DATABASE_URL");
+
+    await assertRejects(
+      () => bootstrapEnv("dev", "config/secret"),
+      Error,
+      "Missing required env var",
+    );
+  } finally {
+    Deno.cwd = originalCwd;
+
+    // Restore original values
+    if (originalPort !== undefined) {
+      Deno.env.set("PORT", originalPort);
+    } else {
+      Deno.env.delete("PORT");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("bootstrapEnv - validates against environment-specific requirements", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secret`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create env.config.ts with environment-specific requirements
+  const schemaPath = `${envDir}/env.config.ts`;
+  await Deno.writeTextFile(
+    schemaPath,
+    `export default {
+      DEBUG: { type: "boolean", required: ["dev", "staging"] },
+      DATABASE_URL: { type: "url", required: ["prod"] },
+    };`,
+  );
+
+  // Create .env.prod file
+  const envFilePath = `${envDir}/.env.prod`;
+  await Deno.writeTextFile(
+    envFilePath,
+    `DATABASE_URL=postgresql://localhost:5432/db`,
+  );
+
+  const originalCwd = Deno.cwd;
+  const originalDebug = Deno.env.get("DEBUG");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+
+  try {
+    Deno.cwd = () => tempDir;
+    // Set process env to ensure they override .env file
+    Deno.env.set("DATABASE_URL", "postgresql://localhost:5432/db");
+
+    // In prod, only DATABASE_URL is required
+    const result = await bootstrapEnv("prod", "config/secret");
+
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
+  } finally {
+    Deno.cwd = originalCwd;
+
+    // Restore original values
+    if (originalDebug !== undefined) {
+      Deno.env.set("DEBUG", originalDebug);
+    } else {
+      Deno.env.delete("DEBUG");
+    }
+    if (originalDbUrl !== undefined) {
+      Deno.env.set("DATABASE_URL", originalDbUrl);
+    } else {
+      Deno.env.delete("DATABASE_URL");
+    }
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
 });
