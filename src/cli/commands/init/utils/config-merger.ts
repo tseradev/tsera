@@ -7,11 +7,11 @@
  * @module
  */
 
-import { join } from "../../../../shared/path.ts";
 import { exists } from "std/fs";
-import { parse as parseJsonc } from "jsr:@std/jsonc@1";
-import type { ComposedTemplate, ComposeOptions } from "./template-composer.ts";
+import { parse as parseJsonc } from "std/jsonc";
+import { join } from "../../../../shared/path.ts";
 import { MODULE_DEPENDENCIES } from "./module-definitions.ts";
+import type { ComposedTemplate, ComposeOptions } from "./template-composer.ts";
 
 /**
  * Type for Deno configuration file structure.

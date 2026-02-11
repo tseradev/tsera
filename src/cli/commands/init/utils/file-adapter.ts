@@ -7,9 +7,9 @@
  * @module
  */
 
-import { join } from "../../../../shared/path.ts";
 import { exists } from "std/fs";
-import { parse as parseJsonc } from "jsr:@std/jsonc@1";
+import { parse as parseJsonc } from "std/jsonc";
+import { join } from "../../../../shared/path.ts";
 import {
   createInMemorySourceFile,
   createTSeraProject,

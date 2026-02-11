@@ -8,8 +8,8 @@
  * @module
  */
 
-import { parse as parseJsonc } from "jsr:@std/jsonc@1";
 import { exists } from "std/fs";
+import { parse as parseJsonc } from "std/jsonc";
 import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { join } from "../../../../shared/path.ts";
 import type { DbConfig } from "../../../definitions.ts";

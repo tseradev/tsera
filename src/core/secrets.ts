@@ -6,6 +6,8 @@
  * with compile-time validation and runtime type checking.
  */
 
+import { join } from "std/path";
+
 /**
  * Valid environment variable types.
  */
@@ -15,6 +17,13 @@ export type EnvVarType = "string" | "number" | "boolean" | "url";
  * Valid environment names.
  */
 export type EnvName = "dev" | "staging" | "prod";
+
+/**
+ * Type guard to check if a value is a valid EnvName.
+ */
+export function isValidEnvName(value: string): value is EnvName {
+  return value === "dev" || value === "staging" || value === "prod";
+}
 
 /**
  * Configuration for a single environment variable.
@@ -33,42 +42,9 @@ export type EnvVarDefinition = {
  */
 export type EnvSchema = Record<string, EnvVarDefinition>;
 
-/**
- * Type-safe environment variable schema definition helper.
- *
- * This function provides VSCode autocomplete and strong typing for
- * environment variable schemas. It enforces required fields at compile time.
- *
- * @example
- * ```ts
- * import { defineEnvConfig } from "tsera/core";
- *
- * export default defineEnvConfig({
- *   DATABASE_URL: {
- *     type: "url",
- *     required: true,
- *     description: "Database connection URL",
- *   },
- *   PORT: {
- *     type: "number",
- *     required: false,
- *     description: "API server port",
- *   },
- *   DEBUG: {
- *     type: "boolean",
- *     required: ["dev", "staging"],
- *   },
- * });
- * ```
- *
- * @param schema - Environment variable schema definition
- * @returns Readonly schema with enforced types
- */
-export function defineEnvConfig<T extends EnvSchema>(
-  schema: T,
-): Readonly<T> {
-  return Object.freeze(schema);
-}
+// Re-export defineEnvConfig from single source of truth
+// (templates/modules/secrets/defineEnvConfig.ts)
+export { defineEnvConfig } from "../../templates/modules/secrets/defineEnvConfig.ts";
 
 /**
  * Validates a value against its type.
@@ -82,24 +58,28 @@ export function validateType(
   type: EnvVarType,
 ): { valid: boolean; reason?: string } {
   switch (type) {
-    case "string":
+    case "string": {
       return { valid: typeof value === "string" };
-    case "number":
+    }
+    case "number": {
       const num = Number(value);
       return { valid: !isNaN(num) && isFinite(num), reason: "must be a number" };
-    case "boolean":
+    }
+    case "boolean": {
       const boolValue = value.toLowerCase();
       return {
         valid: boolValue === "true" || boolValue === "false",
         reason: "must be 'true' or 'false'",
       };
-    case "url":
+    }
+    case "url": {
       try {
         new URL(value);
         return { valid: true };
       } catch {
         return { valid: false, reason: "must be a valid URL" };
       }
+    }
   }
 }
 
@@ -197,10 +177,10 @@ export async function parseEnvFile(
  * @returns Validated environment variables
  * @throws Error if validation fails
  */
-export async function getEnv(
+export function getEnv(
   schema: EnvSchema,
   env: EnvName = "dev",
-): Promise<Record<string, string>> {
+): Record<string, string> {
   // Build secrets for ALL schema keys (including undefined for missing)
   const secrets: Record<string, string | undefined> = {};
   for (const key of Object.keys(schema)) {
@@ -250,6 +230,82 @@ export async function initializeSecrets(
     }
   }
 
+  return getEnv(schema, env);
+}
+
+/**
+ * Bootstrap function for fail-fast environment validation at app startup.
+ *
+ * This function loads environment variables from config/secret/.env.<env>,
+ * validates them against config/secret/env.config.ts, and throws an error
+ * if validation fails. This should be called before starting any servers.
+ *
+ * @param env - Current environment name (default: "dev")
+ * @param envDir - Directory containing .env files (default: "config/secret")
+ * @returns Validated environment variables
+ * @throws Error if validation fails or required files are missing
+ *
+ * @example
+ * ```ts
+ * import { bootstrapEnv } from "tsera/core";
+ * import envSchema from "./config/secret/env.config.ts";
+ *
+ * // Call at app startup before starting servers
+ * const env = await bootstrapEnv("dev");
+ *
+ * // Start servers only after successful validation
+ * await startApiServer(env);
+ * ```
+ */
+export async function bootstrapEnv(
+  env: EnvName = "dev",
+  envDir: string = "config/secret",
+): Promise<Record<string, string>> {
+  // Load schema from env.config.ts
+  const schemaPath = join(envDir, "env.config.ts");
+  let schema: EnvSchema;
+  try {
+    const module = await import(`file://${Deno.cwd()}/${schemaPath}`);
+    schema = module.default || module.envSchema || module.schema;
+    if (!schema) {
+      throw new Error(`No schema found in ${schemaPath}`);
+    }
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(
+        `Environment schema not found at ${schemaPath}. Please ensure that secrets module is installed.`,
+      );
+    }
+    throw error;
+  }
+
+  // Load .env file
+  const envFilePath = join(envDir, `.env.${env}`);
+  const fileEnv = await parseEnvFile(envFilePath);
+  for (const [key, value] of Object.entries(fileEnv)) {
+    if (Deno.env.get(key) === undefined) {
+      Deno.env.set(key, value);
+    }
+  }
+
+  // Validate environment
+  const errors = validateSecrets(
+    Object.fromEntries(
+      Object.keys(schema).map((key) => [key, Deno.env.get(key)]),
+    ),
+    schema,
+    env,
+  );
+
+  if (errors.length > 0) {
+    throw new Error(
+      `Environment validation failed for '${env}' environment:\n${
+        errors.map((e) => `  - ${e}`).join("\\n")
+      }\n\nFix issues in config/secret/.env.${env} before starting the application.`,
+    );
+  }
+
+  // Return validated environment variables
   return getEnv(schema, env);
 }
 

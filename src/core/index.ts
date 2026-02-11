@@ -17,6 +17,7 @@ export {
 export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.ts";
 export { getEntityInputSchemas, getEntityPublicSchema, getEntitySchema } from "./schema.ts";
 export {
+  bootstrapEnv,
   defineEnvConfig,
   type EnvName,
   type EnvSchema,

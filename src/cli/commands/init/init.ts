@@ -1,6 +1,6 @@
 import { Command } from "cliffy/command";
 import { Confirm } from "cliffy/prompt";
-import { parse as parseJsonc } from "jsr:@std/jsonc@1";
+import { parse as parseJsonc } from "std/jsonc";
 import { normalizeNewlines } from "../../../shared/newline.ts";
 import { dirname, join, relative, resolve } from "../../../shared/path.ts";
 import { applyPlan } from "../../engine/applier.ts";
