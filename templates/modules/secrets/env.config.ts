@@ -16,7 +16,7 @@
  * - description: human-readable description (optional but recommended)
  */
 
-import { defineEnvConfig } from "./defineEnvConfig.ts";
+import { defineEnvConfig } from "tsera/core";
 
 export default defineEnvConfig({
   // Database Configuration
@@ -62,18 +62,3 @@ export default defineEnvConfig({
     description: "Enable debug logging",
   },
 });
-
-/**
- * Type definition for environment variable configuration.
- * This is exported for type inference in application code.
- */
-export type EnvKeyConfig = {
-  type: "string" | "number" | "boolean" | "url";
-  required: boolean | string[];
-  description?: string;
-};
-
-/**
- * Type definition for full environment schema.
- */
-export type EnvSchema = Record<string, EnvKeyConfig>;

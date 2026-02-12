@@ -252,7 +252,9 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     " * - description: human-readable description (optional but recommended)",
     " */",
     "",
-    "export default {",
+    'import { defineEnvConfig } from "tsera/core";',
+    "",
+    "export default defineEnvConfig({",
   ];
 
   // Database variables
@@ -344,21 +346,7 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
   lines.push('    description: "Enable debug logging",');
   lines.push("  },");
 
-  lines.push("} as const;");
-  lines.push("");
-  lines.push("/**");
-  lines.push(" * Type definition for environment variable configuration.");
-  lines.push(" */");
-  lines.push("export type EnvKeyConfig = {");
-  lines.push('  type: "string" | "number" | "boolean" | "url";');
-  lines.push("  required: boolean | string[];");
-  lines.push("  description?: string;");
-  lines.push("};");
-  lines.push("");
-  lines.push("/**");
-  lines.push(" * Type definition for * full environment schema.");
-  lines.push(" */");
-  lines.push("export type EnvSchema = Record<string, EnvKeyConfig>;");
+  lines.push("});");
 
   return lines.join("\n");
 }

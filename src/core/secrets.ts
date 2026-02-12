@@ -123,9 +123,42 @@ export type EnvVarDefinition = {
  */
 export type EnvSchema = Record<string, EnvVarDefinition>;
 
-// Re-export defineEnvConfig from single source of truth
-// (templates/modules/secrets/defineEnvConfig.ts)
-export { defineEnvConfig } from "../../templates/modules/secrets/defineEnvConfig.ts";
+/**
+ * Type-safe environment variable schema definition helper.
+ *
+ * This function provides VSCode autocomplete and strong typing for
+ * environment variable schemas. It enforces required fields at compile time.
+ *
+ * @example
+ * ```ts
+ * import { defineEnvConfig } from "tsera/core";
+ *
+ * export default defineEnvConfig({
+ *   DATABASE_URL: {
+ *     type: "url",
+ *     required: true,
+ *     description: "Database connection URL",
+ *   },
+ *   PORT: {
+ *     type: "number",
+ *     required: false,
+ *     description: "API server port",
+ *   },
+ *   DEBUG: {
+ *     type: "boolean",
+ *     required: ["dev", "staging"],
+ *   },
+ * });
+ * ```
+ *
+ * @param schema - Environment variable schema definition
+ * @returns Readonly schema with enforced types
+ */
+export function defineEnvConfig<T extends EnvSchema>(
+  schema: T,
+): Readonly<T> {
+  return Object.freeze(schema);
+}
 
 /**
  * Validation result type for type checking operations.

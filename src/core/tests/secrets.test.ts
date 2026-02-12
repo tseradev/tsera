@@ -14,6 +14,7 @@
 import { assertEquals, assertRejects } from "std/assert";
 import {
   bootstrapEnv,
+  defineEnvConfig,
   EnvName,
   EnvSchema,
   getEnv,
@@ -856,4 +857,146 @@ Deno.test("bootstrapEnv - validates against environment-specific requirements", 
 
     await Deno.remove(tempDir, { recursive: true });
   }
+});
+
+// ============================================================================
+// defineEnvConfig Tests
+// ============================================================================
+
+Deno.test("defineEnvConfig - returns frozen readonly schema", () => {
+  const schema = defineEnvConfig({
+    PORT: {
+      type: "number",
+      required: true,
+      description: "Server port",
+    },
+    DATABASE_URL: {
+      type: "url",
+      required: true,
+      description: "Database URL",
+    },
+  });
+
+  // Verify schema is frozen
+  assertEquals(Object.isFrozen(schema), true);
+
+  // Verify schema has correct structure
+  assertEquals(typeof schema.PORT, "object");
+  assertEquals(typeof schema.DATABASE_URL, "object");
+});
+
+Deno.test("defineEnvConfig - enforces required fields at compile time", () => {
+  const schema = defineEnvConfig({
+    PORT: {
+      type: "number",
+      required: true,
+    },
+    DEBUG: {
+      type: "boolean",
+      required: ["dev", "staging"],
+    },
+  });
+
+  // TypeScript should enforce these types at compile time
+  assertEquals(schema.PORT.type, "number");
+  assertEquals(schema.PORT.required, true);
+  assertEquals(schema.DEBUG.type, "boolean");
+  assertEquals(Array.isArray(schema.DEBUG.required), true);
+});
+
+Deno.test("defineEnvConfig - preserves type inference", () => {
+  const schema = defineEnvConfig({
+    PORT: {
+      type: "number" as const,
+      required: true,
+    },
+    DEBUG: {
+      type: "boolean" as const,
+      required: false,
+    },
+  });
+
+  // Verify types are preserved
+  assertEquals(schema.PORT.type, "number");
+  assertEquals(schema.DEBUG.type, "boolean");
+});
+
+Deno.test("defineEnvConfig - allows optional description field", () => {
+  const schema = defineEnvConfig({
+    PORT: {
+      type: "number",
+      required: true,
+      description: "API server port number",
+    },
+    DATABASE_URL: {
+      type: "url",
+      required: true,
+    },
+  });
+
+  assertEquals(schema.PORT.description, "API server port number");
+  assertEquals("description" in schema.DATABASE_URL, false);
+});
+
+Deno.test("defineEnvConfig - supports all environment variable types", () => {
+  const schema = defineEnvConfig({
+    STRING_VAR: {
+      type: "string",
+      required: false,
+    },
+    NUMBER_VAR: {
+      type: "number",
+      required: false,
+    },
+    BOOLEAN_VAR: {
+      type: "boolean",
+      required: false,
+    },
+    URL_VAR: {
+      type: "url",
+      required: false,
+    },
+  });
+
+  assertEquals(schema.STRING_VAR.type, "string");
+  assertEquals(schema.NUMBER_VAR.type, "number");
+  assertEquals(schema.BOOLEAN_VAR.type, "boolean");
+  assertEquals(schema.URL_VAR.type, "url");
+});
+
+Deno.test("defineEnvConfig - prevents mutation of returned schema", () => {
+  const schema = defineEnvConfig({
+    PORT: {
+      type: "number",
+      required: true,
+    },
+  });
+
+  // Attempting to modify should fail
+  try {
+    (schema as any).NEW_VAR = { type: "string", required: false };
+    throw new Error("Schema should be frozen");
+  } catch (error) {
+    if (error instanceof Error && error.message === "Schema should be frozen") {
+      throw error;
+    }
+    // Expected: cannot add property to frozen object
+  }
+});
+
+Deno.test("defineEnvConfig - supports environment-specific requirements", () => {
+  const schema = defineEnvConfig({
+    DEBUG: {
+      type: "boolean",
+      required: ["dev", "staging"],
+    },
+    DATABASE_URL: {
+      type: "url",
+      required: ["prod"],
+    },
+  });
+
+  assertEquals(Array.isArray(schema.DEBUG.required), true);
+  assertEquals(schema.DEBUG.required, ["dev", "staging"]);
+  assertEquals(schema.DATABASE_URL.required, ["prod"]);
 });
