@@ -1,7 +1,7 @@
 import { assert, assertEquals, assertThrows } from "std/assert";
 import { defineEntity, type EntityConfig } from "../index.ts";
 import { z } from "zod";
-import { getZodInternal, type ZodType } from "../utils/zod.ts";
+import { getZodInternal } from "../utils/zod.ts";
 
 Deno.test("defineEntity validates PascalCase names", () => {
   const config: EntityConfig = {
@@ -96,7 +96,7 @@ Deno.test("defineEntity generates input schemas", () => {
     name: "Test",
     fields: {
       id: { validator: z.uuid(), immutable: true },
-      email: { validator: z.email() },
+      email: { validator: z.string().email() },
       createdAt: { validator: z.date(), db: { defaultNow: true } },
     },
   });

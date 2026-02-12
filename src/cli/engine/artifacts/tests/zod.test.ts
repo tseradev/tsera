@@ -29,7 +29,7 @@ Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async
     name: "User",
     fields: {
       id: { validator: z.uuid(), visibility: "public" },
-      email: { validator: z.email(), visibility: "public" },
+      email: { validator: z.string().email(), visibility: "public" },
       password: { validator: z.string(), visibility: "secret" },
     },
   });
