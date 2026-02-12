@@ -281,7 +281,7 @@ async function patchImportMapForEnvironment(
           ? "../".repeat(upLevels) + downParts.join("/")
           : downParts.join("/");
 
-        tasks.dev = `deno run -A --unstable-kv ${cliRelativePath} dev`;
+        tasks.dev = `deno run -A ${cliRelativePath} dev`;
       }
     }
 

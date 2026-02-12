@@ -251,20 +251,12 @@ async function generateEnvironmentFiles(
   if (await exists(envConfigSource)) {
     let content = await Deno.readTextFile(envConfigSource);
     // Replace local import with JSR import for generated projects
+    // Pattern matches: from "../../../src/core/secrets.ts" (or any number of ../)
     content = content.replace(
-      /from ["']\.\.\/\.\.\/\.\.\/src\/core\/secrets\.ts["']/,
-      'from "tsera/core"',
+      /from ["'](\.\.\/)*src\/core\/secrets\.ts["']/,
+      'from "tsera/core/secrets.ts"',
     );
     await safeWrite(envConfigTarget, content);
     result.copiedFiles.push("config/secret/env.config.ts");
-  }
-
-  // Copy defineEnvConfig.ts from templates/modules/secrets/ to config/secret/
-  const defineEnvConfigSource = join(options.modulesDir, "secrets", "defineEnvConfig.ts");
-  const defineEnvConfigTarget = join(secretDir, "defineEnvConfig.ts");
-  if (await exists(defineEnvConfigSource)) {
-    const defineEnvContent = await Deno.readTextFile(defineEnvConfigSource);
-    await safeWrite(defineEnvConfigTarget, defineEnvContent);
-    result.copiedFiles.push("config/secret/defineEnvConfig.ts");
   }
 }

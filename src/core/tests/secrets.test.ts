@@ -143,6 +143,68 @@ Deno.test("validateType - rejects invalid URL values", () => {
 });
 
 // ============================================================================
+// getActualType Tests (Security: never exposes actual values)
+// ============================================================================
+
+Deno.test("getActualType - identifies boolean values", () => {
+  // This function is internal, so we test it indirectly through validateSecrets
+  const schema: EnvSchema = {
+    DEBUG: { type: "boolean", required: true },
+  };
+
+  const secrets = {
+    DEBUG: "true",
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+Deno.test("getActualType - identifies number values", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+  };
+
+  const secrets = {
+    PORT: "8000",
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+Deno.test("getActualType - identifies URL values", () => {
+  const schema: EnvSchema = {
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  const secrets = {
+    DATABASE_URL: "postgresql://localhost:5432/db",
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 0);
+});
+
+Deno.test("getActualType - defaults to string for non-matching values", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+  };
+
+  const secrets = {
+    PORT: "not-a-number", // This will be detected as "string" type
+  };
+
+  const errors = validateSecrets(secrets, schema, "dev");
+  assertEquals(errors.length, 1);
+  // The error message should show "string" as the actual type, not the value
+  assertEquals(
+    errors[0],
+    '[dev] Invalid env var "PORT": expected number, got string. Fix in config/secret/.env.dev.',
+  );
+});
+
+// ============================================================================
 // Schema Validation Tests
 // ============================================================================
 
@@ -210,13 +272,14 @@ Deno.test("validateSecrets - detects type mismatches", () => {
 
   const errors = validateSecrets(secrets, schema, "dev");
   assertEquals(errors.length, 2);
+  // Messages now show only the type, not the actual value (for security)
   assertEquals(
     errors[0],
-    '[dev] Invalid env var "PORT": expected number, got "not-a-number". Fix in config/secret/.env.dev.',
+    '[dev] Invalid env var "PORT": expected number, got string. Fix in config/secret/.env.dev.',
   );
   assertEquals(
     errors[1],
-    '[dev] Invalid env var "DEBUG": expected boolean, got "not-a-boolean". Fix in config/secret/.env.dev.',
+    '[dev] Invalid env var "DEBUG": expected boolean, got string. Fix in config/secret/.env.dev.',
   );
 });
 

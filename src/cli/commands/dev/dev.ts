@@ -1,7 +1,6 @@
-import { dirname } from "../../../shared/path.ts";
 import { Command } from "cliffy/command";
 import { bootstrapEnv, type EnvName, isValidEnvName } from "../../../core/secrets.ts";
-import { resolveConfig } from "../../utils/resolve-config.ts";
+import { dirname } from "../../../shared/path.ts";
 import { applyPlan } from "../../engine/applier.ts";
 import { createDag } from "../../engine/dag.ts";
 import { prepareDagInputs } from "../../engine/entities.ts";
@@ -10,6 +9,7 @@ import { readEngineState, writeDagState, writeEngineState } from "../../engine/s
 import { watchProject } from "../../engine/watch.ts";
 import type { CliMetadata } from "../../main.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
+import { resolveConfig } from "../../utils/resolve-config.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
 import { DevConsole, type ModuleStatus } from "./dev-ui.ts";
 import { detectActiveModules } from "./modules.ts";
@@ -194,7 +194,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         const msg = error instanceof Error ? error.message : String(error);
         modulesStatus.set("secrets", { status: "error", error: msg });
         updateUI();
-        await fatalExit(`Secrets Manager failed: ${msg}`);
+        // Pass simplified message to avoid duplication - detailed error is already shown in module status
+        await fatalExit("Secrets Manager failed");
       }
     }
 

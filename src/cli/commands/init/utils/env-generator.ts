@@ -252,7 +252,7 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     " * - description: human-readable description (optional but recommended)",
     " */",
     "",
-    'import { defineEnvConfig } from "tsera/core";',
+    'import { defineEnvConfig } from "tsera/core/secrets.ts";',
     "",
     "export default defineEnvConfig({",
   ];

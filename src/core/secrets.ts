@@ -19,34 +19,11 @@
  * - Validation errors provide actionable guidance without exposing sensitive data
  *
  * ## Usage Example
- *
- * ```ts
- * import { bootstrapEnv, defineEnvConfig } from "tsera/core";
- *
- * // Define environment schema
- * const envSchema = defineEnvConfig({
- *   DATABASE_URL: {
- *     type: "url",
- *     required: ["prod", "staging"],
- *     description: "PostgreSQL connection string",
- *   },
- *   PORT: {
- *     type: "number",
- *     required: true,
- *     description: "Server port number",
- *   },
- * });
- *
- * // Bootstrap environment at startup
- * const env = await bootstrapEnv("prod");
- *
- * // Access validated environment variables
- * const dbUrl = env.DATABASE_URL;
- * const port = env.PORT;
- * ```
  */
 
+import { red } from "jsr:@std/internal@^1.0.12/styles";
 import { join } from "std/path";
+import { gray } from "../cli/ui/colors.ts";
 
 /**
  * Valid environment variable types supported by TSera.
@@ -73,7 +50,7 @@ export type EnvName = "dev" | "staging" | "prod";
  * Type guard to check if a value is a valid EnvName.
  *
  * @param value - The string value to check
- * @returns True if the value is a valid environment name
+ * @returns True if value is a valid environment name
  *
  * @example
  * ```ts
@@ -90,7 +67,7 @@ export function isValidEnvName(value: string): value is EnvName {
 /**
  * Configuration for a single environment variable.
  *
- * Defines the type, requirement rules, and optional metadata for
+ * Defines type, requirement rules, and optional metadata for
  * an environment variable in the schema.
  */
 export type EnvVarDefinition = {
@@ -109,7 +86,7 @@ export type EnvVarDefinition = {
 
   /**
    * Human-readable description (optional but recommended).
-   * Provides context about the variable's purpose and usage.
+   * Provides context about variable's purpose and usage.
    */
   description?: string;
 };
@@ -129,28 +106,6 @@ export type EnvSchema = Record<string, EnvVarDefinition>;
  * This function provides VSCode autocomplete and strong typing for
  * environment variable schemas. It enforces required fields at compile time.
  *
- * @example
- * ```ts
- * import { defineEnvConfig } from "tsera/core";
- *
- * export default defineEnvConfig({
- *   DATABASE_URL: {
- *     type: "url",
- *     required: true,
- *     description: "Database connection URL",
- *   },
- *   PORT: {
- *     type: "number",
- *     required: false,
- *     description: "API server port",
- *   },
- *   DEBUG: {
- *     type: "boolean",
- *     required: ["dev", "staging"],
- *   },
- * });
- * ```
- *
  * @param schema - Environment variable schema definition
  * @returns Readonly schema with enforced types
  */
@@ -167,7 +122,7 @@ export function defineEnvConfig<T extends EnvSchema>(
  * The reason provides actionable feedback for fixing invalid values.
  */
 export type ValidationResult = {
-  /** Whether the validation passed */
+  /** Whether validation passed */
   valid: boolean;
   /** Human-readable explanation of why validation failed (if applicable) */
   reason?: string;
@@ -181,7 +136,7 @@ export type ValidationResult = {
  * with actionable error messages.
  *
  * @param value - Raw string value from environment
- * @param type - Expected type from the schema definition
+ * @param type - Expected type from schema definition
  * @returns Validation result with optional reason for failure
  *
  * @example
@@ -227,10 +182,52 @@ export function validateType(
 }
 
 /**
+ * Determines the actual JavaScript type of an environment variable value.
+ *
+ * This function is used for error messages to provide type information
+ * without exposing the actual value, which is critical for security.
+ *
+ * @param value - The string value to analyze
+ * @returns The JavaScript type name as a string
+ *
+ * @example
+ * ```ts
+ * getActualType("12345"); // "number"
+ * getActualType("true"); // "boolean"
+ * getActualType("hello"); // "string"
+ * getActualType("https://example.com"); // "url"
+ * ```
+ */
+function getActualType(value: string): string {
+  // Check if it's a boolean
+  const lowerValue = value.toLowerCase();
+  if (lowerValue === "true" || lowerValue === "false") {
+    return "boolean";
+  }
+
+  // Check if it's a number
+  const num = Number(value);
+  if (!isNaN(num) && isFinite(num)) {
+    return "number";
+  }
+
+  // Check if it's a URL
+  try {
+    new URL(value);
+    return "url";
+  } catch {
+    // Not a valid URL
+  }
+
+  // Default to string
+  return "string";
+}
+
+/**
  * Validates environment variables against their schema definitions.
  *
  * Performs comprehensive validation of all environment variables defined in
- * the schema, checking for:
+ * schema, checking for:
  * - Missing required variables
  * - Invalid type values
  * - Environment-specific requirements
@@ -276,7 +273,7 @@ export function validateSecrets(
     if (value === undefined) {
       if (isRequired) {
         errors.push(
-          `[${env}] Missing required env var "${key}". Set it in config/secret/.env.${env}.`,
+          `[${env}] Missing required var "${key}".`,
         );
       }
       continue;
@@ -285,8 +282,11 @@ export function validateSecrets(
     // Validate type
     const typeValidation = validateType(value, keyConfig.type);
     if (!typeValidation.valid && typeValidation.reason) {
+      // Determine the actual JavaScript type of the value for the error message
+      // This avoids exposing sensitive values in logs while providing useful feedback
+      const actualType = getActualType(value);
       errors.push(
-        `[${env}] Invalid env var "${key}": expected ${keyConfig.type}, got "${value}". Fix in config/secret/.env.${env}.`,
+        `[${env}] Invalid "${key}": expected ${keyConfig.type}, got ${actualType}.`,
       );
     }
   }
@@ -471,23 +471,6 @@ export async function initializeSecrets(
  * @param envDir - Directory containing .env files (default: "config/secret")
  * @returns Validated environment variables
  * @throws Error if validation fails or required files are missing
- *
- * @example
- * ```ts
- * import { bootstrapEnv } from "tsera/core";
- *
- * try {
- *   // Call at app startup before starting servers
- *   const env = await bootstrapEnv("prod");
- *
- *   // Start servers only after successful validation
- *   await startApiServer(env);
- *   await startFrontendServer(env);
- * } catch (error) {
- *   console.error("Failed to bootstrap environment:", error.message);
- *   Deno.exit(1);
- * }
- * ```
  */
 export async function bootstrapEnv(
   env: EnvName = "dev",
@@ -497,8 +480,33 @@ export async function bootstrapEnv(
   const schemaPath = join(envDir, "env.config.ts");
   let schema: EnvSchema;
   try {
-    const module = await import(`file://${Deno.cwd()}/${schemaPath}`);
-    schema = module.default || module.envSchema || module.schema;
+    // Read the file directly to avoid import resolution issues
+    // This bypasses Deno's import map resolution which uses the CLI's deno.jsonc
+    let content = await Deno.readTextFile(schemaPath);
+
+    // Remove import statements to avoid "Cannot use import statement outside a module" error
+    // We'll define defineEnvConfig in the function scope
+    content = content.replace(/^import\s+.*?from\s+.*?;?$/gm, "");
+
+    // Extract the expression after "export default" since it's not valid in Function constructor context
+    // The defineEnvConfig call will be evaluated directly
+    // Use the 's' flag to make '.' match newlines, capturing the entire expression
+    const exportDefaultMatch = content.match(/^export\s+default\s+(.+)$/ms);
+    if (exportDefaultMatch) {
+      // Use only the expression after "export default"
+      content = exportDefaultMatch[1];
+    }
+
+    // Evaluate the content directly as it's now just the defineEnvConfig call
+    const moduleFn = new Function(
+      "defineEnvConfig",
+      `return ${content};`,
+    );
+
+    // defineEnvConfig is available in this module, so we pass it
+    const result = moduleFn(defineEnvConfig);
+    schema = result as EnvSchema;
+
     if (!schema) {
       throw new Error(`No schema found in ${schemaPath}`);
     }
@@ -531,9 +539,11 @@ export async function bootstrapEnv(
 
   if (errors.length > 0) {
     throw new Error(
-      `Environment validation failed for '${env}' environment:\n${
-        errors.map((e) => `  - ${e}`).join("\\n")
-      }\n\nFix issues in config/secret/.env.${env} before starting the application.`,
+      `Environment validation failed for '.env.${env}':\n${
+        errors.map((e) => `${gray("│")} ${red(` - ${e}`)}`).join("\\n")
+      }\n${gray("│")}  ${
+        red(`Fix issues in config/secret/.env.${env} before starting the application.`)
+      }`,
     );
   }
 

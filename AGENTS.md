@@ -424,8 +424,8 @@ export interface TseraConfig {
   "tasks": {
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "test": "deno test -A --unstable-kv",
-    "e2e": "deno test -A --unstable-kv e2e.test.ts",
+    "test": "deno test -A",
+    "e2e": "deno test -A e2e.test.ts",
     "compile": "deno compile -A --output dist/tsera src/cli/main.ts",
     "publish": "deno publish" // optionnel si JSR
   }

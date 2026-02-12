@@ -88,7 +88,7 @@ root):
 - **Dev task** is configured to run directly from source:
   ```jsonc
   "tasks": {
-    "dev": "deno run -A --unstable-kv ../src/cli/main.ts dev"
+    "dev": "deno run -A ../src/cli/main.ts dev"
   }
   ```
 

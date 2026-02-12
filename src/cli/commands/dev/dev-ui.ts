@@ -8,7 +8,6 @@
  */
 
 import { bold, cyan, dim, gray, green, magenta, red, yellow } from "../../ui/colors.ts";
-import { TerminalSpinner } from "../../ui/spinner.ts";
 import { BaseConsole } from "../../ui/console.ts";
 import {
   formatActionSummaryWithSymbols,
@@ -16,6 +15,7 @@ import {
   formatProjectLabel,
   type PlanSummary,
 } from "../../ui/formatters.ts";
+import { TerminalSpinner } from "../../ui/spinner.ts";
 
 /**
  * Options for creating a DevConsole instance.
@@ -154,7 +154,7 @@ export class DevConsole extends BaseConsole {
    */
   start(): void {
     this.write(
-      `⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${green("watch")}${
+      `\n⚙️  ${bold("TSera started for")} ${cyan(this.#projectLabel)} ${dim("(")}${green("watch")}${
         dim(")")
       }`,
     );
