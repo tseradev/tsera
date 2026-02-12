@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Command-specific help rendering functions.
  *
  * Provides modern, compact help output for individual commands.

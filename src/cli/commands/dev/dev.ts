@@ -1,5 +1,6 @@
-import { dirname, join, resolve } from "../../../shared/path.ts";
+import { dirname } from "../../../shared/path.ts";
 import { Command } from "cliffy/command";
+import { bootstrapEnv, type EnvName, isValidEnvName } from "../../../core/secrets.ts";
 import { resolveConfig } from "../../utils/resolve-config.ts";
 import { applyPlan } from "../../engine/applier.ts";
 import { createDag } from "../../engine/dag.ts";
@@ -47,6 +48,42 @@ export type DevCommandHandler = (context: DevCommandContext) => Promise<void> | 
 
 /** Debounce delay in milliseconds for file watch events. */
 const WATCH_DEBOUNCE_MS = 150;
+
+/**
+ * Resolves runtime environment name for secrets bootstrap.
+ *
+ * Priority:
+ * 1. TSERA_ENV (strictly validated)
+ * 2. NODE_ENV (best-effort mapping)
+ * 3. "dev" fallback
+ */
+function resolveSecretsEnvName(): EnvName {
+  const explicit = Deno.env.get("TSERA_ENV");
+  if (explicit) {
+    const resolved = normalizeEnvName(explicit);
+    if (!resolved) {
+      throw new Error(
+        `Invalid TSERA_ENV "${explicit}". Expected one of: dev, staging, prod.`,
+      );
+    }
+    return resolved;
+  }
+
+  const nodeEnv = Deno.env.get("NODE_ENV");
+  const resolvedFromNodeEnv = nodeEnv ? normalizeEnvName(nodeEnv) : undefined;
+  return resolvedFromNodeEnv ?? "dev";
+}
+
+/**
+ * Maps raw env values to TSera environment names.
+ */
+function normalizeEnvName(value: string): EnvName | undefined {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "development") return "dev";
+  if (normalized === "production") return "prod";
+  if (normalized === "stage") return "staging";
+  return isValidEnvName(normalized) ? normalized : undefined;
+}
 
 /**
  * Creates the default dev command handler that orchestrates planning and applying the DAG.
@@ -148,26 +185,8 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
       updateUI();
 
       try {
-        const secretsManagerPath = join(projectRoot, "config", "secrets", "manager.ts");
-        const absolutePath = resolve(secretsManagerPath);
-        const normalizedPath = absolutePath.replace(/\\/g, "/");
-        const pathForUrl = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
-        const fileUrl = new URL(`file://${pathForUrl}`);
-        const cacheBust = `t=${Date.now()}`;
-        const importUrl = `${fileUrl.href}?${cacheBust}`;
-
-        // Suppress logs during import to prevent UI disruption
-        const originalLog = console.log;
-        const originalWarn = console.warn;
-        console.log = () => {};
-        console.warn = () => {};
-
-        try {
-          await import(importUrl);
-        } finally {
-          console.log = originalLog;
-          console.warn = originalWarn;
-        }
+        const envName = resolveSecretsEnvName();
+        await bootstrapEnv(envName, "config/secret");
 
         modulesStatus.set("secrets", { status: "ready" });
         updateUI();

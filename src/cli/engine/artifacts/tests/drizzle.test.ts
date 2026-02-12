@@ -94,8 +94,16 @@ Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", as
     },
   });
 
-  const artifacts1 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
-  const artifacts2 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
+  const artifacts1 = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigPostgres,
+    projectDir,
+  });
+  const artifacts2 = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigPostgres,
+    projectDir,
+  });
 
   // Le même entity devrait générer le même nom de fichier
   assertEquals(artifacts1[0].path, artifacts2[0].path);
@@ -119,7 +127,11 @@ Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
     config: baseConfigPostgres,
     projectDir,
   });
-  const artifactsSqlite = await buildDrizzleArtifacts({ entity, config: baseConfigSqlite, projectDir });
+  const artifactsSqlite = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigSqlite,
+    projectDir,
+  });
 
   // Les deux dialectes devraient produire du SQL (même si différent)
   const contentPostgres = artifactsPostgres[0].content as string;
