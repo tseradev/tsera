@@ -10,7 +10,7 @@ import type { Colorizer } from "./colors.ts";
 /**
  * A color palette for consistent terminal styling.
  */
-export interface Palette {
+export type Palette = {
   /** Accent color for highlighting important elements. */
   accent: Colorizer;
   /** Color for section headings. */
@@ -25,7 +25,7 @@ export interface Palette {
   success: Colorizer;
   /** Highlight color for drawing attention. */
   highlight: Colorizer;
-}
+};
 
 /**
  * Create a default color palette for terminal output.

@@ -3,12 +3,12 @@ const encoder = new TextEncoder();
 /**
  * Options for hash computation.
  */
-export interface HashOptions {
+export type HashOptions = {
   /** Version string to include in the hash. */
   version: string;
   /** Optional salt for hash differentiation. */
   salt?: string;
-}
+};
 
 /**
  * Computes a SHA-256 hash of the provided bytes.

@@ -30,6 +30,8 @@ const baseConfigSqlite: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
   const entity = defineEntity({
     name: "User",
@@ -40,7 +42,7 @@ Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "migration");
@@ -61,7 +63,7 @@ Deno.test("buildDrizzleArtifacts - filtre les champs stored: false", async () =>
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, '"id"');
@@ -78,7 +80,7 @@ Deno.test("buildDrizzleArtifacts - ne génère pas de migration si aucun champ s
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
 
   assertEquals(artifacts.length, 0);
 });
@@ -92,8 +94,8 @@ Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", as
     },
   });
 
-  const artifacts1 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
-  const artifacts2 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres });
+  const artifacts1 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
+  const artifacts2 = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
 
   // Le même entity devrait générer le même nom de fichier
   assertEquals(artifacts1[0].path, artifacts2[0].path);
@@ -115,8 +117,9 @@ Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
   const artifactsPostgres = await buildDrizzleArtifacts({
     entity,
     config: baseConfigPostgres,
+    projectDir,
   });
-  const artifactsSqlite = await buildDrizzleArtifacts({ entity, config: baseConfigSqlite });
+  const artifactsSqlite = await buildDrizzleArtifacts({ entity, config: baseConfigSqlite, projectDir });
 
   // Les deux dialectes devraient produire du SQL (même si différent)
   const contentPostgres = artifactsPostgres[0].content as string;

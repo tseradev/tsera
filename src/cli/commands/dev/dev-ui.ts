@@ -20,7 +20,7 @@ import {
 /**
  * Options for creating a DevConsole instance.
  */
-export interface DevConsoleOptions {
+export type DevConsoleOptions = {
   /** The project directory being watched */
   projectDir: string;
   /** Whether watch mode is enabled */
@@ -29,19 +29,19 @@ export interface DevConsoleOptions {
   logsMode?: boolean;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Status information for a module (secrets, backend, frontend).
  */
-export interface ModuleStatus {
+export type ModuleStatus = {
   /** Current status of the module */
   status: "stopped" | "starting" | "ready" | "error";
   /** URL where the module is accessible (if ready) */
   url?: string;
   /** Error message (if status is error) */
   error?: string;
-}
+};
 
 /**
  * Human-friendly console reporter for the dev command.
@@ -86,7 +86,7 @@ export class DevConsole extends BaseConsole {
    * Debounce timer for renderModules.
    * @private
    */
-  #renderTimer?: number;
+  #renderTimer?: ReturnType<typeof setTimeout>;
 
   /**
    * Pending modules to render (last state wins).
@@ -104,7 +104,7 @@ export class DevConsole extends BaseConsole {
    * Timer for the footer loader animation.
    * @private
    */
-  #loaderTimer?: number;
+  #loaderTimer?: ReturnType<typeof setInterval>;
 
   /**
    * Current frame index for the loader animation.
@@ -210,7 +210,7 @@ export class DevConsole extends BaseConsole {
     this.#renderTimer = setTimeout(() => {
       this.#renderTimer = undefined;
       this.#processPendingRender();
-    }, 50) as unknown as number;
+    }, 50);
   }
 
   /**
@@ -481,7 +481,7 @@ export class DevConsole extends BaseConsole {
       // Update only the last line (loader line) in place
       // Go to start of current line, clear it, write new loader with space before cursor
       this.writeRaw(`\r\x1b[2K${dim(loader)} `);
-    }, 100) as unknown as number;
+    }, 100);
   }
 
   /**

@@ -17,19 +17,19 @@ import { ProcessManager } from "./process-manager.ts";
 /**
  * Options passed to the dev action handler by Cliffy.
  */
-interface DevActionOptions {
+type DevActionOptions = {
   /** Whether to output JSON format */
   json?: boolean;
   /** Whether to force apply even if plan is empty */
   apply?: boolean;
   /** Whether to show module logs in real-time */
   logs?: boolean;
-}
+};
 
 /**
  * Context object passed to dev command handlers.
  */
-export interface DevCommandContext {
+export type DevCommandContext = {
   /** Project root directory. */
   projectDir: string;
   /** Whether to force apply even if the plan is empty. */
@@ -38,7 +38,7 @@ export interface DevCommandContext {
   logs: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Function signature for dev command implementations.

@@ -22,6 +22,8 @@ const baseConfig: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () => {
   const entity = defineEntity({
     name: "User",
@@ -32,7 +34,7 @@ Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () =
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "doc");
@@ -54,7 +56,7 @@ Deno.test("buildDocsArtifacts - contient un tableau des propriétés publiques",
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Vérifie le header
@@ -86,7 +88,7 @@ Deno.test("buildDocsArtifacts - filtre les champs visibility !== public", async 
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Public Fields doit contenir uniquement "public"
@@ -113,7 +115,7 @@ Deno.test("buildDocsArtifacts - utilise entity.docs.description", async () => {
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "Custom description for Invoice entity");
@@ -128,7 +130,7 @@ Deno.test("buildDocsArtifacts - ajoute newline final", async () => {
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertEquals(content.endsWith("\n"), true);

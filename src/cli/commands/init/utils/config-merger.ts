@@ -10,26 +10,27 @@
 import { exists } from "std/fs";
 import { parse as parseJsonc } from "std/jsonc";
 import { join } from "../../../../shared/path.ts";
+import { safeWrite } from "../../../utils/fsx.ts";
 import { MODULE_DEPENDENCIES } from "./module-definitions.ts";
 import type { ComposedTemplate, ComposeOptions } from "./template-composer.ts";
 
 /**
  * Type for Deno configuration file structure.
  */
-export interface DenoConfig {
+export type DenoConfig = {
   tasks?: Record<string, string>;
   imports?: Record<string, string>;
   compilerOptions?: Record<string, unknown>;
   [key: string]: unknown;
-}
+};
 
 /**
  * Type for import map file structure.
  */
-export interface ImportMap {
+export type ImportMap = {
   imports?: Record<string, string>;
   scopes?: Record<string, Record<string, string>>;
-}
+};
 
 /**
  * Merges configuration files that need intelligent merging.
@@ -152,11 +153,13 @@ async function mergeDenoConfig(
   }
 
   // Write merged config
-  await Deno.writeTextFile(
+  const writeResult = await safeWrite(
     targetPath,
     JSON.stringify(baseConfig, null, 2) + "\n",
   );
-  result.mergedFiles.push("deno.jsonc");
+  if (writeResult.changed) {
+    result.mergedFiles.push("deno.jsonc");
+  }
 }
 
 /**
@@ -240,7 +243,7 @@ async function mergeImportsIntoDenoConfig(
   }
 
   // Write merged config
-  await Deno.writeTextFile(
+  await safeWrite(
     denoConfigPath,
     JSON.stringify(denoConfig, null, 2) + "\n",
   );

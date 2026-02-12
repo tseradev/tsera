@@ -22,6 +22,8 @@ const baseConfig: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 Deno.test("buildTestArtifacts - génère un test smoke basique", async () => {
   const entity = defineEntity({
     name: "User",
@@ -32,7 +34,7 @@ Deno.test("buildTestArtifacts - génère un test smoke basique", async () => {
     },
   });
 
-  const artifacts = await buildTestArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildTestArtifacts({ entity, config: baseConfig, projectDir });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "test");
@@ -56,7 +58,7 @@ Deno.test("buildTestArtifacts - masque les valeurs des champs visibility === sec
     },
   });
 
-  const artifacts = await buildTestArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildTestArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Les valeurs des champs secret doivent être masquées
@@ -74,7 +76,7 @@ Deno.test("buildTestArtifacts - génère des tests pour public schema", async ()
     },
   });
 
-  const artifacts = await buildTestArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildTestArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Doit générer un test pour le public schema
@@ -92,7 +94,7 @@ Deno.test("buildTestArtifacts - génère des tests pour input.create", async () 
     },
   });
 
-  const artifacts = await buildTestArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildTestArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Doit générer un test pour input.create
@@ -109,7 +111,7 @@ Deno.test("buildTestArtifacts - ne génère pas de test si test === false", asyn
     },
   });
 
-  const artifacts = await buildTestArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildTestArtifacts({ entity, config: baseConfig, projectDir });
 
   assertEquals(artifacts.length, 0);
 });

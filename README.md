@@ -19,8 +19,8 @@ team-facing documentation.
 ## Current stack
 
 - **Deno v2** (strict ESM, tasks managed via `deno.jsonc`).
-- **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `cd`, `update`).
-- **Zod**, **zod-to-openapi**, and **Drizzle** to project entities.
+- **Cliffy** for the modular CLI (`init`, `dev`, `doctor`, `deploy`, `update`).
+- **Zod** plus OpenAPI + SQL projection helpers for entities.
 - **TS-Morph** (via JSR) for AST-based TypeScript code generation.
 - **Hono** API framework (optional module).
 - **Lume** static frontend framework (optional module).
@@ -28,7 +28,6 @@ team-facing documentation.
 - **GitHub Actions** CI workflows (optional module, generates 6 workflows in `.github/workflows/`).
 - **Type-safe secrets management** with environment validation (optional module).
 - **Type-Safe SDK** generation for seamless Backend-Frontend integration.
-- **MCP Server** (`tsera mcp`) to expose project architecture to AI agents.
 
 ## Quick start
 
@@ -198,7 +197,7 @@ TSera uses a modular architecture where you can enable or disable specific featu
 
 **Available modules (all enabled by default):**
 
-- **Hono**: Fast and minimal API framework (Hono v4 via JSR/npm)
+- **Hono**: Fast and minimal API framework (Hono v4 via JSR)
 - **Lume**: Static site generator for Deno, focused on simplicity and performance, with multiple
   template engines and a plugin-based architecture.
 - **Docker**: Docker Compose configuration with PostgreSQL
@@ -218,16 +217,12 @@ tsera init my-app --no-docker --no-ci
 tsera init my-app --no-ci
 ```
 
-> The template ships with `deps/hono.ts`, a thin loader that attempts to import `npm:hono@4`. If the
-> network is unavailable it falls back to a minimal router so tests continue to run offline. Once
-> you are ready to depend on the full framework, execute `deno add npm:hono@4` inside the generated
-> project to pin the official package.
-
 When `tsera init` completes you will find:
 
 - `tsera.config.ts` — a fully documented configuration with defaults for entities, paths, deploy
   targets, and enabled modules.
-- `.tsera/graph.json` & `.tsera/manifest.json` — cached hashes and manifest produced by the engine.
+- `.tsera/graph.json`, `.tsera/manifest.json`, and `.tsera/openapi.json` — cached hashes, manifest,
+  and aggregated OpenAPI spec produced by the engine.
 - `drizzle/`, `docs/`, and `tests/` — folders that will receive generated migrations, documentation,
   and smoke tests as soon as entities are introduced.
 - `domain/User.entity.ts` — an example entity to explore.

@@ -7,8 +7,7 @@
  * @module
  */
 
-// Install drizzle-kit first: deno add npm:drizzle-kit
-// After installation, uncomment the import below:
+// If you choose to use drizzle-kit, install it and uncomment the import below:
 // import type { Config } from "drizzle-kit";
 
 // Get database URL from environment

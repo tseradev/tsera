@@ -4,14 +4,14 @@ import { pathExists } from "../../../utils/fsx.ts";
 /**
  * Result of git repository initialization.
  */
-export interface GitInitResult {
+export type GitInitResult = {
   /** Whether a new git repository was initialized. */
   initialized: boolean;
   /** Whether an initial commit was created. */
   committed: boolean;
   /** Error message if initialization failed (optional). */
   error?: string;
-}
+};
 
 /**
  * Initializes a git repository and creates an initial commit.

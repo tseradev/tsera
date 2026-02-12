@@ -515,7 +515,7 @@ export async function bootstrapEnv(
  * variables throughout the application. This interface can be extended
  * to provide additional functionality like type-safe accessors.
  */
-export interface TseraAPI {
+export type TseraAPI = {
   /**
    * Gets all validated environment variables.
    * @returns Record of all environment variables with defined values
@@ -528,4 +528,4 @@ export interface TseraAPI {
    * @returns The environment variable value or undefined if not set
    */
   getEnvVar<T extends string>(key: string): T | undefined;
-}
+};

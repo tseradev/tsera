@@ -84,8 +84,10 @@ Deno.test("init generates the full skeleton and manifest", async () => {
 
     // Compare parsed JSON to ignore platform-specific newline differences while
     // still validating the structure and values of the generated document.
-    const openapiObject = JSON.parse(openapiDocument);
-    const expectedOpenapiObject = JSON.parse(expectedOpenapi);
+    const openapiObject: unknown = JSON.parse(openapiDocument);
+    const expectedOpenapiObject: unknown = JSON.parse(expectedOpenapi);
+    stripGeneratedAt(openapiObject);
+    stripGeneratedAt(expectedOpenapiObject);
     assertEquals(openapiObject, expectedOpenapiObject);
 
     const manifestText = await Deno.readTextFile(join(projectDir, ".tsera", "manifest.json"));
@@ -132,6 +134,23 @@ async function fileExists(path: string): Promise<boolean> {
     }
     throw error;
   }
+}
+
+function stripGeneratedAt(value: unknown): void {
+  if (!isRecord(value)) {
+    return;
+  }
+  const meta = value["x-tsera"];
+  if (!isRecord(meta)) {
+    return;
+  }
+  if ("generatedAt" in meta) {
+    delete meta.generatedAt;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 Deno.test("init generates Lume frontend structure", async () => {

@@ -27,6 +27,8 @@ const baseConfig: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 const userEntity = defineEntity({
   name: "User",
   table: true,
@@ -42,12 +44,12 @@ const userEntity = defineEntity({
 
 Deno.test("createDag links artifacts to the entity", async () => {
   const artifacts = [
-    ...(await buildZodArtifacts({ entity: userEntity, config: baseConfig })),
-    ...(await buildDrizzleArtifacts({ entity: userEntity, config: baseConfig })),
-    ...(await buildDocsArtifacts({ entity: userEntity, config: baseConfig })),
-    ...(await buildTestArtifacts({ entity: userEntity, config: baseConfig })),
+    ...(await buildZodArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
+    ...(await buildDrizzleArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
+    ...(await buildDocsArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
+    ...(await buildTestArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
   ];
-  const openapiArtifact = buildProjectOpenAPIArtifact([userEntity], baseConfig);
+  const openapiArtifact = await buildProjectOpenAPIArtifact([userEntity], baseConfig, projectDir);
   if (openapiArtifact) {
     artifacts.push(openapiArtifact);
   }

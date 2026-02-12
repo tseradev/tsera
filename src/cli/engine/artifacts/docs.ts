@@ -1,29 +1,8 @@
 import { join } from "../../../shared/path.ts";
 import { filterPublicFields } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
-import type { ZodType } from "../../../core/utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of public types.
- */
-interface ZodInternalDef {
-  type: string;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-} & ZodType;
+import { applyGeneratedTextHeader } from "./generated-header.ts";
+import { getZodInternal, type ZodType } from "../../../core/utils/zod.ts";
 
 /**
  * Extracts type from a Zod schema for documentation.
@@ -36,8 +15,7 @@ type ZodWithInternal = {
  * @returns Type string for documentation (e.g., "string", "number", "Array<string>").
  */
 function extractTypeFromZod(zodSchema: ZodType): string {
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -146,8 +124,8 @@ function formatDefault(value: unknown): string {
  * @param context.entity - Entity runtime with field definitions.
  * @returns Array of artifact descriptors containing Markdown documentation file.
  */
-export const buildDocsArtifacts: ArtifactBuilder = (context) => {
-  const { entity } = context;
+export const buildDocsArtifacts: ArtifactBuilder = async (context) => {
+  const { entity, projectDir } = context;
 
   // Public docs: only fields with visibility === "public"
   const publicFields = filterPublicFields(entity.fields);
@@ -174,8 +152,7 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
     );
 
     // Extract shape from public schema
-    const publicWithInternal = entity.public as unknown as ZodWithInternal;
-    const schemaDef = publicWithInternal._zod.def;
+    const schemaDef = getZodInternal(entity.public).def;
     if (schemaDef.type === "object" && schemaDef.shape) {
       const shape = schemaDef.shape;
 
@@ -191,12 +168,9 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
         }
 
         const type = extractTypeFromZod(zodSchema);
-        const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-        const zodDef = zodWithInternal._zod.def;
+        const { def: zodDef } = getZodInternal(zodSchema);
         const isOptional = zodDef.type === "optional";
-        const innerDef = zodDef.innerType
-          ? (zodDef.innerType as unknown as ZodWithInternal)._zod.def
-          : null;
+        const innerDef = zodDef.innerType ? getZodInternal(zodDef.innerType).def : null;
         const isNullable = zodDef.type === "nullable" ||
           (isOptional && innerDef?.type === "nullable");
         const optional = isOptional ? "yes" : "no";
@@ -239,8 +213,7 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
       "| --- | --- | --- |",
     );
 
-    const schemaWithInternal = entity.schema as unknown as ZodWithInternal;
-    const schemaDef = schemaWithInternal._zod.def;
+    const schemaDef = getZodInternal(entity.schema).def;
     if (schemaDef.type === "object" && schemaDef.shape) {
       const shape = schemaDef.shape;
 
@@ -260,11 +233,19 @@ export const buildDocsArtifacts: ArtifactBuilder = (context) => {
   // Note: visibility === "secret" NEVER appears in documentation
 
   const path = join("docs", "markdown", `${entity.name}.md`);
+  const body = lines.join("\n") + "\n";
+  const content = await applyGeneratedTextHeader({
+    projectDir,
+    targetPath: path,
+    format: "md",
+    source: `Entity ${entity.name}`,
+    body,
+  });
 
   return [{
     kind: "doc",
     path,
-    content: lines.join("\n") + "\n",
+    content,
     label: `${entity.name} documentation`,
     data: { entity: entity.name },
   }];

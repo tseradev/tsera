@@ -8,8 +8,8 @@ Deno.test("deepFreeze - freezes a simple object", () => {
   assert(Object.isFrozen(frozen));
 
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen as any).name = "Jane";
+    const mutable = frozen as Record<string, unknown>;
+    mutable.name = "Jane";
   });
 });
 
@@ -30,13 +30,13 @@ Deno.test("deepFreeze - freezes nested objects", () => {
   assert(Object.isFrozen(frozen.user.address));
 
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen.user as any).name = "Jane";
+    const mutableUser = frozen.user as Record<string, unknown>;
+    mutableUser.name = "Jane";
   });
 
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen.user.address as any).city = "Lyon";
+    const mutableAddress = frozen.user.address as Record<string, unknown>;
+    mutableAddress.city = "Lyon";
   });
 });
 
@@ -48,8 +48,8 @@ Deno.test("deepFreeze - freezes arrays", () => {
   assert(Object.isFrozen(frozen.tags));
 
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen.tags as any).push("tag3");
+    const mutableTags = frozen.tags as unknown[];
+    mutableTags.push("tag3");
   });
 });
 
@@ -91,8 +91,8 @@ Deno.test("deepFreeze - handles objects with nested arrays", () => {
   assert(Object.isFrozen(frozen.users[0].tags));
 
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen.users[0] as any).name = "Bob";
+    const mutableUser = frozen.users[0] as Record<string, unknown>;
+    mutableUser.name = "Bob";
   });
 });
 
@@ -128,8 +128,8 @@ Deno.test("deepFreeze - handles empty array", () => {
 
   assert(Object.isFrozen(frozen));
   assertThrows(() => {
-    // deno-lint-ignore no-explicit-any
-    (frozen as any).push("item");
+    const mutableArray = frozen as unknown[];
+    mutableArray.push("item");
   });
 });
 

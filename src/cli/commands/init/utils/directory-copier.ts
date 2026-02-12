@@ -10,7 +10,7 @@
 import { exists } from "std/fs";
 import { walk } from "std/fs/walk";
 import { dirname, join, relative } from "../../../../shared/path.ts";
-import { ensureDir } from "../../../utils/fsx.ts";
+import { ensureDir, safeWrite } from "../../../utils/fsx.ts";
 import { adaptConnectFile, adaptDrizzleConfigFile, adaptEntityImports } from "./file-adapter.ts";
 import type { ComposedTemplate } from "./template-composer.ts";
 
@@ -72,7 +72,7 @@ function isBinaryFile(filePath: string): boolean {
 /**
  * Options for copying a directory.
  */
-export interface CopyDirectoryOptions {
+export type CopyDirectoryOptions = {
   /** Source directory to copy from. */
   source: string;
   /** Target directory to copy to. */
@@ -81,7 +81,7 @@ export interface CopyDirectoryOptions {
   result: ComposedTemplate;
   /** Whether to overwrite existing files. */
   force?: boolean;
-}
+};
 
 /**
  * Copies a directory recursively to target.
@@ -170,7 +170,7 @@ export async function copyDirectory(
     if (isBinaryFile(relativePath)) {
       // Copy binary file directly without adaptation
       const binaryContent = await Deno.readFile(entry.path);
-      await Deno.writeFile(targetPath, binaryContent);
+      await safeWrite(targetPath, binaryContent);
     } else {
       // Read file content to potentially adapt it
       let content = await Deno.readTextFile(entry.path);
@@ -201,7 +201,7 @@ export async function copyDirectory(
       }
 
       // Write adapted content
-      await Deno.writeTextFile(targetPath, content);
+      await safeWrite(targetPath, content);
     }
 
     // Use actual target path relative to project root for copiedFiles

@@ -7,7 +7,7 @@ import { readWorkflowsMeta, removeWorkflowFromMeta, updateWorkflowHash } from ".
 /**
  * Options for synchronizing a workflow.
  */
-export interface SyncWorkflowOptions {
+export type SyncWorkflowOptions = {
   /** Project directory. */
   projectDir: string;
   /** Source workflow path (config/cd/<provider>/<name>.yml). */
@@ -16,17 +16,17 @@ export interface SyncWorkflowOptions {
   targetPath: string;
   /** Force overwrite even if the file has been manually modified. */
   force: boolean;
-}
+};
 
 /**
  * Result of workflow synchronization.
  */
-export interface SyncResult {
+export type SyncResult = {
   /** Action performed: created, updated, skipped, conflict. */
   action: "created" | "updated" | "skipped" | "conflict";
   /** Reason for the action (for logs). */
   reason?: string;
-}
+};
 
 /**
  * Synchronizes a CD workflow from its source to the .github/workflows/ directory.

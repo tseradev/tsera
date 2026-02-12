@@ -8,17 +8,18 @@
  */
 
 import { join } from "../../../../shared/path.ts";
+import { safeWrite } from "../../../utils/fsx.ts";
 import type { ComposedTemplate } from "./template-composer.ts";
 
 /**
  * Options for generating gitattributes file.
  */
-export interface GitAttributesOptions {
+export type GitAttributesOptions = {
   /** Target directory where the project is being created. */
   targetDir: string;
   /** Composition result to update. */
   result: ComposedTemplate;
-}
+};
 
 /**
  * Generates .gitattributes file for git-crypt encryption.
@@ -38,6 +39,6 @@ config/secret/.env.* filter=git-crypt diff=git-crypt
 `;
 
   const gitattributesPath = join(options.targetDir, ".gitattributes");
-  await Deno.writeTextFile(gitattributesPath, gitattributesContent);
+  await safeWrite(gitattributesPath, gitattributesContent);
   options.result.copiedFiles.push(".gitattributes");
 }

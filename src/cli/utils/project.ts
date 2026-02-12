@@ -29,12 +29,12 @@ export async function findConfigPath(startDir: string): Promise<string | null> {
 /**
  * Result of resolving a TSera project.
  */
-export interface ProjectResolution {
+export type ProjectResolution = {
   /** Project root directory. */
   rootDir: string;
   /** Absolute path to the configuration file. */
   configPath: string;
-}
+};
 
 /**
  * Resolves a TSera project by finding its configuration file.

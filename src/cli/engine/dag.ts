@@ -22,7 +22,7 @@ export type DagNodeMode = "input" | "output";
 /**
  * Represents a single node in the dependency graph.
  */
-export interface DagNode {
+export type DagNode = {
   /** Unique identifier for the node. */
   id: string;
   /** Type of node. */
@@ -41,29 +41,29 @@ export interface DagNode {
   content?: string | Uint8Array;
   /** Additional metadata. */
   data?: Record<string, unknown>;
-}
+};
 
 /**
  * Represents a dependency edge between two nodes.
  */
-export interface DagEdge {
+export type DagEdge = {
   /** Source node identifier. */
   from: string;
   /** Target node identifier. */
   to: string;
-}
+};
 
 /**
  * Complete dependency graph structure.
  */
-export interface Dag {
+export type Dag = {
   /** Map of node identifiers to node objects. */
   nodes: Map<string, DagNode>;
   /** Array of dependency edges. */
   edges: DagEdge[];
   /** Topologically sorted array of nodes. */
   order: DagNode[];
-}
+};
 
 /**
  * Types of generated artifacts (excludes entity input nodes).
@@ -73,7 +73,7 @@ export type DagArtifactKind = Exclude<DagNodeKind, "entity">;
 /**
  * Describes a generated artifact to be included in the dependency graph.
  */
-export interface ArtifactDescriptor {
+export type ArtifactDescriptor = {
   /** Type of artifact. */
   kind: DagArtifactKind;
   /** Relative path where the artifact should be written. */
@@ -86,27 +86,27 @@ export interface ArtifactDescriptor {
   label?: string;
   /** Optional dependencies on other node identifiers. */
   dependsOn?: string[];
-}
+};
 
 /**
  * Input data for creating a DAG from an entity runtime.
  */
-export interface DagEntityInput {
+export type DagEntityInput = {
   /** Entity runtime. */
   entity: EntityRuntime;
   /** Source file path of the entity. */
   sourcePath: string;
   /** Artifacts to generate from this entity. */
   artifacts: ArtifactDescriptor[];
-}
+};
 
 /**
  * Options for DAG creation.
  */
-export interface DagOptions {
+export type DagOptions = {
   /** CLI version used for hash computation. */
   cliVersion: string;
-}
+};
 
 /**
  * Creates a dependency graph from entity inputs and their artifacts.

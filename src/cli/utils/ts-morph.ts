@@ -73,14 +73,14 @@ export function createTSeraProject(options: Partial<ProjectOptions> = {}): Proje
 /**
  * Result of formatting and saving a source file.
  */
-export interface FormatAndSaveResult {
+export type FormatAndSaveResult = {
   /** Absolute path where the file was written. */
   path: string;
   /** Whether the file content changed compared to existing content. */
   changed: boolean;
   /** Whether the file was written to disk. */
   written: boolean;
-}
+};
 
 /**
  * Formats a TS-Morph source file and writes it to disk using safeWrite.
@@ -123,14 +123,14 @@ export async function formatAndSave(
 /**
  * Options for adding an import declaration.
  */
-export interface AddImportOptions {
+export type AddImportOptions = {
   /** Default export name to import. */
   defaultImport?: string;
   /** Named imports to add. */
   namedImports?: string[] | Record<string, string>;
   /** Namespace import (import * as name). */
   namespaceImport?: string;
-}
+};
 
 /**
  * Adds an import declaration to a source file with proper formatting.

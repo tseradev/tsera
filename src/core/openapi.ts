@@ -8,48 +8,24 @@
  */
 
 import type { EntityRuntime } from "./entity.ts";
-import type { ZodType } from "./utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
- */
-interface ZodInternalDef {
-  type: string;
-  checks?: Array<{ def?: { format?: string } }>;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-  description?: string;
-} & ZodType;
+import { getZodInternal, type ZodType } from "./utils/zod.ts";
 
 /**
  * Options for generating an OpenAPI document.
  */
-export interface OpenAPIDocumentOptions {
+export type OpenAPIDocumentOptions = {
   /** Document title. */
   title: string;
   /** API version string. */
   version: string;
   /** Optional description. */
   description?: string;
-}
+};
 
 /**
  * OpenAPI schema object representation.
  */
-export interface SchemaObject {
+export type SchemaObject = {
   /** Type or array of types. */
   type?: string | string[];
   /** Human-readable description. */
@@ -68,12 +44,12 @@ export interface SchemaObject {
   format?: string;
   /** Whether additional properties are allowed. */
   additionalProperties?: boolean;
-}
+};
 
 /**
  * Complete OpenAPI document structure.
  */
-export interface OpenAPIObject {
+export type OpenAPIObject = {
   /** OpenAPI specification version. */
   openapi: string;
   /** API information. */
@@ -92,7 +68,7 @@ export interface OpenAPIObject {
     /** Schema definitions keyed by schema name. */
     schemas: Record<string, SchemaObject>;
   };
-}
+};
 
 /**
  * Converts a Zod schema to an OpenAPI schema object.
@@ -102,14 +78,13 @@ export interface OpenAPIObject {
  * @returns OpenAPI schema object.
  */
 function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def, description } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
     const schema: SchemaObject = { type: "string" };
-    if (zodWithInternal.description) {
-      schema.description = zodWithInternal.description;
+    if (description) {
+      schema.description = description;
     }
     // Check for format (email, uuid, etc.)
     if (def.checks) {
@@ -128,8 +103,8 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
   // Handle ZodNumber
   if (def.type === "number") {
     const schema: SchemaObject = { type: "number" };
-    if (zodSchema.description) {
-      schema.description = zodSchema.description;
+    if (description) {
+      schema.description = description;
     }
     return schema;
   }
@@ -137,8 +112,8 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
   // Handle ZodBoolean
   if (def.type === "boolean") {
     const schema: SchemaObject = { type: "boolean" };
-    if (zodSchema.description) {
-      schema.description = zodSchema.description;
+    if (description) {
+      schema.description = description;
     }
     return schema;
   }
@@ -146,8 +121,8 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
   // Handle ZodDate
   if (def.type === "date") {
     const schema: SchemaObject = { type: "string", format: "date-time" };
-    if (zodSchema.description) {
-      schema.description = zodSchema.description;
+    if (description) {
+      schema.description = description;
     }
     return schema;
   }
@@ -158,8 +133,8 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
       type: "array",
       items: zodSchemaToOpenAPI(def.element as ZodType),
     };
-    if (zodSchema.description) {
-      schema.description = zodSchema.description;
+    if (description) {
+      schema.description = description;
     }
     return schema;
   }
@@ -178,8 +153,7 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
       properties[key] = fieldSchema;
 
       // Check if field is required (not optional)
-      const fieldWithInternal = value as unknown as ZodWithInternal;
-      const fieldDef = fieldWithInternal._zod.def;
+      const fieldDef = getZodInternal(value as ZodType).def;
       if (fieldDef.type !== "optional" && fieldDef.type !== "default") {
         required.push(key);
       }
@@ -194,8 +168,8 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
       schema.required = required;
     }
 
-    if (zodSchema.description) {
-      schema.description = zodSchema.description;
+    if (description) {
+      schema.description = description;
     }
 
     return schema;

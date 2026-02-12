@@ -1,29 +1,7 @@
 import type { EntityRuntime, FieldDef } from "./entity.ts";
 import { filterStoredFields } from "./entity.ts";
 import { pascalToSnakeCase } from "./utils/strings.ts";
-import type { ZodType } from "./utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
- */
-interface ZodInternalDef {
-  type: string;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-} & ZodType;
+import { getZodInternal, type ZodType } from "./utils/zod.ts";
 
 export type Dialect = "postgres" | "sqlite" | "mysql";
 
@@ -35,8 +13,7 @@ export type Dialect = "postgres" | "sqlite" | "mysql";
  * @returns Corresponding Drizzle type.
  */
 function extractDrizzleTypeFromZod(zodSchema: ZodType, dialect: Dialect): string {
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -146,8 +123,7 @@ export function entityToDrizzleTable(
   const imports = getImports(dialect);
 
   // Extract the shape from the Zod schema
-  const schemaWithInternal = entity.schema as unknown as ZodWithInternal;
-  const schemaDef = schemaWithInternal._zod.def;
+  const schemaDef = getZodInternal(entity.schema).def;
   if (schemaDef.type !== "object") {
     throw new Error(`Entity ${entity.name} schema is not a ZodObject`);
   }
@@ -206,12 +182,9 @@ function formatColumn(name: string, field: FieldDef, zodSchema: ZodType, dialect
   def = `${def}("${name}")`;
 
   // NOT NULL if field is not nullable and not optional
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const zodDef = zodWithInternal._zod.def;
+  const { def: zodDef } = getZodInternal(zodSchema);
   const isOptional = zodDef.type === "optional";
-  const innerDef = zodDef.innerType
-    ? (zodDef.innerType as unknown as ZodWithInternal)._zod.def
-    : null;
+  const innerDef = zodDef.innerType ? getZodInternal(zodDef.innerType).def : null;
   const isNullable = zodDef.type === "nullable" ||
     (isOptional && innerDef?.type === "nullable");
 

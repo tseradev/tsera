@@ -5,7 +5,6 @@ import { createDoctorCommand, type DoctorCommandHandler } from "./commands/docto
 import { exportEnvCommand } from "./commands/export-env/export-env.ts";
 import { applyModernHelp, type ModernHelpCommand } from "./commands/help/help.ts";
 import { createInitCommand, type InitCommandHandler } from "./commands/init/init.ts";
-import { mcpCommand } from "./commands/mcp/mcp.ts";
 import { createUpdateCommand, type UpdateCommandHandler } from "./commands/update/update.ts";
 import type { CliMetadata } from "./main.ts";
 
@@ -45,10 +44,6 @@ const COMMAND_HELP: ModernHelpCommand[] = [
     description: "Upgrade TSera CLI via deno install or compiled binaries.",
   },
   {
-    label: "mcp",
-    description: "Start Model Context Protocol server for AI agents.",
-  },
-  {
     label: "export-env",
     description: "Export environment variables for runtime or CI/CD.",
   },
@@ -63,15 +58,15 @@ const CLI_EXAMPLES = [
 /**
  * Global options shared across all CLI commands.
  */
-export interface GlobalCLIOptions extends Record<string, unknown> {
+export type GlobalCLIOptions = Record<string, unknown> & {
   /** Enables machine-readable NDJSON output. */
   json: boolean;
-}
+};
 
 /**
  * Optional hooks used to override command implementations in tests.
  */
-export interface RouterHandlers {
+export type RouterHandlers = {
   init?: InitCommandHandler;
   dev?: DevCommandHandler;
   doctor?: DoctorCommandHandler;
@@ -84,7 +79,7 @@ export interface RouterHandlers {
     ) => Promise<void> | void;
   };
   update?: UpdateCommandHandler;
-}
+};
 
 /**
  * Constructs root Cliffy command with all TSera subcommands attached.
@@ -117,7 +112,6 @@ export function createRouter(
   root.command("doctor", withGlobalOpts(createDoctorCommand(handlers.doctor)));
   root.command("deploy", withGlobalOpts(createDeployCommand(handlers.deploy)));
   root.command("update", withGlobalOpts(createUpdateCommand(handlers.update)));
-  root.command("mcp", withGlobalOpts(mcpCommand));
   root.command("export-env", withGlobalOpts(exportEnvCommand));
 
   applyModernHelp(root, {

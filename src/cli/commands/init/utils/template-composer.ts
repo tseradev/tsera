@@ -13,7 +13,7 @@ import { parse as parseJsonc } from "std/jsonc";
 import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { join } from "../../../../shared/path.ts";
 import type { DbConfig } from "../../../definitions.ts";
-import { ensureDir } from "../../../utils/fsx.ts";
+import { ensureDir, safeWrite } from "../../../utils/fsx.ts";
 import type { DenoConfig } from "./config-merger.ts";
 import { mergeConfigFiles } from "./config-merger.ts";
 import { copyDirectory } from "./directory-copier.ts";
@@ -48,7 +48,7 @@ async function clearDirectory(dir: string): Promise<void> {
 /**
  * Options for template composition.
  */
-export interface ComposeOptions {
+export type ComposeOptions = {
   /** Target directory where the project will be created. */
   targetDir: string;
   /** Base template directory. */
@@ -61,19 +61,19 @@ export interface ComposeOptions {
   force?: boolean;
   /** Database configuration (required for env file generation). */
   dbConfig?: DbConfig;
-}
+};
 
 /**
  * Result of template composition.
  */
-export interface ComposedTemplate {
+export type ComposedTemplate = {
   /** List of files that were copied. */
   copiedFiles: string[];
   /** List of files that were merged. */
   mergedFiles: string[];
   /** List of files that were skipped. */
   skippedFiles: string[];
-}
+};
 
 /**
  * Composes a TSera project from base template and optional modules.
@@ -241,7 +241,7 @@ async function generateEnvironmentFiles(
 
   for (const [fileName, content] of Object.entries(envFiles)) {
     const filePath = join(secretDir, fileName);
-    await Deno.writeTextFile(filePath, content + "\n");
+    await safeWrite(filePath, content + "\n");
     result.copiedFiles.push(`config/secret/${fileName}`);
   }
 
@@ -255,7 +255,7 @@ async function generateEnvironmentFiles(
       /from ["']\.\.\/\.\.\/\.\.\/src\/core\/secrets\.ts["']/,
       'from "tsera/core"',
     );
-    await Deno.writeTextFile(envConfigTarget, content);
+    await safeWrite(envConfigTarget, content);
     result.copiedFiles.push("config/secret/env.config.ts");
   }
 
@@ -263,7 +263,8 @@ async function generateEnvironmentFiles(
   const defineEnvConfigSource = join(options.modulesDir, "secrets", "defineEnvConfig.ts");
   const defineEnvConfigTarget = join(secretDir, "defineEnvConfig.ts");
   if (await exists(defineEnvConfigSource)) {
-    await Deno.copyFile(defineEnvConfigSource, defineEnvConfigTarget);
+    const defineEnvContent = await Deno.readTextFile(defineEnvConfigSource);
+    await safeWrite(defineEnvConfigTarget, defineEnvContent);
     result.copiedFiles.push("config/secret/defineEnvConfig.ts");
   }
 }

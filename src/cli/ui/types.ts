@@ -59,10 +59,10 @@ export type Writer = (line: string) => void;
 /**
  * Options for creating console-based UI components.
  */
-export interface ConsoleOptions {
+export type ConsoleOptions = {
   /**
    * Custom writer function for output.
    * Defaults to console.log if not provided.
    */
   writer?: Writer;
-}
+};

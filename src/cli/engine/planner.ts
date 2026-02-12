@@ -10,19 +10,19 @@ export type PlanStepKind = "create" | "update" | "delete" | "noop";
 /**
  * Represents a single step in the execution plan.
  */
-export interface PlanStep {
+export type PlanStep = {
   /** Type of operation to perform. */
   kind: PlanStepKind;
   /** Node to operate on. */
   node: DagNode;
   /** Previous snapshot record (for update/delete operations). */
   previous?: SnapshotRecord;
-}
+};
 
 /**
  * Summary statistics of the execution plan.
  */
-export interface PlanSummary {
+export type PlanSummary = {
   /** Number of artifacts to create. */
   create: number;
   /** Number of artifacts to update. */
@@ -35,25 +35,25 @@ export interface PlanSummary {
   total: number;
   /** Whether any changes are required. */
   changed: boolean;
-}
+};
 
 /**
  * Complete execution plan with steps and summary.
  */
-export interface PlanResult {
+export type PlanResult = {
   /** Array of steps to execute. */
   steps: PlanStep[];
   /** Summary statistics. */
   summary: PlanSummary;
-}
+};
 
 /**
  * Options for plan generation.
  */
-export interface PlannerOptions {
+export type PlannerOptions = {
   /** Whether to include unchanged artifacts in the plan. */
   includeUnchanged?: boolean;
-}
+};
 
 const OUTPUT_KINDS: ReadonlySet<DagNodeKind> = new Set([
   "schema",

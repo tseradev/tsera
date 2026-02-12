@@ -3,20 +3,20 @@ import { resolve } from "../../shared/path.ts";
 /**
  * Options for file system watching.
  */
-export interface WatchOptions {
+export type WatchOptions = {
   /** Debounce delay in milliseconds. */
   debounceMs?: number;
   /** Patterns to ignore when watching. */
   ignore?: (string | RegExp)[];
-}
+};
 
 /**
  * Controller for managing a file system watcher.
  */
-export interface WatchController {
+export type WatchController = {
   /** Closes the watcher and stops monitoring. */
   close(): void;
-}
+};
 
 /**
  * Callback function invoked when file system events occur.

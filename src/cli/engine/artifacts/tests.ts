@@ -3,35 +3,13 @@ import { posixPath } from "../../../shared/path.ts";
 import type { EntityRuntime, FieldDef } from "../../../core/entity.ts";
 import { filterPublicFields } from "../../../core/entity.ts";
 import type { ArtifactBuilder } from "./types.ts";
+import { applyGeneratedTextHeader } from "./generated-header.ts";
 import {
   addImportDeclaration,
   createInMemorySourceFile,
   createTSeraProject,
 } from "../../utils/ts-morph.ts";
-import type { ZodType } from "../../../core/utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of public types.
- */
-interface ZodInternalDef {
-  type: string;
-  checks?: Array<{ def?: { format?: string; min?: number; max?: number } }>;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-} & ZodType;
+import { getZodInternal, type ZodType } from "../../../core/utils/zod.ts";
 
 const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
 
@@ -83,8 +61,7 @@ function generateSampleValue(zodSchema: ZodType, field: FieldDef): string {
   }
 
   // Otherwise, generate from Zod type
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -197,8 +174,7 @@ function buildSampleObject(entity: EntityRuntime, usePublic: boolean): string {
   const fields = usePublic ? filterPublicFields(entity.fields) : entity.fields;
   const schema = usePublic ? entity.public : entity.schema;
 
-  const schemaWithInternal = schema as unknown as ZodWithInternal;
-  const schemaDef = schemaWithInternal._zod.def;
+  const schemaDef = getZodInternal(schema).def;
   if (schemaDef.type !== "object" || !schemaDef.shape) {
     return "{}";
   }
@@ -247,8 +223,7 @@ function buildInputCreateSample(entity: EntityRuntime): string {
   const fields = entity.fields;
   const schema = entity.input.create;
 
-  const schemaWithInternal = schema as unknown as ZodWithInternal;
-  const schemaDef = schemaWithInternal._zod.def;
+  const schemaDef = getZodInternal(schema).def;
   if (schemaDef.type !== "object" || !schemaDef.shape) {
     return "{}";
   }
@@ -304,8 +279,8 @@ function buildInputCreateSample(entity: EntityRuntime): string {
  * @param context.config - TSera configuration.
  * @returns Array of artifact descriptors containing test files.
  */
-export const buildTestArtifacts: ArtifactBuilder = (context) => {
-  const { entity, config } = context;
+export const buildTestArtifacts: ArtifactBuilder = async (context) => {
+  const { entity, config, projectDir } = context;
 
   if (entity.test === false) {
     return [];
@@ -385,11 +360,18 @@ Deno.test("${entityName} input.create valide un exemple minimal", () => {
   content = content.replace(/(from\s+["'])@std\/assert(["'])/g, "$1std/assert$2");
 
   const path = join("core", "entities", `${entity.name}.test.ts`);
+  const contentWithHeader = await applyGeneratedTextHeader({
+    projectDir,
+    targetPath: path,
+    format: "ts",
+    source: `Entity ${entity.name}`,
+    body: content,
+  });
 
   return [{
     kind: "test",
     path,
-    content,
+    content: contentWithHeader,
     label: `${entity.name} test`,
     data: { entity: entity.name },
   }];

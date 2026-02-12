@@ -5,9 +5,9 @@ import { readJsonFile, writeJsonFile } from "../../../utils/fsx.ts";
  * Interface for metadata of generated CD workflows.
  * Key = relative path of generated workflow, value = SHA-256 hash.
  */
-export interface WorkflowsMeta {
+export type WorkflowsMeta = {
   [workflowPath: string]: string;
-}
+};
 
 /**
  * Reads workflow metadata from .tsera/workflows-meta.json.

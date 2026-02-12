@@ -14,12 +14,12 @@ import type { SyncResult } from "./utils/workflow-sync.ts";
 /**
  * Options for creating a DeploySyncConsole instance.
  */
-export interface DeploySyncConsoleOptions {
+export type DeploySyncConsoleOptions = {
   /** The project directory */
   projectDir: string;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Human-friendly console reporter for the deploy sync command.

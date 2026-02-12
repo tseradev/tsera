@@ -116,7 +116,7 @@ export type DocsConfig = {
 /**
  * Complete configuration for a TSERA entity.
  */
-export interface EntityConfig {
+export type EntityConfig = {
   /** Logical name of the entity (PascalCase, required). */
   name: string;
 
@@ -149,7 +149,7 @@ export interface EntityConfig {
 
   /** Configuration for actions (CRUD + custom). */
   actions?: (a: unknown) => ActionsConfig;
-}
+};
 
 /**
  * Runtime for entity relations.

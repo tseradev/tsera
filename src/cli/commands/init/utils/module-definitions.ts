@@ -15,7 +15,7 @@ export type MergeStrategy = "copy" | "merge" | "skip";
 /**
  * Definition of a template module.
  */
-export interface TemplateModule {
+export type TemplateModule = {
   /** Module name (e.g., "hono", "lume"). */
   name: string;
   /** Strategy for handling file conflicts. */
@@ -24,7 +24,7 @@ export interface TemplateModule {
   dependencies?: string[];
   /** Custom merge handler for specific file types. */
   customMerge?: (target: string, source: string) => Promise<string>;
-}
+};
 
 /**
  * Module definitions with their merge strategies.

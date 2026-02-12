@@ -6,12 +6,12 @@ import { handleDeploySync } from "./deploy-sync.ts";
 /**
  * Context for the `tsera deploy init` command.
  */
-export interface DeployInitContext {
+export type DeployInitContext = {
   /** Project directory. */
   projectDir: string;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Handler for the `tsera deploy init` command.

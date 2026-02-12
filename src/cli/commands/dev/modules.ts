@@ -27,14 +27,14 @@ async function exists(path: string): Promise<boolean> {
 /**
  * Represents active modules in a TSera project.
  */
-export interface ActiveModules {
+export type ActiveModules = {
   /** Backend module (Hono API) is present */
   backend: boolean;
   /** Frontend module (Lume MPA) is present */
   frontend: boolean;
   /** Secrets module (type-safe secrets management) is present */
   secrets: boolean;
-}
+};
 
 /**
  * Detects which modules are active in given project directory.

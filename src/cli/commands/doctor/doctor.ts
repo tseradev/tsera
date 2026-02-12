@@ -13,24 +13,24 @@ import { DoctorConsole } from "./doctor-ui.ts";
 import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /** CLI options accepted by the {@code doctor} command. */
-interface DoctorCommandOptions extends GlobalCLIOptions {
+type DoctorCommandOptions = GlobalCLIOptions & {
   cwd: string;
   fix: boolean;
   quick: boolean;
-}
+};
 
 /** Options passed to the doctor action handler by Cliffy. */
-interface DoctorActionOptions {
+type DoctorActionOptions = {
   json?: boolean;
   cwd?: string;
   fix?: boolean;
   quick?: boolean;
-}
+};
 
 /**
  * Context object passed to doctor command handlers.
  */
-export interface DoctorCommandContext {
+export type DoctorCommandContext = {
   /** Current working directory to diagnose. */
   cwd: string;
   /** Whether to automatically apply safe fixes. */
@@ -39,18 +39,18 @@ export interface DoctorCommandContext {
   quick: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Function signature for doctor command implementations.
  */
 export type DoctorCommandHandler = (context: DoctorCommandContext) => Promise<void> | void;
 
-interface DoctorHandlerDependencies {
+type DoctorHandlerDependencies = {
   cliVersion?: string;
   writer?: (line: string) => void;
   exit?: (code: number) => never;
-}
+};
 
 /**
  * Creates the default doctor command handler which diagnoses and optionally fixes artifacts.

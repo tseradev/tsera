@@ -6,7 +6,7 @@ import { readJsonFile, writeJsonFile } from "../utils/fsx.ts";
 /**
  * Snapshot record representing the state of a node at a point in time.
  */
-export interface SnapshotRecord {
+export type SnapshotRecord = {
   /** Unique node identifier. */
   id: string;
   /** Type of node. */
@@ -19,26 +19,26 @@ export interface SnapshotRecord {
   sourcePath?: string;
   /** Human-readable label. */
   label?: string;
-}
+};
 
 /**
  * Complete engine state tracking all node snapshots.
  */
-export interface EngineState {
+export type EngineState = {
   /** Map of node identifiers to their snapshot records. */
   snapshots: Record<string, SnapshotRecord>;
-}
+};
 
-interface ManifestFile {
+type ManifestFile = {
   version: number;
   snapshots: Record<string, SnapshotRecord>;
-}
+};
 
-interface GraphFile {
+type GraphFile = {
   version: number;
   nodes: DagNode[];
   edges: DagEdge[];
-}
+};
 
 /** Directory where engine state files are stored. */
 export const STATE_DIR = ".tsera";

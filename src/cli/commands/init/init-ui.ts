@@ -25,12 +25,12 @@ import type { PlanStepKind } from "../../engine/planner.ts";
 /**
  * Options for creating an InitConsole instance.
  */
-export interface InitConsoleOptions {
+export type InitConsoleOptions = {
   /** The project directory being initialized */
   projectDir: string;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Human-friendly console reporter for the init command.

@@ -14,7 +14,7 @@ import { BaseConsole } from "../../ui/console.ts";
 /**
  * Options for creating an UpdateConsole instance.
  */
-export interface UpdateConsoleOptions {
+export type UpdateConsoleOptions = {
   /** The update channel being used */
   channel: "stable" | "beta" | "canary";
   /** Whether binary installation is being used */
@@ -23,7 +23,7 @@ export interface UpdateConsoleOptions {
   currentVersion: string;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Human-friendly console reporter for the update command.

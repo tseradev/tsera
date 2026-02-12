@@ -102,9 +102,6 @@
             workflow-hash.ts    # calcul hash SHA-256
             workflow-meta.ts    # gestion workflows-meta.json
             workflow-sync.ts    # logique synchronisation
-        mcp/               # mcp command
-          mcp.ts
-          mcp.test.ts
         help/              # help command
           help.ts
           command-help-renderer.ts

@@ -21,7 +21,7 @@ import {
 /**
  * Options for creating a DoctorConsole instance.
  */
-export interface DoctorConsoleOptions {
+export type DoctorConsoleOptions = {
   /** The project directory being diagnosed */
   projectDir: string;
   /** Whether auto-fix mode is enabled */
@@ -30,7 +30,7 @@ export interface DoctorConsoleOptions {
   quick: boolean;
   /** Optional custom writer for output */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Human-friendly console reporter for the doctor command.

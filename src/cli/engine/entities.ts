@@ -16,12 +16,12 @@ type ModuleNamespace = Record<string, unknown>;
 /**
  * Represents a discovered entity with its source file path.
  */
-export interface DiscoveredEntity {
+export type DiscoveredEntity = {
   /** Validated entity runtime. */
   entity: EntityRuntime;
   /** Relative path to the source file. */
   sourcePath: string;
-}
+};
 
 const ENTITY_SUFFIX = ".ts";
 
@@ -40,7 +40,7 @@ export async function prepareDagInputs(
   const inputs: DagEntityInput[] = [];
 
   for (const item of discovered) {
-    const artifacts = await buildEntityArtifacts(item.entity, config);
+    const artifacts = await buildEntityArtifacts(item.entity, config, projectDir);
     inputs.push({
       entity: item.entity,
       sourcePath: item.sourcePath,
@@ -48,9 +48,10 @@ export async function prepareDagInputs(
     });
   }
 
-  const openapiArtifact = buildProjectOpenAPIArtifact(
+  const openapiArtifact = await buildProjectOpenAPIArtifact(
     discovered.map((item) => item.entity),
     config,
+    projectDir,
   );
   if (openapiArtifact && inputs.length > 0) {
     inputs[0].artifacts.push(openapiArtifact);
@@ -109,8 +110,9 @@ export async function discoverEntities(
 export async function buildEntityArtifacts(
   entity: EntityRuntime,
   config: TseraConfig,
+  projectDir: string,
 ): Promise<ArtifactDescriptor[]> {
-  const context = { entity, config } as const;
+  const context = { entity, config, projectDir } as const;
   const descriptors: ArtifactDescriptor[] = [];
   let previousStageIds: string[] = [];
 

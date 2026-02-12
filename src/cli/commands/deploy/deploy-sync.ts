@@ -16,14 +16,14 @@ import { AVAILABLE_PROVIDERS } from "./deploy-init-ui.ts";
 /**
  * Context for the `tsera deploy sync` command.
  */
-export interface DeploySyncContext {
+export type DeploySyncContext = {
   /** Project directory. */
   projectDir: string;
   /** Force overwrite even if files have been manually modified. */
   force: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Handler for the `tsera deploy sync` command.

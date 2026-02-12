@@ -135,7 +135,7 @@ Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
     },
   });
 
-  const artifacts = await buildEntityArtifacts(entity, baseConfig);
+  const artifacts = await buildEntityArtifacts(entity, baseConfig, Deno.cwd());
   assertEquals(artifacts.map((artifact) => artifact.kind), [
     "schema",
     "migration",
@@ -164,7 +164,7 @@ Deno.test("buildEntityArtifacts omits optional artifacts", async () => {
     },
   });
 
-  const artifacts = await buildEntityArtifacts(entity, baseConfig);
+  const artifacts = await buildEntityArtifacts(entity, baseConfig, Deno.cwd());
   assertEquals(artifacts.map((artifact) => artifact.kind), [
     "schema",
   ]);

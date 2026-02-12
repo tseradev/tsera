@@ -1,19 +1,19 @@
-import { resolve } from "../../../shared/path.ts";
 import { Command } from "cliffy/command";
+import { resolve } from "../../../shared/path.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
+import { renderCommandHelp } from "../help/command-help-renderer.ts";
 import { type DeployInitContext, handleDeployInit } from "./deploy-init.ts";
 import { type DeploySyncContext, handleDeploySync } from "./deploy-sync.ts";
-import { renderCommandHelp } from "../help/command-help-renderer.ts";
 
 /**
  * Context for deployment commands.
  */
-export interface DeployCommandContext {
+export type DeployCommandContext = {
   /** Project directory (default: "."). */
   projectDir: string;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Handler for the `tsera deploy` command.
@@ -24,21 +24,21 @@ export type DeployCommandHandler = (context: DeployCommandContext) => Promise<vo
  * Options for the init subcommand.
  * @internal
  */
-interface DeployInitActionOptions {
+type DeployInitActionOptions = {
   /** Enable JSON output mode. */
   json?: boolean;
-}
+};
 
 /**
  * Options for the sync subcommand.
  * @internal
  */
-interface DeploySyncActionOptions {
+type DeploySyncActionOptions = {
   /** Enable JSON output mode. */
   json?: boolean;
   /** Force overwrite of manually modified workflows. */
   force?: boolean;
-}
+};
 
 /**
  * Creates the Cliffy `tsera deploy` command with its `init` and `sync` subcommands.
@@ -103,12 +103,12 @@ export function createDeployCommand(handlers: {
   root
     .command("init")
     .description("Interactive configuration of deployment providers")
-    .action(async (options) => {
-      const opts = options as unknown as DeployInitActionOptions;
+    .option("--json", "Output machine-readable NDJSON events", { default: false })
+    .action(async (options: DeployInitActionOptions) => {
       const projectDir = resolve(".");
       await initHandler({
         projectDir,
-        global: { json: opts.json ?? false },
+        global: { json: options.json ?? false },
       });
     });
 
@@ -116,13 +116,13 @@ export function createDeployCommand(handlers: {
     .command("sync")
     .description("Synchronize CD workflows from config/cd/ to .github/workflows/")
     .option("--force", "Force overwrite of manually modified workflows", { default: false })
-    .action(async (options) => {
-      const opts = options as unknown as DeploySyncActionOptions;
+    .option("--json", "Output machine-readable NDJSON events", { default: false })
+    .action(async (options: DeploySyncActionOptions) => {
       const projectDir = resolve(".");
       await syncHandler({
         projectDir,
-        force: opts.force ?? false,
-        global: { json: opts.json ?? false },
+        force: options.force ?? false,
+        global: { json: options.json ?? false },
       });
     });
 

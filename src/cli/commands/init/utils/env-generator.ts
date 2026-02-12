@@ -10,10 +10,10 @@ import type { DbConfig } from "../../../definitions.ts";
 /**
  * Configuration for generating environment files.
  */
-export interface EnvGenerationConfig {
+export type EnvGenerationConfig = {
   db: DbConfig;
   modules: string[];
-}
+};
 
 /**
  * Generates .env files for all environments with appropriate default values.

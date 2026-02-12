@@ -25,7 +25,7 @@ import type { PlanStepKind } from "../engine/planner.ts";
 /**
  * Plan summary containing operation counts.
  */
-export interface PlanSummary {
+export type PlanSummary = {
   /** Number of create operations */
   create: number;
   /** Number of update operations */
@@ -38,7 +38,7 @@ export interface PlanSummary {
   total?: number;
   /** Whether any changes are present */
   changed?: boolean;
-}
+};
 
 /**
  * Formats a directory path into a concise project label.

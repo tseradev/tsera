@@ -1,36 +1,13 @@
 import { join } from "../../../shared/path.ts";
 import type { ArtifactBuilder } from "./types.ts";
+import { applyGeneratedTextHeader } from "./generated-header.ts";
 import {
   addImportDeclaration,
   createInMemorySourceFile,
   createTSeraProject,
 } from "../../utils/ts-morph.ts";
 import { VariableDeclarationKind } from "../../utils/ts-morph.ts";
-import type { ZodType } from "../../../core/utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of public types.
- */
-interface ZodInternalDef {
-  type: string;
-  checks?: Array<{ def?: { format?: string; min?: number; max?: number } }>;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-  description?: string;
-} & ZodType;
+import { getZodInternal, type ZodType } from "../../../core/utils/zod.ts";
 
 /**
  * Converts a Zod schema to a TypeScript expression.
@@ -40,8 +17,7 @@ type ZodWithInternal = {
  * @returns TypeScript expression representing the schema.
  */
 function zodSchemaToTsExpression(zodSchema: ZodType): string {
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def, description } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -60,8 +36,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
         }
       }
     }
-    if (zodWithInternal.description) {
-      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    if (description) {
+      expr += `.describe(${JSON.stringify(description)})`;
     }
     return expr;
   }
@@ -79,8 +55,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
         }
       }
     }
-    if (zodWithInternal.description) {
-      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    if (description) {
+      expr += `.describe(${JSON.stringify(description)})`;
     }
     return expr;
   }
@@ -88,8 +64,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
   // Handle ZodBoolean
   if (def.type === "boolean") {
     let expr = "z.boolean()";
-    if (zodWithInternal.description) {
-      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    if (description) {
+      expr += `.describe(${JSON.stringify(description)})`;
     }
     return expr;
   }
@@ -97,8 +73,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
   // Handle ZodDate
   if (def.type === "date") {
     let expr = "z.date()";
-    if (zodWithInternal.description) {
-      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    if (description) {
+      expr += `.describe(${JSON.stringify(description)})`;
     }
     return expr;
   }
@@ -107,8 +83,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
   if (def.type === "array") {
     if (def.element) {
       let expr = `z.array(${zodSchemaToTsExpression(def.element)})`;
-      if (zodWithInternal.description) {
-        expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+      if (description) {
+        expr += `.describe(${JSON.stringify(description)})`;
       }
       return expr;
     }
@@ -126,8 +102,8 @@ function zodSchemaToTsExpression(zodSchema: ZodType): string {
       properties.push(`${key}: ${zodSchemaToTsExpression(value as ZodType)}`);
     }
     let expr = `z.object({\n    ${properties.join(",\n    ")}\n  }).strict()`;
-    if (zodWithInternal.description) {
-      expr += `.describe(${JSON.stringify(zodWithInternal.description)})`;
+    if (description) {
+      expr += `.describe(${JSON.stringify(description)})`;
     }
     return expr;
   }
@@ -314,8 +290,8 @@ function escapeReservedWord(name: string): string {
  * @param context.config - TSera configuration.
  * @returns Array of artifact descriptors containing the generated schema file.
  */
-export const buildZodArtifacts: ArtifactBuilder = (context) => {
-  const { entity, config } = context;
+export const buildZodArtifacts: ArtifactBuilder = async (context) => {
+  const { entity, config, projectDir } = context;
   const path = join(config.outDir, "schemas", `${entity.name}.schema.ts`);
 
   // Create a TS-Morph project and source file
@@ -413,11 +389,18 @@ export const buildZodArtifacts: ArtifactBuilder = (context) => {
   // Format and get the generated text
   sourceFile.formatText();
   const content = sourceFile.getFullText();
+  const contentWithHeader = await applyGeneratedTextHeader({
+    projectDir,
+    targetPath: path,
+    format: "ts",
+    source: `Entity ${entity.name}`,
+    body: content,
+  });
 
   return [{
     kind: "schema",
     path,
-    content,
+    content: contentWithHeader,
     label: `${entity.name} schema`,
     data: { entity: entity.name },
   }];

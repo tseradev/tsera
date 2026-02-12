@@ -7,24 +7,24 @@ import { applySnapshots } from "./state.ts";
 /**
  * Options for applying an execution plan.
  */
-export interface ApplyOptions {
+export type ApplyOptions = {
   /** Project root directory. */
   projectDir: string;
   /** Optional callback invoked after each step is applied. */
   onStep?: (step: PlanStep, result: ApplyStepResult) => void | Promise<void>;
-}
+};
 
 /**
  * Result of applying a single plan step.
  */
-export interface ApplyStepResult {
+export type ApplyStepResult = {
   /** Type of operation performed. */
   kind: PlanStep["kind"];
   /** Path of the file affected (if applicable). */
   path?: string;
   /** Whether the file was actually changed. */
   changed: boolean;
-}
+};
 
 /**
  * Applies an execution plan by writing, updating, or deleting artifacts.

@@ -3,6 +3,7 @@ import { entityToDDL } from "../../../core/drizzle.ts";
 import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
 import { hashValue } from "../hash.ts";
 import type { ArtifactBuilder } from "./types.ts";
+import { applyGeneratedTextHeader } from "./generated-header.ts";
 
 /**
  * Derives a deterministic timestamp from a hash for migration file naming.
@@ -78,7 +79,7 @@ async function nextMigrationFile(
  * @returns Array of artifact descriptors containing migration files.
  */
 export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
-  const { entity, config } = context;
+  const { entity, config, projectDir } = context;
 
   // entityToDDL already filters fields with stored: false
   const content = entityToDDL(entity, config.db.dialect);
@@ -91,10 +92,19 @@ export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
   const fileName = await nextMigrationFile(entity.name, content);
   const path = join("app", "db", "migrations", fileName);
 
+  const body = content.endsWith("\n") ? content : `${content}\n`;
+  const contentWithHeader = await applyGeneratedTextHeader({
+    projectDir,
+    targetPath: path,
+    format: "sql",
+    source: `Entity ${entity.name}`,
+    body,
+  });
+
   return [{
     kind: "migration",
     path,
-    content: content.endsWith("\n") ? content : `${content}\n`,
+    content: contentWithHeader,
     label: `${entity.name} migration`,
     data: { entity: entity.name },
   }];

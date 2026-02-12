@@ -25,7 +25,7 @@ import { composeTemplate, getTemplatesRoot } from "./utils/template-composer.ts"
 import { generateVscodeConfig } from "./utils/vscode-generator.ts";
 
 /** CLI options accepted by the {@code init} command. */
-interface InitCommandOptions extends GlobalCLIOptions {
+type InitCommandOptions = GlobalCLIOptions & {
   force: boolean;
   yes: boolean;
   noHono: boolean;
@@ -33,10 +33,10 @@ interface InitCommandOptions extends GlobalCLIOptions {
   noDocker: boolean;
   noCi: boolean;
   noSecrets: boolean;
-}
+};
 
 /** Options passed to the init action handler by Cliffy. */
-interface InitActionOptions {
+type InitActionOptions = {
   json?: boolean;
   force?: boolean;
   yes?: boolean;
@@ -50,12 +50,12 @@ interface InitActionOptions {
   ci?: boolean;
   /** True if Secrets is enabled (default: true unless --no-secrets is passed). */
   secrets?: boolean;
-}
+};
 
 /**
  * Context passed to init command handlers.
  */
-export interface InitCommandContext {
+export type InitCommandContext = {
   /** Target directory for project initialization. */
   directory: string;
   /** Whether to overwrite existing files. */
@@ -72,18 +72,18 @@ export interface InitCommandContext {
   };
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Function signature for init command implementations.
  */
 export type InitCommandHandler = (context: InitCommandContext) => Promise<void> | void;
 
-interface InitHandlerDependencies {
+type InitHandlerDependencies = {
   templatesRoot?: string;
   cliVersion?: string;
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Resolves the default templates directory from the current module location.

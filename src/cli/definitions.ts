@@ -29,14 +29,14 @@ export type DeployTarget = "deno_deploy" | "cloudflare" | "node_pm2";
 /**
  * Deployment configuration specifying the target platform and entry point.
  */
-export interface DeployConfig {
+export type DeployConfig = {
   /** Target deployment platform. */
   target: DeployTarget;
   /** Entry point file for the deployment. */
   entry: string;
   /** Optional environment file path. */
   envFile?: string;
-}
+};
 
 /**
  * Supported deployment providers for CD (Continuous Deployment).
@@ -51,17 +51,17 @@ export type DeployProvider =
 /**
  * Path configuration for entity and route discovery.
  */
-export interface PathsConfig {
+export type PathsConfig = {
   /** Array of paths (files or directories) containing entity definitions. */
   entities: string[];
   /** Optional array of paths containing route definitions. */
   routes?: string[];
-}
+};
 
 /**
  * Module configuration specifying which optional features are enabled.
  */
-export interface ModulesConfig {
+export type ModulesConfig = {
   /** Enable Hono API framework. */
   hono?: boolean;
   /** Enable Lume frontend framework. */
@@ -72,12 +72,12 @@ export interface ModulesConfig {
   ci?: boolean;
   /** Enable type-safe secrets management. */
   secrets?: boolean;
-}
+};
 
 /**
  * Complete TSera project configuration.
  */
-export interface TseraConfig {
+export type TseraConfig = {
   /** Enables OpenAPI document generation. */
   openapi: boolean;
   /** Enables documentation generation. */
@@ -101,14 +101,14 @@ export interface TseraConfig {
    * Les workflows CD correspondants seront générés dans .github/workflows/
    */
   deployTargets?: DeployProvider[];
-}
+};
 
 /**
  * Resolved configuration with the absolute path to the configuration file.
  */
-export interface ResolvedTseraConfig {
+export type ResolvedTseraConfig = {
   /** Absolute path to the tsera.config.ts file. */
   configPath: string;
   /** Validated configuration object. */
   config: TseraConfig;
-}
+};

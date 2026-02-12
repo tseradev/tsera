@@ -1,6 +1,7 @@
 import { join } from "../../../shared/path.ts";
 import { entityToDrizzleTable } from "../../../core/drizzle-schema.ts";
 import type { ArtifactBuilder } from "./types.ts";
+import { applyGeneratedTextHeader } from "./generated-header.ts";
 
 /**
  * Builds Drizzle TypeScript schema artifacts for an entity.
@@ -20,8 +21,8 @@ import type { ArtifactBuilder } from "./types.ts";
  * @param context.config - TSera configuration with database dialect.
  * @returns Array of artifact descriptors containing the Drizzle schema file.
  */
-export const buildDrizzleSchemaArtifact: ArtifactBuilder = (context) => {
-  const { entity, config } = context;
+export const buildDrizzleSchemaArtifact: ArtifactBuilder = async (context) => {
+  const { entity, config, projectDir } = context;
 
   // Only generate schema for entities with table: true
   if (!entity.table) {
@@ -30,11 +31,19 @@ export const buildDrizzleSchemaArtifact: ArtifactBuilder = (context) => {
 
   const content = entityToDrizzleTable(entity, config.db.dialect);
   const path = join(config.outDir, "db", "schema", `${entity.name}.ts`);
+  const body = content.endsWith("\n") ? content : `${content}\n`;
+  const contentWithHeader = await applyGeneratedTextHeader({
+    projectDir,
+    targetPath: path,
+    format: "ts",
+    source: `Entity ${entity.name}`,
+    body,
+  });
 
   return [{
     kind: "drizzle-schema",
     path,
-    content,
+    content: contentWithHeader,
     label: `${entity.name} Drizzle Table`,
     data: { entity: entity.name },
   }];

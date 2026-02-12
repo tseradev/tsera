@@ -29,6 +29,8 @@ const config: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 const entityV1 = defineEntity({
   name: "Invoice",
   table: true,
@@ -54,12 +56,12 @@ const entityV2 = defineEntity({
 
 Deno.test("planDag computes create/update/delete summaries", async () => {
   const artifactsV1 = [
-    ...(await buildZodArtifacts({ entity: entityV1, config })),
-    ...(await buildDrizzleArtifacts({ entity: entityV1, config })),
-    ...(await buildDocsArtifacts({ entity: entityV1, config })),
-    ...(await buildTestArtifacts({ entity: entityV1, config })),
+    ...(await buildZodArtifacts({ entity: entityV1, config, projectDir })),
+    ...(await buildDrizzleArtifacts({ entity: entityV1, config, projectDir })),
+    ...(await buildDocsArtifacts({ entity: entityV1, config, projectDir })),
+    ...(await buildTestArtifacts({ entity: entityV1, config, projectDir })),
   ];
-  const openapiV1 = buildProjectOpenAPIArtifact([entityV1], config);
+  const openapiV1 = await buildProjectOpenAPIArtifact([entityV1], config, projectDir);
   if (openapiV1) {
     artifactsV1.push(openapiV1);
   }
@@ -76,12 +78,12 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
   state = applySnapshots(state, toUpdates(planCreate.steps));
 
   const artifactsV2 = [
-    ...(await buildZodArtifacts({ entity: entityV2, config })),
-    ...(await buildDrizzleArtifacts({ entity: entityV2, config })),
-    ...(await buildDocsArtifacts({ entity: entityV2, config })),
-    ...(await buildTestArtifacts({ entity: entityV2, config })),
+    ...(await buildZodArtifacts({ entity: entityV2, config, projectDir })),
+    ...(await buildDrizzleArtifacts({ entity: entityV2, config, projectDir })),
+    ...(await buildDocsArtifacts({ entity: entityV2, config, projectDir })),
+    ...(await buildTestArtifacts({ entity: entityV2, config, projectDir })),
   ];
-  const openapiV2 = buildProjectOpenAPIArtifact([entityV2], config);
+  const openapiV2 = await buildProjectOpenAPIArtifact([entityV2], config, projectDir);
   if (openapiV2) {
     artifactsV2.push(openapiV2);
   }
@@ -95,10 +97,10 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
   state = applySnapshots(state, toUpdates(planUpdate.steps));
 
   const artifactsV3 = [
-    ...(await buildZodArtifacts({ entity: entityV2, config })),
-    ...(await buildDrizzleArtifacts({ entity: entityV2, config })),
+    ...(await buildZodArtifacts({ entity: entityV2, config, projectDir })),
+    ...(await buildDrizzleArtifacts({ entity: entityV2, config, projectDir })),
   ];
-  const openapiV3 = buildProjectOpenAPIArtifact([entityV2], config);
+  const openapiV3 = await buildProjectOpenAPIArtifact([entityV2], config, projectDir);
   if (openapiV3) {
     artifactsV3.push(openapiV3);
   }

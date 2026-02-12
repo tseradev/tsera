@@ -4,19 +4,17 @@ import { renderModernHelp } from "./renderer.ts";
 import type { ModernHelpConfig } from "./types.ts";
 
 /** CLI options accepted by the {@code help} command. */
-interface HelpCommandOptions extends GlobalCLIOptions {
-  // Future: could add --format or --markdown options
-}
+type HelpCommandOptions = GlobalCLIOptions;
 
 /**
  * Context object passed to help command handlers.
  */
-export interface HelpCommandContext {
+export type HelpCommandContext = {
   /** Optional command name to show help for. */
   command?: string;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Function signature for help command implementations.

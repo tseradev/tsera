@@ -15,7 +15,7 @@ export type ProcessStatus = "starting" | "ready" | "error" | "stopped";
 /**
  * Represents a managed module process.
  */
-export interface ModuleProcess {
+export type ModuleProcess = {
   /** Module name (e.g., "backend", "frontend") */
   name: string;
   /** Current status of the process */
@@ -28,7 +28,7 @@ export interface ModuleProcess {
   child?: Deno.ChildProcess;
   /** URL where the server is running (if detected) */
   url?: string;
-}
+};
 
 /**
  * Callback invoked when a module's status changes.
@@ -38,7 +38,7 @@ export type StatusChangeCallback = (name: string, status: ProcessStatus, url?: s
 /**
  * Options for starting a module.
  */
-export interface StartModuleOptions {
+export type StartModuleOptions = {
   /** Module name */
   name: string;
   /** Command to run (e.g., "deno", "vite") */
@@ -49,7 +49,7 @@ export interface StartModuleOptions {
   cwd: string;
   /** Show logs in real-time to console */
   showLogs?: boolean;
-}
+};
 
 /**
  * Manages child processes for development servers.

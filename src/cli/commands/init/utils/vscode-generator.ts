@@ -15,22 +15,22 @@ import { normalizeNewlines } from "../../../../shared/newline.ts";
 /**
  * Options for VSCode generation.
  */
-export interface VscodeGeneratorOptions {
+export type VscodeGeneratorOptions = {
   /** Target directory where .vscode folder will be created. */
   targetDir: string;
   /** Whether to overwrite existing files. */
   force?: boolean;
-}
+};
 
 /**
  * Result of VSCode generation.
  */
-export interface VscodeGeneratorResult {
+export type VscodeGeneratorResult = {
   /** List of files that were created. */
   createdFiles: string[];
   /** List of files that were skipped (already existed and force is false). */
   skippedFiles: string[];
-}
+};
 
 /**
  * Generates VSCode settings.json for TSera projects.

@@ -39,6 +39,7 @@ import { Command } from "cliffy/command";
 import { crypto } from "std/crypto";
 import { join } from "std/path";
 import { EnvName, EnvSchema, isValidEnvName, validateSecrets } from "../../../core/secrets.ts";
+import { safeWrite } from "../../utils/fsx.ts";
 
 /**
  * Supported export formats for environment variables.
@@ -131,9 +132,8 @@ async function exportToGithubEnv(secrets: Record<string, string>): Promise<void>
   }
 
   // Write to GITHUB_ENV file
-  await Deno.writeTextFile(githubEnvPath, lines.join("\n") + "\n", {
-    append: true,
-  });
+  const payload = lines.join("\n") + "\n";
+  await appendTextFileAtomic(githubEnvPath, payload);
 }
 
 /**
@@ -198,7 +198,7 @@ async function exportToGitlabDotenv(
   }
 
   // Write to output file
-  await Deno.writeTextFile(outputPath, lines.join("\n") + "\n");
+  await safeWrite(outputPath, lines.join("\n") + "\n");
 }
 
 /**
@@ -364,3 +364,21 @@ export const exportEnvCommand = new Command()
       Deno.exit(1);
     }
   });
+
+/**
+ * Appends content to a file using an atomic rewrite to avoid partial writes.
+ *
+ * @param path - File path to append to.
+ * @param content - Content to append.
+ */
+async function appendTextFileAtomic(path: string, content: string): Promise<void> {
+  let existing = "";
+  try {
+    existing = await Deno.readTextFile(path);
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error;
+    }
+  }
+  await safeWrite(path, existing + content);
+}

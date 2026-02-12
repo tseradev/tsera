@@ -4,9 +4,9 @@ import { createRouter } from "./router.ts";
 /**
  * Metadata passed to the CLI entrypoint, primarily containing the published version.
  */
-export interface CliMetadata {
+export type CliMetadata = {
   version: string;
-}
+};
 
 const DEFAULT_METADATA: CliMetadata = {
   version: "0.0.0-dev",

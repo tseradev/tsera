@@ -11,27 +11,27 @@ import { UpdateConsole } from "./update-ui.ts";
  * CLI options accepted by the {@code update} command.
  * @internal
  */
-interface UpdateCommandOptions extends GlobalCLIOptions {
+type UpdateCommandOptions = GlobalCLIOptions & {
   channel: "stable" | "beta" | "canary";
   binary: boolean;
   dryRun: boolean;
-}
+};
 
 /**
  * Options passed to the update action handler by Cliffy.
  * @internal
  */
-interface UpdateActionOptions {
+type UpdateActionOptions = {
   json?: boolean;
   channel?: "stable" | "beta" | "canary";
   binary?: boolean;
   dryRun?: boolean;
-}
+};
 
 /**
  * Context object passed to update command handlers.
  */
-export interface UpdateCommandContext {
+export type UpdateCommandContext = {
   /** Release channel to use for updates. */
   channel: "stable" | "beta" | "canary";
   /** Whether to install a compiled binary instead of using deno install. */
@@ -40,7 +40,7 @@ export interface UpdateCommandContext {
   dryRun: boolean;
   /** Global CLI options. */
   global: GlobalCLIOptions;
-}
+};
 
 /**
  * Function signature for update command implementations.
@@ -51,7 +51,7 @@ export type UpdateCommandHandler = (context: UpdateCommandContext) => Promise<vo
  * Result of executing a command.
  * @internal
  */
-interface CommandExecutionResult {
+type CommandExecutionResult = {
   /** Whether the command succeeded. */
   success: boolean;
   /** Exit code from the command. */
@@ -60,7 +60,7 @@ interface CommandExecutionResult {
   stdout: string;
   /** Standard error from the command. */
   stderr: string;
-}
+};
 
 /**
  * Function that executes a command and returns its result.
@@ -72,7 +72,7 @@ type CommandRunner = (command: string, args: string[]) => Promise<CommandExecuti
  * Dependencies for the update command handler.
  * @internal
  */
-interface UpdateHandlerDependencies {
+type UpdateHandlerDependencies = {
   /** Optional command runner for testing. */
   runner?: CommandRunner;
   /** Optional writer for output. */
@@ -81,7 +81,7 @@ interface UpdateHandlerDependencies {
   cliVersion?: string;
   /** Optional exit function for testing. */
   exit?: (code: number) => never;
-}
+};
 
 const TEXT_DECODER = new TextDecoder();
 

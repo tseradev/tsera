@@ -1,29 +1,7 @@
 import type { EntityRuntime, FieldDef } from "./entity.ts";
 import { filterStoredFields } from "./entity.ts";
 import { pascalToSnakeCase } from "./utils/strings.ts";
-import type { ZodType } from "./utils/zod.ts";
-
-/**
- * Internal Zod definition structure (for accessing _zod.def).
- * This is used to access Zod's internal API which is not part of the public types.
- */
-interface ZodInternalDef {
-  type: string;
-  element?: ZodType;
-  innerType?: ZodType;
-  defaultValue?: unknown;
-  shape?: Record<string, ZodType>;
-}
-
-/**
- * Helper type for accessing Zod's internal _zod property.
- * Uses unknown instead of any for type safety.
- */
-type ZodWithInternal = {
-  _zod: {
-    def: ZodInternalDef;
-  };
-} & ZodType;
+import { getZodInternal, type ZodType } from "./utils/zod.ts";
 
 /** Supported SQL dialect identifiers for DDL generation. */
 export type Dialect = "postgres" | "sqlite" | "mysql";
@@ -37,8 +15,7 @@ export type Dialect = "postgres" | "sqlite" | "mysql";
  * @returns Corresponding SQL type.
  */
 function extractSqlTypeFromZod(zodSchema: ZodType, dialect: Dialect): string {
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -143,12 +120,10 @@ function formatColumn(
   const constraints: string[] = [];
 
   // NOT NULL if field is not nullable and not optional and has no default
-  const zodWithInternal = zodSchema as unknown as ZodWithInternal;
-  const def = zodWithInternal._zod.def;
+  const { def } = getZodInternal(zodSchema);
   const isOptional = def.type === "optional";
-  const hasDefault = def.type === "default" ||
-    (def.innerType && (def.innerType as unknown as ZodWithInternal)._zod.def.type === "default");
-  const innerDef = def.innerType ? (def.innerType as unknown as ZodWithInternal)._zod.def : null;
+  const innerDef = def.innerType ? getZodInternal(def.innerType).def : null;
+  const hasDefault = def.type === "default" || innerDef?.type === "default";
   const isNullable = def.type === "nullable" ||
     (isOptional && innerDef?.type === "nullable");
 
@@ -270,8 +245,7 @@ export function entityToDDL(entity: EntityRuntime, dialect: Dialect = "postgres"
   const columnDefinitions: string[] = [];
 
   // Extract the shape from the Zod schema
-  const schemaWithInternal = entity.schema as unknown as ZodWithInternal;
-  const schemaDef = schemaWithInternal._zod.def;
+  const schemaDef = getZodInternal(entity.schema).def;
   if (schemaDef.type !== "object") {
     throw new Error(`Entity ${entity.name} schema is not a ZodObject`);
   }

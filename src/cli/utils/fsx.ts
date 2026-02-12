@@ -1,13 +1,13 @@
 import { dirname, join } from "../../shared/path.ts";
 
-export interface SafeWriteResult {
+export type SafeWriteResult = {
   /** Whether the file contents were written to disk. */
   written: boolean;
   /** Indicates that the file contents differ from the previous snapshot. */
   changed: boolean;
   /** Absolute path of the file written. */
   path: string;
-}
+};
 
 /** Ensures a directory exists, creating it if necessary. */
 export async function ensureDir(path: string): Promise<void> {

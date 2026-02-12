@@ -12,7 +12,7 @@ import { dirname, join, relative } from "../../../../shared/path.ts";
 import { fromFileUrl } from "../../../../shared/file-url.ts";
 import { exists } from "std/fs";
 import { walk } from "std/fs/walk";
-import { ensureDir } from "../../../utils/fsx.ts";
+import { ensureDir, safeWrite } from "../../../utils/fsx.ts";
 
 /**
  * Extensions of binary files that should be copied as binary data.
@@ -72,14 +72,14 @@ function isBinaryFile(filePath: string): boolean {
 /**
  * Options for generating a Lume project.
  */
-export interface LumeGeneratorOptions {
+export type LumeGeneratorOptions = {
   /** Target directory where Lume should be generated (app/front/) */
   targetDir: string;
   /** Root directory of TSera project (for .vscode/ and other project-level files) */
   projectRootDir?: string;
   /** Whether to overwrite existing files */
   force?: boolean;
-}
+};
 
 /**
  * Generates a Lume project structure in target directory.
@@ -159,7 +159,7 @@ export async function generateLumeProject(
       if (isBinaryFile(relativePath)) {
         // Copy binary file directly without adaptation
         const binaryContent = await Deno.readFile(entry.path);
-        await Deno.writeFile(targetPath, binaryContent);
+        await safeWrite(targetPath, binaryContent);
         createdFiles.push(relativePath);
       } else {
         // Read and adapt file content if needed
@@ -167,7 +167,7 @@ export async function generateLumeProject(
         content = adaptFileContent(relativePath, content, actualTargetDir);
 
         // Write adapted content
-        await Deno.writeTextFile(targetPath, content);
+        await safeWrite(targetPath, content);
         createdFiles.push(relativePath);
       }
     } catch {

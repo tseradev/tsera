@@ -22,6 +22,8 @@ const baseConfig: TseraConfig = {
   },
 };
 
+const projectDir = Deno.cwd();
+
 Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async () => {
   const entity = defineEntity({
     name: "User",
@@ -32,7 +34,7 @@ Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "schema");
@@ -71,7 +73,7 @@ Deno.test("buildZodArtifacts - génère un schéma pour types primitifs", async 
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
 
   assertEquals(artifacts.length, 1);
   const content = artifacts[0].content as string;
@@ -91,7 +93,7 @@ Deno.test("buildZodArtifacts - gère les champs optionnels", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "title: z.string()");
@@ -107,7 +109,7 @@ Deno.test("buildZodArtifacts - gère les champs nullables", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "content: z.string()");
@@ -124,7 +126,7 @@ Deno.test("buildZodArtifacts - gère les valeurs par défaut", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, 'theme: z.string().default("dark")');
@@ -140,7 +142,7 @@ Deno.test("buildZodArtifacts - gère les descriptions", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, 'name: z.string().describe("Product name")');
@@ -155,7 +157,7 @@ Deno.test("buildZodArtifacts - gère les arrays", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "tags: z.array(z.string())");
@@ -170,7 +172,7 @@ Deno.test("buildZodArtifacts - combine optional et nullable", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "bio: z.string().optional().nullable()");
@@ -187,7 +189,7 @@ Deno.test("buildZodArtifacts - génère du code syntaxiquement valide", async ()
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig });
+  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
   // Vérifie que le code est bien formaté et contient les éléments clés

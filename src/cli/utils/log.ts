@@ -19,7 +19,7 @@ export type LogLevel = "debug" | "info" | "warn" | "error";
 /**
  * Structured log event representation.
  */
-export interface LogEvent {
+export type LogEvent = {
   /** Severity level of the log event. */
   level: LogLevel;
   /** Human-readable message. */
@@ -28,22 +28,22 @@ export interface LogEvent {
   context?: Record<string, unknown>;
   /** Optional event name for structured logging. */
   event?: string;
-}
+};
 
 /**
  * Options for creating a logger instance.
  */
-export interface LoggerOptions {
+export type LoggerOptions = {
   /** Enables JSON/NDJSON output format. */
   json?: boolean;
   /** Custom writer function for output (defaults to console.log). */
   writer?: (line: string) => void;
-}
+};
 
 /**
  * Logger interface for structured logging with multiple severity levels.
  */
-export interface Logger {
+export type Logger = {
   /** Logs a debug-level message. */
   debug(message: string, context?: Record<string, unknown>): void;
   /** Logs an info-level message. */
@@ -54,14 +54,14 @@ export interface Logger {
   error(message: string, context?: Record<string, unknown>): void;
   /** Logs a structured event. */
   event(event: string, context?: Record<string, unknown>): void;
-}
+};
 
-interface LevelStyle {
+type LevelStyle = {
   icon: string;
   label: string;
   color: Colorizer;
   accent: Colorizer;
-}
+};
 
 const LEVEL_STYLES: Record<LogLevel, LevelStyle> = {
   debug: { icon: "·", label: "debug", color: gray, accent: dim },
@@ -70,10 +70,10 @@ const LEVEL_STYLES: Record<LogLevel, LevelStyle> = {
   error: { icon: "✖", label: "error", color: red, accent: bold },
 };
 
-interface EventStyle {
+type EventStyle = {
   icon: string;
   color: Colorizer;
-}
+};
 
 const EVENT_STYLES: Record<string, EventStyle> = {
   init: { icon: "🚀", color: magenta },

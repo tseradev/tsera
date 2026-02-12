@@ -3,7 +3,7 @@ import { createInMemorySourceFile, createTSeraProject } from "../../../utils/ts-
 /**
  * Module configuration options passed during template initialization.
  */
-export interface ModuleOptions {
+export type ModuleOptions = {
   /** Enable Hono API module. */
   hono?: boolean;
   /** Enable Lume frontend module. */
@@ -14,7 +14,7 @@ export interface ModuleOptions {
   ci?: boolean;
   /** Enable Secrets management module. */
   secrets?: boolean;
-}
+};
 
 /**
  * Generates the default tsera.config.ts file content using TS-Morph.

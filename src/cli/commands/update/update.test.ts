@@ -4,10 +4,10 @@ import { assert, assertEquals, assertStringIncludes } from "std/assert";
 
 const NOOP_WRITER = () => {};
 
-interface CallRecord {
+type CallRecord = {
   command: string;
   args: string[];
-}
+};
 
 function createRunner(records: CallRecord[]): (command: string, args: string[]) => Promise<{
   success: boolean;

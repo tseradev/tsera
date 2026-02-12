@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Command-specific help rendering functions.
  *
  * Provides modern, compact help output for individual commands.
@@ -6,17 +6,17 @@
  * @module
  */
 
+import type { Palette } from "../../ui/palette.ts";
 import { createPalette } from "../../ui/palette.ts";
 import { clampWidth, detectTerminalWidth } from "../../ui/terminal.ts";
 import { StringBuilder } from "../../ui/text-utils.ts";
 import { formatExamples, formatTwoColumn, formatUsage } from "./formatters.ts";
 import type { ModernHelpCommand } from "./types.ts";
-import type { Palette } from "../../ui/palette.ts";
 
 /**
  * Configuration for rendering command-specific help.
  */
-export interface CommandHelpConfig {
+export type CommandHelpConfig = {
   /** Command name (e.g., "init", "dev") */
   commandName: string;
   /** Brief description of what the command does */
@@ -31,7 +31,7 @@ export interface CommandHelpConfig {
   examples: string[];
   /** Optional theme override */
   theme?: Partial<Palette>;
-}
+};
 
 /**
  * Render a modern, compact help screen for a specific command.
