@@ -2,8 +2,7 @@
   "deno.enable": true,
   "deno.lint": true,
   "deno.testing.args": [
-    "-A",
-    "--unstable-kv"
+    "-A"
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno",
@@ -25,6 +24,5 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit"
-  },
-  "chatgpt.openOnStartup": false
+  }
 }
