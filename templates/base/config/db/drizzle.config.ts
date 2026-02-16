@@ -1,5 +1,5 @@
 /**
- * Drizzle ORM configuration.
+ * Drizzle ORM configuration for SQLite.
  *
  * This configuration file is used by the Drizzle CLI for migrations
  * and other database operations.
@@ -20,19 +20,26 @@ if (!databaseUrl) {
   );
 }
 
+// Validate SQLite URL format
+if (!databaseUrl.startsWith("file:")) {
+  throw new Error(
+    `DATABASE_URL must start with "file:" for SQLite. Got: ${databaseUrl}`,
+  );
+}
+
 /**
- * Drizzle Kit configuration.
+ * Drizzle Kit configuration for SQLite.
  *
  * - schema: Path to your generated schema files (managed by TSera)
  * - out: Output directory for migration files
- * - dialect: Database dialect (postgres, mysql, or sqlite)
+ * - dialect: Database dialect (sqlite for libsql/SQLite)
  *
  * NOTE: Uncomment the import and use `satisfies Config` after installing drizzle-kit
  */
 export default {
   schema: "./.tsera/schemas/*.schema.ts",
   out: "./app/db/migrations",
-  dialect: "postgresql",
+  dialect: "sqlite",
   dbCredentials: {
     url: databaseUrl,
   },

@@ -1,6 +1,131 @@
 export const layout = "layout.vto";
 
-export default function (): string {
+/**
+ * Slogan type from API response.
+ */
+type Slogan = {
+  id: number;
+  text: string;
+};
+
+/**
+ * Slogans API response type.
+ */
+type SlogansApiResponse = {
+  data: Slogan[];
+};
+
+/**
+ * Health API response type.
+ */
+type HealthApiResponse = {
+  status: "ok" | "down";
+};
+
+/**
+ * Fetch slogans from the API at build time.
+ * Returns fallback slogans if API is unavailable.
+ */
+async function fetchSlogans(): Promise<Slogan[]> {
+  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:8000";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/v1/slogans`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Slogans API returned ${response.status}, using fallback`);
+      return getFallbackSlogans();
+    }
+
+    const data: SlogansApiResponse = await response.json();
+    return data.data ?? getFallbackSlogans();
+  } catch (error) {
+    console.warn(
+      "Failed to fetch slogans:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return getFallbackSlogans();
+  }
+}
+
+/**
+ * Fetch health status from the API at build time.
+ */
+async function fetchHealthStatus(): Promise<"ok" | "down"> {
+  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:8000";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/v1/health`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      return "down";
+    }
+
+    const data: HealthApiResponse = await response.json();
+    return data.status;
+  } catch (error) {
+    console.warn(
+      "Failed to fetch health:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return "down";
+  }
+}
+
+/**
+ * Fallback slogans when API is unavailable.
+ */
+function getFallbackSlogans(): Slogan[] {
+  return [
+    { id: 1, text: "Minimal by design." },
+    { id: 2, text: "Scalable by default." },
+  ];
+}
+
+/**
+ * Render slogans as HTML.
+ */
+function renderSlogans(slogans: Slogan[]): string {
+  if (slogans.length === 0) {
+    return getFallbackSlogans().map((s) => escapeHtml(s.text)).join(" ");
+  }
+  return slogans.map((s) => escapeHtml(s.text)).join(" ");
+}
+
+/**
+ * Render database status card.
+ */
+function renderDatabaseCard(status: "ok" | "down"): string {
+  const isOk = status === "ok";
+  const dotClass = isOk ? "dot ok" : "dot err";
+  const statusText = isOk ? "Connected" : "Disconnected";
+  const statusHint = isOk ? "SQLite ready" : "Check connection";
+
+  return `
+    <div class="card">
+      <div class="card-h"><span class="${dotClass}" aria-hidden="true"></span><span>Database</span></div>
+      <div class="card-v">SQLite</div>
+      <div class="card-s">${statusText} — ${statusHint}</div>
+    </div>
+  `;
+}
+
+export default async function (): Promise<string> {
+  // Fetch data at build time
+  const slogans = await fetchSlogans();
+  const healthStatus = await fetchHealthStatus();
+  const slogansText = renderSlogans(slogans);
+
   return `
     <main class="page" aria-label="Hello TSera">
       <header class="hero">
@@ -19,7 +144,7 @@ export default function (): string {
               <div class="kicker">The Next Era of TypeScript Fullstack</div>
               <p class="sub">
                 Your project is initialized and ready to ship.<br>
-                Unified. Simple. Automated. Full TypeScript.
+                ${slogansText}
               </p>
             </div>
           </div>
@@ -51,7 +176,7 @@ export default function (): string {
       <section class="section" aria-label="Stack status">
         <div class="section-h">
           <h2>Test Stack status</h2>
-          <p>Minimal by design. Scalable by default.</p>
+          <p>${slogansText}</p>
         </div>
 
         <div class="cards">
@@ -72,6 +197,8 @@ export default function (): string {
             <div class="card-v">Lume</div>
             <div class="card-s">Build & serve working</div>
           </div>
+
+          ${renderDatabaseCard(healthStatus)}
 
           <div class="card">
             <div class="card-h"><span class="dot warn" aria-hidden="true"></span><span>Quality Gate</span></div>
@@ -153,9 +280,8 @@ export default function (): string {
 
 function termLine(label: string, cmd: string, desc: string): string {
   return /* html */ `
-    <button class="tline" type="button" data-copy="${
-    escapeAttr(cmd)
-  }" role="listitem" aria-label="Copy: ${escapeAttr(cmd)}">
+    <button class="tline" type="button" data-copy="${escapeAttr(cmd)
+    }" role="listitem" aria-label="Copy: ${escapeAttr(cmd)}">
       <span class="prompt" aria-hidden="true">$</span>
       <span class="cmd">${escapeHtml(label)}</span>
       <span class="desc">${escapeHtml(desc)}</span>

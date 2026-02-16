@@ -49,12 +49,15 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
 
   // Database URL based on dialect
   if (db.dialect === "postgres") {
+    lines.push("DATABASE_PROVIDER=postgres");
     lines.push("DATABASE_URL=postgresql://localhost:5432/tsera_dev");
     lines.push("DATABASE_SSL=disable");
   } else if (db.dialect === "mysql") {
+    lines.push("DATABASE_PROVIDER=mysql");
     lines.push("DATABASE_URL=mysql://localhost:3306/tsera_dev");
     lines.push("DATABASE_SSL=false");
   } else if (db.dialect === "sqlite") {
+    lines.push("DATABASE_PROVIDER=sqlite");
     lines.push("DATABASE_URL=file:./data/tsera_dev.db");
   }
 
@@ -112,12 +115,15 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
 
   // Database URL based on dialect
   if (db.dialect === "postgres") {
+    lines.push("DATABASE_PROVIDER=postgres");
     lines.push("DATABASE_URL=postgresql://staging-host:5432/tsera_staging");
     lines.push("DATABASE_SSL=prefer");
   } else if (db.dialect === "mysql") {
+    lines.push("DATABASE_PROVIDER=mysql");
     lines.push("DATABASE_URL=mysql://staging-host:3306/tsera_staging");
     lines.push("DATABASE_SSL=true");
   } else if (db.dialect === "sqlite") {
+    lines.push("DATABASE_PROVIDER=sqlite");
     lines.push("DATABASE_URL=file:./data/tsera_staging.db");
   }
 
@@ -175,12 +181,15 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
 
   // Database URL based on dialect
   if (db.dialect === "postgres") {
+    lines.push("DATABASE_PROVIDER=postgres");
     lines.push("DATABASE_URL=CHANGE_ME_PROD_POSTGRESQL_URL");
     lines.push("DATABASE_SSL=require");
   } else if (db.dialect === "mysql") {
+    lines.push("DATABASE_PROVIDER=mysql");
     lines.push("DATABASE_URL=CHANGE_ME_PROD_MYSQL_URL");
     lines.push("DATABASE_SSL=true");
   } else if (db.dialect === "sqlite") {
+    lines.push("DATABASE_PROVIDER=sqlite");
     lines.push("DATABASE_URL=file:./data/tsera_prod.db");
   }
 
@@ -259,6 +268,11 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
 
   // Database variables
   lines.push("  // Database Configuration");
+  lines.push("  DATABASE_PROVIDER: {");
+  lines.push('    type: "string" as const,');
+  lines.push("    required: true,");
+  lines.push(`    description: "${getDbDescription(db.dialect)} database provider",`);
+  lines.push("  },");
   lines.push("  DATABASE_URL: {");
   lines.push('    type: "url" as const,');
   lines.push("    required: true,");

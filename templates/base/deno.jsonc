@@ -24,6 +24,11 @@
     "std/fs/walk": "jsr:@std/fs@^1.0.22/walk",
     "std/path": "jsr:@std/path@^1.1.4",
     "tsera/": "jsr:@tsera/tsera@^1.0.0/",
-    "zod": "jsr:@zod/zod@^4.3.6"
+    "zod": "jsr:@zod/zod@^4.3.6",
+    // Database dependencies
+    "@libsql/client": "npm:@libsql/client@^0.17.0",
+    "drizzle-orm": "npm:drizzle-orm@^0.45.1",
+    "drizzle-orm/libsql": "npm:drizzle-orm@^0.38.0/libsql",
+    "drizzle-orm/sqlite-core": "npm:drizzle-orm@^0.38.0/sqlite-core"
   }
 }

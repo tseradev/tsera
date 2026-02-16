@@ -22,15 +22,20 @@ import { defineEnvConfig } from "../../../src/core/secrets.ts";
 
 export default defineEnvConfig({
   // Database Configuration
+  DATABASE_PROVIDER: {
+    type: "string",
+    required: true,
+    description: "Database provider (must be 'sqlite')",
+  },
   DATABASE_URL: {
     type: "url",
-    required: ["staging", "prod"],
-    description: "Database connection URL",
+    required: true,
+    description: "SQLite database file URL (must start with 'file:')",
   },
   DATABASE_SSL: {
     type: "string",
     required: false,
-    description: "SSL mode for database connection (disable, prefer, require)",
+    description: "SSL mode for database connection (not used for SQLite)",
   },
 
   // API Server (Hono)
@@ -55,6 +60,13 @@ export default defineEnvConfig({
     type: "number",
     required: false,
     description: "Lume frontend server port",
+  },
+
+  // Environment
+  DENO_ENV: {
+    type: "string",
+    required: false,
+    description: "Environment (development, staging, production)",
   },
 
   // Debugging
