@@ -138,7 +138,7 @@ export default async function (): Promise<string> {
 
         <div class="hero-inner">
           <div class="brand">
-            <img class="logo" src="/assets/tsera-logo.png" alt="TSera logo" loading="eager" decoding="async" />
+            <img class="logo" src="/assets/tsera-logo.svg" alt="TSera logo" loading="eager" decoding="async" />
             <div class="wordmark">
               <h1 class="headline">Hello TSera</h1>
               <div class="kicker">The Next Era of TypeScript Fullstack</div>

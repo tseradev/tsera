@@ -273,7 +273,7 @@ app/front/
 │   │   └── layout.vto  # Main layout
 │   └── assets/          # Static assets
 │       ├── global.css   # Global styles
-│       └── tsera-logo.png
+│       └── tsera-logo.svg
 └── _site/               # Build output (generated)
 ```
 
