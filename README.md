@@ -1,7 +1,7 @@
-# TSera — Unified full-stack TypeScript development environment for Deno
+# TSera – Full TypeScript monorepo for modern full-stack apps
 
 <p align="center">
-  <strong>One domain definition. All artifacts generated. Always aligned.</strong>
+  <strong>One domain definition. All artifacts generated. Stack stays aligned.</strong>
 </p>
 
 <p align="center">
@@ -10,20 +10,19 @@
 </p>
 
 <p align="center">
-  DX-first environment that keeps code, database, docs, and infrastructure automatically aligned.
+  <strong>Build and ship full-stack applications:</strong><br/>
+  database, API, frontend, docs and deployment workflows — all in TypeScript.
 </p>
 
 <p align="center">
-  <em>Full TypeScript · Unification · Simplicity · Automation</em>
+  <em>Watch → Plan → Apply. No manual sync steps.</em>
 </p>
 
 ---
 
-<p align="center">
-  🚧 <strong>Under active construction.</strong><br>APIs may change.<br><br>
-  🎥 Follow the development live on Twitch:<br/>
-  https://www.twitch.tv/tseradev
-</p>
+<h2 align="center">🚧 Under active construction.</h2>
+
+#### 🎥 Follow the development live on Twitch:  [https://www.twitch.tv/tseradev](https://www.twitch.tv/tseradev)
 
 ---
 
