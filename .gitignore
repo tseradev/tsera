@@ -1,3 +1,5 @@
 # TSera internal files (should not exist in CLI repo)
 .tsera/
 demo*/
+
+node_modules/
