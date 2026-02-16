@@ -2,51 +2,24 @@
   "components": {
     "schemas": {
       "User": {
-        "description": "User entity",
+        "description": "Entité représentant un utilisateur applicatif.",
         "properties": {
-          "createdAt": {
-            "default": "1970-01-01T00:00:00.000Z",
-            "description": "ISO creation timestamp.",
-            "format": "date-time",
-            "type": "string"
-          },
           "displayName": {
-            "description": "Optional display name.",
             "type": "string"
           },
           "email": {
-            "description": "User email address, expected to be unique.",
+            "description": "Adresse e-mail de l'utilisateur, supposée unique.",
+            "format": "email",
             "type": "string"
           },
           "id": {
-            "description": "Unique identifier generated on the client or by TSera.",
+            "description": "Identifiant unique de l'utilisateur.",
             "type": "string"
-          },
-          "isActive": {
-            "default": true,
-            "description": "Logical activation flag.",
-            "type": "boolean"
-          },
-          "settings": {
-            "description": "Array of JSON configuration objects.",
-            "items": {
-              "type": [
-                "object",
-                "array",
-                "string",
-                "number",
-                "boolean",
-                "null"
-              ]
-            },
-            "type": "array"
           }
         },
         "required": [
           "id",
-          "email",
-          "isActive",
-          "createdAt"
+          "email"
         ],
         "type": "object"
       }

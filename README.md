@@ -221,8 +221,8 @@ When `tsera init` completes you will find:
 
 - `tsera.config.ts` — a fully documented configuration with defaults for entities, paths, deploy
   targets, and enabled modules.
-- `.tsera/graph.json`, `.tsera/manifest.json`, and `.tsera/openapi.json` — cached hashes, manifest,
-  and aggregated OpenAPI spec produced by the engine.
+- `.tsera/graph.json`, `.tsera/manifest.json` — cached hashes and manifest produced by the engine.
+- `docs/openapi/openapi.json` — aggregated OpenAPI spec produced by the engine.
 - `drizzle/`, `docs/`, and `tests/` — folders that will receive generated migrations, documentation,
   and smoke tests as soon as entities are introduced.
 - `domain/User.entity.ts` — an example entity to explore.

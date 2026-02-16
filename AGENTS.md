@@ -441,7 +441,7 @@ export interface TseraConfig {
 - **E2E** : `e2e.test.ts` :
 
   1. crée un tmp dir → `tsera init demo` → `cd demo` → `tsera dev --json` (1 cycle),
-  2. vérifie artefacts (`.tsera/openapi.json`, `drizzle/**`, docs, tests),
+  2. vérifie artefacts (`docs/openapi/openapi.json`, `drizzle/**`, docs, tests),
   3. modifie `User.entity.ts` → attend regen → vérifie **plan**/**apply**.
 - **Lint/format** : `deno lint` + `deno fmt`; JSON stable.
 

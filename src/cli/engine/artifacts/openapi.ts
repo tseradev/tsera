@@ -1,9 +1,9 @@
-import { join } from "../../../shared/path.ts";
-import { generateOpenAPIDocument } from "../../../core/openapi.ts";
 import type { EntityRuntime } from "../../../core/entity.ts";
+import { generateOpenAPIDocument } from "../../../core/openapi.ts";
 import { pascalToSnakeCase } from "../../../core/utils/strings.ts";
-import type { ArtifactDescriptor } from "../dag.ts";
+import { join } from "../../../shared/path.ts";
 import type { TseraConfig } from "../../definitions.ts";
+import type { ArtifactDescriptor } from "../dag.ts";
 
 /**
  * Recursively sorts object keys for deterministic JSON output.
@@ -87,7 +87,7 @@ export async function buildProjectOpenAPIArtifact(
     title: "TSera API",
     version: "1.0.0",
   });
-  const path = join(config.outDir, "openapi.json");
+  const path = join("docs", "openapi", "openapi.json");
   const generatedAt = await resolveGeneratedAt({
     projectDir,
     path,

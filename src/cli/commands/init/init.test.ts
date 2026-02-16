@@ -78,7 +78,7 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     const gitignore = await Deno.readTextFile(join(projectDir, ".gitignore"));
     assert(gitignore.includes(".tsera/"));
 
-    const openapiPath = join(projectDir, ".tsera", "openapi.json");
+    const openapiPath = join(projectDir, "docs", "openapi", "openapi.json");
     const openapiDocument = await Deno.readTextFile(openapiPath);
     const expectedOpenapi = await readGoldenFile("openapi.json");
 

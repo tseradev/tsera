@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
-import { defineEntity } from "../../../../core/entity.ts";
 import { z } from "zod";
+import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildProjectOpenAPIArtifact } from "../openapi.ts";
 
@@ -38,7 +38,7 @@ Deno.test("buildProjectOpenAPIArtifact - generates an OpenAPI document", async (
   assertEquals(artifact !== null, true);
   assertEquals(artifact!.kind, "openapi");
   const normalizedPath = artifact!.path.replace(/\\/g, "/");
-  assertEquals(normalizedPath, ".tsera/openapi.json");
+  assertEquals(normalizedPath, "docs/openapi/openapi.json");
   assertEquals(artifact!.label, "Project OpenAPI");
 });
 
