@@ -1,15 +1,38 @@
-# TSera
+# TSera — Unified full-stack TypeScript development environment for Deno
 
-[![Build](https://img.shields.io/badge/build-in%20development-orange.svg)](#)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+<p align="center">
+  <strong>One domain definition. All artifacts generated. Always aligned.</strong>
+</p>
 
-**DX-first full-stack TypeScript tooling for Deno that keeps code, database, docs, and infrastructure automatically aligned.**
+<p align="center">
+  <img src="https://img.shields.io/badge/build-in%20development-orange.svg" alt="Build status" />
+  <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" />
+</p>
 
-**Full TypeScript · Unification · Simplicity · Automation · Continuous Coherence (CC)**
+<p align="center">
+  DX-first environment that keeps code, database, docs, and infrastructure automatically aligned.
+</p>
 
-* **Docs:** [https://tsera.dev](https://tsera.dev) • [Getting Started](./docs/GETTING_STARTED.md) • [CLI Reference](./docs/CLI_REFERENCE.md)
-* **Discord:** [https://discord.tsera.dev](https://discord.tsera.dev)
-* **Status:** 🚧 Under active construction (APIs may change)
+<p align="center">
+  <em>Full TypeScript · Unification · Simplicity · Automation</em>
+</p>
+
+---
+
+<p align="center">
+  🚧 <strong>Under active construction.</strong><br>APIs may change.<br><br>
+  🎥 Follow the development live on Twitch:<br/>
+  https://www.twitch.tv/tseradev
+</p>
+
+---
+
+### 🔗 Resources
+- 🌐 **Website & Docs:** https://tsera.dev *(coming soon)* 
+- 💬 **Community (Discord):** https://discord.tsera.dev  
+- 🤝 **Contributing Guide:** [CONTRIBUTING.md](./CONTRIBUTING.md)  
+- 🔐 **Security Policy:** [SECURITY.md](./SECURITY.md)  
+- ⚖️ **License:** [LICENSE.md](./LICENSE.md)   
 
 ---
 
@@ -110,12 +133,9 @@ TSera is modular. `tsera init` can enable/disable modules depending on your need
 
 ## Documentation
 
-* [Getting Started](./docs/GETTING_STARTED.md)
-* [CLI Reference](./docs/CLI_REFERENCE.md)
-* [Recipes](./docs/RECIPES.md)
-* [Architecture Notes](./docs/ARCHITECTURE.md)
+Official documentation will be published at https://tsera.dev.
 
-Online docs: [https://tsera.dev](https://tsera.dev)
+Until then, refer to the source code and the CLI help output.
 
 ---
 
