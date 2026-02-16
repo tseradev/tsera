@@ -20,9 +20,10 @@
 
 ---
 
-<h2 align="center">🚧 Under active construction.</h2>
+<h3 align="center">🚧 Under active construction.</h3>
 
-#### 🎥 Follow the development live on Twitch:  [https://www.twitch.tv/tseradev](https://www.twitch.tv/tseradev)
+<h4 align="center">🎥 Follow the development live on Twitch:<br><a href="https://www.twitch.tv/tseradev">twitch.tv/tseradev</a>
+</h4>
 
 ---
 
