@@ -1,4 +1,4 @@
-# TSera – TypeScript engine for modern full-stack apps
+<h1 align="center">TSera – TypeScript engine for modern full-stack apps</h1>
 
 <p align="center">
   <strong>One domain definition. All artifacts generated. Stack stays aligned.</strong>
@@ -32,7 +32,7 @@
 - 💬 **Community (Discord):** https://discord.tsera.dev  
 - 🤝 **Contributing Guide:** [CONTRIBUTING.md](./CONTRIBUTING.md)  
 - 🔐 **Security Policy:** [SECURITY.md](./SECURITY.md)  
-- ⚖️ **License:** [LICENSE.md](./LICENSE.md)   
+- ⚖️ **License:** [LICENSE](./LICENSE)   
 
 ---
 
