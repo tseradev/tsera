@@ -192,7 +192,7 @@ export class ProcessManager {
 
       // Start port checking for frontend (Lume)
       if (name === "frontend") {
-        this.startPortCheck(name, 8001);
+        this.startPortCheck(name, 3000);
       }
 
       // Monitor process exit

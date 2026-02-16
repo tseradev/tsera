@@ -17,7 +17,7 @@
       ],
       "net": [
         "0.0.0.0",
-        "localhost:8000",
+        "localhost:3001",
         "cdn.jsdelivr.net:443",
         "data.jsdelivr.com:443",
         "jsr.io:443",

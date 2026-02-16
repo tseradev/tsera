@@ -216,11 +216,40 @@ async function getDb(): Promise<ReturnType<typeof drizzle>> {
 export let db: ReturnType<typeof drizzle> | undefined = undefined;
 
 /**
+ * Create tables if they don't exist.
+ * This is useful for development mode where migrations may not have been run.
+ */
+async function createTablesIfNotExist(client: Client): Promise<void> {
+  // Create slogans table
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS slogans (
+      id INTEGER PRIMARY KEY,
+      text TEXT NOT NULL
+    )
+  `);
+
+  // Create users table
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      display_name TEXT,
+      mot_de_passe TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    )
+  `);
+}
+
+/**
  * Initialize the database connection synchronously.
  * Call this at application startup.
  */
 export async function initDb(): Promise<void> {
-  const drizzleInstance = await getDb();
+  const { client, db: drizzleInstance } = await initializeDatabase();
+
+  // Create tables if they don't exist (useful for development)
+  await createTablesIfNotExist(client);
+
   db = drizzleInstance;
 }
 

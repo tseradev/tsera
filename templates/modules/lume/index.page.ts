@@ -27,7 +27,7 @@ type HealthApiResponse = {
  * Returns fallback slogans if API is unavailable.
  */
 async function fetchSlogans(): Promise<Slogan[]> {
-  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:8000";
+  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:3001";
 
   try {
     const response = await fetch(`${apiUrl}/api/v1/slogans`, {
@@ -57,7 +57,7 @@ async function fetchSlogans(): Promise<Slogan[]> {
  * Fetch health status from the API at build time.
  */
 async function fetchHealthStatus(): Promise<"ok" | "down"> {
-  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:8000";
+  const apiUrl = Deno.env.get("API_URL") ?? "http://localhost:3001";
 
   try {
     const response = await fetch(`${apiUrl}/api/v1/health`, {

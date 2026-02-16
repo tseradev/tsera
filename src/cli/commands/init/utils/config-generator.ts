@@ -66,13 +66,13 @@ const config = {
   },
   db: {
     // Choose between "postgres", "mysql", or "sqlite".
-    dialect: "postgres",
-    // Environment variable supplying the connection URL.
-    urlEnv: "${envVar}",
-    ssl: "prefer",
-    // Example SQLite configuration:
-    // dialect: "sqlite",
-    // file: "./data/tsera.sqlite",
+    dialect: "sqlite",
+    // SQLite database file path.
+    file: "./data/tsera.sqlite",
+    // Example PostgreSQL configuration:
+    // dialect: "postgres",
+    // urlEnv: "TSERA_DATABASE_URL",
+    // ssl: "prefer",
   },
   deploy: {
     // Deployment target handled by "tsera update".

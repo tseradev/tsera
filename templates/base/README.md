@@ -1,6 +1,7 @@
 # TSera Project
 
-A fullstack TypeScript project powered by TSera - continuous coherence for modern applications.
+A fullstack TypeScript project powered by TSera - continuous coherence for
+modern applications.
 
 ## Stack
 
@@ -13,7 +14,8 @@ A fullstack TypeScript project powered by TSera - continuous coherence for moder
 
 ### Prerequisites
 
-- [Deno v2](https://docs.deno.com/runtime/manual/getting_started/installation) installed
+- [Deno v2](https://docs.deno.com/runtime/manual/getting_started/installation)
+  installed
 
 ### Development
 
@@ -100,7 +102,8 @@ tsera doctor --fix
 
 ## Secrets Management
 
-TSera provides a secure, type-safe secrets management system with optional encryption.
+TSera provides a secure, type-safe secrets management system with optional
+encryption.
 
 ### Local Development
 
@@ -136,8 +139,9 @@ TSera provides a secure, type-safe secrets management system with optional encry
    export TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
    ```
 
-   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in `.tsera/kv/` (warning
-   displayed). **With `TSERA_SECRET_KEY`**: Secrets are encrypted with AES-256-GCM before storage.
+   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in
+   `.tsera/kv/` (warning displayed). **With `TSERA_SECRET_KEY`**: Secrets are
+   encrypted with AES-256-GCM before storage.
 
 ### Encrypted Store (Deno KV)
 
@@ -192,8 +196,8 @@ To version secrets in Git securely using **git-crypt**:
    git push
    ```
 
-**Note**: git-crypt is **optional**. Without it, the files listed in `.gitignore` won't be
-committed.
+**Note**: git-crypt is **optional**. Without it, the files listed in
+`.gitignore` won't be committed.
 
 ### Environment Variables Schema
 
@@ -204,7 +208,7 @@ import { defineEnvSchema } from "tsera/core/secrets.ts";
 
 export const envSchema = defineEnvSchema({
   DATABASE_URL: { type: "string", required: true },
-  PORT: { type: "number", required: true, default: 3000 },
+  PORT: { type: "number", required: true, default: 3001 },
   DEBUG: { type: "boolean", required: false, default: false },
 });
 ```
@@ -219,7 +223,8 @@ console.log(`Running in ${tsera.currentEnvironment} mode`);
 
 ## Entities
 
-Entities are defined in the `core/entities/` directory and serve as the single source of truth for:
+Entities are defined in the `core/entities/` directory and serve as the single
+source of truth for:
 
 - TypeScript types
 - Zod validation schemas
@@ -247,10 +252,12 @@ export default defineEntity({
 
 ## Frontend (Lume)
 
-The frontend uses [Lume 3.1.4](https://lume.land), a modern static site generator for Deno with:
+The frontend uses [Lume 3.1.4](https://lume.land), a modern static site
+generator for Deno with:
 
 - **Static Site Generation**: Fast builds with server-side rendering
-- **Flexible Templates**: Support for multiple template engines (VTO, JSX, Markdown)
+- **Flexible Templates**: Support for multiple template engines (VTO, JSX,
+  Markdown)
 - **File-based Routing**: Pages in `app/front/src/` are automatically discovered
 - **Plugin Architecture**: Extensible plugin system for custom functionality
 

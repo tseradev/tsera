@@ -66,7 +66,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
   // Hono module
   if (modules.includes("hono")) {
     lines.push("# API Server (Hono)");
-    lines.push("PORT=3000");
+    lines.push("PORT=3001");
     lines.push("HOST=localhost");
     lines.push("API_PREFIX=/api");
     lines.push("");
@@ -75,7 +75,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
   // Lume module
   if (modules.includes("lume")) {
     lines.push("# Frontend Server (Lume)");
-    lines.push("LUME_PORT=8001");
+    lines.push("LUME_PORT=3000");
     lines.push("");
   }
 

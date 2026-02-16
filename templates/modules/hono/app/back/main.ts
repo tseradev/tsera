@@ -116,6 +116,8 @@ function validateEnvironment(): void {
 
 /**
  * Setup graceful shutdown handlers.
+ * Note: Windows only supports SIGINT, SIGBREAK, and SIGUP (ctrl-close).
+ * SIGTERM is only available on Unix-like systems.
  */
 function setupGracefulShutdown(state: ServerState): void {
   const shutdown = async (signal: string) => {
@@ -139,8 +141,13 @@ function setupGracefulShutdown(state: ServerState): void {
     Deno.exit(0);
   };
 
+  // SIGINT (Ctrl+C) is supported on all platforms
   Deno.addSignalListener("SIGINT", () => shutdown("SIGINT"));
-  Deno.addSignalListener("SIGTERM", () => shutdown("SIGTERM"));
+
+  // SIGTERM is only supported on Unix-like systems (not Windows)
+  if (Deno.build.os !== "windows") {
+    Deno.addSignalListener("SIGTERM", () => shutdown("SIGTERM"));
+  }
 }
 
 // ============================================================================
@@ -208,7 +215,7 @@ if (import.meta.main) {
   // Get port from environment or use default
   const tseraPort = tseraEnv ? tseraEnv.env("PORT") : undefined;
   const envPort = Deno.env.get("PORT");
-  const port = readPort(tseraPort) ?? readPort(envPort) ?? 8000;
+  const port = readPort(tseraPort) ?? readPort(envPort) ?? 3001;
 
   // Create abort controller for graceful shutdown
   serverState.abortController = new AbortController();

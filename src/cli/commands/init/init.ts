@@ -344,10 +344,10 @@ export function createDefaultInitHandler(
     const modulesDir = join(templatesRoot, "modules");
 
     // Default database configuration for env file generation
+    // Must match the dialect in config-generator.ts
     const defaultDbConfig = {
-      dialect: "postgres" as const,
-      urlEnv: "DATABASE_URL",
-      ssl: "prefer" as const,
+      dialect: "sqlite" as const,
+      file: "./data/tsera.sqlite",
     };
 
     // composeTemplate must NOT receive "ci" as it would be copied with its directory structure

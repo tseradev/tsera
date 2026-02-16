@@ -77,35 +77,24 @@ Modern full-stack work is repetitive and fragile:
 
 ```bash
 git clone https://github.com/tseradev/tsera.git && cd tsera
+deno i && deno run tsera init demo
+cd demo && deno run dev
+```
+
+Having trouble with the installation? Try this in the CLI folder :
+```bash
 deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
-tsera init demo && cd demo && tsera dev
 ```
 
 ---
 
-## Minimal example
+## Entities
 
-Create an entity once:
+You can find the entities here in a TSera project : ``core/entities/``
 
-```ts
-// domain/User.entity.ts
-import { defineEntity } from "tsera/core";
-
-export default defineEntity({
-  name: "User",
-  table: true,
-  columns: {
-    id: { type: "string", primaryKey: true },
-    email: { type: "string", unique: true },
-    createdAt: { type: "date" },
-  },
-});
-```
-
-Run the coherence loop:
-
+# Launch the TSera project
 ```bash
-tsera dev
+deno run dev
 ```
 
 TSera will **plan → apply** and (depending on enabled modules) generate artifacts such as:
@@ -113,14 +102,14 @@ TSera will **plan → apply** and (depending on enabled modules) generate artifa
 * `schemas/user.schema.ts` (Zod validation)
 * `docs/openapi/openapi.json` (OpenAPI)
 * `drizzle/*` (migrations)
-* `docs/entities/user.md` (documentation)
-* `tests/*` (smoke/regression scaffolding)
+* `docs/entities/*.md` (documentation)
+* `tests/*` (smoke/regression scaffolding) *(soon)*
 
 ---
 
 ## Modules (opt-in)
 
-TSera is modular. `tsera init` can enable/disable modules depending on your needs:
+TSera is modular. `deno run tsera init` can enable/disable modules depending on your needs:
 
 * **API**: Hono (optional)
 * **Frontend**: Lume (optional)
@@ -128,6 +117,8 @@ TSera is modular. `tsera init` can enable/disable modules depending on your need
 * **CI**: GitHub Actions workflows (optional)
 * **Secrets**: type-safe environment validation (optional)
 * **SDK**: type-safe client generation (optional)
+
+Type ``deno run tsera init -h`` to see the possible options.
 
 ---
 

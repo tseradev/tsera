@@ -1,6 +1,6 @@
 import { count } from "drizzle-orm";
 import type { Context, Hono } from "hono";
-import { db, slogans } from "../../../../../base/app/db/connect.ts";
+import { db, slogans } from "../../db/connect.ts";
 
 /**
  * Health check response types.
