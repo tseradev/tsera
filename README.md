@@ -1,4 +1,4 @@
-# TSera – Full TypeScript monorepo for modern full-stack apps
+# TSera – TypeScript engine for modern full-stack apps
 
 <p align="center">
   <strong>One domain definition. All artifacts generated. Stack stays aligned.</strong>
