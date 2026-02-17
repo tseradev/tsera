@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Build and ship full-stack applications:</strong><br/>
-  database, API, frontend, docs and deployment workflows — all in TypeScript.
+  schemas, database, API, frontend, docs, CI/CD — all in TypeScript.
 </p>
 
 <p align="center">
