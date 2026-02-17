@@ -27,7 +27,7 @@ export function generateConfigFile(
   _projectName?: string,
   modules: ModuleOptions = {},
 ): string {
-  const envVar = "TSERA_DATABASE_URL";
+  const _envVar = "TSERA_DATABASE_URL";
 
   // Create a TS-Morph project and source file
   const project = createTSeraProject();

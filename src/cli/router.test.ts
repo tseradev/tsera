@@ -192,7 +192,7 @@ Deno.test("router: export-env command can be executed", async () => {
   const router = createRouter(TEST_METADATA);
 
   // Test that export-env command can be parsed (basic smoke test)
-  const result = await router.parse(["export-env", "--help"]);
+  const _result = await router.parse(["export-env", "--help"]);
 
   // If we reach here without throwing, the command is properly registered
   // The help output will be shown, which is sufficient for a basic test

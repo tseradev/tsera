@@ -40,7 +40,7 @@ export default function registerHealthRoutes(app: Hono): Hono {
 
       // Perform a minimal database query to verify connectivity
       // Using count on slogans table as a lightweight health check
-      const result = await db.select({ count: count() }).from(slogans);
+      const _result = await db.select({ count: count() }).from(slogans);
 
       // If we got a result, database is healthy
       const response: HealthResponseOk = { status: "ok" };

@@ -1037,7 +1037,7 @@ Deno.test("defineEnvConfig - prevents mutation of returned schema", () => {
 
   // Attempting to modify should fail
   try {
-    (schema as any).NEW_VAR = { type: "string", required: false };
+    (schema as Record<string, unknown>).NEW_VAR = { type: "string", required: false };
     throw new Error("Schema should be frozen");
   } catch (error) {
     if (error instanceof Error && error.message === "Schema should be frozen") {

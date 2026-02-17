@@ -7,9 +7,9 @@
  * @module
  */
 import { join } from "../../../shared/path.ts";
+import type { PlanStepKind } from "../../engine/planner.ts";
 import { bold, brightMagenta, cyan, dim, gray, green, magenta, yellow } from "../../ui/colors.ts";
 import { BaseConsole } from "../../ui/console.ts";
-import { clampWidth, detectTerminalWidth } from "../../ui/terminal.ts";
 import {
   formatActionLabel,
   formatActionSummary,
@@ -20,7 +20,7 @@ import {
   sanitizeProjectDir,
 } from "../../ui/formatters.ts";
 import { TerminalSpinner } from "../../ui/spinner.ts";
-import type { PlanStepKind } from "../../engine/planner.ts";
+import { clampWidth, detectTerminalWidth } from "../../ui/terminal.ts";
 
 /**
  * Options for creating an InitConsole instance.
@@ -136,9 +136,9 @@ export class InitConsole extends BaseConsole {
       : "";
 
     if (this.#spinner) {
-      // Arrêter le spinner sans message (il nettoie la ligne)
+      // Stop spinner without message (it clears the line)
       this.#spinner.stop();
-      // Puis écrire avec le formatage d'arbre
+      // Then write with tree formatting
       this.writeMiddle(`${green("✓")} ${copiedLabel}${skippedInfo}`);
     } else {
       this.writeMiddle(`${green("✓")} ${copiedLabel}${skippedInfo}`);

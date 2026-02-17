@@ -81,7 +81,7 @@ async function handleWriteStep(
 ): Promise<void> {
   const targetPath = step.node.targetPath;
   if (!targetPath) {
-    throw new Error(`Impossible d'appliquer le step ${step.node.id} sans chemin de sortie.`);
+    throw new Error(`Cannot apply step ${step.node.id} without an output path.`);
   }
   const content = step.node.content;
   if (content === undefined) {

@@ -83,7 +83,7 @@ export function watchProject(
   })()
     .catch((error) => {
       if (!closed) {
-        console.error("Erreur watcher:", error);
+        console.error("Watcher error:", error);
       }
     });
 
@@ -106,7 +106,7 @@ export function watchProject(
  * @returns {@code true} if the path should be ignored; otherwise {@code false}.
  */
 function shouldIgnore(path: string, ignores: (string | RegExp)[]): boolean {
-  // Normalise les chemins Windows pour utiliser des forward slashes
+  // Normalize Windows paths to use forward slashes
   const normalizedPath = path.replace(/\\/g, "/");
 
   for (const pattern of ignores) {

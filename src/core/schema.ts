@@ -2,30 +2,30 @@ import type { EntityRuntime } from "./entity.ts";
 import type { ZodObject, ZodType } from "./utils/zod.ts";
 
 /**
- * Retourne le schéma Zod principal d'une entité.
+ * Returns the main Zod schema for an entity.
  *
- * @param entity - Entité runtime TSERA.
- * @returns Schéma Zod principal.
+ * @param entity - TSera runtime entity.
+ * @returns Main Zod schema.
  */
 export function getEntitySchema(entity: EntityRuntime): ZodObject<Record<string, ZodType>> {
   return entity.schema;
 }
 
 /**
- * Retourne le schéma public d'une entité (champs visibility === "public").
+ * Returns the public schema for an entity (fields with visibility === "public").
  *
- * @param entity - Entité runtime TSERA.
- * @returns Schéma Zod public.
+ * @param entity - TSera runtime entity.
+ * @returns Public Zod schema.
  */
 export function getEntityPublicSchema(entity: EntityRuntime): ZodObject<Record<string, ZodType>> {
   return entity.public;
 }
 
 /**
- * Retourne les schémas d'entrée d'une entité (create et update).
+ * Returns input schemas for an entity (create and update).
  *
- * @param entity - Entité runtime TSERA.
- * @returns Schémas d'entrée (create et update).
+ * @param entity - TSera runtime entity.
+ * @returns Input schemas (create and update).
  */
 export function getEntityInputSchemas(entity: EntityRuntime): {
   create: ZodObject<Record<string, ZodType>>;

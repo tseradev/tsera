@@ -28,17 +28,19 @@
 ---
 
 ### 🔗 Resources
-- 🌐 **Website & Docs:** https://tsera.dev *(coming soon)* 
-- 💬 **Community (Discord):** https://discord.tsera.dev  
-- 🤝 **Contributing Guide:** [CONTRIBUTING.md](./CONTRIBUTING.md)  
-- 🔐 **Security Policy:** [SECURITY.md](./SECURITY.md)  
-- ⚖️ **License:** [LICENSE](./LICENSE)   
+
+- 🌐 **Website & Docs:** https://tsera.dev _(coming soon)_
+- 💬 **Community (Discord):** https://discord.tsera.dev
+- 🤝 **Contributing Guide:** [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 🔐 **Security Policy:** [SECURITY.md](./SECURITY.md)
+- ⚖️ **License:** [LICENSE](./LICENSE)
 
 ---
 
 ## What is TSera?
 
-TSera is a **Deno v2 CLI engine + entity core** that turns a single domain definition into **coherent, ready-to-use artifacts**—continuously.
+TSera is a **Deno v2 CLI engine + entity core** that turns a single domain definition into
+**coherent, ready-to-use artifacts**—continuously.
 
 ---
 
@@ -46,11 +48,12 @@ TSera is a **Deno v2 CLI engine + entity core** that turns a single domain defin
 
 Modern full-stack work is repetitive and fragile:
 
-* You define an entity… then rewrite it in validation, OpenAPI, SQL migrations, docs, tests.
-* Things drift out of sync.
-* “Just one change” becomes a cascade of manual updates.
+- You define an entity… then rewrite it in validation, OpenAPI, SQL migrations, docs, tests.
+- Things drift out of sync.
+- “Just one change” becomes a cascade of manual updates.
 
-**TSera solves this by enforcing Continuous Coherence (CC):** once an entity is declared, TSera keeps every derived artifact aligned from `plan` to `apply`—without manual sync steps.
+**TSera solves this by enforcing Continuous Coherence (CC):** once an entity is declared, TSera
+keeps every derived artifact aligned from `plan` to `apply`—without manual sync steps.
 
 ---
 
@@ -62,12 +65,12 @@ Modern full-stack work is repetitive and fragile:
 
 **Generated artifacts (examples):**
 
-* Zod schemas
-* OpenAPI definitions
-* Drizzle migrations
-* Docs (Markdown)
-* Tests (smoke/regressions)
-* Optional type-safe SDK for front/back integration
+- Zod schemas
+- OpenAPI definitions
+- Drizzle migrations
+- Docs (Markdown)
+- Tests (smoke/regressions)
+- Optional type-safe SDK for front/back integration
 
 ---
 
@@ -82,6 +85,7 @@ cd demo && deno run dev
 ```
 
 Having trouble with the installation? Try this in the CLI folder :
+
 ```bash
 deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
 ```
@@ -90,20 +94,21 @@ deno install --global --config deno.jsonc -A -f --name tsera src/cli/main.ts
 
 ## Entities
 
-You can find the entities here in a TSera project : ``core/entities/``
+You can find the entities here in a TSera project : `core/entities/`
 
 # Launch the TSera project
+
 ```bash
 deno run dev
 ```
 
 TSera will **plan → apply** and (depending on enabled modules) generate artifacts such as:
 
-* `schemas/user.schema.ts` (Zod validation)
-* `docs/openapi/openapi.json` (OpenAPI)
-* `drizzle/*` (migrations)
-* `docs/entities/*.md` (documentation)
-* `tests/*` (smoke/regression scaffolding) *(soon)*
+- `schemas/user.schema.ts` (Zod validation)
+- `docs/openapi/openapi.json` (OpenAPI)
+- `drizzle/*` (migrations)
+- `docs/entities/*.md` (documentation)
+- `tests/*` (smoke/regression scaffolding) _(soon)_
 
 ---
 
@@ -111,14 +116,14 @@ TSera will **plan → apply** and (depending on enabled modules) generate artifa
 
 TSera is modular. `deno run tsera init` can enable/disable modules depending on your needs:
 
-* **API**: Hono (optional)
-* **Frontend**: Lume (optional)
-* **Local infra**: Docker Compose (optional)
-* **CI**: GitHub Actions workflows (optional)
-* **Secrets**: type-safe environment validation (optional)
-* **SDK**: type-safe client generation (optional)
+- **API**: Hono (optional)
+- **Frontend**: Lume (optional)
+- **Local infra**: Docker Compose (optional)
+- **CI**: GitHub Actions workflows (optional)
+- **Secrets**: type-safe environment validation (optional)
+- **SDK**: type-safe client generation (optional)
 
-Type ``deno run tsera init -h`` to see the possible options.
+Type `deno run tsera init -h` to see the possible options.
 
 ---
 
@@ -132,27 +137,28 @@ Until then, refer to the source code and the CLI help output.
 
 ## Vision
 
-TSera’s goal is simple: **shrink the time between a domain idea and a production-ready implementation**.
+TSera’s goal is simple: **shrink the time between a domain idea and a production-ready
+implementation**.
 
 Long term, TSera evolves into an industrial environment:
 
-* **TSera Doctor**: prescriptive diagnostics, auto-fix, coherence gates for CI
-* **TSera Hub**: coherence metrics, drift tracking, project health dashboards
-* **Provider ecosystem**: plug-in generation pipelines (contracts, policies, deployment targets)
-* **AI-native workflows**: machine-readable plans and artifacts for agent-driven ops
+- **TSera Doctor**: prescriptive diagnostics, auto-fix, coherence gates for CI
+- **TSera Hub**: coherence metrics, drift tracking, project health dashboards
+- **Provider ecosystem**: plug-in generation pipelines (contracts, policies, deployment targets)
+- **AI-native workflows**: machine-readable plans and artifacts for agent-driven ops
 
 ---
 
 ## Community & Contributing
 
-* Join the community: [https://discord.tsera.dev](https://discord.tsera.dev)
-* Contribute: [CONTRIBUTING.md](./CONTRIBUTING.md) (DCO required)
-* Security reports: [SECURITY.md](./SECURITY.md)
-* Code of Conduct: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- Join the community: [https://discord.tsera.dev](https://discord.tsera.dev)
+- Contribute: [CONTRIBUTING.md](./CONTRIBUTING.md) (DCO required)
+- Security reports: [SECURITY.md](./SECURITY.md)
+- Code of Conduct: [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
 ---
 
 ## License
 
-Licensed under **Apache-2.0** — see [LICENSE](./LICENSE).
-Trademark usage is governed by [TRADEMARK_POLICY.md](./TRADEMARK_POLICY.md).
+Licensed under **Apache-2.0** — see [LICENSE](./LICENSE). Trademark usage is governed by
+[TRADEMARK_POLICY.md](./TRADEMARK_POLICY.md).

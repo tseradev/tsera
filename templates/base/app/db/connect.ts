@@ -200,7 +200,7 @@ let dbPromise:
 /**
  * Get or create the database connection.
  */
-async function getDb(): Promise<ReturnType<typeof drizzle>> {
+export async function getDb(): Promise<ReturnType<typeof drizzle>> {
   if (!dbPromise) {
     dbPromise = initializeDatabase();
   }

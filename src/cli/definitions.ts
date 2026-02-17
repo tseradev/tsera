@@ -97,8 +97,8 @@ export type TseraConfig = {
   /** Optional module configuration. */
   modules?: ModulesConfig;
   /**
-   * Liste des providers de déploiement activés (vide = aucun CD).
-   * Les workflows CD correspondants seront générés dans .github/workflows/
+   * List of enabled deployment providers (empty = no CD).
+   * Corresponding CD workflows will be generated in .github/workflows/
    */
   deployTargets?: DeployProvider[];
 };
