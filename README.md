@@ -5,8 +5,12 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/tseradev/tsera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" />
-  <img src="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main" alt="CodeQL status" />
+  <a href="https://github.com/tseradev/tsera/actions/workflows/ci.yml">
+    <img src="https://github.com/tseradev/tsera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" />
+  </a>
+  <a href="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql">
+    <img src="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main" alt="CodeQL" />
+  </a>
   <img src="https://img.shields.io/badge/build-in%20development-orange.svg" alt="Build status" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" />
 </p>
@@ -42,7 +46,7 @@
 ## What is TSera?
 
 TSera is a **Deno v2 CLI engine + entity core** that turns a single domain definition into
-**coherent, ready-to-use artifacts**—continuously.
+**coherent, ready-to-use artifacts** — continuously.
 
 ---
 
@@ -55,7 +59,7 @@ Modern full-stack work is repetitive and fragile:
 - “Just one change” becomes a cascade of manual updates.
 
 **TSera solves this by enforcing Continuous Coherence (CC):** once an entity is declared, TSera
-keeps every derived artifact aligned from `plan` to `apply`—without manual sync steps.
+keeps every derived artifact aligned from `plan` to `apply` — without manual sync steps.
 
 ---
 
@@ -106,7 +110,7 @@ deno run dev
 
 TSera will **plan → apply** and (depending on enabled modules) generate artifacts such as:
 
-- `schemas/user.schema.ts` (Zod validation)
+- `schemas/*.schema.ts` (Zod validation)
 - `docs/openapi/openapi.json` (OpenAPI)
 - `drizzle/*` (migrations)
 - `docs/entities/*.md` (documentation)
