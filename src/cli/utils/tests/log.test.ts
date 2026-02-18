@@ -1,9 +1,9 @@
-import { createLogger } from "../log.ts";
 import { assert, assertEquals } from "std/assert";
+import { createLogger } from "../log.ts";
 
 function stripAnsi(value: string): string {
   const escape = String.fromCharCode(27);
-  const pattern = new RegExp(`${escape}\[[0-9;]*[A-Za-z]`, "g");
+  const pattern = new RegExp(`${escape}\\[[0-9;]*[A-Za-z]`, "g");
   return value.replace(pattern, "");
 }
 
