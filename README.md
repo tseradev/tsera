@@ -5,12 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/tseradev/tsera/actions/workflows/ci.yml">
-    <img src="https://github.com/tseradev/tsera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" />
-  </a>
-  <a href="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql">
-    <img src="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main" alt="CodeQL" />
-  </a>
+  <a href="https://github.com/tseradev/tsera/actions/workflows/ci.yml" target="_blank"><img src="https://github.com/tseradev/tsera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
+  <a href="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql" target="_blank"><img src="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main" alt="CodeQL" /></a>
   <img src="https://img.shields.io/badge/build-in%20development-orange.svg" alt="Build status" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" />
 </p>
