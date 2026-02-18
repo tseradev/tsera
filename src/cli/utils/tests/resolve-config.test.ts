@@ -10,7 +10,7 @@ async function withTempDir<T>(
   try {
     return await fn(dir);
   } finally {
-    await Deno.remove(dir, { recursive: true }).catch(() => { });
+    await Deno.remove(dir, { recursive: true }).catch(() => {});
   }
 }
 
