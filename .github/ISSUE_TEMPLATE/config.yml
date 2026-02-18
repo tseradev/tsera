@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Questions / Support"
+    url: "https://github.com/tseradev/tsera/discussions"
+    about: "Please use Discussions for questions, help, and troubleshooting."
+
+  - name: "Security vulnerabilities"
+    url: "https://github.com/tseradev/tsera/security/policy"
+    about: "Report security issues privately. Do not open a public issue."
