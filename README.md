@@ -106,7 +106,7 @@ deno run dev
 
 TSera will **plan → apply** and (depending on enabled modules) generate artifacts such as:
 
-- `schemas/user.schema.ts` (Zod validation)
+- `schemas/*.schema.ts` (Zod validation)
 - `docs/openapi/openapi.json` (OpenAPI)
 - `drizzle/*` (migrations)
 - `docs/entities/*.md` (documentation)
