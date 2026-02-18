@@ -1,7 +1,7 @@
-import { join } from "../../../shared/path.ts";
 import { assertEquals } from "std/assert";
-import { defineEntity } from "../../../core/entity.ts";
 import { z } from "zod";
+import { defineEntity } from "../../../core/entity.ts";
+import { join } from "../../../shared/path.ts";
 import type { TseraConfig } from "../../definitions.ts";
 import { buildEntityArtifacts, discoverEntities, prepareDagInputs } from "../entities.ts";
 
@@ -146,10 +146,13 @@ Deno.test("buildEntityArtifacts respects the dependency chain", async () => {
 
   const schemaId = `schema:invoice:${artifacts[0].path}`;
   const migrationId = `migration:invoice:${artifacts[1].path}`;
+  const drizzleSchemaId = `drizzle-schema:invoice:${artifacts[2].path}`;
   const docId = `doc:invoice:${artifacts[3].path}`;
 
+  // Each stage depends on the previous stage
   assertEquals(artifacts[1].dependsOn, [schemaId]);
-  assertEquals(artifacts[3].dependsOn, [migrationId]);
+  assertEquals(artifacts[2].dependsOn, [migrationId]);
+  assertEquals(artifacts[3].dependsOn, [drizzleSchemaId]);
   assertEquals(artifacts[4].dependsOn, [docId]);
 });
 

@@ -200,7 +200,7 @@ Deno.test("getActualType - defaults to string for non-matching values", () => {
   // The error message should show "string" as the actual type, not the value
   assertEquals(
     errors[0],
-    '[dev] Invalid env var "PORT": expected number, got string. Fix in config/secret/.env.dev.',
+    '[dev] Invalid "PORT": expected number, got string.',
   );
 });
 
@@ -238,7 +238,7 @@ Deno.test("validateSecrets - detects missing required variables", () => {
   assertEquals(errors.length, 1);
   assertEquals(
     errors[0],
-    '[dev] Missing required env var "DATABASE_URL". Set it in config/secret/.env.dev.',
+    '[dev] Missing required var "DATABASE_URL".',
   );
 });
 
@@ -275,11 +275,11 @@ Deno.test("validateSecrets - detects type mismatches", () => {
   // Messages now show only the type, not the actual value (for security)
   assertEquals(
     errors[0],
-    '[dev] Invalid env var "PORT": expected number, got string. Fix in config/secret/.env.dev.',
+    '[dev] Invalid "PORT": expected number, got string.',
   );
   assertEquals(
     errors[1],
-    '[dev] Invalid env var "DEBUG": expected boolean, got string. Fix in config/secret/.env.dev.',
+    '[dev] Invalid "DEBUG": expected boolean, got string.',
   );
 });
 
@@ -715,7 +715,7 @@ Deno.test("initializeSecrets - throws on validation failure", async () => {
     await assertRejects(
       () => initializeSecrets(schema, "dev", envFilePath),
       Error,
-      "Invalid env var",
+      "Invalid",
     );
   } finally {
     // Restore original value
@@ -756,23 +756,20 @@ Deno.test("bootstrapEnv - loads schema and .env file", async () => {
 DATABASE_URL=postgresql://localhost:5432/db`,
   );
 
-  const originalCwd = Deno.cwd;
   const originalPort = Deno.env.get("PORT");
   const originalDbUrl = Deno.env.get("DATABASE_URL");
 
   try {
-    Deno.cwd = () => tempDir;
     // Set process env to ensure they override .env file
     Deno.env.set("PORT", "8000");
     Deno.env.set("DATABASE_URL", "postgresql://localhost:5432/db");
 
-    const result = await bootstrapEnv("dev", "config/secret");
+    // Pass absolute path to envDir instead of mocking Deno.cwd
+    const result = await bootstrapEnv("dev", envDir);
 
     assertEquals(result.PORT, "8000");
     assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
   } finally {
-    Deno.cwd = originalCwd;
-
     // Restore original values
     if (originalPort !== undefined) {
       Deno.env.set("PORT", originalPort);
@@ -834,24 +831,21 @@ Deno.test("bootstrapEnv - throws when .env file is missing and required vars are
 
   // Don't create .env.dev file
 
-  const originalCwd = Deno.cwd;
   const originalPort = Deno.env.get("PORT");
   const originalDbUrl = Deno.env.get("DATABASE_URL");
 
   try {
-    Deno.cwd = () => tempDir;
     // Clear process env to ensure .env file is required
     Deno.env.delete("PORT");
     Deno.env.delete("DATABASE_URL");
 
+    // Pass absolute path to envDir instead of mocking Deno.cwd
     await assertRejects(
-      () => bootstrapEnv("dev", "config/secret"),
+      () => bootstrapEnv("dev", envDir),
       Error,
-      "Missing required env var",
+      "Missing required var",
     );
   } finally {
-    Deno.cwd = originalCwd;
-
     // Restore original values
     if (originalPort !== undefined) {
       Deno.env.set("PORT", originalPort);
@@ -890,22 +884,19 @@ Deno.test("bootstrapEnv - validates against environment-specific requirements", 
     `DATABASE_URL=postgresql://localhost:5432/db`,
   );
 
-  const originalCwd = Deno.cwd;
   const originalDebug = Deno.env.get("DEBUG");
   const originalDbUrl = Deno.env.get("DATABASE_URL");
 
   try {
-    Deno.cwd = () => tempDir;
     // Set process env to ensure they override .env file
     Deno.env.set("DATABASE_URL", "postgresql://localhost:5432/db");
 
+    // Pass absolute path to envDir instead of mocking Deno.cwd
     // In prod, only DATABASE_URL is required
-    const result = await bootstrapEnv("prod", "config/secret");
+    const result = await bootstrapEnv("prod", envDir);
 
     assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db");
   } finally {
-    Deno.cwd = originalCwd;
-
     // Restore original values
     if (originalDebug !== undefined) {
       Deno.env.set("DEBUG", originalDebug);

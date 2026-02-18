@@ -191,9 +191,36 @@ Deno.test("main shows help when no arguments are provided", async () => {
 Deno.test("router: export-env command can be executed", async () => {
   const router = createRouter(TEST_METADATA);
 
-  // Test that export-env command can be parsed (basic smoke test)
-  const _result = await router.parse(["export-env", "--help"]);
+  // Mock Deno.exit to prevent test termination
+  const originalExit = Deno.exit;
+  Deno.exit = (code?: number) => {
+    throw new Error(`Deno.exit(${code}) called`);
+  };
 
-  // If we reach here without throwing, the command is properly registered
-  // The help output will be shown, which is sufficient for a basic test
+  const captured: string[] = [];
+  const originalLog = console.log;
+  console.log = (...args: unknown[]) => {
+    captured.push(args.map((value) => String(value)).join(" "));
+  };
+
+  try {
+    // Test that export-env command can be parsed (basic smoke test)
+    await router.parse(["export-env", "--help"]);
+  } catch (error) {
+    // Deno.exit(0) is expected for --help
+    if (error instanceof Error && error.message.includes("Deno.exit(0)")) {
+      // This is expected behavior for --help
+    } else {
+      throw error;
+    }
+  } finally {
+    Deno.exit = originalExit;
+    console.log = originalLog;
+  }
+
+  // Verify help was shown (command is properly registered)
+  const output = captured.join("\n");
+  if (!output.includes("export-env") && !output.includes("Export environment")) {
+    throw new Error("export-env command help was not shown properly.");
+  }
 });

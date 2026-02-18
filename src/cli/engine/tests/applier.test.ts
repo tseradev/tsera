@@ -1,11 +1,10 @@
 import { assertEquals } from "std/assert";
 import { join } from "../../../shared/path.ts";
-import { applyPlan } from "../applier.ts";
 import type { ApplyStepResult } from "../applier.ts";
-import type { PlanStep } from "../planner.ts";
-import type { PlanSummary } from "../planner.ts";
-import { createEmptyState } from "../state.ts";
+import { applyPlan } from "../applier.ts";
 import type { DagNode } from "../dag.ts";
+import type { PlanStep, PlanSummary } from "../planner.ts";
+import { createEmptyState } from "../state.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,
@@ -394,7 +393,7 @@ Deno.test("applyPlan - échoue si node sans targetPath pour create", async () =>
     }
 
     assertEquals(error !== null, true);
-    assertEquals(error?.message.includes("sans chemin de sortie"), true);
+    assertEquals(error?.message.includes("without an output path"), true);
   });
 });
 
