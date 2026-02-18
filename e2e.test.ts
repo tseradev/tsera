@@ -137,7 +137,7 @@ Deno.test("E2E: selective module disabling", async () => {
     assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
     assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono should be present");
     assert(
-      await exists(join(projectDir, "config", "secrets", "manager.ts")),
+      await exists(join(projectDir, "config", "secret", "env.config.ts")),
       "Secrets should be present",
     );
 
@@ -202,7 +202,8 @@ Deno.test("E2E: export-env command works", async () => {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
-    // Create a minimal environment schema
+    // Create a minimal environment schema in config/secret/
+    const secretDir = join(projectDir, "config", "secret");
     const schemaContent = `
 export const envSchema = {
   TEST_API_KEY: {
@@ -217,7 +218,7 @@ export const envSchema = {
 };
 `;
 
-    await Deno.writeTextFile(join(projectDir, "env.config.ts"), schemaContent);
+    await Deno.writeTextFile(join(secretDir, "env.config.ts"), schemaContent);
 
     // Test sh format
     const shCommand = new Deno.Command(Deno.execPath(), {

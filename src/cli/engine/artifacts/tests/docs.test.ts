@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
-import { defineEntity } from "../../../../core/entity.ts";
 import { z } from "zod";
+import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildDocsArtifacts } from "../docs.ts";
 
@@ -94,12 +94,12 @@ Deno.test("buildDocsArtifacts - filtre les champs visibility !== public", async 
   // Public Fields doit contenir uniquement "public"
   assertStringIncludes(content, "## Public Fields");
   assertStringIncludes(content, "| public |");
-  assertEquals(content.includes("| internal |"), false);
-  assertEquals(content.includes("| secret |"), false);
 
   // Internal Fields doit contenir "internal" mais pas "secret"
   assertStringIncludes(content, "## Internal Fields");
   assertStringIncludes(content, "| internal |");
+
+  // secret ne doit jamais apparaître dans la documentation
   assertEquals(content.includes("| secret |"), false);
 });
 

@@ -6,8 +6,8 @@
  * @module
  */
 
-import { z, ZodError } from "zod";
 import type { ZodType } from "zod";
+import { z, ZodError } from "zod";
 
 /**
  * Zod schema library instance.
@@ -25,11 +25,37 @@ export { ZodError as SchemaError };
  */
 export type ZodInternalDef = {
   type: string;
-  checks?: Array<{ def?: { format?: string; min?: number; max?: number } }>;
+  checks?: Array<{
+    def?: {
+      format?: string;
+      min?: number;
+      max?: number;
+      kind?: string;
+      value?: number;
+    };
+  }>;
   element?: ZodType;
   innerType?: ZodType;
   defaultValue?: unknown;
   shape?: Record<string, ZodType>;
+};
+
+/**
+ * Internal Zod bag structure for constraints.
+ */
+export type ZodInternalBag = {
+  minimum?: number;
+  maximum?: number;
+};
+
+/**
+ * Internal Zod parent structure for additional type info.
+ */
+export type ZodInternalParent = {
+  isInt?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  format?: string | null;
 };
 
 /**
@@ -38,6 +64,8 @@ export type ZodInternalDef = {
 export type ZodInternalSchema = {
   def: ZodInternalDef;
   description?: string;
+  bag?: ZodInternalBag;
+  parent?: ZodInternalParent;
 };
 
 /**
@@ -64,7 +92,15 @@ export function getZodInternal(schema: ZodType): ZodInternalSchema {
 
   const description = typeof schema["description"] === "string" ? schema["description"] : undefined;
 
-  return { def: defCandidate, description };
+  // Extract bag for constraints (min/max for strings)
+  const bag = isRecord(zodInternal["bag"]) ? zodInternal["bag"] as ZodInternalBag : undefined;
+
+  // Extract parent for additional type info (isInt, minLength/maxLength)
+  const parent = isRecord(zodInternal["parent"])
+    ? zodInternal["parent"] as ZodInternalParent
+    : undefined;
+
+  return { def: defCandidate, description, bag, parent };
 }
 
 /**

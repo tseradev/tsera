@@ -16,9 +16,7 @@
  * - description: human-readable description (optional but recommended)
  */
 
-// NOTE: Cet import relatif pointe vers le code source du CLI TSera.
-// Dans un projet généré, cet import sera remplacé par un import JSR
-import { defineEnvConfig } from "../../../src/core/secrets.ts";
+import { defineEnvConfig } from "tsera/core";
 
 export default defineEnvConfig({
   // Database Configuration

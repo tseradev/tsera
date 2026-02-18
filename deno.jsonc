@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true
   },
+  "exclude": [
+    "templates/"
+  ],
   "nodeModulesDir": "none",
   "fmt": {
     "useTabs": false,

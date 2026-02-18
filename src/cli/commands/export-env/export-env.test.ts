@@ -575,7 +575,7 @@ Deno.test("export-env validates environment variables", async () => {
       if (error instanceof Error && error.message === "Deno.exit called") {
         const stderrOutput = capturedStderr.join("\n");
         assertStringIncludes(stderrOutput, "Validation errors");
-        assertStringIncludes(stderrOutput, "Missing required env var");
+        assertStringIncludes(stderrOutput, "Missing required var");
         assertStringIncludes(stderrOutput, "DATABASE_URL");
       } else {
         throw error;

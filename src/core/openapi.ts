@@ -44,6 +44,10 @@ export type SchemaObject = {
   format?: string;
   /** Whether additional properties are allowed. */
   additionalProperties?: boolean;
+  /** Minimum string length. */
+  minLength?: number;
+  /** Maximum string length. */
+  maxLength?: number;
 };
 
 /**
@@ -78,7 +82,7 @@ export type OpenAPIObject = {
  * @returns OpenAPI schema object.
  */
 function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
-  const { def, description } = getZodInternal(zodSchema);
+  const { def, description, bag, parent } = getZodInternal(zodSchema);
 
   // Handle ZodString
   if (def.type === "string") {
@@ -97,6 +101,25 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
         }
       }
     }
+    // Extract length constraints from bag (Zod v4)
+    // Only add constraints if they are defined AND not null
+    if (bag) {
+      if (bag.minimum != null) {
+        schema.minLength = bag.minimum;
+      }
+      if (bag.maximum != null) {
+        schema.maxLength = bag.maximum;
+      }
+    }
+    // Also check parent for minLength/maxLength (Zod v4)
+    if (parent) {
+      if (parent.minLength != null && schema.minLength === undefined) {
+        schema.minLength = parent.minLength;
+      }
+      if (parent.maxLength != null && schema.maxLength === undefined) {
+        schema.maxLength = parent.maxLength;
+      }
+    }
     return schema;
   }
 
@@ -105,6 +128,10 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
     const schema: SchemaObject = { type: "number" };
     if (description) {
       schema.description = description;
+    }
+    // Check for integer constraint from parent (Zod v4)
+    if (parent?.isInt === true) {
+      schema.type = "integer";
     }
     return schema;
   }
@@ -177,7 +204,50 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
 
   // Handle ZodOptional
   if (def.type === "optional") {
-    return zodSchemaToOpenAPI(def.innerType as ZodType);
+    const innerSchema = zodSchemaToOpenAPI(def.innerType as ZodType);
+    // Get constraints from the innerType's _zod structure
+    // (for z.string().min(1).max(100).optional(), the min/max are in the innerType's bag/parent/checks)
+    const innerZod = getZodInternal(def.innerType as ZodType);
+
+    // Extract from bag (Zod v4)
+    if (innerZod.bag) {
+      if (innerZod.bag.minimum != null && innerSchema.minLength === undefined) {
+        innerSchema.minLength = innerZod.bag.minimum;
+      }
+      if (innerZod.bag.maximum != null && innerSchema.maxLength === undefined) {
+        innerSchema.maxLength = innerZod.bag.maximum;
+      }
+    }
+
+    // Extract from parent (Zod v4)
+    if (innerZod.parent) {
+      if (innerZod.parent.minLength != null && innerSchema.minLength === undefined) {
+        innerSchema.minLength = innerZod.parent.minLength;
+      }
+      if (innerZod.parent.maxLength != null && innerSchema.maxLength === undefined) {
+        innerSchema.maxLength = innerZod.parent.maxLength;
+      }
+    }
+
+    // Extract from checks (fallback for some Zod v4 versions)
+    if (innerZod.def.checks) {
+      for (const check of innerZod.def.checks) {
+        const checkDef = check.def;
+        if (
+          checkDef?.kind === "min" && typeof checkDef.value === "number" &&
+          innerSchema.minLength === undefined
+        ) {
+          innerSchema.minLength = checkDef.value;
+        } else if (
+          checkDef?.kind === "max" && typeof checkDef.value === "number" &&
+          innerSchema.maxLength === undefined
+        ) {
+          innerSchema.maxLength = checkDef.value;
+        }
+      }
+    }
+
+    return innerSchema;
   }
 
   // Handle ZodDefault
