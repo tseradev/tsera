@@ -5,6 +5,8 @@
 </p>
 
 <p align="center">
+  <img src="https://github.com/tseradev/tsera/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" />
+  <img src="https://github.com/tseradev/tsera/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main" alt="CodeQL status" />
   <img src="https://img.shields.io/badge/build-in%20development-orange.svg" alt="Build status" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" />
 </p>
