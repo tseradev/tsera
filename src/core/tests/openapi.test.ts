@@ -1,6 +1,6 @@
 import { assert, assertEquals } from "std/assert";
-import { defineEntity, generateOpenAPIDocument } from "../index.ts";
 import { z } from "zod";
+import { defineEntity, generateOpenAPIDocument } from "../index.ts";
 
 const commentEntity = defineEntity({
   name: "Comment",
@@ -21,12 +21,12 @@ Deno.test("generateOpenAPIDocument aggregates schemas for all entities", () => {
 
   assertEquals(document.info.title, "Comment API");
   assert(document.components?.schemas?.Comment);
-  // Le schéma OpenAPI ne doit contenir que les champs visibility === "public"
+  // OpenAPI schema should only contain fields with visibility === "public"
   const commentSchema = document.components?.schemas?.Comment;
   assert(commentSchema.properties);
   assert("id" in commentSchema.properties);
   assert("body" in commentSchema.properties);
-  // createdAt ne doit pas être dans OpenAPI (visibility: "internal")
+  // createdAt should not be in OpenAPI (visibility: "internal")
   assert(!("createdAt" in commentSchema.properties));
 });
 

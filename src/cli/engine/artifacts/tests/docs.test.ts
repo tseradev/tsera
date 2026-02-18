@@ -24,7 +24,7 @@ const baseConfig: TseraConfig = {
 
 const projectDir = Deno.cwd();
 
-Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () => {
+Deno.test("buildDocsArtifacts - generates Markdown documentation", async () => {
   const entity = defineEntity({
     name: "User",
     doc: true,
@@ -38,13 +38,13 @@ Deno.test("buildDocsArtifacts - génère une documentation Markdown", async () =
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "doc");
-  // Normalise le chemin pour Windows
+  // Normalize path for Windows
   const normalizedPath = artifacts[0].path.replace(/\\/g, "/");
   assertEquals(normalizedPath, "docs/markdown/User.md");
   assertEquals(artifacts[0].label, "User documentation");
 });
 
-Deno.test("buildDocsArtifacts - contient un tableau des propriétés publiques", async () => {
+Deno.test("buildDocsArtifacts - contains a table of public properties", async () => {
   const entity = defineEntity({
     name: "Product",
     doc: true,
@@ -59,25 +59,25 @@ Deno.test("buildDocsArtifacts - contient un tableau des propriétés publiques",
   const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
-  // Vérifie le header
+  // Verify header
   assertStringIncludes(content, "# Product");
 
-  // Vérifie l'en-tête du tableau
+  // Verify table header
   assertStringIncludes(content, "## Public Fields");
   assertStringIncludes(
     content,
     "| Property | Type | Optional | Nullable | Default | Description |",
   );
 
-  // Vérifie les lignes de propriétés publiques
+  // Verify public property rows
   assertStringIncludes(content, "| name |");
   assertStringIncludes(content, "| price |");
   assertStringIncludes(content, "| active |");
-  // secret ne doit pas apparaître dans Public Fields
+  // secret should not appear in Public Fields
   assertEquals(content.includes("| secret |"), false);
 });
 
-Deno.test("buildDocsArtifacts - filtre les champs visibility !== public", async () => {
+Deno.test("buildDocsArtifacts - filters fields with visibility !== public", async () => {
   const entity = defineEntity({
     name: "Test",
     doc: true,
@@ -91,19 +91,19 @@ Deno.test("buildDocsArtifacts - filtre les champs visibility !== public", async 
   const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
-  // Public Fields doit contenir uniquement "public"
+  // Public Fields should only contain "public"
   assertStringIncludes(content, "## Public Fields");
   assertStringIncludes(content, "| public |");
 
-  // Internal Fields doit contenir "internal" mais pas "secret"
+  // Internal Fields should contain "internal" but not "secret"
   assertStringIncludes(content, "## Internal Fields");
   assertStringIncludes(content, "| internal |");
 
-  // secret ne doit jamais apparaître dans la documentation
+  // secret should never appear in the documentation
   assertEquals(content.includes("| secret |"), false);
 });
 
-Deno.test("buildDocsArtifacts - utilise entity.docs.description", async () => {
+Deno.test("buildDocsArtifacts - uses entity.docs.description", async () => {
   const entity = defineEntity({
     name: "Invoice",
     doc: true,
@@ -121,7 +121,7 @@ Deno.test("buildDocsArtifacts - utilise entity.docs.description", async () => {
   assertStringIncludes(content, "Custom description for Invoice entity");
 });
 
-Deno.test("buildDocsArtifacts - ajoute newline final", async () => {
+Deno.test("buildDocsArtifacts - adds trailing newline", async () => {
   const entity = defineEntity({
     name: "Profile",
     doc: true,

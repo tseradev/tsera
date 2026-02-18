@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
-import { defineEntity, entityToDDL } from "../index.ts";
 import { z } from "zod";
+import { defineEntity, entityToDDL } from "../index.ts";
 
 const userEntity = defineEntity({
   name: "UserAccount",
@@ -10,7 +10,7 @@ const userEntity = defineEntity({
     email: { validator: z.string().default("anonymous@example.com"), stored: true },
     createdAt: { validator: z.date(), stored: true },
     preferences: { validator: z.any().default({ theme: "light" }), stored: true },
-    computed: { validator: z.string(), stored: false }, // Ne doit pas apparaître dans DDL
+    computed: { validator: z.string(), stored: false }, // Should not appear in DDL
   },
 });
 
@@ -21,7 +21,7 @@ Deno.test("entityToDDL emits a CREATE TABLE statement", () => {
   assertStringIncludes(ddl, '"id" TEXT NOT NULL');
   assertStringIncludes(ddl, "\"email\" TEXT DEFAULT 'anonymous@example.com'");
   assertStringIncludes(ddl, `"preferences" JSONB DEFAULT '{"theme":"light"}'::jsonb`);
-  // computed ne doit pas apparaître (stored: false)
+  // computed should not appear (stored: false)
   assertEquals(ddl.includes('"computed"'), false);
 });
 

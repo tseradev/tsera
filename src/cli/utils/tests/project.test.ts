@@ -9,11 +9,11 @@ async function withTempDir<T>(
   try {
     return await fn(dir);
   } finally {
-    await Deno.remove(dir, { recursive: true }).catch(() => {});
+    await Deno.remove(dir, { recursive: true }).catch(() => { });
   }
 }
 
-Deno.test("findConfigPath - trouve le config à la racine", async () => {
+Deno.test("findConfigPath - finds config at root", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
@@ -25,41 +25,41 @@ Deno.test("findConfigPath - trouve le config à la racine", async () => {
   });
 });
 
-Deno.test("findConfigPath - trouve le config dans un sous-répertoire", async () => {
+Deno.test("findConfigPath - finds config from subdirectory", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
-    // Crée un sous-répertoire
+    // Create a subdirectory
     const subDir = join(dir, "src", "domain");
     await Deno.mkdir(subDir, { recursive: true });
 
-    // Cherche depuis le sous-répertoire
+    // Search from subdirectory
     const found = await findConfigPath(subDir);
 
     assertEquals(found, configPath);
   });
 });
 
-Deno.test("findConfigPath - remonte plusieurs niveaux", async () => {
+Deno.test("findConfigPath - traverses multiple levels", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
-    // Crée un sous-répertoire profond
+    // Create a deep subdirectory
     const deepDir = join(dir, "a", "b", "c", "d");
     await Deno.mkdir(deepDir, { recursive: true });
 
-    // Cherche depuis le répertoire profond
+    // Search from deep directory
     const found = await findConfigPath(deepDir);
 
     assertEquals(found, configPath);
   });
 });
 
-Deno.test("findConfigPath - retourne null si config non trouvé", async () => {
+Deno.test("findConfigPath - returns null if config not found", async () => {
   await withTempDir(async (dir) => {
     const found = await findConfigPath(dir);
 
@@ -67,38 +67,38 @@ Deno.test("findConfigPath - retourne null si config non trouvé", async () => {
   });
 });
 
-Deno.test("findConfigPath - s'arrête à la racine du système", async () => {
+Deno.test("findConfigPath - stops at system root", async () => {
   await withTempDir(async (dir) => {
-    // Ne crée pas de config
+    // Don't create config
     const found = await findConfigPath(dir);
 
-    // Devrait retourner null sans boucler infiniment
+    // Should return null without infinite loop
     assertEquals(found, null);
   });
 });
 
-Deno.test("findConfigPath - préfère le config le plus proche", async () => {
+Deno.test("findConfigPath - prefers closest config", async () => {
   await withTempDir(async (dir) => {
-    // Crée un config à la racine
+    // Create config at root
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const rootConfig = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(rootConfig, "export default { root: true }");
 
-    // Crée un sous-répertoire avec son propre config
+    // Create subdirectory with its own config
     const subDir = join(dir, "sub");
     await Deno.mkdir(join(subDir, "config"), { recursive: true });
     const subConfig = join(subDir, "config", "tsera.config.ts");
     await Deno.writeTextFile(subConfig, "export default { sub: true }");
 
-    // Cherche depuis le sous-répertoire
+    // Search from subdirectory
     const found = await findConfigPath(subDir);
 
-    // Devrait trouver le config du sous-répertoire, pas celui de la racine
+    // Should find subdirectory config, not root config
     assertEquals(found, subConfig);
   });
 });
 
-Deno.test("resolveProject - retourne rootDir et configPath", async () => {
+Deno.test("resolveProject - returns rootDir and configPath", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
@@ -111,26 +111,26 @@ Deno.test("resolveProject - retourne rootDir et configPath", async () => {
   });
 });
 
-Deno.test("resolveProject - rootDir est le répertoire du config", async () => {
+Deno.test("resolveProject - rootDir is config directory", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
     await Deno.writeTextFile(configPath, "export default {}");
 
-    // Crée un sous-répertoire
+    // Create a subdirectory
     const subDir = join(dir, "src");
     await Deno.mkdir(subDir);
 
-    // Résout depuis le sous-répertoire
+    // Resolve from subdirectory
     const result = await resolveProject(subDir);
 
-    // Le rootDir devrait être le répertoire contenant le config, pas subDir
+    // rootDir should be the directory containing config, not subDir
     assertEquals(result.rootDir, dir);
     assertEquals(result.configPath, configPath);
   });
 });
 
-Deno.test("resolveProject - échoue si config non trouvé", async () => {
+Deno.test("resolveProject - fails if config not found", async () => {
   await withTempDir(async (dir) => {
     await assertRejects(
       async () => {
@@ -142,7 +142,7 @@ Deno.test("resolveProject - échoue si config non trouvé", async () => {
   });
 });
 
-Deno.test("resolveProject - message d'erreur inclut le répertoire de départ", async () => {
+Deno.test("resolveProject - error message includes starting directory", async () => {
   await withTempDir(async (dir) => {
     try {
       await resolveProject(dir);
@@ -154,9 +154,9 @@ Deno.test("resolveProject - message d'erreur inclut le répertoire de départ", 
   });
 });
 
-Deno.test("resolveProject - gère les chemins avec espaces", async () => {
+Deno.test("resolveProject - handles paths with spaces", async () => {
   await withTempDir(async (dir) => {
-    // Crée un sous-répertoire avec espaces
+    // Create subdirectory with spaces
     const spacedDir = join(dir, "my project");
     await Deno.mkdir(join(spacedDir, "config"), { recursive: true });
 
@@ -170,9 +170,9 @@ Deno.test("resolveProject - gère les chemins avec espaces", async () => {
   });
 });
 
-Deno.test("resolveProject - gère les chemins avec caractères spéciaux", async () => {
+Deno.test("resolveProject - handles paths with special characters", async () => {
   await withTempDir(async (dir) => {
-    // Crée un sous-répertoire avec caractères spéciaux
+    // Create subdirectory with special characters
     const specialDir = join(dir, "project-2024");
     await Deno.mkdir(join(specialDir, "config"), { recursive: true });
 
@@ -186,28 +186,28 @@ Deno.test("resolveProject - gère les chemins avec caractères spéciaux", async
   });
 });
 
-Deno.test("findConfigPath - ne trouve pas tsera.config.js", async () => {
+Deno.test("findConfigPath - does not find tsera.config.js", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
-    // Crée un fichier JS au lieu de TS
+    // Create JS file instead of TS
     await Deno.writeTextFile(join(dir, "config", "tsera.config.js"), "export default {}");
 
     const found = await findConfigPath(dir);
 
-    // Ne devrait pas trouver le fichier JS
+    // Should not find JS file
     assertEquals(found, null);
   });
 });
 
-Deno.test("findConfigPath - ne trouve pas config.ts", async () => {
+Deno.test("findConfigPath - does not find config.ts", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
-    // Crée un fichier avec un nom différent
+    // Create file with different name
     await Deno.writeTextFile(join(dir, "config.ts"), "export default {}");
 
     const found = await findConfigPath(dir);
 
-    // Ne devrait pas trouver ce fichier
+    // Should not find this file
     assertEquals(found, null);
   });
 });

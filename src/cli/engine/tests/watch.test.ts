@@ -9,7 +9,7 @@ async function withTempDir<T>(
   try {
     return await fn(dir);
   } finally {
-    await Deno.remove(dir, { recursive: true }).catch(() => {});
+    await Deno.remove(dir, { recursive: true }).catch(() => { });
   }
 }
 
@@ -17,7 +17,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-Deno.test("watchProject - détecte la création d'un fichier", async () => {
+Deno.test("watchProject - detects file creation", async () => {
   await withTempDir(async (dir) => {
     const events: Deno.FsEvent[] = [];
 
@@ -30,16 +30,16 @@ Deno.test("watchProject - détecte la création d'un fichier", async () => {
     );
 
     try {
-      // Attend que le watcher soit initialisé
+      // Wait for watcher to be initialized
       await sleep(100);
 
-      // Crée un fichier
+      // Create a file
       await Deno.writeTextFile(join(dir, "test.txt"), "content");
 
-      // Attend le debounce + traitement
+      // Wait for debounce + processing
       await sleep(200);
 
-      // Vérifie qu'un événement a été capturé
+      // Verify that an event was captured
       assertEquals(events.length > 0, true);
 
       const hasCreate = events.some((e) =>
@@ -52,9 +52,9 @@ Deno.test("watchProject - détecte la création d'un fichier", async () => {
   });
 });
 
-Deno.test("watchProject - détecte la modification d'un fichier", async () => {
+Deno.test("watchProject - detects file modification", async () => {
   await withTempDir(async (dir) => {
-    // Crée un fichier initial
+    // Create an initial file
     await Deno.writeTextFile(join(dir, "test.txt"), "initial");
 
     const events: Deno.FsEvent[] = [];
@@ -70,12 +70,12 @@ Deno.test("watchProject - détecte la modification d'un fichier", async () => {
     try {
       await sleep(100);
 
-      // Modifie le fichier
+      // Modify the file
       await Deno.writeTextFile(join(dir, "test.txt"), "modified");
 
       await sleep(200);
 
-      // Vérifie qu'un événement modify ou create a été capturé
+      // Verify that a modify or create event was captured
       assertEquals(events.length > 0, true);
 
       const hasModify = events.some((e) =>
@@ -89,9 +89,9 @@ Deno.test("watchProject - détecte la modification d'un fichier", async () => {
   });
 });
 
-Deno.test("watchProject - détecte la suppression d'un fichier", async () => {
+Deno.test("watchProject - detects file deletion", async () => {
   await withTempDir(async (dir) => {
-    // Crée un fichier initial
+    // Create an initial file
     const testFile = join(dir, "test.txt");
     await Deno.writeTextFile(testFile, "to delete");
 
@@ -108,12 +108,12 @@ Deno.test("watchProject - détecte la suppression d'un fichier", async () => {
     try {
       await sleep(100);
 
-      // Supprime le fichier
+      // Delete the file
       await Deno.remove(testFile);
 
       await sleep(200);
 
-      // Vérifie qu'un événement remove a été capturé
+      // Verify that a remove event was captured
       assertEquals(events.length > 0, true);
 
       const hasRemove = events.some((e) =>
@@ -126,13 +126,13 @@ Deno.test("watchProject - détecte la suppression d'un fichier", async () => {
   });
 });
 
-Deno.test("watchProject - ignore les fichiers .tsera par défaut", async () => {
+Deno.test("watchProject - ignores .tsera files by default", async () => {
   await withTempDir(async (dir) => {
-    // Crée le répertoire .tsera AVANT de démarrer le watcher
+    // Create .tsera directory BEFORE starting the watcher
     const tseraDir = join(dir, ".tsera");
     await Deno.mkdir(tseraDir);
 
-    // Attend un peu pour que le FS se stabilise
+    // Wait a bit for FS to stabilize
     await sleep(50);
 
     const events: Deno.FsEvent[] = [];
@@ -148,19 +148,19 @@ Deno.test("watchProject - ignore les fichiers .tsera par défaut", async () => {
     try {
       await sleep(100);
 
-      // Crée un fichier dans .tsera
+      // Create a file in .tsera
       await Deno.writeTextFile(join(tseraDir, "manifest.json"), "{}");
 
-      // Crée un fichier normal
+      // Create a normal file
       await Deno.writeTextFile(join(dir, "normal.txt"), "content");
 
       await sleep(200);
 
-      // Vérifie que le fichier manifest.json dans .tsera n'a PAS été détecté
+      // Verify that manifest.json in .tsera was NOT detected
       const hasManifestEvent = events.some((e) => e.paths.some((p) => p.includes("manifest.json")));
       assertEquals(hasManifestEvent, false);
 
-      // Vérifie que le fichier normal a été détecté
+      // Verify that the normal file was detected
       const hasNormalEvent = events.some((e) => e.paths.some((p) => p.includes("normal.txt")));
       assertEquals(hasNormalEvent, true);
     } finally {
@@ -169,7 +169,7 @@ Deno.test("watchProject - ignore les fichiers .tsera par défaut", async () => {
   });
 });
 
-Deno.test("watchProject - ignore les patterns personnalisés", async () => {
+Deno.test("watchProject - ignores custom patterns", async () => {
   await withTempDir(async (dir) => {
     const events: Deno.FsEvent[] = [];
 
@@ -187,18 +187,18 @@ Deno.test("watchProject - ignore les patterns personnalisés", async () => {
     try {
       await sleep(100);
 
-      // Crée des fichiers à ignorer
+      // Create files to ignore
       await Deno.mkdir(join(dir, "node_modules"), { recursive: true });
       await Deno.writeTextFile(join(dir, "node_modules", "pkg.json"), "{}");
       await Deno.mkdir(join(dir, "dist"), { recursive: true });
       await Deno.writeTextFile(join(dir, "dist", "bundle.js"), "code");
 
-      // Crée un fichier normal
+      // Create a normal file
       await Deno.writeTextFile(join(dir, "src.ts"), "code");
 
       await sleep(200);
 
-      // Vérifie que seul le fichier src.ts a été détecté
+      // Verify that only src.ts was detected
       const hasIgnoredEvent = events.some((e) =>
         e.paths.some((p) => p.includes("node_modules") || p.includes("dist"))
       );
@@ -212,7 +212,7 @@ Deno.test("watchProject - ignore les patterns personnalisés", async () => {
   });
 });
 
-Deno.test("watchProject - debounce regroupe les événements", async () => {
+Deno.test("watchProject - debounce groups events", async () => {
   await withTempDir(async (dir) => {
     let callCount = 0;
 
@@ -227,15 +227,15 @@ Deno.test("watchProject - debounce regroupe les événements", async () => {
     try {
       await sleep(50);
 
-      // Crée plusieurs fichiers rapidement
+      // Create multiple files quickly
       await Deno.writeTextFile(join(dir, "file1.txt"), "1");
       await Deno.writeTextFile(join(dir, "file2.txt"), "2");
       await Deno.writeTextFile(join(dir, "file3.txt"), "3");
 
-      // Attend le debounce
+      // Wait for debounce
       await sleep(200);
 
-      // Le callback ne devrait être appelé qu'une fois grâce au debounce
+      // Callback should only be called once thanks to debounce
       assertEquals(callCount, 1);
     } finally {
       controller.close();
@@ -243,7 +243,7 @@ Deno.test("watchProject - debounce regroupe les événements", async () => {
   });
 });
 
-Deno.test("watchProject - close arrête le watcher", async () => {
+Deno.test("watchProject - close stops the watcher", async () => {
   await withTempDir(async (dir) => {
     const events: Deno.FsEvent[] = [];
 
@@ -257,34 +257,34 @@ Deno.test("watchProject - close arrête le watcher", async () => {
 
     await sleep(100);
 
-    // Crée un fichier avant de fermer
+    // Create a file before closing
     await Deno.writeTextFile(join(dir, "before.txt"), "content");
     await sleep(200);
 
     const eventsBefore = events.length;
     assertEquals(eventsBefore > 0, true);
 
-    // Ferme le watcher
+    // Close the watcher
     controller.close();
     await sleep(100);
 
-    // Crée un fichier après fermeture
+    // Create a file after closing
     await Deno.writeTextFile(join(dir, "after.txt"), "content");
     await sleep(200);
 
-    // Aucun nouvel événement ne devrait être capturé
+    // No new events should be captured
     assertEquals(events.length, eventsBefore);
   });
 });
 
-Deno.test("watchProject - callback async est attendu", async () => {
+Deno.test("watchProject - async callback is awaited", async () => {
   await withTempDir(async (dir) => {
     const processed: string[] = [];
 
     const controller = watchProject(
       dir,
       async (batch) => {
-        // Simule un traitement async
+        // Simulate async processing
         await sleep(50);
         for (const event of batch) {
           for (const path of event.paths) {
@@ -300,7 +300,7 @@ Deno.test("watchProject - callback async est attendu", async () => {
 
       await Deno.writeTextFile(join(dir, "async-test.txt"), "content");
 
-      // Attend le debounce + traitement async
+      // Wait for debounce + async processing
       await sleep(300);
 
       const hasProcessed = processed.some((p) => p.includes("async-test.txt"));
@@ -311,9 +311,9 @@ Deno.test("watchProject - callback async est attendu", async () => {
   });
 });
 
-Deno.test("watchProject - détecte les modifications dans les sous-répertoires", async () => {
+Deno.test("watchProject - detects modifications in subdirectories", async () => {
   await withTempDir(async (dir) => {
-    // Crée un sous-répertoire
+    // Create a subdirectory
     const subDir = join(dir, "sub", "nested");
     await Deno.mkdir(subDir, { recursive: true });
 
@@ -330,7 +330,7 @@ Deno.test("watchProject - détecte les modifications dans les sous-répertoires"
     try {
       await sleep(100);
 
-      // Crée un fichier dans le sous-répertoire
+      // Create a file in the subdirectory
       await Deno.writeTextFile(join(subDir, "deep.txt"), "content");
 
       await sleep(200);

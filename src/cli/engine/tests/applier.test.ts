@@ -23,7 +23,7 @@ function createSummary(create = 0, update = 0, deleteCount = 0, noop = 0): PlanS
   return { create, update, delete: deleteCount, noop, total, changed };
 }
 
-Deno.test("applyPlan - create crée un nouveau fichier", async () => {
+Deno.test("applyPlan - create creates a new file", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",
@@ -46,18 +46,18 @@ Deno.test("applyPlan - create crée un nouveau fichier", async () => {
     const state = createEmptyState();
     const nextState = await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que le fichier a été créé
+    // Verify that the file was created
     const content = await Deno.readTextFile(join(dir, "output.txt"));
     assertEquals(content, "Hello, World!");
 
-    // Vérifie que le snapshot a été ajouté
+    // Verify that the snapshot was added
     assertEquals(nextState.snapshots["test:1"].hash, "abc");
   });
 });
 
-Deno.test("applyPlan - update met à jour un fichier existant", async () => {
+Deno.test("applyPlan - update updates an existing file", async () => {
   await withTempDir(async (dir) => {
-    // Crée un fichier initial
+    // Create an initial file
     await Deno.writeTextFile(join(dir, "output.txt"), "Old content");
 
     const node: DagNode = {
@@ -99,18 +99,18 @@ Deno.test("applyPlan - update met à jour un fichier existant", async () => {
 
     const nextState = await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que le fichier a été mis à jour
+    // Verify that the file was updated
     const content = await Deno.readTextFile(join(dir, "output.txt"));
     assertEquals(content, "New content");
 
-    // Vérifie que le snapshot a été mis à jour
+    // Verify that the snapshot was updated
     assertEquals(nextState.snapshots["test:1"].hash, "new");
   });
 });
 
-Deno.test("applyPlan - delete supprime un fichier", async () => {
+Deno.test("applyPlan - delete deletes a file", async () => {
   await withTempDir(async (dir) => {
-    // Crée un fichier à supprimer
+    // Create a file to delete
     await Deno.writeTextFile(join(dir, "output.txt"), "To delete");
 
     const node: DagNode = {
@@ -150,7 +150,7 @@ Deno.test("applyPlan - delete supprime un fichier", async () => {
 
     const nextState = await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que le fichier a été supprimé
+    // Verify that the file was deleted
     let exists = true;
     try {
       await Deno.stat(join(dir, "output.txt"));
@@ -161,12 +161,12 @@ Deno.test("applyPlan - delete supprime un fichier", async () => {
     }
     assertEquals(exists, false);
 
-    // Vérifie que le snapshot a été supprimé
+    // Verify that the snapshot was deleted
     assertEquals(nextState.snapshots["test:1"], undefined);
   });
 });
 
-Deno.test("applyPlan - noop ne fait rien", async () => {
+Deno.test("applyPlan - noop does nothing", async () => {
   await withTempDir(async (dir) => {
     await Deno.writeTextFile(join(dir, "output.txt"), "Unchanged");
 
@@ -209,16 +209,16 @@ Deno.test("applyPlan - noop ne fait rien", async () => {
 
     const nextState = await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que le fichier est toujours là
+    // Verify that the file is still there
     const content = await Deno.readTextFile(join(dir, "output.txt"));
     assertEquals(content, "Unchanged");
 
-    // Vérifie que l'état n'a pas changé
+    // Verify that the state has not changed
     assertEquals(nextState.snapshots["test:1"].hash, "abc");
   });
 });
 
-Deno.test("applyPlan - callback onStep est appelé", async () => {
+Deno.test("applyPlan - onStep callback is called", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",
@@ -256,7 +256,7 @@ Deno.test("applyPlan - callback onStep est appelé", async () => {
   });
 });
 
-Deno.test("applyPlan - callback onStep pour noop", async () => {
+Deno.test("applyPlan - onStep callback for noop", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",
@@ -292,7 +292,7 @@ Deno.test("applyPlan - callback onStep pour noop", async () => {
   });
 });
 
-Deno.test("applyPlan - applique plusieurs steps dans l'ordre", async () => {
+Deno.test("applyPlan - applies multiple steps in order", async () => {
   await withTempDir(async (dir) => {
     const node1: DagNode = {
       id: "test:1",
@@ -324,18 +324,18 @@ Deno.test("applyPlan - applique plusieurs steps dans l'ordre", async () => {
     const state = createEmptyState();
     const nextState = await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que les deux fichiers ont été créés
+    // Verify that both files were created
     const content1 = await Deno.readTextFile(join(dir, "file1.txt"));
     const content2 = await Deno.readTextFile(join(dir, "file2.txt"));
     assertEquals(content1, "File 1");
     assertEquals(content2, "File 2");
 
-    // Vérifie que les deux snapshots ont été ajoutés
+    // Verify that both snapshots were added
     assertEquals(Object.keys(nextState.snapshots).length, 2);
   });
 });
 
-Deno.test("applyPlan - crée les sous-répertoires si nécessaire", async () => {
+Deno.test("applyPlan - creates subdirectories if necessary", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",
@@ -358,13 +358,13 @@ Deno.test("applyPlan - crée les sous-répertoires si nécessaire", async () => 
     const state = createEmptyState();
     await applyPlan(plan, state, { projectDir: dir });
 
-    // Vérifie que le fichier a été créé avec les sous-répertoires
+    // Verify that the file was created with subdirectories
     const content = await Deno.readTextFile(join(dir, "sub", "dir", "output.txt"));
     assertEquals(content, "Nested file");
   });
 });
 
-Deno.test("applyPlan - échoue si node sans targetPath pour create", async () => {
+Deno.test("applyPlan - fails if node without targetPath for create", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",
@@ -397,7 +397,7 @@ Deno.test("applyPlan - échoue si node sans targetPath pour create", async () =>
   });
 });
 
-Deno.test("applyPlan - échoue si node sans content pour create", async () => {
+Deno.test("applyPlan - fails if node without content for create", async () => {
   await withTempDir(async (dir) => {
     const node: DagNode = {
       id: "test:1",

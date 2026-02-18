@@ -1,15 +1,14 @@
-import { join } from "../../../shared/path.ts";
-import { posixPath } from "../../../shared/path.ts";
 import type { EntityRuntime, FieldDef } from "../../../core/entity.ts";
 import { filterPublicFields } from "../../../core/entity.ts";
-import type { ArtifactBuilder } from "./types.ts";
-import { applyGeneratedTextHeader } from "./generated-header.ts";
+import { getZodInternal, type ZodType } from "../../../core/utils/zod.ts";
+import { join, posixPath } from "../../../shared/path.ts";
 import {
   addImportDeclaration,
   createInMemorySourceFile,
   createTSeraProject,
 } from "../../utils/ts-morph.ts";
-import { getZodInternal, type ZodType } from "../../../core/utils/zod.ts";
+import { applyGeneratedTextHeader } from "./generated-header.ts";
+import type { ArtifactBuilder } from "./types.ts";
 
 const { dirname: posixDirname, join: posixJoin, relative: posixRelative } = posixPath;
 
@@ -319,7 +318,7 @@ export const buildTestArtifacts: ArtifactBuilder = async (context) => {
   const fullKeys = Object.keys(entity.fields).sort();
 
   sourceFile.addStatements(`
-Deno.test("${entityName} schema valide un exemple minimal", () => {
+Deno.test("${entityName} schema validates a minimal example", () => {
   const sample = ${fullSample}; 
   const parsed = ${entityName}Schema.parse(sample);
   assertEquals(Object.keys(parsed).sort(), ${JSON.stringify(fullKeys)});
@@ -333,7 +332,7 @@ Deno.test("${entityName} schema valide un exemple minimal", () => {
     const publicKeys = Object.keys(publicFields).sort();
 
     sourceFile.addStatements(`
-Deno.test("${entityName} public schema valide un exemple minimal", () => {
+Deno.test("${entityName} public schema validates a minimal example", () => {
   const sample = ${publicSample};
   const parsed = ${entityName}.public.parse(sample);
   assertEquals(Object.keys(parsed).sort(), ${JSON.stringify(publicKeys)});
@@ -344,7 +343,7 @@ Deno.test("${entityName} public schema valide un exemple minimal", () => {
   // Test input.create (excludes id, immutable, defaultNow fields)
   const inputCreateSample = buildInputCreateSample(entity);
   sourceFile.addStatements(`
-Deno.test("${entityName} input.create valide un exemple minimal", () => {
+Deno.test("${entityName} input.create validates a minimal example", () => {
   const sample = ${inputCreateSample};
   const parsed = ${entityName}.input.create.parse(sample);
   // Verify that excluded fields are not present
