@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "std/assert";
 import { join } from "../../../shared/path.ts";
-import { resolveConfig } from "../resolve-config.ts";
 import type { TseraConfig } from "../../definitions.ts";
+import { resolveConfig } from "../resolve-config.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,
@@ -553,7 +553,7 @@ Deno.test("resolveConfig cache bust with timestamp", async () => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     const configPath = join(dir, "config", "tsera.config.ts");
 
-    // Crée la config initiale
+    // Create initial config
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(config)};`,
@@ -562,14 +562,14 @@ Deno.test("resolveConfig cache bust with timestamp", async () => {
     const result1 = await resolveConfig(dir);
     assertEquals(result1.config.db.dialect, "postgres");
 
-    // Modifie la config
+    // Modify config
     const newConfig = validSqliteConfig();
     await Deno.writeTextFile(
       configPath,
       `export default ${JSON.stringify(newConfig)};`,
     );
 
-    // Devrait charger la nouvelle config grâce au cache bust
+    // Should load new config thanks to cache bust
     const result2 = await resolveConfig(dir);
     assertEquals(result2.config.db.dialect, "sqlite");
   });

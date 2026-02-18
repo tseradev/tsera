@@ -1,5 +1,6 @@
 import { assertEquals } from "std/assert";
 import { join } from "../../../shared/path.ts";
+import type { DagNode } from "../dag.ts";
 import {
   applySnapshots,
   createEmptyState,
@@ -11,7 +12,6 @@ import {
   writeDagState,
   writeEngineState,
 } from "../state.ts";
-import type { DagNode } from "../dag.ts";
 
 async function withTempDir<T>(
   fn: (dir: string) => Promise<T>,
@@ -24,13 +24,13 @@ async function withTempDir<T>(
   }
 }
 
-Deno.test("createEmptyState - crée un état vide", () => {
+Deno.test("createEmptyState - creates an empty state", () => {
   const state = createEmptyState();
 
   assertEquals(state.snapshots, {});
 });
 
-Deno.test("readEngineState - retourne état vide si manifest n'existe pas", async () => {
+Deno.test("readEngineState - returns empty state if manifest does not exist", async () => {
   await withTempDir(async (dir) => {
     const state = await readEngineState(dir);
 
@@ -38,7 +38,7 @@ Deno.test("readEngineState - retourne état vide si manifest n'existe pas", asyn
   });
 });
 
-Deno.test("writeEngineState + readEngineState - écrit et lit l'état", async () => {
+Deno.test("writeEngineState + readEngineState - writes and reads state", async () => {
   await withTempDir(async (dir) => {
     const originalState = {
       snapshots: {
@@ -54,18 +54,18 @@ Deno.test("writeEngineState + readEngineState - écrit et lit l'état", async ()
 
     await writeEngineState(dir, originalState);
 
-    // Vérifie que le fichier existe
+    // Verify that the file exists
     const manifestPath = join(dir, STATE_DIR, MANIFEST_FILENAME);
     const stat = await Deno.stat(manifestPath);
     assertEquals(stat.isFile, true);
 
-    // Relit l'état
+    // Re-read the state
     const readState = await readEngineState(dir);
     assertEquals(readState, originalState);
   });
 });
 
-Deno.test("writeEngineState - crée le répertoire .tsera si nécessaire", async () => {
+Deno.test("writeEngineState - creates .tsera directory if necessary", async () => {
   await withTempDir(async (dir) => {
     const state = {
       snapshots: {
@@ -85,7 +85,7 @@ Deno.test("writeEngineState - crée le répertoire .tsera si nécessaire", async
   });
 });
 
-Deno.test("writeEngineState - écrit un JSON valide avec version", async () => {
+Deno.test("writeEngineState - writes valid JSON with version", async () => {
   await withTempDir(async (dir) => {
     const state = {
       snapshots: {
@@ -108,7 +108,7 @@ Deno.test("writeEngineState - écrit un JSON valide avec version", async () => {
   });
 });
 
-Deno.test("writeDagState - écrit le graph.json", async () => {
+Deno.test("writeDagState - writes graph.json", async () => {
   await withTempDir(async (dir) => {
     const dag = {
       nodes: new Map<string, DagNode>(),
@@ -139,7 +139,7 @@ Deno.test("writeDagState - écrit le graph.json", async () => {
   });
 });
 
-Deno.test("writeDagState - sérialise les edges", async () => {
+Deno.test("writeDagState - serializes edges", async () => {
   await withTempDir(async (dir) => {
     const dag = {
       nodes: new Map<string, DagNode>(),
@@ -177,7 +177,7 @@ Deno.test("writeDagState - sérialise les edges", async () => {
   });
 });
 
-Deno.test("snapshotFromNode - extrait un snapshot d'un node", () => {
+Deno.test("snapshotFromNode - extracts a snapshot from a node", () => {
   const node: DagNode = {
     id: "entity:User",
     kind: "entity",
@@ -200,7 +200,7 @@ Deno.test("snapshotFromNode - extrait un snapshot d'un node", () => {
   });
 });
 
-Deno.test("snapshotFromNode - gère les champs optionnels undefined", () => {
+Deno.test("snapshotFromNode - handles undefined optional fields", () => {
   const node: DagNode = {
     id: "test:1",
     kind: "entity",
@@ -216,7 +216,7 @@ Deno.test("snapshotFromNode - gère les champs optionnels undefined", () => {
   assertEquals(snapshot.label, "Test");
 });
 
-Deno.test("applySnapshots - ajoute des snapshots pour create", () => {
+Deno.test("applySnapshots - adds snapshots for create", () => {
   const state = createEmptyState();
   const node: DagNode = {
     id: "entity:User",
@@ -238,7 +238,7 @@ Deno.test("applySnapshots - ajoute des snapshots pour create", () => {
   });
 });
 
-Deno.test("applySnapshots - met à jour des snapshots pour update", () => {
+Deno.test("applySnapshots - updates snapshots for update", () => {
   const state = {
     snapshots: {
       "entity:User": {
@@ -262,7 +262,7 @@ Deno.test("applySnapshots - met à jour des snapshots pour update", () => {
   assertEquals(nextState.snapshots["entity:User"].hash, "new");
 });
 
-Deno.test("applySnapshots - supprime des snapshots pour delete", () => {
+Deno.test("applySnapshots - removes snapshots for delete", () => {
   const state = {
     snapshots: {
       "entity:User": {
@@ -298,7 +298,7 @@ Deno.test("applySnapshots - supprime des snapshots pour delete", () => {
   });
 });
 
-Deno.test("applySnapshots - applique plusieurs updates", () => {
+Deno.test("applySnapshots - applies multiple updates", () => {
   const state = createEmptyState();
   const node1: DagNode = {
     id: "entity:User",
@@ -325,7 +325,7 @@ Deno.test("applySnapshots - applique plusieurs updates", () => {
   assertEquals(nextState.snapshots["entity:Post"].hash, "b");
 });
 
-Deno.test("applySnapshots - ne mute pas l'état original", () => {
+Deno.test("applySnapshots - does not mutate original state", () => {
   const state = {
     snapshots: {
       "entity:User": {
@@ -346,7 +346,7 @@ Deno.test("applySnapshots - ne mute pas l'état original", () => {
 
   applySnapshots(state, [{ node, action: "create" }]);
 
-  // L'état original ne doit pas être modifié
+  // Original state must not be modified
   assertEquals(state.snapshots["entity:Post" as keyof typeof state.snapshots], undefined);
   assertEquals(Object.keys(state.snapshots).length, 1);
 });

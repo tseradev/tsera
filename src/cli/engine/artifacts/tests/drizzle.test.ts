@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
-import { defineEntity } from "../../../../core/entity.ts";
 import { z } from "zod";
+import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildDrizzleArtifacts } from "../drizzle.ts";
 
@@ -32,7 +32,7 @@ const baseConfigSqlite: TseraConfig = {
 
 const projectDir = Deno.cwd();
 
-Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
+Deno.test("buildDrizzleArtifacts - generates a SQL migration", async () => {
   const entity = defineEntity({
     name: "User",
     table: true,
@@ -52,7 +52,7 @@ Deno.test("buildDrizzleArtifacts - génère une migration SQL", async () => {
   assertStringIncludes(content, '"user"');
 });
 
-Deno.test("buildDrizzleArtifacts - filtre les champs stored: false", async () => {
+Deno.test("buildDrizzleArtifacts - filters stored: false fields", async () => {
   const entity = defineEntity({
     name: "Test",
     table: true,
@@ -71,7 +71,7 @@ Deno.test("buildDrizzleArtifacts - filtre les champs stored: false", async () =>
   assertEquals(content.includes('"virtual"'), false);
 });
 
-Deno.test("buildDrizzleArtifacts - ne génère pas de migration si aucun champ stored", async () => {
+Deno.test("buildDrizzleArtifacts - does not generate migration if no stored fields", async () => {
   const entity = defineEntity({
     name: "Virtual",
     table: true,
@@ -85,7 +85,7 @@ Deno.test("buildDrizzleArtifacts - ne génère pas de migration si aucun champ s
   assertEquals(artifacts.length, 0);
 });
 
-Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", async () => {
+Deno.test("buildDrizzleArtifacts - generates deterministic filename", async () => {
   const entity = defineEntity({
     name: "Product",
     table: true,
@@ -105,14 +105,14 @@ Deno.test("buildDrizzleArtifacts - génère un nom de fichier déterministe", as
     projectDir,
   });
 
-  // Le même entity devrait générer le même nom de fichier
+  // Same entity should generate the same filename
   assertEquals(artifacts1[0].path, artifacts2[0].path);
   const normalizedPath = artifacts1[0].path.replace(/\\/g, "/");
   assertStringIncludes(normalizedPath, "app/db/migrations/");
   assertStringIncludes(normalizedPath, "_product.sql");
 });
 
-Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
+Deno.test("buildDrizzleArtifacts - uses correct SQL dialect", async () => {
   const entity = defineEntity({
     name: "Post",
     table: true,
@@ -133,7 +133,7 @@ Deno.test("buildDrizzleArtifacts - utilise le bon dialect SQL", async () => {
     projectDir,
   });
 
-  // Les deux dialectes devraient produire du SQL (même si différent)
+  // Both dialects should produce SQL (even if different)
   const contentPostgres = artifactsPostgres[0].content as string;
   const contentSqlite = artifactsSqlite[0].content as string;
 

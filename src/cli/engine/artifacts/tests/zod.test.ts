@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "std/assert";
-import { defineEntity } from "../../../../core/entity.ts";
 import { z } from "zod";
+import { defineEntity } from "../../../../core/entity.ts";
 import type { TseraConfig } from "../../../definitions.ts";
 import { buildZodArtifacts } from "../zod.ts";
 
@@ -24,7 +24,7 @@ const baseConfig: TseraConfig = {
 
 const projectDir = Deno.cwd();
 
-Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async () => {
+Deno.test("buildZodArtifacts - generates User super-object and namespace", async () => {
   const entity = defineEntity({
     name: "User",
     fields: {
@@ -61,7 +61,7 @@ Deno.test("buildZodArtifacts - génère le super-objet User et namespace", async
   assertStringIncludes(content, 'export type id = type_["id"]');
 });
 
-Deno.test("buildZodArtifacts - génère un schéma pour types primitifs", async () => {
+Deno.test("buildZodArtifacts - generates schema for primitive types", async () => {
   const entity = defineEntity({
     name: "User",
     fields: {
@@ -84,7 +84,7 @@ Deno.test("buildZodArtifacts - génère un schéma pour types primitifs", async 
   assertStringIncludes(content, "metadata: z.any()");
 });
 
-Deno.test("buildZodArtifacts - gère les champs optionnels", async () => {
+Deno.test("buildZodArtifacts - handles optional fields", async () => {
   const entity = defineEntity({
     name: "Post",
     fields: {
@@ -100,7 +100,7 @@ Deno.test("buildZodArtifacts - gère les champs optionnels", async () => {
   assertStringIncludes(content, "subtitle: z.string().optional()");
 });
 
-Deno.test("buildZodArtifacts - gère les champs nullables", async () => {
+Deno.test("buildZodArtifacts - handles nullable fields", async () => {
   const entity = defineEntity({
     name: "Comment",
     fields: {
@@ -116,7 +116,7 @@ Deno.test("buildZodArtifacts - gère les champs nullables", async () => {
   assertStringIncludes(content, "deletedAt: z.date().nullable()");
 });
 
-Deno.test("buildZodArtifacts - gère les valeurs par défaut", async () => {
+Deno.test("buildZodArtifacts - handles default values", async () => {
   const entity = defineEntity({
     name: "Settings",
     fields: {
@@ -134,7 +134,7 @@ Deno.test("buildZodArtifacts - gère les valeurs par défaut", async () => {
   assertStringIncludes(content, "enabled: z.boolean().default(true)");
 });
 
-Deno.test("buildZodArtifacts - gère les descriptions", async () => {
+Deno.test("buildZodArtifacts - handles descriptions", async () => {
   const entity = defineEntity({
     name: "Product",
     fields: {
@@ -148,7 +148,7 @@ Deno.test("buildZodArtifacts - gère les descriptions", async () => {
   assertStringIncludes(content, 'name: z.string().describe("Product name")');
 });
 
-Deno.test("buildZodArtifacts - gère les arrays", async () => {
+Deno.test("buildZodArtifacts - handles arrays", async () => {
   const entity = defineEntity({
     name: "Article",
     fields: {
@@ -164,7 +164,7 @@ Deno.test("buildZodArtifacts - gère les arrays", async () => {
   assertStringIncludes(content, "scores: z.array(z.number())");
 });
 
-Deno.test("buildZodArtifacts - combine optional et nullable", async () => {
+Deno.test("buildZodArtifacts - combines optional and nullable", async () => {
   const entity = defineEntity({
     name: "Profile",
     fields: {
@@ -178,7 +178,7 @@ Deno.test("buildZodArtifacts - combine optional et nullable", async () => {
   assertStringIncludes(content, "bio: z.string().optional().nullable()");
 });
 
-Deno.test("buildZodArtifacts - génère du code syntaxiquement valide", async () => {
+Deno.test("buildZodArtifacts - generates syntactically valid code", async () => {
   const entity = defineEntity({
     name: "Complex",
     fields: {
@@ -192,7 +192,7 @@ Deno.test("buildZodArtifacts - génère du code syntaxiquement valide", async ()
   const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
   const content = artifacts[0].content as string;
 
-  // Vérifie que le code est bien formaté et contient les éléments clés
+  // Verify that code is well formatted and contains key elements
   assertStringIncludes(content, 'import { z } from "zod"');
   assertStringIncludes(content, "export const ComplexSchema = z.object({");
   assertStringIncludes(content, "export const Complex = {");
