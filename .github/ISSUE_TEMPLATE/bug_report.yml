@@ -2,6 +2,7 @@ name: "Bug report"
 description: "Report a TSera CLI bug with reproducible steps"
 title: "[bug]: "
 labels: ["bug"]
+type: "Bug"
 body:
   - type: markdown
     attributes:
@@ -136,7 +137,6 @@ body:
         Paste the relevant terminal output.
         If available, re-run with `--json` and paste the NDJSON excerpt.
         ⚠️ Remove secrets.
-      render: text
       placeholder: |
         (paste logs here)
     validations:
