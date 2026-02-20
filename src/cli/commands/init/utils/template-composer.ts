@@ -18,7 +18,6 @@ import type { DenoConfig } from "./config-merger.ts";
 import { mergeConfigFiles } from "./config-merger.ts";
 import { copyDirectory } from "./directory-copier.ts";
 import { generateEnvFiles } from "./env-generator.ts";
-import { generateGitAttributes } from "./gitattributes-generator.ts";
 import { generateLumeProject } from "./lume-generator.ts";
 import { getAvailableModules, validateModuleDependencies } from "./module-definitions.ts";
 
@@ -188,14 +187,6 @@ export async function composeTemplate(
   // Generate environment files if secrets module is enabled
   if (options.enabledModules.includes("secrets") && options.dbConfig) {
     await generateEnvironmentFiles(options, result);
-  }
-
-  // Generate .gitattributes for git-crypt if secrets module is enabled
-  if (options.enabledModules.includes("secrets")) {
-    await generateGitAttributes({
-      targetDir: options.targetDir,
-      result,
-    });
   }
 
   return result;

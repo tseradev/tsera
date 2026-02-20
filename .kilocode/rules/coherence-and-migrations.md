@@ -58,14 +58,13 @@ several strategic advantages:
 ### Secure Storage Principles
 
 Sensitive configuration data requires specialized handling that goes beyond simple environment
-variables. Encrypted storage with automatic environment detection provides:
+variables. Type-safe configuration with automatic environment detection provides:
 
-- **Zero-Knowledge Storage**: Sensitive values are encrypted at rest with keys managed separately
+- **Type-Safe Access**: All environment variables are validated against schemas at startup
 - **Environment-Aware Configuration**: Automatic detection of deployment environment with
   appropriate configuration loading
 - **Audit Trail**: Configuration changes can be tracked and audited for compliance requirements
-- **Secure Distribution**: Encrypted configuration can be safely distributed through version control
-  or CI/CD pipelines
+- **Secure Distribution**: Configuration files are excluded from version control via .gitignore
 
 ## Migration Strategy Philosophy
 

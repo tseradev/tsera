@@ -100,7 +100,7 @@ tsera doctor --fix
 
 ## Secrets Management
 
-TSera provides a secure, type-safe secrets management system with optional encryption.
+TSera provides a secure, type-safe secrets management system for your environment variables.
 
 ### Local Development
 
@@ -118,82 +118,11 @@ TSera provides a secure, type-safe secrets management system with optional encry
 
    ```bash
    # Copy example file to get started
-   cp secrets/.env.example secrets/.env.dev
+   cp config/secrets/.env.example config/secrets/.env.dev
 
    # Edit with your actual values
-   # secrets/.env.dev
+   # config/secrets/.env.dev
    ```
-
-3. **(Optional) Enable encryption**:
-
-   Set `TSERA_SECRET_KEY` to encrypt secrets in the local KV store:
-
-   ```bash
-   # On Windows
-   $env:TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
-
-   # On macOS/Linux
-   export TSERA_SECRET_KEY="your-strong-passphrase-32chars-min"
-   ```
-
-   **Without `TSERA_SECRET_KEY`**: Secrets are stored in clear text in `.tsera/kv/` (warning
-   displayed). **With `TSERA_SECRET_KEY`**: Secrets are encrypted with AES-256-GCM before storage.
-
-### Encrypted Store (Deno KV)
-
-TSera persists validated secrets locally in `.tsera/kv` using Deno KV:
-
-- **With `TSERA_SECRET_KEY`**: Values encrypted with AES-256-GCM
-- **Without**: Values stored in clear (warning displayed)
-- **Salt**: Fixed per installation in `.tsera/salt`
-- **Isolation**: Each environment (dev/staging/prod) has isolated storage
-
-The global API `tsera.env()` always reads from memory for speed, not from KV.
-
-### Git-Crypt Protection (Optional)
-
-To version secrets in Git securely using **git-crypt**:
-
-1. **Install git-crypt**:
-
-   ```bash
-   # macOS
-   brew install git-crypt
-
-   # Ubuntu/Debian
-   sudo apt-get install git-crypt
-
-   # Windows
-   # Download from: https://github.com/AGWA/git-crypt/releases
-   ```
-
-2. **Initialize git-crypt**:
-
-   ```bash
-   git-crypt init
-   ```
-
-3. **Add team member** (using their GPG key):
-
-   ```bash
-   git-crypt add-gpg-user <GPG_KEY_ID>
-   ```
-
-4. **Commit encrypted files**:
-
-   The `.gitattributes` file already configures which files to encrypt:
-   - `secrets/.env.*` (all environment files)
-   - `.tsera/kv/**` (KV store database)
-   - `.tsera/salt` (encryption salt)
-
-   ```bash
-   git add secrets/ .gitattributes
-   git commit -m "chore: add encrypted secrets"
-   git push
-   ```
-
-**Note**: git-crypt is **optional**. Without it, the files listed in `.gitignore` won't be
-committed.
 
 ### Environment Variables Schema
 
