@@ -5,6 +5,7 @@
     "strict": true
   },
   "tasks": {
+    "tsera": "tsera",
     // Main development command: runs tsera dev with watch mode
     "dev": "tsera dev",
     // Backend dev server (Hono) - runs on port 3001

@@ -6,89 +6,142 @@
  * export-env command output, errors, and status messages.
  */
 
-import { blue, green, red, yellow } from "../../ui/colors.ts";
+import { bold, dim, gray, green, magenta, red } from "../../ui/colors.ts";
+import { BaseConsole } from "../../ui/console.ts";
+import { TerminalSpinner } from "../../ui/spinner.ts";
 
 /**
- * Display format options in a formatted table.
+ * Options for creating an ExportEnvConsole instance.
  */
-export function displayFormatOptions(): void {
-  console.log("Available export formats:");
-  console.log("");
-  console.log("  github-env    Export to GitHub Actions environment file");
-  console.log("  sh            Export to shell script format");
-  console.log("  gitlab-dotenv Export to GitLab CI dotenv file");
-  console.log("  json          Export to JSON format");
-  console.log("");
-}
+export type ExportEnvConsoleOptions = {
+  /** Optional custom writer for output */
+  writer?: (line: string) => void;
+};
 
 /**
- * Display environment options in a formatted table.
+ * Human-friendly console reporter for the export-env command.
+ *
+ * Provides visual feedback during environment variable export,
+ * using a terminal spinner and formatted output.
+ *
+ * @example
+ * ```typescript
+ * const console = new ExportEnvConsole();
+ *
+ * console.start("prod", "github-env");
+ * console.schemaLoaded(5);
+ * console.exporting("github-env");
+ * console.success(5, "github-env");
+ * ```
  */
-export function displayEnvironmentOptions(): void {
-  console.log("Available environments:");
-  console.log("");
-  console.log("  dev     Development environment");
-  console.log("  staging Staging environment");
-  console.log("  prod    Production environment");
-  console.log("");
-}
+export class ExportEnvConsole extends BaseConsole {
+  /**
+   * Terminal spinner for animated progress display.
+   * @private
+   */
+  #spinner: TerminalSpinner;
 
-/**
- * Display usage examples for the export-env command.
- */
-export function displayUsageExamples(): void {
-  console.log("Usage examples:");
-  console.log("");
-  console.log("  # Export to GitHub Actions for production");
-  console.log("  tsera export-env --format github-env --env prod");
-  console.log("");
-  console.log("  # Export to shell with prefix");
-  console.log("  tsera export-env --format sh --prefix APP_");
-  console.log("");
-  console.log("  # Export to JSON");
-  console.log("  tsera export-env --format json");
-  console.log("");
-  console.log("  # Export to GitLab CI dotenv file");
-  console.log("  tsera export-env --format gitlab-dotenv --out .env");
-  console.log("");
-}
-
-/**
- * Display success message with exported variables count.
- */
-export function displaySuccess(count: number, format: string): void {
-  console.log(
-    `${green("✓")} Export successful: ${count} variable(s) exported in ${format} format`,
-  );
-}
-
-/**
- * Display validation errors.
- */
-export function displayValidationErrors(errors: string[]): void {
-  console.error(red("Validation errors:"));
-  for (const error of errors) {
-    console.error(`  ${red("-")} ${error}`);
+  /**
+   * Creates a new export-env console instance.
+   *
+   * @param options - Configuration options
+   */
+  constructor(options: ExportEnvConsoleOptions = {}) {
+    const writer = options.writer ?? ((line: string) => console.log(line));
+    super(writer);
+    this.#spinner = new TerminalSpinner(writer);
   }
-}
 
-/**
- * Display error message.
- */
-export function displayError(message: string): void {
-  console.error(`${red("Error:")} ${message}`);
-}
+  /**
+   * Announces the beginning of the export process.
+   *
+   * @param env - Target environment (dev/staging/prod)
+   * @param format - Export format
+   */
+  start(env: string, _format: string): void {
+    this.#spinner.start(
+      `${magenta("◆")} ${bold("Export")} ${dim("│")} ${gray(`Loading schema for ${env}...`)}`,
+    );
+  }
 
-/**
- * Display warning message.
- */
-export function displayWarning(message: string): void {
-  console.warn(`${yellow("Warning:")} ${message}`);
-}
+  /**
+   * Reports that the schema was loaded and validation is starting.
+   *
+   * @param count - Number of variables to validate
+   */
+  schemaLoaded(count: number): void {
+    this.#spinner.update(
+      `${dim("→")} ${gray(`Validating ${count} variable(s)...`)}`,
+    );
+  }
 
-/**
- * Display info message.
- */
-export function displayInfo(message: string): void {
-  console.log(`${blue("Info:")} ${message}`);
+  /**
+   * Reports that export is in progress.
+   *
+   * @param format - Export format being used
+   */
+  exporting(format: string): void {
+    this.#spinner.update(
+      `${dim("→")} ${gray(`Exporting to ${format} format...`)}`,
+    );
+  }
+
+  /**
+   * Confirms successful export completion (console mode).
+   *
+   * @param count - Number of variables exported
+   * @param format - Export format used
+   */
+  success(count: number, format: string): void {
+    this.#spinner.succeed(
+      `${green("✓")} ${bold("Export complete")} ${dim("│")} ${gray(`${count} variable(s) exported as ${format}`)
+      }`,
+    );
+  }
+
+  /**
+   * Confirms successful export to file.
+   *
+   * @param filePath - Path to the output file
+   * @param count - Number of variables exported
+   * @param format - Export format used
+   */
+  fileSuccess(filePath: string, count: number, format: string): void {
+    this.#spinner.succeed(
+      `${green("✓")} ${bold("Exported to")} ${filePath} ${dim("│")} ${gray(`${count} variable(s) as ${format}`)
+      }`,
+    );
+  }
+
+  /**
+   * Reports an export failure.
+   *
+   * @param message - Error message describing the failure
+   */
+  error(message: string): void {
+    this.#spinner.fail(
+      `${bold("Export failed")} ${dim("│")} ${gray(message)}`,
+    );
+  }
+
+  /**
+   * Displays an info message.
+   *
+   * @param message - Info message to display
+   */
+  info(message: string): void {
+    this.write(`${dim("ℹ")} ${gray(message)}`);
+  }
+
+  /**
+   * Displays validation errors.
+   *
+   * @param errors - List of validation error messages
+   */
+  validationErrors(errors: string[]): void {
+    this.write(`${red("✖")} ${bold("Validation errors:")}`);
+    for (const error of errors) {
+      this.write(`  ${red("-")} ${gray(error)}`);
+    }
+  }
 }
