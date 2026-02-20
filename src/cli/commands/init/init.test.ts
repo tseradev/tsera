@@ -33,7 +33,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     // Lume projects: imports are in deno.jsonc
     const denoConfigPath = join(projectDir, "deno.jsonc");
     if (await fileExists(denoConfigPath)) {
-      const { parse } = await import("jsr:@std/jsonc@1");
+      const { parse } = await import("std/jsonc");
       const denoConfig = parse(await Deno.readTextFile(denoConfigPath)) as {
         imports?: Record<string, string>;
       };

@@ -21,9 +21,8 @@
  * ## Usage Example
  */
 
-import { red } from "jsr:@std/internal@^1.0.12/styles";
 import { join } from "std/path";
-import { gray } from "../cli/ui/colors.ts";
+import { gray, red } from "../cli/ui/colors.ts";
 
 /**
  * Valid environment variable types supported by TSera.
