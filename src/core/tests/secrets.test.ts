@@ -735,7 +735,7 @@ Deno.test("initializeSecrets - throws on validation failure", async () => {
 
 Deno.test("bootstrapEnv - loads schema and .env file", async () => {
   const tempDir = await Deno.makeTempDir();
-  const envDir = `${tempDir}/config/secret`;
+  const envDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(envDir, { recursive: true });
 
   // Create env.config.ts
@@ -788,7 +788,7 @@ DATABASE_URL=postgresql://localhost:5432/db`,
 
 Deno.test("bootstrapEnv - throws when schema file is missing", async () => {
   const tempDir = await Deno.makeTempDir();
-  const envDir = `${tempDir}/config/secret`;
+  const envDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(envDir, { recursive: true });
 
   const originalCwd = Deno.cwd;
@@ -797,7 +797,7 @@ Deno.test("bootstrapEnv - throws when schema file is missing", async () => {
     Deno.cwd = () => tempDir;
 
     await assertRejects(
-      () => bootstrapEnv("dev", "config/secret"),
+      () => bootstrapEnv("dev", "config/secrets"),
       Error,
       "Module not found",
     );
@@ -816,7 +816,7 @@ Deno.test("bootstrapEnv - throws when schema file is missing", async () => {
 
 Deno.test("bootstrapEnv - throws when .env file is missing and required vars are not set", async () => {
   const tempDir = await Deno.makeTempDir();
-  const envDir = `${tempDir}/config/secret`;
+  const envDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(envDir, { recursive: true });
 
   // Create env.config.ts
@@ -864,7 +864,7 @@ Deno.test("bootstrapEnv - throws when .env file is missing and required vars are
 
 Deno.test("bootstrapEnv - validates against environment-specific requirements", async () => {
   const tempDir = await Deno.makeTempDir();
-  const envDir = `${tempDir}/config/secret`;
+  const envDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(envDir, { recursive: true });
 
   // Create env.config.ts with environment-specific requirements

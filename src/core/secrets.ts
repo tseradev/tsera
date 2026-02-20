@@ -249,7 +249,7 @@ function getActualType(value: string): string {
  * };
  *
  * const errors = validateSecrets(secrets, schema, "prod");
- * // ["[prod] Missing required env var \"DATABASE_URL\". Set it in config/secret/.env.prod."]
+ * // ["[prod] Missing required env var \"DATABASE_URL\". Set it in config/secrets/.env.prod."]
  * ```
  */
 export function validateSecrets(
@@ -457,8 +457,8 @@ export async function initializeSecrets(
  * This is the recommended entry point for environment initialization in TSera
  * applications. It performs the following steps:
  *
- * 1. Loads the environment schema from `config/secret/env.config.ts`
- * 2. Loads environment variables from `config/secret/.env.<env>`
+ * 1. Loads the environment schema from `config/secrets/env.config.ts`
+ * 2. Loads environment variables from `config/secrets/.env.<env>`
  * 3. Merges .env values with process environment (process env takes precedence)
  * 4. Validates all variables against the schema
  * 5. Throws an error if validation fails (fail-fast)
@@ -468,13 +468,13 @@ export async function initializeSecrets(
  * and valid.
  *
  * @param env - Current environment name (default: "dev")
- * @param envDir - Directory containing .env files (default: "config/secret")
+ * @param envDir - Directory containing .env files (default: "config/secrets")
  * @returns Validated environment variables
  * @throws Error if validation fails or required files are missing
  */
 export async function bootstrapEnv(
   env: EnvName = "dev",
-  envDir: string = "config/secret",
+  envDir: string = "config/secrets",
 ): Promise<Record<string, string>> {
   // Load schema from env.config.ts
   const schemaPath = join(envDir, "env.config.ts");
@@ -542,7 +542,7 @@ export async function bootstrapEnv(
       `Environment validation failed for '.env.${env}':\n${
         errors.map((e) => `${gray("│")} ${red(` - ${e}`)}`).join("\\n")
       }\n${gray("│")}  ${
-        red(`Fix issues in config/secret/.env.${env} before starting the application.`)
+        red(`Fix issues in config/secrets/.env.${env} before starting the application.`)
       }`,
     );
   }

@@ -186,7 +186,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
       try {
         const envName = resolveSecretsEnvName();
-        await bootstrapEnv(envName, "config/secret");
+        await bootstrapEnv(envName, "config/secrets");
 
         modulesStatus.set("secrets", { status: "ready" });
         updateUI();

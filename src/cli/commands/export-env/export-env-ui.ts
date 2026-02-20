@@ -6,7 +6,7 @@
  * export-env command output, errors, and status messages.
  */
 
-import { bold, dim, gray, green, magenta, red } from "../../ui/colors.ts";
+import { bold, dim, gray, red } from "../../ui/colors.ts";
 import { BaseConsole } from "../../ui/console.ts";
 import { TerminalSpinner } from "../../ui/spinner.ts";
 
@@ -60,7 +60,7 @@ export class ExportEnvConsole extends BaseConsole {
    */
   start(env: string, _format: string): void {
     this.#spinner.start(
-      `${magenta("◆")} ${bold("Export")} ${dim("│")} ${gray(`Loading schema for ${env}...`)}`,
+      `${bold("Export")} ${dim("│")} ${gray(`Loading schema for ${env}...`)}`,
     );
   }
 
@@ -71,7 +71,7 @@ export class ExportEnvConsole extends BaseConsole {
    */
   schemaLoaded(count: number): void {
     this.#spinner.update(
-      `${dim("→")} ${gray(`Validating ${count} variable(s)...`)}`,
+      `${gray(`Validating ${count} variable(s)...`)}`,
     );
   }
 
@@ -82,7 +82,7 @@ export class ExportEnvConsole extends BaseConsole {
    */
   exporting(format: string): void {
     this.#spinner.update(
-      `${dim("→")} ${gray(`Exporting to ${format} format...`)}`,
+      `${gray(`Exporting to ${format} format...`)}`,
     );
   }
 
@@ -94,7 +94,8 @@ export class ExportEnvConsole extends BaseConsole {
    */
   success(count: number, format: string): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Export complete")} ${dim("│")} ${gray(`${count} variable(s) exported as ${format}`)
+      `${bold("Export complete")} ${dim("│")} ${
+        gray(`${count} variable(s) exported as ${format}`)
       }`,
     );
   }
@@ -108,8 +109,7 @@ export class ExportEnvConsole extends BaseConsole {
    */
   fileSuccess(filePath: string, count: number, format: string): void {
     this.#spinner.succeed(
-      `${green("✓")} ${bold("Exported to")} ${filePath} ${dim("│")} ${gray(`${count} variable(s) as ${format}`)
-      }`,
+      `${bold("Exported to")} ${filePath} ${dim("│")} ${gray(`${count} variable(s) as ${format}`)}`,
     );
   }
 

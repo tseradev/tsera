@@ -229,8 +229,8 @@ async function generateEnvironmentFiles(
 ): Promise<void> {
   if (!options.dbConfig) return;
 
-  // Create secret directory in config (singular "secret" with 's' at the end)
-  const secretDir = join(options.targetDir, "config", "secret");
+  // Create secrets directory in config
+  const secretDir = join(options.targetDir, "config", "secrets");
   await ensureDir(secretDir);
 
   // Generate .env files
@@ -242,10 +242,10 @@ async function generateEnvironmentFiles(
   for (const [fileName, content] of Object.entries(envFiles)) {
     const filePath = join(secretDir, fileName);
     await safeWrite(filePath, content + "\n");
-    result.copiedFiles.push(`config/secret/${fileName}`);
+    result.copiedFiles.push(`config/secrets/${fileName}`);
   }
 
-  // Copy env.config.ts from templates/modules/secrets/ to config/secret/
+  // Copy env.config.ts from templates/modules/secrets/ to config/secrets/
   const envConfigSource = join(options.modulesDir, "secrets", "env.config.ts");
   const envConfigTarget = join(secretDir, "env.config.ts");
   if (await exists(envConfigSource)) {
@@ -257,6 +257,6 @@ async function generateEnvironmentFiles(
       'from "tsera/core/secrets.ts"',
     );
     await safeWrite(envConfigTarget, content);
-    result.copiedFiles.push("config/secret/env.config.ts");
+    result.copiedFiles.push("config/secrets/env.config.ts");
   }
 }

@@ -100,9 +100,9 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     const templateReadme = await Deno.readTextFile(join(projectDir, "README.md"));
     assert(templateReadme.length > 0);
 
-    // Verify env.config.ts was generated in config/secret/
-    const envConfigPath = join(projectDir, "config", "secret", "env.config.ts");
-    assert(await fileExists(envConfigPath), "config/secret/env.config.ts should be generated");
+    // Verify env.config.ts was generated in config/secrets/
+    const envConfigPath = join(projectDir, "config", "secrets", "env.config.ts");
+    assert(await fileExists(envConfigPath), "config/secrets/env.config.ts should be generated");
     const envConfig = await Deno.readTextFile(envConfigPath);
     assert(
       envConfig.includes('import { defineEnvConfig } from "tsera/core"'),

@@ -42,7 +42,7 @@ export type ActiveModules = {
  * A module is considered active if its entry point and configuration exist:
  * - Backend: `app/back/main.ts` exists
  * - Frontend: ``config/front/_config.ts` exists (Lume) OR `app/front/` exists (Lume)
- * - Secrets: `config/secret/env.config.ts` exists
+ * - Secrets: `config/secrets/env.config.ts` exists
  *
  * @param projectDir - The root directory of TSera project
  * @returns Object indicating which modules are active

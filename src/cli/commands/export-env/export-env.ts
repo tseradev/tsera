@@ -201,8 +201,10 @@ function exportToSh(
 ): void {
   for (const [key, value] of Object.entries(secrets)) {
     // Quote values that contain spaces, quotes, or special characters
-    if (value.includes(" ") || value.includes('"') || value.includes("'") ||
-      value.includes("\n") || value.includes("\t")) {
+    if (
+      value.includes(" ") || value.includes('"') || value.includes("'") ||
+      value.includes("\n") || value.includes("\t")
+    ) {
       // Escape double quotes and backslashes
       const escapedValue = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
       write(`${key}="${escapedValue}"`);
@@ -529,13 +531,10 @@ export function createExportEnvCommand(
             },
           ],
           examples: [
-            "# Export to console (raw output, no status messages)",
-            "tsera export-env --format sh --env prod",
-            "tsera export-env --format json --env dev",
-            "",
-            "# Export to file in config/secrets/",
-            "tsera export-env --format sh --file .env.prod --env prod",
-            "tsera export-env --format json --file secrets.json --env prod",
+            "tsera export-env --format sh --env dev",
+            "tsera export-env --format json --env prod",
+            "tsera export-env --format sh --file .env.prod --env prod --json",
+            "tsera export-env --format sh --file secrets.txt --env prod --prefix 'export '",
           ],
         }),
       );

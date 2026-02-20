@@ -97,7 +97,7 @@ function validateEnvironment(): void {
 
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is required. Set it in your environment or config/secret/.env.* file.",
+      "DATABASE_URL is required. Set it in your environment or config/secrets/.env.* file.",
     );
   }
 

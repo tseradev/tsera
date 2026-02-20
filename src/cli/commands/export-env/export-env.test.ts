@@ -29,10 +29,10 @@ import {
 function createMockLogger(): { logger: Logger; events: { type: string; data: unknown }[] } {
   const events: { type: string; data: unknown }[] = [];
   const logger: Logger = {
-    debug: () => { },
-    info: () => { },
-    warn: () => { },
-    error: () => { },
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
     event: (type: string, data: unknown) => {
       events.push({ type, data });
     },

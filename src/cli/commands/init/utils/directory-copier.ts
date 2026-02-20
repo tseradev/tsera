@@ -126,12 +126,7 @@ export async function copyDirectory(
       continue;
     }
 
-    // Special handling for env.config.ts from base template: should go to config/
     let targetPath = join(target, relativePath);
-    if (lastPart === "env.config.ts" && relativePath === lastPart) {
-      // File is at root of base template, place it in config/
-      targetPath = join(target, "config", "env.config.ts");
-    }
 
     // Special handling for docker module: all files should go to config/docker/
     const isDockerModule = source.includes("docker") && !source.includes("config/docker");
@@ -140,13 +135,13 @@ export async function copyDirectory(
       targetPath = join(target, "config", "docker", lastPart);
     }
 
-    // Special handling for secrets module: env.config.ts should go to config/secret/
+    // Special handling for secrets module: env.config.ts should go to config/secrets/
     const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");
     const isEnvConfigFile = lastPart === "env.config.ts";
 
     if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
-      // File is at root of secrets module, place it in config/secret/
-      targetPath = join(target, "config", "secret", lastPart);
+      // File is at root of secrets module, place it in config/secrets/
+      targetPath = join(target, "config", "secrets", lastPart);
     }
 
     // Skip deps files if they already exist (shared between modules)
@@ -206,12 +201,10 @@ export async function copyDirectory(
 
     // Use actual target path relative to project root for copiedFiles
     let copiedPath = relativePath;
-    if (lastPart === "env.config.ts" && relativePath === lastPart) {
-      copiedPath = `config/env.config.ts`;
-    } else if (isDockerModule) {
+    if (isDockerModule) {
       copiedPath = `config/docker/${lastPart}`;
     } else if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
-      copiedPath = `config/secret/${lastPart}`;
+      copiedPath = `config/secrets/${lastPart}`;
     }
     result.copiedFiles.push(copiedPath);
   }

@@ -180,7 +180,7 @@ function isInsideTSeraRepo(
  * Patches the deno.jsonc in the target directory based on the environment.
  *
  * - If the project is created inside the TSera repo (dev mode):
- *   Replaces JSR imports with local relative paths to the source code.
+ *   Replaces the "tsera" task alias to use local CLI source.
  *
  * - If the project is created outside the TSera repo (production):
  *   Leaves JSR imports as-is.
@@ -244,11 +244,12 @@ async function patchImportMapForEnvironment(
       }
     }
 
-    // Patch dev task to use deno run from source instead of tsera binary
-    // This ensures the task works when tsera is not installed globally
+    // Patch "tsera" task alias to use local CLI source
+    // This ensures all tasks using "deno task tsera" work with local source
     if (denoConfig.tasks && typeof denoConfig.tasks === "object") {
       const tasks = denoConfig.tasks as Record<string, string>;
-      if (tasks.dev === "tsera dev") {
+      // Check if tsera task uses JSR and patch it
+      if (tasks.tsera && tasks.tsera.includes("jsr:@tsera/cli")) {
         // Calculate relative path from targetDir to src/cli/main.ts
         const cliMainPath = join(repoRoot, "src", "cli", "main.ts");
         const absoluteCliMainPath = resolve(cliMainPath);
@@ -281,7 +282,8 @@ async function patchImportMapForEnvironment(
           ? "../".repeat(upLevels) + downParts.join("/")
           : downParts.join("/");
 
-        tasks.dev = `deno run -A ${cliRelativePath} dev`;
+        // Patch only the "tsera" task alias - other tasks use "deno task tsera"
+        tasks.tsera = `deno run -A ${cliRelativePath}`;
       }
     }
 
@@ -692,10 +694,10 @@ function buildGitignore(): string {
     "_site",
     "_cache",
     "",
-    "# TSera secrets (local unless using git-crypt)",
-    "config/secret/.env.dev",
-    "config/secret/.env.staging",
-    "config/secret/.env.prod",
+    "# TSera secrets",
+    "config/secrets/.env.dev",
+    "config/secrets/.env.staging",
+    "config/secrets/.env.prod",
     "",
     "coverage/",
     "*.log",
