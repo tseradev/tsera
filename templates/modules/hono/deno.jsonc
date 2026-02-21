@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/denoland/deno/v2.6.8/cli/schemas/config-file.v1.json",
+  "tasks": {
+    "dev:back": "deno run -A --watch app/back/main.ts",
+    "build:back": "deno compile -A --output dist/back app/back/main.ts"
+  }
+}

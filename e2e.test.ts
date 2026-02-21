@@ -247,7 +247,8 @@ export const envSchema = {
     }
 
     const shOutput = new TextDecoder().decode(shStdout);
-    if (!shOutput.includes("export TEST_TEST_API_KEY='test-secret-key'")) {
+    // sh format outputs KEY=value (dotenv format), not export KEY=value
+    if (!shOutput.includes("TEST_TEST_API_KEY=test-secret-key")) {
       throw new Error(`sh output missing expected export. Got: ${shOutput}`);
     }
 

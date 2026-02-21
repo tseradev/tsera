@@ -102,6 +102,14 @@ async function mergeDenoConfig(
           ...moduleConfigParsed.tasks,
         };
       }
+
+      // Merge imports (except for Lume which is handled separately below)
+      if (moduleConfigParsed.imports && moduleName !== "lume") {
+        baseConfig.imports = {
+          ...(baseConfig.imports || {}),
+          ...moduleConfigParsed.imports,
+        };
+      }
     }
   }
 

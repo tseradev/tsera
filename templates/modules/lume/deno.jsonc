@@ -32,8 +32,8 @@
     }
   },
   "tasks": {
-    "build": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts",
-    "serve": "deno run -A https://deno.land/x/lume@v3.1.4/cli.ts -s"
+    "build:front": "deno run -A lume/cli.ts --config config/front/_config.ts --src app/front",
+    "dev:front": "deno run -A lume/cli.ts --config config/front/_config.ts --src app/front -s"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

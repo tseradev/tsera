@@ -62,7 +62,7 @@ export async function detectActiveModules(projectDir: string): Promise<ActiveMod
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendConfig = join(projectDir, "config", "front", "_config.ts"); // Lume entry point
   const frontendSrcDir = join(projectDir, "app", "front"); // Lume pages directory
-  const secretsConfig = join(projectDir, "config", "secret", "env.config.ts");
+  const secretsConfig = join(projectDir, "config", "secrets", "env.config.ts");
 
   const [
     hasBackend,

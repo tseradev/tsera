@@ -21,7 +21,7 @@
     // Database dependencies
     "@libsql/client": "npm:@libsql/client@^0.17.0",
     "drizzle-orm": "npm:drizzle-orm@^0.45.1",
-    "drizzle-orm/libsql": "npm:drizzle-orm@^0.38.0/libsql",
-    "drizzle-orm/sqlite-core": "npm:drizzle-orm@^0.38.0/sqlite-core"
+    "drizzle-orm/libsql": "npm:drizzle-orm@^0.45.1/libsql",
+    "drizzle-orm/sqlite-core": "npm:drizzle-orm@^0.45.1/sqlite-core"
   }
 }
