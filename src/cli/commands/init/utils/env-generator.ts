@@ -58,7 +58,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
     lines.push("DATABASE_SSL=false");
   } else if (db.dialect === "sqlite") {
     lines.push("DATABASE_PROVIDER=sqlite");
-    lines.push("DATABASE_URL=file:./data/tsera_dev.db");
+    lines.push("DATABASE_URL=file:./app/db/tsera_dev.db");
   }
 
   lines.push("");
@@ -124,7 +124,7 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
     lines.push("DATABASE_SSL=true");
   } else if (db.dialect === "sqlite") {
     lines.push("DATABASE_PROVIDER=sqlite");
-    lines.push("DATABASE_URL=file:./data/tsera_staging.db");
+    lines.push("DATABASE_URL=file:./app/db/tsera_staging.db");
   }
 
   lines.push("");
@@ -190,7 +190,7 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
     lines.push("DATABASE_SSL=true");
   } else if (db.dialect === "sqlite") {
     lines.push("DATABASE_PROVIDER=sqlite");
-    lines.push("DATABASE_URL=file:./data/tsera_prod.db");
+    lines.push("DATABASE_URL=file:./app/db/tsera_prod.db");
   }
 
   lines.push("");

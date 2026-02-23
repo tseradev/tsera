@@ -349,7 +349,7 @@ export function createDefaultInitHandler(
     // Must match the dialect in config-generator.ts
     const defaultDbConfig = {
       dialect: "sqlite" as const,
-      file: "./data/tsera.sqlite",
+      file: "./app/db/tsera.sqlite",
     };
 
     // composeTemplate must NOT receive "ci" as it would be copied with its directory structure

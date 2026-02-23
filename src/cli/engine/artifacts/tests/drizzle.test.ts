@@ -108,7 +108,7 @@ Deno.test("buildDrizzleArtifacts - generates deterministic filename", async () =
   // Same entity should generate the same filename
   assertEquals(artifacts1[0].path, artifacts2[0].path);
   const normalizedPath = artifacts1[0].path.replace(/\\/g, "/");
-  assertStringIncludes(normalizedPath, "app/db/migrations/");
+  assertStringIncludes(normalizedPath, ".tsera/db/migrations/");
   assertStringIncludes(normalizedPath, "_product.sql");
 });
 

@@ -68,7 +68,7 @@ const config = {
     // Choose between "postgres", "mysql", or "sqlite".
     dialect: "sqlite",
     // SQLite database file path.
-    file: "./data/tsera.sqlite",
+    file: "./app/db/tsera.sqlite",
     // Example PostgreSQL configuration:
     // dialect: "postgres",
     // urlEnv: "TSERA_DATABASE_URL",

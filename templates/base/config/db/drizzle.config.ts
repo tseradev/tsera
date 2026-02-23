@@ -37,8 +37,8 @@ if (!databaseUrl.startsWith("file:")) {
  * NOTE: Uncomment the import and use `satisfies Config` after installing drizzle-kit
  */
 export default {
-  schema: "./.tsera/schemas/*.schema.ts",
-  out: "./app/db/migrations",
+  schema: "./.tsera/db/schemas/*.ts",
+  out: "./.tsera/db/migrations",
   dialect: "sqlite",
   dbCredentials: {
     url: databaseUrl,

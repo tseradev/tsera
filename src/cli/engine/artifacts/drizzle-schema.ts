@@ -13,7 +13,7 @@ import { applyGeneratedTextHeader } from "./generated-header.ts";
  * Only entities with `table: true` generate schema artifacts. Entities
  * without a table configuration return an empty array.
  *
- * The generated schema file is placed in the `db/schema` directory
+ * The generated schema file is placed in the `db/schemas` directory
  * within the configured output directory.
  *
  * @param context - Artifact context containing entity and configuration.
@@ -30,7 +30,7 @@ export const buildDrizzleSchemaArtifact: ArtifactBuilder = async (context) => {
   }
 
   const content = entityToDrizzleTable(entity, config.db.dialect);
-  const path = join(config.outDir, "db", "schema", `${entity.name}.ts`);
+  const path = join(config.outDir, "db", "schemas", `${entity.name}.ts`);
   const body = content.endsWith("\n") ? content : `${content}\n`;
   const contentWithHeader = await applyGeneratedTextHeader({
     projectDir,

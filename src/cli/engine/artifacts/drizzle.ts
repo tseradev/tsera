@@ -90,7 +90,7 @@ export const buildDrizzleArtifacts: ArtifactBuilder = async (context) => {
   }
 
   const fileName = await nextMigrationFile(entity.name, content);
-  const path = join("app", "db", "migrations", fileName);
+  const path = join(config.outDir, "db", "migrations", fileName);
 
   const body = content.endsWith("\n") ? content : `${content}\n`;
   const contentWithHeader = await applyGeneratedTextHeader({
