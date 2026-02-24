@@ -58,7 +58,9 @@ export type ActiveModules = {
  * }
  * ```
  */
-export async function detectActiveModules(projectDir: string): Promise<ActiveModules> {
+export async function detectActiveModules(
+  projectDir: string,
+): Promise<ActiveModules> {
   const backendEntry = join(projectDir, "app", "back", "main.ts");
   const frontendConfig = join(projectDir, "config", "front", "_config.ts"); // Lume entry point
   const frontendSrcDir = join(projectDir, "app", "front"); // Lume pages directory

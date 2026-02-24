@@ -177,7 +177,10 @@ export async function createDag(
  * @param entityName - Name of the entity this artifact belongs to.
  * @returns Unique artifact identifier.
  */
-export function buildArtifactId(artifact: ArtifactDescriptor, entityName: string): string {
+export function buildArtifactId(
+  artifact: ArtifactDescriptor,
+  entityName: string,
+): string {
   const slug = pascalToSnakeCase(entityName);
   return `${artifact.kind}:${slug}:${artifact.path}`;
 }
@@ -190,7 +193,10 @@ export function buildArtifactId(artifact: ArtifactDescriptor, entityName: string
  * @returns Topologically sorted array of nodes.
  * @throws {Error} If the graph contains cycles or references unknown nodes.
  */
-function topologicalSort(nodes: Map<string, DagNode>, edges: DagEdge[]): DagNode[] {
+function topologicalSort(
+  nodes: Map<string, DagNode>,
+  edges: DagEdge[],
+): DagNode[] {
   const incoming = new Map<string, number>();
   const outgoing = new Map<string, string[]>();
 

@@ -1,48 +1,34 @@
 /**
  * @module tsera.test
- * Tests for the TSera facade.
+ * Tests for the TSera facade (synchronous API).
  */
 
 import { assertEquals, assertThrows } from "std/assert";
-import { TSera } from "./mod.ts";
+import { createTSera, DEFAULT_CONFIG, TSera } from "./mod.ts";
 
 /**
- * Test suite for TSera facade.
+ * Test suite for TSera facade (synchronous initialization).
  */
 Deno.test("TSera Facade", async (t) => {
-  // Reset TSera before each test section
-  await t.step("ready promise", async (t2) => {
-    await t2.step("should be a promise", () => {
-      const ready = TSera.ready;
-      assertEquals(typeof ready?.then, "function");
-    });
-
-    await t2.step("should resolve without error when config exists", async () => {
-      // This test assumes we're running in the tsera project directory
-      // which has a valid tsera.config.ts
-      await TSera.ready;
-      // If we get here without throwing, the test passes
-    });
-  });
-
   await t.step("config property", async (t2) => {
-    await t2.step("should throw before initialization", () => {
-      // This test can't be run in isolation because TSera auto-initializes
-      // We'll skip it for now
-    });
-
-    await t2.step("should return config after initialization", async () => {
-      await TSera.ready;
+    await t2.step("should be immediately available (sync)", () => {
+      // TSera is initialized synchronously, no await needed
       const config = TSera.config;
       assertEquals(typeof config, "object");
+    });
+
+    await t2.step("should have required config properties", () => {
+      const config = TSera.config;
       assertEquals(typeof config.db, "object");
       assertEquals(typeof config.paths, "object");
+      assertEquals(typeof config.openapi, "boolean");
+      assertEquals(typeof config.docs, "boolean");
+      assertEquals(typeof config.tests, "boolean");
     });
   });
 
   await t.step("env module", async (t2) => {
-    await t2.step("should be undefined if secrets module disabled", async () => {
-      await TSera.ready;
+    await t2.step("should be undefined if secrets module disabled", () => {
       const config = TSera.config;
       // If secrets module is disabled, env should be undefined
       if (!config.modules?.secrets) {
@@ -50,8 +36,7 @@ Deno.test("TSera Facade", async (t) => {
       }
     });
 
-    await t2.step("should have get, require, has methods when enabled", async () => {
-      await TSera.ready;
+    await t2.step("should have get, require, has methods when enabled", () => {
       const config = TSera.config;
 
       if (config.modules?.secrets && TSera.env) {
@@ -61,6 +46,57 @@ Deno.test("TSera Facade", async (t) => {
       }
     });
   });
+
+  await t.step("resolvedConfig property", () => {
+    const resolved = TSera.resolvedConfig;
+    assertEquals(typeof resolved, "object");
+    assertEquals(typeof resolved.configPath, "string");
+    assertEquals(typeof resolved.config, "object");
+  });
+});
+
+/**
+ * Test suite for createTSera function.
+ */
+Deno.test("createTSera", async (t) => {
+  await t.step("should create TSera with explicit config", () => {
+    const customConfig = {
+      ...DEFAULT_CONFIG,
+      openapi: false,
+    };
+
+    const myTSera = createTSera(customConfig);
+    assertEquals(myTSera.config.openapi, false);
+  });
+
+  await t.step("should create TSera with custom configPath", () => {
+    const myTSera = createTSera(DEFAULT_CONFIG, "/custom/path/config.ts");
+    assertEquals(myTSera.resolvedConfig.configPath, "/custom/path/config.ts");
+  });
+
+  await t.step("should have env module when secrets enabled", () => {
+    const configWithSecrets = {
+      ...DEFAULT_CONFIG,
+      modules: {
+        ...DEFAULT_CONFIG.modules,
+        secrets: true,
+      },
+    };
+
+    // Set a test env var
+    Deno.env.set("TSERA_TEST_VAR", "test_value");
+
+    try {
+      const myTSera = createTSera(configWithSecrets);
+      // env should be defined when secrets module is enabled
+      // (may be empty if no env vars match, but the module should exist)
+      if (myTSera.env) {
+        assertEquals(typeof myTSera.env.get, "function");
+      }
+    } finally {
+      Deno.env.delete("TSERA_TEST_VAR");
+    }
+  });
 });
 
 /**
@@ -68,25 +104,30 @@ Deno.test("TSera Facade", async (t) => {
  */
 Deno.test("EnvModule Interface", async (t) => {
   await t.step("get method", async (t2) => {
-    await t2.step("should return undefined for missing key", async () => {
-      await TSera.ready;
+    await t2.step("should return undefined for missing key", () => {
       if (TSera.env) {
         const value = TSera.env.get("NONEXISTENT_VAR_12345");
         assertEquals(value, undefined);
       }
     });
 
-    await t2.step("should return value for existing key", async () => {
-      await TSera.ready;
+    await t2.step("should return value for existing key", () => {
       // Set a test environment variable
       Deno.env.set("TSERA_TEST_VAR", "test_value");
 
       try {
-        // Reset to pick up the new variable
-        await TSera._reset();
+        // Create new TSera instance to pick up the env var
+        const configWithSecrets = {
+          ...DEFAULT_CONFIG,
+          modules: {
+            ...DEFAULT_CONFIG.modules,
+            secrets: true,
+          },
+        };
+        const myTSera = createTSera(configWithSecrets);
 
-        if (TSera.env) {
-          const value = TSera.env.get("TSERA_TEST_VAR");
+        if (myTSera.env) {
+          const value = myTSera.env.get("TSERA_TEST_VAR");
           assertEquals(value, "test_value");
         }
       } finally {
@@ -96,8 +137,7 @@ Deno.test("EnvModule Interface", async (t) => {
   });
 
   await t.step("require method", async (t2) => {
-    await t2.step("should throw for missing key", async () => {
-      await TSera.ready;
+    await t2.step("should throw for missing key", () => {
       if (TSera.env) {
         assertThrows(
           () => TSera.env!.require("NONEXISTENT_VAR_12345"),
@@ -107,15 +147,21 @@ Deno.test("EnvModule Interface", async (t) => {
       }
     });
 
-    await t2.step("should return value for existing key", async () => {
-      await TSera.ready;
+    await t2.step("should return value for existing key", () => {
       Deno.env.set("TSERA_TEST_REQUIRE", "required_value");
 
       try {
-        await TSera._reset();
+        const configWithSecrets = {
+          ...DEFAULT_CONFIG,
+          modules: {
+            ...DEFAULT_CONFIG.modules,
+            secrets: true,
+          },
+        };
+        const myTSera = createTSera(configWithSecrets);
 
-        if (TSera.env) {
-          const value = TSera.env.require("TSERA_TEST_REQUIRE");
+        if (myTSera.env) {
+          const value = myTSera.env.require("TSERA_TEST_REQUIRE");
           assertEquals(value, "required_value");
         }
       } finally {
@@ -125,22 +171,27 @@ Deno.test("EnvModule Interface", async (t) => {
   });
 
   await t.step("has method", async (t2) => {
-    await t2.step("should return false for missing key", async () => {
-      await TSera.ready;
+    await t2.step("should return false for missing key", () => {
       if (TSera.env) {
         assertEquals(TSera.env.has("NONEXISTENT_VAR_12345"), false);
       }
     });
 
-    await t2.step("should return true for existing key", async () => {
-      await TSera.ready;
+    await t2.step("should return true for existing key", () => {
       Deno.env.set("TSERA_TEST_HAS", "has_value");
 
       try {
-        await TSera._reset();
+        const configWithSecrets = {
+          ...DEFAULT_CONFIG,
+          modules: {
+            ...DEFAULT_CONFIG.modules,
+            secrets: true,
+          },
+        };
+        const myTSera = createTSera(configWithSecrets);
 
-        if (TSera.env) {
-          assertEquals(TSera.env.has("TSERA_TEST_HAS"), true);
+        if (myTSera.env) {
+          assertEquals(myTSera.env.has("TSERA_TEST_HAS"), true);
         }
       } finally {
         Deno.env.delete("TSERA_TEST_HAS");
@@ -149,16 +200,25 @@ Deno.test("EnvModule Interface", async (t) => {
   });
 
   await t.step("property access", async (t2) => {
-    await t2.step("should allow property access for env vars", async () => {
-      await TSera.ready;
+    await t2.step("should allow property access for env vars", () => {
       Deno.env.set("TSERA_TEST_PROP", "prop_value");
 
       try {
-        await TSera._reset();
+        const configWithSecrets = {
+          ...DEFAULT_CONFIG,
+          modules: {
+            ...DEFAULT_CONFIG.modules,
+            secrets: true,
+          },
+        };
+        const myTSera = createTSera(configWithSecrets);
 
-        if (TSera.env) {
+        if (myTSera.env) {
           // Property access via Proxy
-          const env = TSera.env as unknown as Record<string, string | undefined>;
+          const env = myTSera.env as unknown as Record<
+            string,
+            string | undefined
+          >;
           assertEquals(env.TSERA_TEST_PROP, "prop_value");
           assertEquals(env.NONEXISTENT_VAR_12345, undefined);
         }
@@ -170,19 +230,22 @@ Deno.test("EnvModule Interface", async (t) => {
 });
 
 /**
- * Test suite for TSera._reset method.
+ * Test suite for DEFAULT_CONFIG.
  */
-Deno.test("TSera._reset", async (t) => {
-  await t.step("should clear and reinitialize state", async () => {
-    await TSera.ready;
-    const config1 = TSera.config;
+Deno.test("DEFAULT_CONFIG", async (t) => {
+  await t.step("should have required properties", () => {
+    assertEquals(typeof DEFAULT_CONFIG.openapi, "boolean");
+    assertEquals(typeof DEFAULT_CONFIG.docs, "boolean");
+    assertEquals(typeof DEFAULT_CONFIG.tests, "boolean");
+    assertEquals(typeof DEFAULT_CONFIG.telemetry, "boolean");
+    assertEquals(typeof DEFAULT_CONFIG.outDir, "string");
+    assertEquals(typeof DEFAULT_CONFIG.paths, "object");
+    assertEquals(typeof DEFAULT_CONFIG.db, "object");
+    assertEquals(typeof DEFAULT_CONFIG.deploy, "object");
+    assertEquals(typeof DEFAULT_CONFIG.modules, "object");
+  });
 
-    await TSera._reset();
-
-    await TSera.ready;
-    const config2 = TSera.config;
-
-    // Config should be the same after reset
-    assertEquals(config1, config2);
+  await t.step("should have valid db config", () => {
+    assertEquals(DEFAULT_CONFIG.db.dialect, "sqlite");
   });
 });

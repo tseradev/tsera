@@ -39,7 +39,10 @@ export async function applyPlan(
   state: EngineState,
   options: ApplyOptions,
 ): Promise<EngineState> {
-  const updates: { node: PlanStep["node"]; action: "create" | "update" | "delete" }[] = [];
+  const updates: {
+    node: PlanStep["node"];
+    action: "create" | "update" | "delete";
+  }[] = [];
 
   for (const step of plan.steps) {
     switch (step.kind) {
@@ -81,7 +84,9 @@ async function handleWriteStep(
 ): Promise<void> {
   const targetPath = step.node.targetPath;
   if (!targetPath) {
-    throw new Error(`Cannot apply step ${step.node.id} without an output path.`);
+    throw new Error(
+      `Cannot apply step ${step.node.id} without an output path.`,
+    );
   }
   const content = step.node.content;
   if (content === undefined) {
@@ -93,7 +98,11 @@ async function handleWriteStep(
   updates.push({ node: step.node, action: step.kind as "create" | "update" });
 
   if (options.onStep) {
-    await options.onStep(step, { kind: step.kind, path: targetPath, changed: result.changed });
+    await options.onStep(step, {
+      kind: step.kind,
+      path: targetPath,
+      changed: result.changed,
+    });
   }
 }
 
@@ -111,7 +120,9 @@ async function handleDeleteStep(
 ): Promise<void> {
   const path = step.node.targetPath ?? step.previous?.targetPath;
   if (!path) {
-    throw new Error(`Cannot delete node ${step.node.id} without an associated path.`);
+    throw new Error(
+      `Cannot delete node ${step.node.id} without an associated path.`,
+    );
   }
 
   const absolute = join(options.projectDir, path);

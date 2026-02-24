@@ -9,7 +9,7 @@
  * @see https://orm.drizzle.team/kit-docs/config-reference
  */
 
-import { createDrizzleConfigFromTsera } from "tsera/core/index.ts";
+import { createDrizzleConfigFromTsera } from "@tsera/core";
 import tseraConfig from "../../../tsera.config.ts";
 
 export default createDrizzleConfigFromTsera(tseraConfig);

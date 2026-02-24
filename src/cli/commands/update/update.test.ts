@@ -9,7 +9,9 @@ type CallRecord = {
   args: string[];
 };
 
-function createRunner(records: CallRecord[]): (command: string, args: string[]) => Promise<{
+function createRunner(
+  records: CallRecord[],
+): (command: string, args: string[]) => Promise<{
   success: boolean;
   code: number;
   stdout: string;
@@ -18,7 +20,12 @@ function createRunner(records: CallRecord[]): (command: string, args: string[]) 
   return (command, args) => {
     records.push({ command, args: [...args] });
     if (args.length === 1 && args[0] === "--version") {
-      return Promise.resolve({ success: true, code: 0, stdout: "deno 2.0.0\n", stderr: "" });
+      return Promise.resolve({
+        success: true,
+        code: 0,
+        stdout: "deno 2.0.0\n",
+        stderr: "",
+      });
     }
     return Promise.resolve({ success: true, code: 0, stdout: "", stderr: "" });
   };
@@ -66,7 +73,13 @@ Deno.test("update with --binary executes deno compile", async () => {
     assertEquals(calls[0], { command: "deno", args: ["--version"] });
     assertEquals(calls[1], {
       command: "deno",
-      args: ["compile", "-A", "--output", "dist/tsera", "jsr:tsera@canary/cli/main.ts"],
+      args: [
+        "compile",
+        "-A",
+        "--output",
+        "dist/tsera",
+        "jsr:tsera@canary/cli/main.ts",
+      ],
     });
 
     const distStat = await Deno.stat(join(tempDir, "dist"));

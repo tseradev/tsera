@@ -62,7 +62,10 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       denoConfig.imports["tsera/"] = fileUrl;
       denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
       denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
-      await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig, null, 2) + "\n");
+      await Deno.writeTextFile(
+        denoConfigPath,
+        JSON.stringify(denoConfig, null, 2) + "\n",
+      );
     }
   }
 }
@@ -71,7 +74,10 @@ Deno.test("doctor reports a pending plan with exit code", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "doctor-app");
-    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const init = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
     await init({
       directory: projectDir,
       force: false,
@@ -130,7 +136,10 @@ Deno.test("doctor --quick exits with code 0 even when issues found", async () =>
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "doctor-quick");
-    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const init = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
     await init({
       directory: projectDir,
       force: false,
@@ -186,7 +195,10 @@ Deno.test("doctor --fix applies changes and leaves a clean state", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "doctor-fix");
-    const init = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const init = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
     await init({
       directory: projectDir,
       force: false,

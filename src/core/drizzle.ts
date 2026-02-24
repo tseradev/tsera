@@ -229,7 +229,10 @@ function escapeSqlString(value: string): string {
  * @param dialect - SQL dialect (default: postgres).
  * @returns SQL CREATE TABLE statement.
  */
-export function entityToDDL(entity: EntityRuntime, dialect: Dialect = "postgres"): string {
+export function entityToDDL(
+  entity: EntityRuntime,
+  dialect: Dialect = "postgres",
+): string {
   if (!entity.table) {
     return `-- Entity ${entity.name} is not mapped to a table.`;
   }

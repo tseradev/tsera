@@ -179,7 +179,10 @@ export class BaseConsole {
    * //    → Custom prefix
    * ```
    */
-  protected writeBullet(content: string, prefix: string = TreeChars.BULLET): void {
+  protected writeBullet(
+    content: string,
+    prefix: string = TreeChars.BULLET,
+  ): void {
     this.write(`   ${dim(prefix)} ${content}`);
   }
 }

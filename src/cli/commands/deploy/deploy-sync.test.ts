@@ -47,7 +47,12 @@ on:
     });
 
     // Verify workflow was created
-    const workflowPath = join(testDir, ".github", "workflows", "cd-docker-staging.yml");
+    const workflowPath = join(
+      testDir,
+      ".github",
+      "workflows",
+      "cd-docker-staging.yml",
+    );
     assertEquals(await pathExists(workflowPath), true);
 
     // Verify meta was updated

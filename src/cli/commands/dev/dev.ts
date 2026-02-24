@@ -44,7 +44,9 @@ export type DevCommandContext = {
 /**
  * Function signature for dev command implementations.
  */
-export type DevCommandHandler = (context: DevCommandContext) => Promise<void> | void;
+export type DevCommandHandler = (
+  context: DevCommandContext,
+) => Promise<void> | void;
 
 /** Debounce delay in milliseconds for file watch events. */
 const WATCH_DEBOUNCE_MS = 150;
@@ -121,9 +123,15 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
 
     // Track module status
     const modulesStatus = new Map<string, ModuleStatus>();
-    if (activeModules.secrets) modulesStatus.set("secrets", { status: "stopped" });
-    if (activeModules.backend) modulesStatus.set("backend", { status: "stopped" });
-    if (activeModules.frontend) modulesStatus.set("frontend", { status: "stopped" });
+    if (activeModules.secrets) {
+      modulesStatus.set("secrets", { status: "stopped" });
+    }
+    if (activeModules.backend) {
+      modulesStatus.set("backend", { status: "stopped" });
+    }
+    if (activeModules.frontend) {
+      modulesStatus.set("frontend", { status: "stopped" });
+    }
 
     const updateUI = (): void => {
       if (uiConsole && !context.logs) {
@@ -204,7 +212,10 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         const shouldBeActive = (name === "secrets" && activeModules.secrets) ||
           (name === "backend" && activeModules.backend) ||
           (name === "frontend" && activeModules.frontend);
-        if (shouldBeActive && status.status !== "ready" && status.status !== "error") {
+        if (
+          shouldBeActive && status.status !== "ready" &&
+          status.status !== "error"
+        ) {
           return false;
         }
       }
@@ -238,7 +249,9 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         return;
       }
 
-      if (name === "backend" && newStatus === "ready" && activeModules.frontend) {
+      if (
+        name === "backend" && newStatus === "ready" && activeModules.frontend
+      ) {
         const frontStatus = modulesStatus.get("frontend");
         if (frontStatus && frontStatus.status === "stopped") {
           modulesStatus.set("frontend", { status: "starting" });
@@ -250,7 +263,10 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             cwd: projectRoot,
             showLogs: context.logs,
           }).catch((err) => {
-            modulesStatus.set("frontend", { status: "error", error: String(err) });
+            modulesStatus.set("frontend", {
+              status: "error",
+              error: String(err),
+            });
             updateUI();
             fatalExit(`Failed to start frontend: ${err}`);
           });
@@ -286,44 +302,50 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
     }
 
     // Watch for file changes
-    const controller = watchProject(projectRoot, async (events: Array<{ paths: string[] }>) => {
-      const paths = events.flatMap((event) => event.paths);
+    const controller = watchProject(
+      projectRoot,
+      async (events: Array<{ paths: string[] }>) => {
+        const paths = events.flatMap((event) => event.paths);
 
-      if (paths.some((p) => p === configWatchPath)) {
-        await fatalExit("Configuration changed. Please restart dev command.");
-        return;
-      }
-
-      if (uiConsole) {
-        uiConsole.cycleStart("watch", paths);
-      }
-
-      const { config } = await resolveConfig(projectRoot);
-      const dagInputs = await prepareDagInputs(projectRoot, config);
-      const dag = await createDag(dagInputs, { cliVersion: metadata.version });
-      await writeDagState(projectRoot, dag);
-      const state = await readEngineState(projectRoot);
-      const plan = planDag(dag, state);
-
-      if (uiConsole) {
-        uiConsole.planSummary(plan.summary);
-      }
-
-      if (plan.summary.changed) {
-        const nextState = await applyPlan(plan, state, {
-          projectDir: projectRoot,
-          onStep: () => {},
-        });
-        await writeEngineState(projectRoot, nextState);
-        if (uiConsole) {
-          uiConsole.applyComplete(plan.summary.total, true);
+        if (paths.some((p) => p === configWatchPath)) {
+          await fatalExit("Configuration changed. Please restart dev command.");
+          return;
         }
-      } else if (uiConsole) {
-        uiConsole.applyComplete(0, false);
-      }
 
-      updateUI();
-    }, { debounceMs: WATCH_DEBOUNCE_MS });
+        if (uiConsole) {
+          uiConsole.cycleStart("watch", paths);
+        }
+
+        const { config } = await resolveConfig(projectRoot);
+        const dagInputs = await prepareDagInputs(projectRoot, config);
+        const dag = await createDag(dagInputs, {
+          cliVersion: metadata.version,
+        });
+        await writeDagState(projectRoot, dag);
+        const state = await readEngineState(projectRoot);
+        const plan = planDag(dag, state);
+
+        if (uiConsole) {
+          uiConsole.planSummary(plan.summary);
+        }
+
+        if (plan.summary.changed) {
+          const nextState = await applyPlan(plan, state, {
+            projectDir: projectRoot,
+            onStep: () => {},
+          });
+          await writeEngineState(projectRoot, nextState);
+          if (uiConsole) {
+            uiConsole.applyComplete(plan.summary.total, true);
+          }
+        } else if (uiConsole) {
+          uiConsole.applyComplete(0, false);
+        }
+
+        updateUI();
+      },
+      { debounceMs: WATCH_DEBOUNCE_MS },
+    );
 
     // Keep alive - wait indefinitely for SIGINT or cleanup
     await new Promise<never>((_resolve, _reject) => {
@@ -349,9 +371,13 @@ export function createDevCommand(
   handler: DevCommandHandler = createDefaultDevHandler(metadata),
 ) {
   const command = new Command()
-    .description("Watch entities, plan changes, and apply generated artifacts in development mode.")
+    .description(
+      "Watch entities, plan changes, and apply generated artifacts in development mode.",
+    )
     .arguments("[projectDir]")
-    .option("--apply", "Force apply even if the plan is empty.", { default: false })
+    .option("--apply", "Force apply even if the plan is empty.", {
+      default: false,
+    })
     .option("--logs", "Show all module logs in real-time.", { default: false })
     .action(async (options: DevActionOptions, projectDir = ".") => {
       const { json = false, apply = false, logs = false } = options;

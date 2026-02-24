@@ -7,7 +7,11 @@ const commentEntity = defineEntity({
   table: true,
   fields: {
     id: { validator: z.string(), visibility: "public" },
-    body: { validator: z.string(), visibility: "public", description: "Comment body" },
+    body: {
+      validator: z.string(),
+      visibility: "public",
+      description: "Comment body",
+    },
     createdAt: { validator: z.date(), visibility: "internal" },
   },
   doc: true,

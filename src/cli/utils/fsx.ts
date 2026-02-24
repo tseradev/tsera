@@ -184,7 +184,10 @@ export async function readJsonFile<T>(path: string): Promise<T | null> {
  * @param value - Value to serialise as JSON.
  * @returns Result indicating whether the file was written and if it changed.
  */
-export async function writeJsonFile(path: string, value: unknown): Promise<SafeWriteResult> {
+export async function writeJsonFile(
+  path: string,
+  value: unknown,
+): Promise<SafeWriteResult> {
   const sorted = sortJson(value);
   const json = JSON.stringify(sorted, null, 2) + "\n";
   return await safeWrite(path, json);
@@ -219,6 +222,9 @@ function sortJson(value: unknown): unknown {
  * @param segments - Path segments to join.
  * @returns Joined path.
  */
-export function toProjectPath(projectDir: string, ...segments: string[]): string {
+export function toProjectPath(
+  projectDir: string,
+  ...segments: string[]
+): string {
   return join(projectDir, ...segments);
 }

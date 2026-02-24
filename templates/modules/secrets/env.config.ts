@@ -16,7 +16,7 @@
  * - description: human-readable description (optional but recommended)
  */
 
-import { defineEnvConfig } from "tsera/core/index.ts";
+import { defineEnvConfig } from "@tsera/core";
 
 export default defineEnvConfig({
   // Database Configuration

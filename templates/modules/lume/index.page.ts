@@ -164,8 +164,12 @@ export default async function (): Promise<string> {
             </div>
 
             <div class="terminal-b" role="list">
-              ${termLine("tsera dev", "tsera dev", "Start dev watcher (plan → apply)")}
-              ${termLine("tsera doctor", "tsera doctor", "Validate environment & artifacts")}
+              ${
+    termLine("tsera dev", "tsera dev", "Start dev watcher (plan → apply)")
+  }
+              ${
+    termLine("tsera doctor", "tsera doctor", "Validate environment & artifacts")
+  }
               ${termLine("tsera update", "tsera update", "Update the CLI")}
             </div>
           </div>

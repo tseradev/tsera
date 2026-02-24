@@ -1,6 +1,6 @@
 // NOTE: Ces imports relatifs pointent vers le code source du CLI TSera.
 // Dans un projet généré, ces imports seront remplacés par des imports JSR
-// (ex: import { defineEntity, z } from "tsera/core";)
+// (ex: import { defineEntity, z } from "@tsera/core";)
 // Une fois TSera publié sur JSR, ce problème sera résolu automatiquement.
 import { defineEntity } from "../../../../src/core/entity.ts";
 import { z } from "../../../../src/core/utils/zod.ts";

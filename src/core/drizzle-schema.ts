@@ -12,7 +12,10 @@ export type Dialect = "postgres" | "sqlite" | "mysql";
  * @param dialect - Target SQL dialect.
  * @returns Corresponding Drizzle type.
  */
-function extractDrizzleTypeFromZod(zodSchema: ZodType, dialect: Dialect): string {
+function extractDrizzleTypeFromZod(
+  zodSchema: ZodType,
+  dialect: Dialect,
+): string {
   const { def } = getZodInternal(zodSchema);
 
   // Handle ZodString
@@ -118,7 +121,8 @@ export function entityToDrizzleTable(
   }
 
   const tableName = pascalToSnakeCase(entity.name);
-  const variableName = entity.name.charAt(0).toLowerCase() + entity.name.slice(1);
+  const variableName = entity.name.charAt(0).toLowerCase() +
+    entity.name.slice(1);
 
   const imports = getImports(dialect);
 
@@ -176,7 +180,12 @@ function getTableFunction(dialect: Dialect): string {
   }
 }
 
-function formatColumn(name: string, field: FieldDef, zodSchema: ZodType, dialect: Dialect): string {
+function formatColumn(
+  name: string,
+  field: FieldDef,
+  zodSchema: ZodType,
+  dialect: Dialect,
+): string {
   let def = extractDrizzleTypeFromZod(zodSchema, dialect);
 
   def = `${def}("${name}")`;
@@ -218,7 +227,9 @@ function formatColumn(name: string, field: FieldDef, zodSchema: ZodType, dialect
       if (defaultValue !== undefined) {
         if (typeof defaultValue === "string") {
           def += `.default(${JSON.stringify(defaultValue)})`;
-        } else if (typeof defaultValue === "number" || typeof defaultValue === "boolean") {
+        } else if (
+          typeof defaultValue === "number" || typeof defaultValue === "boolean"
+        ) {
           def += `.default(${String(defaultValue)})`;
         } else {
           def += `.default(${JSON.stringify(defaultValue)})`;

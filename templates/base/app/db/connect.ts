@@ -15,7 +15,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import {
   getDatabaseCredentials,
   resolveDatabaseProvider,
-} from "tsera/core/index.ts";
+} from "@tsera/core";
 
 // ============================================================================
 // Database Configuration (from core)

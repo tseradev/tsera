@@ -221,10 +221,14 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
 
     // Extract from parent (Zod v4)
     if (innerZod.parent) {
-      if (innerZod.parent.minLength != null && innerSchema.minLength === undefined) {
+      if (
+        innerZod.parent.minLength != null && innerSchema.minLength === undefined
+      ) {
         innerSchema.minLength = innerZod.parent.minLength;
       }
-      if (innerZod.parent.maxLength != null && innerSchema.maxLength === undefined) {
+      if (
+        innerZod.parent.maxLength != null && innerSchema.maxLength === undefined
+      ) {
         innerSchema.maxLength = innerZod.parent.maxLength;
       }
     }

@@ -18,7 +18,9 @@ export type DeployCommandContext = {
 /**
  * Handler for the `tsera deploy` command.
  */
-export type DeployCommandHandler = (context: DeployCommandContext) => Promise<void> | void;
+export type DeployCommandHandler = (
+  context: DeployCommandContext,
+) => Promise<void> | void;
 
 /**
  * Options for the init subcommand.
@@ -55,7 +57,9 @@ export function createDeployCommand(handlers: {
 
   const root = new Command()
     .name("deploy")
-    .description("Manage Continuous Deployment (CD) workflows for multiple providers")
+    .description(
+      "Manage Continuous Deployment (CD) workflows for multiple providers",
+    )
     .action(() => {
       // When deploy is called without a subcommand, show help
       root.showHelp();
@@ -103,7 +107,9 @@ export function createDeployCommand(handlers: {
   root
     .command("init")
     .description("Interactive configuration of deployment providers")
-    .option("--json", "Output machine-readable NDJSON events", { default: false })
+    .option("--json", "Output machine-readable NDJSON events", {
+      default: false,
+    })
     .action(async (options: DeployInitActionOptions) => {
       const projectDir = resolve(".");
       await initHandler({
@@ -114,9 +120,15 @@ export function createDeployCommand(handlers: {
 
   root
     .command("sync")
-    .description("Synchronize CD workflows from config/cd/ to .github/workflows/")
-    .option("--force", "Force overwrite of manually modified workflows", { default: false })
-    .option("--json", "Output machine-readable NDJSON events", { default: false })
+    .description(
+      "Synchronize CD workflows from config/cd/ to .github/workflows/",
+    )
+    .option("--force", "Force overwrite of manually modified workflows", {
+      default: false,
+    })
+    .option("--json", "Output machine-readable NDJSON events", {
+      default: false,
+    })
     .action(async (options: DeploySyncActionOptions) => {
       const projectDir = resolve(".");
       await syncHandler({

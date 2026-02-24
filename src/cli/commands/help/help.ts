@@ -19,7 +19,9 @@ export type HelpCommandContext = {
 /**
  * Function signature for help command implementations.
  */
-export type HelpCommandHandler = (context: HelpCommandContext) => Promise<void> | void;
+export type HelpCommandHandler = (
+  context: HelpCommandContext,
+) => Promise<void> | void;
 
 /**
  * Creates the default help command handler.

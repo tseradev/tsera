@@ -26,7 +26,10 @@ import {
 } from "./export-env.ts";
 
 // Helper to create a mock logger
-function createMockLogger(): { logger: Logger; events: { type: string; data: unknown }[] } {
+function createMockLogger(): {
+  logger: Logger;
+  events: { type: string; data: unknown }[];
+} {
   const events: { type: string; data: unknown }[] = [];
   const logger: Logger = {
     debug: () => {},
@@ -238,7 +241,10 @@ Deno.test("handler returns exit code 2 for invalid format (usage error)", async 
       assertEquals(exitCode, 2);
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:error");
-      assertEquals((capturedEvents[1]?.data as { type: string })?.type, "usage");
+      assertEquals(
+        (capturedEvents[1]?.data as { type: string })?.type,
+        "usage",
+      );
     } else {
       throw error;
     }
@@ -291,7 +297,10 @@ Deno.test("handler returns exit code 1 for validation errors (general error)", a
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:schema");
       assertEquals(capturedEvents[2]?.type, "export-env:error");
-      assertEquals((capturedEvents[2]?.data as { type: string })?.type, "validation");
+      assertEquals(
+        (capturedEvents[2]?.data as { type: string })?.type,
+        "validation",
+      );
     } else {
       throw error;
     }
@@ -333,7 +342,10 @@ Deno.test("handler returns exit code 1 for missing schema (general error)", asyn
       assertEquals(exitCode, 1);
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:error");
-      assertEquals((capturedEvents[1]?.data as { type: string })?.type, "schema");
+      assertEquals(
+        (capturedEvents[1]?.data as { type: string })?.type,
+        "schema",
+      );
     } else {
       throw error;
     }
@@ -613,7 +625,12 @@ Deno.test("export-env validates env option", async () => {
     };
 
     try {
-      await exportEnvCommand.parse(["--format", "json", "--env", "invalid-env"]);
+      await exportEnvCommand.parse([
+        "--format",
+        "json",
+        "--env",
+        "invalid-env",
+      ]);
       throw new Error("Should have thrown");
     } catch (error) {
       if (error instanceof Error && error.message === "exit:2") {
@@ -737,7 +754,10 @@ Deno.test("export-env exports to shell format (KEY=value)", async () => {
 
       // Check shell output format (KEY=value)
       assertStringIncludes(stdoutOutput, "PORT=8000");
-      assertStringIncludes(stdoutOutput, "DATABASE_URL=postgresql://localhost:5432/db");
+      assertStringIncludes(
+        stdoutOutput,
+        "DATABASE_URL=postgresql://localhost:5432/db",
+      );
     } finally {
       console.log = originalStdout;
     }
@@ -965,7 +985,10 @@ Deno.test("export-env throws error when schema not found", async () => {
     } catch (error) {
       if (error instanceof Error && error.message === "exit:1") {
         const stderrOutput = capturedStderr.join("\n");
-        assertStringIncludes(stderrOutput, "config/secrets/env.config.ts not found");
+        assertStringIncludes(
+          stderrOutput,
+          "config/secrets/env.config.ts not found",
+        );
         assertStringIncludes(stderrOutput, "secrets module is installed");
       } else {
         throw error;
@@ -1117,7 +1140,12 @@ Deno.test("export-env writes pretty JSON to file in config/secrets/", async () =
     };
 
     try {
-      await exportEnvCommand.parse(["--format", "json", "--file", "secrets.json"]);
+      await exportEnvCommand.parse([
+        "--format",
+        "json",
+        "--file",
+        "secrets.json",
+      ]);
 
       // Verify file was created in config/secrets/ with pretty JSON
       const outputPath = `${tempDir}/config/secrets/secrets.json`;

@@ -228,11 +228,15 @@ const entityConfigSchema = z.object({
   table: z.boolean().optional(),
   schema: z.boolean().optional(),
   doc: z.boolean().optional(),
-  test: z.union([z.literal("smoke"), z.literal("full"), z.literal(false)]).optional(),
+  test: z.union([z.literal("smoke"), z.literal("full"), z.literal(false)])
+    .optional(),
   active: z.boolean().optional(),
-  fields: z.record(z.string(), fieldDefSchema).refine((fields) => Object.keys(fields).length > 0, {
-    message: "Entity must define at least one field",
-  }),
+  fields: z.record(z.string(), fieldDefSchema).refine(
+    (fields) => Object.keys(fields).length > 0,
+    {
+      message: "Entity must define at least one field",
+    },
+  ),
   relations: z.function().optional(),
   openapi: z.object({
     enabled: z.boolean().optional(),
@@ -402,7 +406,9 @@ function generateRelations(
 /**
  * Filters fields to keep only those with stored === true.
  */
-export function filterStoredFields(fields: Record<string, FieldDef>): Record<string, FieldDef> {
+export function filterStoredFields(
+  fields: Record<string, FieldDef>,
+): Record<string, FieldDef> {
   const filtered: Record<string, FieldDef> = {};
   for (const [key, field] of Object.entries(fields)) {
     if (field.stored !== false) {
@@ -416,7 +422,9 @@ export function filterStoredFields(fields: Record<string, FieldDef>): Record<str
 /**
  * Filters fields to keep only those with visibility === "public".
  */
-export function filterPublicFields(fields: Record<string, FieldDef>): Record<string, FieldDef> {
+export function filterPublicFields(
+  fields: Record<string, FieldDef>,
+): Record<string, FieldDef> {
   const filtered: Record<string, FieldDef> = {};
   for (const [key, field] of Object.entries(fields)) {
     if ((field.visibility ?? "public") === "public") {

@@ -216,7 +216,10 @@ async function mergeImportsIntoDenoConfig(
   // Add module-specific dependencies for enabled modules
   for (const moduleName of options.enabledModules) {
     if (MODULE_DEPENDENCIES[moduleName]) {
-      denoConfig.imports = { ...denoConfig.imports, ...MODULE_DEPENDENCIES[moduleName] };
+      denoConfig.imports = {
+        ...denoConfig.imports,
+        ...MODULE_DEPENDENCIES[moduleName],
+      };
     }
   }
 

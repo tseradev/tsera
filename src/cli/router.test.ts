@@ -12,13 +12,17 @@ function assertEquals<T>(actual: T, expected: T): void {
     const actualJson = JSON.stringify(actual);
     const expectedJson = JSON.stringify(expected);
     if (actualJson !== expectedJson) {
-      throw new Error(`Assertion failed:\nActual:   ${actualJson}\nExpected: ${expectedJson}`);
+      throw new Error(
+        `Assertion failed:\nActual:   ${actualJson}\nExpected: ${expectedJson}`,
+      );
     }
     return;
   }
 
   if (actual !== expected) {
-    throw new Error(`Assertion failed: actual=\"${actual}\" expected=\"${expected}\"`);
+    throw new Error(
+      `Assertion failed: actual=\"${actual}\" expected=\"${expected}\"`,
+    );
   }
 }
 
@@ -111,7 +115,14 @@ Deno.test("update accepts custom channel and options", async () => {
     },
   });
 
-  await router.parse(["update", "--channel", "beta", "--binary", "--dry-run", "--json"]);
+  await router.parse([
+    "update",
+    "--channel",
+    "beta",
+    "--binary",
+    "--dry-run",
+    "--json",
+  ]);
 
   if (!received) {
     throw new Error("The update handler was not invoked.");
@@ -158,7 +169,9 @@ Deno.test("router shows modern help layout", () => {
 
   // Check for the bullet character (may be styled with ANSI codes)
   if (!output.includes("▸") && !output.includes("--json")) {
-    throw new Error("Help output is missing the styled option bullet or --json option.");
+    throw new Error(
+      "Help output is missing the styled option bullet or --json option.",
+    );
   }
 });
 
@@ -184,7 +197,9 @@ Deno.test("main shows help when no arguments are provided", async () => {
   }
 
   if (!output.includes("COMMANDS")) {
-    throw new Error("Commands section is missing when no arguments are provided.");
+    throw new Error(
+      "Commands section is missing when no arguments are provided.",
+    );
   }
 });
 
@@ -220,7 +235,9 @@ Deno.test("router: export-env command can be executed", async () => {
 
   // Verify help was shown (command is properly registered)
   const output = captured.join("\n");
-  if (!output.includes("export-env") && !output.includes("Export environment")) {
+  if (
+    !output.includes("export-env") && !output.includes("Export environment")
+  ) {
     throw new Error("export-env command help was not shown properly.");
   }
 });

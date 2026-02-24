@@ -154,7 +154,11 @@ export class DoctorConsole extends BaseConsole {
         }`,
       );
     } else {
-      const label = formatCount(entities, "entity verified", "entities verified");
+      const label = formatCount(
+        entities,
+        "entity verified",
+        "entities verified",
+      );
       this.#spinner.succeed(
         `${bold("All checks passed")} ${dim("│")} ${gray(label)}`,
       );
@@ -202,9 +206,15 @@ export class DoctorConsole extends BaseConsole {
    * @param path - The file path being fixed (if applicable)
    * @param total - The total number of operations
    */
-  trackFixProgress(kind: string, path: string | undefined, total: number): void {
+  trackFixProgress(
+    kind: string,
+    path: string | undefined,
+    total: number,
+  ): void {
     this.#completed += 1;
-    const label = formatActionLabel(kind as "create" | "update" | "delete" | "noop");
+    const label = formatActionLabel(
+      kind as "create" | "update" | "delete" | "noop",
+    );
     const progress = total > 0 ? `${this.#completed}/${total}` : `${this.#completed}`;
     const target = path ? cyan(path) : gray("(internal)");
     this.#spinner.update(

@@ -184,13 +184,19 @@ export class DeploySyncConsole extends BaseConsole {
     if (this.#hadChanges || summary.removed > 0) {
       const parts: string[] = [];
       if (summary.created > 0) {
-        parts.push(`${summary.created} ${summary.created === 1 ? "creation" : "creations"}`);
+        parts.push(
+          `${summary.created} ${summary.created === 1 ? "creation" : "creations"}`,
+        );
       }
       if (summary.updated > 0) {
-        parts.push(`${summary.updated} ${summary.updated === 1 ? "update" : "updates"}`);
+        parts.push(
+          `${summary.updated} ${summary.updated === 1 ? "update" : "updates"}`,
+        );
       }
       if (summary.removed > 0) {
-        parts.push(`${summary.removed} ${summary.removed === 1 ? "removal" : "removals"}`);
+        parts.push(
+          `${summary.removed} ${summary.removed === 1 ? "removal" : "removals"}`,
+        );
       }
 
       const actions = parts.length > 0 ? gray(parts.join(" • ")) : "";

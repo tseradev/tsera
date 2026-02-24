@@ -17,7 +17,12 @@ async function withTempDir<T>(
   }
 }
 
-function createSummary(create = 0, update = 0, deleteCount = 0, noop = 0): PlanSummary {
+function createSummary(
+  create = 0,
+  update = 0,
+  deleteCount = 0,
+  noop = 0,
+): PlanSummary {
   const total = create + update + deleteCount + noop;
   const changed = create + update + deleteCount > 0;
   return { create, update, delete: deleteCount, noop, total, changed };
@@ -271,7 +276,12 @@ Deno.test("applyPlan - onStep callback for noop", async () => {
       steps: [{
         kind: "noop" as const,
         node,
-        previous: { id: "test:1", kind: "entity" as const, hash: "abc", label: "Test" },
+        previous: {
+          id: "test:1",
+          kind: "entity" as const,
+          hash: "abc",
+          label: "Test",
+        },
       }],
       summary: createSummary(0, 0, 0, 1),
     };
@@ -359,7 +369,9 @@ Deno.test("applyPlan - creates subdirectories if necessary", async () => {
     await applyPlan(plan, state, { projectDir: dir });
 
     // Verify that the file was created with subdirectories
-    const content = await Deno.readTextFile(join(dir, "sub", "dir", "output.txt"));
+    const content = await Deno.readTextFile(
+      join(dir, "sub", "dir", "output.txt"),
+    );
     assertEquals(content, "Nested file");
   });
 });

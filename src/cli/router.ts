@@ -94,7 +94,9 @@ export function createRouter(
 ) {
   const root = new Command()
     .name(CLI_NAME)
-    .description("TSera CLI — The next era of fullstack TypeScript starts here.")
+    .description(
+      "TSera CLI — The next era of fullstack TypeScript starts here.",
+    )
     .globalOption("--json", JSON_OPTION_DESC, { default: false })
     .globalOption("-v, -V, --version", "Display CLI version.", {
       override: true,
@@ -105,7 +107,10 @@ export function createRouter(
     });
 
   const withGlobalOpts = (cmd: SubCommand): SubCommand =>
-    cmd.globalOption("--json", JSON_OPTION_DESC, { default: false, override: true });
+    cmd.globalOption("--json", JSON_OPTION_DESC, {
+      default: false,
+      override: true,
+    });
 
   root.command("init", withGlobalOpts(createInitCommand(handlers.init)));
   root.command("dev", withGlobalOpts(createDevCommand(metadata, handlers.dev)));

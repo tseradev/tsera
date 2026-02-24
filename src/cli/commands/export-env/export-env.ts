@@ -104,7 +104,9 @@ export type ExportEnvContext = {
 /**
  * Function signature for export-env command implementations.
  */
-export type ExportEnvHandler = (context: ExportEnvContext) => Promise<void> | void;
+export type ExportEnvHandler = (
+  context: ExportEnvContext,
+) => Promise<void> | void;
 
 /**
  * Dependencies for the export-env command handler.
@@ -171,7 +173,9 @@ export async function loadSchema(
       return null;
     }
     // Dynamic import throws TypeError with "Module not found" for missing files
-    if (error instanceof TypeError && error.message.includes("Module not found")) {
+    if (
+      error instanceof TypeError && error.message.includes("Module not found")
+    ) {
       return null;
     }
     throw error;
@@ -257,7 +261,8 @@ function exportToJson(
 export function createDefaultExportEnvHandler(
   dependencies: ExportEnvDependencies = {},
 ): ExportEnvHandler {
-  const exitFn = dependencies.exit ?? ((code: number): never => Deno.exit(code));
+  const exitFn = dependencies.exit ??
+    ((code: number): never => Deno.exit(code));
   const readTextFile = dependencies.readTextFile ?? Deno.readTextFile;
   const getEnv = dependencies.getEnv ?? ((key: string) => Deno.env.get(key));
 
@@ -271,14 +276,20 @@ export function createDefaultExportEnvHandler(
     const verboseMode = hasFile || jsonMode;
 
     const human = verboseMode
-      ? (dependencies.console ?? new ExportEnvConsole({ writer: dependencies.writer }))
+      ? (dependencies.console ??
+        new ExportEnvConsole({ writer: dependencies.writer }))
       : null;
 
     const { env, format, prefix, file, cwd } = context;
 
     // Start event (only in verbose mode)
     if (jsonMode) {
-      logger.event("export-env:start", { env, format, prefix, file: file ?? null });
+      logger.event("export-env:start", {
+        env,
+        format,
+        prefix,
+        file: file ?? null,
+      });
     } else if (verboseMode) {
       human?.start(env, format);
     }
@@ -462,9 +473,13 @@ export function createExportEnvCommand(
         required: true,
       },
     )
-    .option("--prefix <prefix:string>", "Prefix to add to exported variable names.", {
-      default: "",
-    })
+    .option(
+      "--prefix <prefix:string>",
+      "Prefix to add to exported variable names.",
+      {
+        default: "",
+      },
+    )
     .option(
       "-o, --file <name:string>",
       "Output file name (written to config/secrets/, enables status messages).",

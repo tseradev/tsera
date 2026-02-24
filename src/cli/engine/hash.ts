@@ -44,7 +44,10 @@ export async function hashText(text: string): Promise<string> {
  * @param options - Hash computation options.
  * @returns Hexadecimal representation of the hash.
  */
-export async function hashValue(value: unknown, options: HashOptions): Promise<string> {
+export async function hashValue(
+  value: unknown,
+  options: HashOptions,
+): Promise<string> {
   const serialised = stableStringify({
     version: options.version,
     salt: options.salt ?? null,

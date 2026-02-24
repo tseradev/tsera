@@ -265,7 +265,9 @@ export function validateSecrets(
     let isRequired = false;
     if (keyConfig.required === true) {
       isRequired = true;
-    } else if (Array.isArray(keyConfig.required) && keyConfig.required.includes(env)) {
+    } else if (
+      Array.isArray(keyConfig.required) && keyConfig.required.includes(env)
+    ) {
       isRequired = true;
     }
 
@@ -541,7 +543,9 @@ export async function bootstrapEnv(
       `Environment validation failed for '.env.${env}':\n${
         errors.map((e) => `${gray("│")} ${red(` - ${e}`)}`).join("\\n")
       }\n${gray("│")}  ${
-        red(`Fix issues in config/secrets/.env.${env} before starting the application.`)
+        red(
+          `Fix issues in config/secrets/.env.${env} before starting the application.`,
+        )
       }`,
     );
   }

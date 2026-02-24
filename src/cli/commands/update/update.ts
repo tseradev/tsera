@@ -45,7 +45,9 @@ export type UpdateCommandContext = {
 /**
  * Function signature for update command implementations.
  */
-export type UpdateCommandHandler = (context: UpdateCommandContext) => Promise<void> | void;
+export type UpdateCommandHandler = (
+  context: UpdateCommandContext,
+) => Promise<void> | void;
 
 /**
  * Result of executing a command.
@@ -66,7 +68,10 @@ type CommandExecutionResult = {
  * Function that executes a command and returns its result.
  * @internal
  */
-type CommandRunner = (command: string, args: string[]) => Promise<CommandExecutionResult>;
+type CommandRunner = (
+  command: string,
+  args: string[],
+) => Promise<CommandExecutionResult>;
 
 /**
  * Dependencies for the update command handler.
@@ -93,7 +98,10 @@ const TEXT_DECODER = new TextDecoder();
  * @returns Promise resolving to the command execution result.
  * @internal
  */
-function defaultRunner(command: string, args: string[]): Promise<CommandExecutionResult> {
+function defaultRunner(
+  command: string,
+  args: string[],
+): Promise<CommandExecutionResult> {
   const denoCommand = new Deno.Command(command, {
     args,
     stdout: "piped",
@@ -116,7 +124,8 @@ export function createDefaultUpdateHandler(
   const runner = dependencies.runner ?? defaultRunner;
   const writer = dependencies.writer;
   const cliVersion = dependencies.cliVersion ?? determineCliVersion();
-  const exitFn = dependencies.exit ?? ((code: number): never => Deno.exit(code));
+  const exitFn = dependencies.exit ??
+    ((code: number): never => Deno.exit(code));
 
   return async (context) => {
     const jsonMode = context.global.json;
@@ -219,12 +228,15 @@ export function createDefaultUpdateHandler(
         ) {
           errorType = "package-not-found";
         } else if (
-          lowerDetail.includes("permission") || lowerDetail.includes("denied") ||
-          lowerDetail.includes("eacces") || lowerDetail.includes("access denied")
+          lowerDetail.includes("permission") ||
+          lowerDetail.includes("denied") ||
+          lowerDetail.includes("eacces") ||
+          lowerDetail.includes("access denied")
         ) {
           errorType = "permission";
         } else if (
-          lowerDetail.includes("network") || lowerDetail.includes("connection") ||
+          lowerDetail.includes("network") ||
+          lowerDetail.includes("connection") ||
           lowerDetail.includes("timeout") || lowerDetail.includes("dns")
         ) {
           errorType = "network";
@@ -232,7 +244,12 @@ export function createDefaultUpdateHandler(
       }
 
       if (jsonMode) {
-        logger.error("Update failed", { code: result.code, stderr, stdout, errorType });
+        logger.error("Update failed", {
+          code: result.code,
+          stderr,
+          stdout,
+          errorType,
+        });
         throw new Error(errorMessage);
       } else {
         human?.updateError(errorMessage, errorType);
@@ -280,19 +297,34 @@ export function createUpdateCommand(
 ) {
   const command = new Command()
     .description("Update the TSera CLI via deno install or a compiled binary.")
-    .option("--channel <channel:string>", "Release channel (stable|beta|canary).", {
-      default: "stable",
-      value: (value): "stable" | "beta" | "canary" => {
-        if (value !== "stable" && value !== "beta" && value !== "canary") {
-          throw new Error(`Unknown channel: ${value}`);
-        }
-        return value;
+    .option(
+      "--channel <channel:string>",
+      "Release channel (stable|beta|canary).",
+      {
+        default: "stable",
+        value: (value): "stable" | "beta" | "canary" => {
+          if (value !== "stable" && value !== "beta" && value !== "canary") {
+            throw new Error(`Unknown channel: ${value}`);
+          }
+          return value;
+        },
       },
+    )
+    .option(
+      "--binary",
+      "Install the compiled binary instead of deno install.",
+      { default: false },
+    )
+    .option("--dry-run", "Show the steps without applying them.", {
+      default: false,
     })
-    .option("--binary", "Install the compiled binary instead of deno install.", { default: false })
-    .option("--dry-run", "Show the steps without applying them.", { default: false })
     .action(async (options: UpdateActionOptions) => {
-      const { json = false, channel = "stable", binary = false, dryRun = false } = options;
+      const {
+        json = false,
+        channel = "stable",
+        binary = false,
+        dryRun = false,
+      } = options;
       await handler({
         channel,
         binary,
@@ -361,7 +393,10 @@ function buildSpecifier(channel: UpdateCommandContext["channel"]): string {
  * @param specifier - JSR specifier string.
  * @returns Array of Deno command arguments.
  */
-function buildDenoArgs(context: UpdateCommandContext, specifier: string): string[] {
+function buildDenoArgs(
+  context: UpdateCommandContext,
+  specifier: string,
+): string[] {
   if (context.binary) {
     return ["compile", "-A", "--output", "dist/tsera", specifier];
   }

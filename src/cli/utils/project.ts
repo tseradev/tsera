@@ -43,7 +43,9 @@ export type ProjectResolution = {
  * @returns Project resolution with root directory and config path.
  * @throws {Error} If no configuration file is found.
  */
-export async function resolveProject(startDir: string): Promise<ProjectResolution> {
+export async function resolveProject(
+  startDir: string,
+): Promise<ProjectResolution> {
   const configPath = await findConfigPath(startDir);
   if (!configPath) {
     throw new Error(`Unable to find config/tsera.config.ts from ${startDir}`);

@@ -48,7 +48,8 @@ export function renderCommandHelp(config: CommandHelpConfig): string {
   const emoji = getCommandEmoji(config.commandName);
   builder.append("\n");
   builder.append(
-    "  " + palette.accent(emoji) + "  " + palette.strong(`tsera ${config.commandName}`) + "\n",
+    "  " + palette.accent(emoji) + "  " +
+      palette.strong(`tsera ${config.commandName}`) + "\n",
   );
   builder.append("  " + palette.subtle(config.description) + "\n");
   builder.append("\n");
@@ -56,7 +57,10 @@ export function renderCommandHelp(config: CommandHelpConfig): string {
   // Usage section
   builder.append(palette.accent("  ◆ ") + palette.heading("USAGE") + "\n");
   const usagePart = config.usage ? ` ${config.usage}` : "";
-  builder.append(formatUsage(`tsera ${config.commandName}`, usagePart.trim(), palette, 4) + "\n");
+  builder.append(
+    formatUsage(`tsera ${config.commandName}`, usagePart.trim(), palette, 4) +
+      "\n",
+  );
   builder.append("\n");
 
   // Commands section (for commands with subcommands)
@@ -88,7 +92,8 @@ export function renderCommandHelp(config: CommandHelpConfig): string {
 
   // Footer
   builder.append(
-    "  " + palette.subtle("For general help, run: ") + palette.strong("tsera --help") + "\n",
+    "  " + palette.subtle("For general help, run: ") +
+      palette.strong("tsera --help") + "\n",
   );
   builder.append("\n");
 

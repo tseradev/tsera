@@ -42,7 +42,11 @@ Deno.test("buildDrizzleArtifacts - generates a SQL migration", async () => {
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
+  const artifacts = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigPostgres,
+    projectDir,
+  });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "migration");
@@ -63,7 +67,11 @@ Deno.test("buildDrizzleArtifacts - filters stored: false fields", async () => {
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
+  const artifacts = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigPostgres,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, '"id"');
@@ -80,7 +88,11 @@ Deno.test("buildDrizzleArtifacts - does not generate migration if no stored fiel
     },
   });
 
-  const artifacts = await buildDrizzleArtifacts({ entity, config: baseConfigPostgres, projectDir });
+  const artifacts = await buildDrizzleArtifacts({
+    entity,
+    config: baseConfigPostgres,
+    projectDir,
+  });
 
   assertEquals(artifacts.length, 0);
 });

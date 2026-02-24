@@ -19,7 +19,11 @@ const INDENT_SPACES = 2;
  * @param palette - Color palette for styling borders.
  * @returns Formatted line with centered text and styled borders.
  */
-export function centerInBox(text: string, boxWidth: number, palette: Palette): string {
+export function centerInBox(
+  text: string,
+  boxWidth: number,
+  palette: Palette,
+): string {
   // Use the existing visualWidth function which handles ANSI codes
   const visualText = visualWidth(text);
 
@@ -28,7 +32,8 @@ export function centerInBox(text: string, boxWidth: number, palette: Palette): s
   const textWithoutAnsi = text.replace(/\u001b\[[0-9;]*m/g, "");
 
   // Simple check: if text contains emoji-like characters
-  const hasEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(textWithoutAnsi);
+  const hasEmoji = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u
+    .test(textWithoutAnsi);
 
   // The content width is boxWidth minus the two border characters (│ on each side)
   const contentWidth = boxWidth - 2;
@@ -43,7 +48,8 @@ export function centerInBox(text: string, boxWidth: number, palette: Palette): s
   const rightPad = " ".repeat(rightPadding) + (hasEmoji ? " " : "");
 
   // Match the exact format of empty lines: "  │" (2 spaces + left border) + content + "│" (right border)
-  return palette.highlight("  │") + leftPad + text + rightPad + palette.highlight("│");
+  return palette.highlight("  │") + leftPad + text + rightPad +
+    palette.highlight("│");
 }
 
 /**
@@ -74,7 +80,11 @@ export function formatUsage(
  * @param palette - Active color palette.
  * @returns Array of formatted example lines.
  */
-export function formatExamples(examples: string[], width: number, palette: Palette): string[] {
+export function formatExamples(
+  examples: string[],
+  width: number,
+  palette: Palette,
+): string[] {
   const indent = "    ";
   const prompt = brightMagenta("$"); // Reserved color for code examples
   const available = Math.max(width - (indent.length + 2), 24);
@@ -121,7 +131,9 @@ export function formatTwoColumn(
 
   // Group entries by category if categories are present
   const hasCategories = entries.some((entry) => entry.category);
-  const groupedEntries: Array<{ category?: string; entries: ModernHelpCommand[] }> = [];
+  const groupedEntries: Array<
+    { category?: string; entries: ModernHelpCommand[] }
+  > = [];
 
   if (hasCategories) {
     const categoryMap = new Map<string, ModernHelpCommand[]>();
@@ -164,7 +176,10 @@ export function formatTwoColumn(
   const indent = "    ";
   const gap = "  ";
   const bullet = palette.subtle("▸");
-  const available = Math.max(width - (indent.length + 2 + computedLabelWidth + gap.length), 24);
+  const available = Math.max(
+    width - (indent.length + 2 + computedLabelWidth + gap.length),
+    24,
+  );
   const emptyLabel = " ".repeat(computedLabelWidth);
 
   const lines: string[] = [];
@@ -183,7 +198,9 @@ export function formatTwoColumn(
       const wrapped = wrapText(entry.description, available);
 
       if (wrapped.length === 0) {
-        lines.push(`${indent}${bullet} ${palette.label(paddedLabel)}`.trimEnd());
+        lines.push(
+          `${indent}${bullet} ${palette.label(paddedLabel)}`.trimEnd(),
+        );
         continue;
       }
 
@@ -193,7 +210,8 @@ export function formatTwoColumn(
       );
       for (const line of rest) {
         lines.push(
-          `${indent}  ${palette.label(emptyLabel)}${gap}${palette.subtle(line)}`.trimEnd(),
+          `${indent}  ${palette.label(emptyLabel)}${gap}${palette.subtle(line)}`
+            .trimEnd(),
         );
       }
     }

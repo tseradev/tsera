@@ -43,7 +43,11 @@ export async function applyGeneratedTextHeader(
   return header + options.body;
 }
 
-function buildHeader(format: GeneratedTextFormat, generatedAt: string, source: string): string {
+function buildHeader(
+  format: GeneratedTextFormat,
+  generatedAt: string,
+  source: string,
+): string {
   if (format === "md") {
     return [
       "<!--",

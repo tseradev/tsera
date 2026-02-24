@@ -271,19 +271,25 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
   lines.push("  DATABASE_PROVIDER: {");
   lines.push('    type: "string" as const,');
   lines.push("    required: true,");
-  lines.push(`    description: "${getDbDescription(db.dialect)} database provider",`);
+  lines.push(
+    `    description: "${getDbDescription(db.dialect)} database provider",`,
+  );
   lines.push("  },");
   lines.push("  DATABASE_URL: {");
   lines.push('    type: "url" as const,');
   lines.push("    required: true,");
-  lines.push(`    description: "${getDbDescription(db.dialect)} connection URL",`);
+  lines.push(
+    `    description: "${getDbDescription(db.dialect)} connection URL",`,
+  );
   lines.push("  },");
 
   if (db.dialect === "postgres" || db.dialect === "mysql") {
     lines.push("  DATABASE_SSL: {");
     lines.push('    type: "string" as const,');
     lines.push('    required: ["dev", "staging"],');
-    lines.push('    description: "SSL mode for database connection (disable, prefer, require)",');
+    lines.push(
+      '    description: "SSL mode for database connection (disable, prefer, require)",',
+    );
     lines.push("  },");
   }
 

@@ -40,7 +40,11 @@ export async function prepareDagInputs(
   const inputs: DagEntityInput[] = [];
 
   for (const item of discovered) {
-    const artifacts = await buildEntityArtifacts(item.entity, config, projectDir);
+    const artifacts = await buildEntityArtifacts(
+      item.entity,
+      config,
+      projectDir,
+    );
     inputs.push({
       entity: item.entity,
       sourcePath: item.sourcePath,
@@ -126,7 +130,10 @@ export async function buildEntityArtifacts(
     for (const artifact of artifacts) {
       const id = buildArtifactId(artifact, entity.name);
       stageIds.push(id);
-      const mergedDependencies = mergeDependencies(artifact.dependsOn, dependencies);
+      const mergedDependencies = mergeDependencies(
+        artifact.dependsOn,
+        dependencies,
+      );
       descriptors.push({
         ...artifact,
         dependsOn: mergedDependencies.length > 0 ? mergedDependencies : undefined,
@@ -175,7 +182,9 @@ async function gatherEntityPaths(
       stat = await Deno.stat(absolute);
     } catch (error) {
       if (error instanceof Deno.errors.NotFound) {
-        throw new Error(`Configured entity path ${entry} does not exist at ${absolute}.`);
+        throw new Error(
+          `Configured entity path ${entry} does not exist at ${absolute}.`,
+        );
       }
       throw error;
     }
@@ -186,7 +195,9 @@ async function gatherEntityPaths(
     }
 
     if (!stat.isDirectory) {
-      throw new Error(`Configured entity path ${entry} must be a file or directory.`);
+      throw new Error(
+        `Configured entity path ${entry} must be a file or directory.`,
+      );
     }
 
     await walkEntities(absolute, (absolutePath) => {
@@ -195,7 +206,9 @@ async function gatherEntityPaths(
     });
   }
 
-  return dedupePreserveOrder(collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1)));
+  return dedupePreserveOrder(
+    collected.sort((a, b) => (a === b ? 0 : a < b ? -1 : 1)),
+  );
 }
 
 /**

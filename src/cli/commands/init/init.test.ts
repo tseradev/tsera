@@ -43,7 +43,10 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       denoConfig.imports["tsera/"] = fileUrl;
       denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
       denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
-      await Deno.writeTextFile(denoConfigPath, JSON.stringify(denoConfig, null, 2) + "\n");
+      await Deno.writeTextFile(
+        denoConfigPath,
+        JSON.stringify(denoConfig, null, 2) + "\n",
+      );
     }
   }
 }
@@ -52,7 +55,10 @@ Deno.test("init generates the full skeleton and manifest", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "demo-app");
-    const handler = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const handler = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
 
     await handler({
       directory: projectDir,
@@ -72,7 +78,10 @@ Deno.test("init generates the full skeleton and manifest", async () => {
 
     const configPath = join(projectDir, "config", "tsera.config.ts");
     const config = normalizeNewlines(await Deno.readTextFile(configPath), "\n");
-    const expectedConfig = normalizeNewlines(await readGoldenFile("tsera.config.ts"), "\n");
+    const expectedConfig = normalizeNewlines(
+      await readGoldenFile("tsera.config.ts"),
+      "\n",
+    );
     assertEquals(config, expectedConfig);
 
     const gitignore = await Deno.readTextFile(join(projectDir, ".gitignore"));
@@ -90,19 +99,35 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     stripGeneratedAt(expectedOpenapiObject);
     assertEquals(openapiObject, expectedOpenapiObject);
 
-    const manifestText = await Deno.readTextFile(join(projectDir, ".tsera", "manifest.json"));
-    const manifest = JSON.parse(manifestText) as { snapshots?: Record<string, unknown> };
+    const manifestText = await Deno.readTextFile(
+      join(projectDir, ".tsera", "manifest.json"),
+    );
+    const manifest = JSON.parse(manifestText) as {
+      snapshots?: Record<string, unknown>;
+    };
     assert(manifest.snapshots !== undefined);
 
-    const graphExists = await fileExists(join(projectDir, ".tsera", "graph.json"));
+    const graphExists = await fileExists(
+      join(projectDir, ".tsera", "graph.json"),
+    );
     assert(graphExists);
 
-    const templateReadme = await Deno.readTextFile(join(projectDir, "README.md"));
+    const templateReadme = await Deno.readTextFile(
+      join(projectDir, "README.md"),
+    );
     assert(templateReadme.length > 0);
 
     // Verify env.config.ts was generated in config/secrets/
-    const envConfigPath = join(projectDir, "config", "secrets", "env.config.ts");
-    assert(await fileExists(envConfigPath), "config/secrets/env.config.ts should be generated");
+    const envConfigPath = join(
+      projectDir,
+      "config",
+      "secrets",
+      "env.config.ts",
+    );
+    assert(
+      await fileExists(envConfigPath),
+      "config/secrets/env.config.ts should be generated",
+    );
     const envConfig = await Deno.readTextFile(envConfigPath);
     assert(
       envConfig.includes('import { defineEnvConfig } from "tsera/core"'),
@@ -114,7 +139,12 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     );
 
     // Verify Docker files are in config/docker/
-    const dockerComposePath = join(projectDir, "config", "docker", "docker-compose.yml");
+    const dockerComposePath = join(
+      projectDir,
+      "config",
+      "docker",
+      "docker-compose.yml",
+    );
     assert(
       await fileExists(dockerComposePath),
       "config/docker/docker-compose.yml should be generated",
@@ -157,7 +187,10 @@ Deno.test("init generates Lume frontend structure", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "demo-app");
-    const handler = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const handler = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
 
     await handler({
       directory: projectDir,
@@ -182,8 +215,14 @@ Deno.test("init generates Lume frontend structure", async () => {
     const lumeAssetsDir = join(frontDir, "assets");
 
     // Check that Lume directories exist
-    assert(await fileExists(lumeIncludesDir), "Lume _includes/ directory should exist");
-    assert(await fileExists(lumeAssetsDir), "Lume assets/ directory should exist");
+    assert(
+      await fileExists(lumeIncludesDir),
+      "Lume _includes/ directory should exist",
+    );
+    assert(
+      await fileExists(lumeAssetsDir),
+      "Lume assets/ directory should exist",
+    );
 
     // Check that Lume files exist
     assert(await fileExists(lumeConfigPath), "Lume _config.ts should exist");
@@ -197,7 +236,7 @@ Deno.test("init generates Lume frontend structure", async () => {
     );
     // Verify _config.ts imports tsera.config.ts for centralized configuration
     assert(
-      configContent.includes('import tseraConfig from'),
+      configContent.includes("import tseraConfig from"),
       "Lume _config.ts should import tsera.config.ts",
     );
     assert(
@@ -213,7 +252,10 @@ Deno.test("init skips Lume when --no-lume is passed", async () => {
   const tempDir = await Deno.makeTempDir({ dir: Deno.cwd() });
   try {
     const projectDir = join(tempDir, "demo-app");
-    const handler = createDefaultInitHandler({ cliVersion: "test", writer: NOOP_WRITER });
+    const handler = createDefaultInitHandler({
+      cliVersion: "test",
+      writer: NOOP_WRITER,
+    });
 
     await handler({
       directory: projectDir,

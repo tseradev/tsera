@@ -44,12 +44,32 @@ const userEntity = defineEntity({
 
 Deno.test("createDag links artifacts to the entity", async () => {
   const artifacts = [
-    ...(await buildZodArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
-    ...(await buildDrizzleArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
-    ...(await buildDocsArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
-    ...(await buildTestArtifacts({ entity: userEntity, config: baseConfig, projectDir })),
+    ...(await buildZodArtifacts({
+      entity: userEntity,
+      config: baseConfig,
+      projectDir,
+    })),
+    ...(await buildDrizzleArtifacts({
+      entity: userEntity,
+      config: baseConfig,
+      projectDir,
+    })),
+    ...(await buildDocsArtifacts({
+      entity: userEntity,
+      config: baseConfig,
+      projectDir,
+    })),
+    ...(await buildTestArtifacts({
+      entity: userEntity,
+      config: baseConfig,
+      projectDir,
+    })),
   ];
-  const openapiArtifact = await buildProjectOpenAPIArtifact([userEntity], baseConfig, projectDir);
+  const openapiArtifact = await buildProjectOpenAPIArtifact(
+    [userEntity],
+    baseConfig,
+    projectDir,
+  );
   if (openapiArtifact) {
     artifacts.push(openapiArtifact);
   }

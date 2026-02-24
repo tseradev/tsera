@@ -8,12 +8,9 @@
  * ## Usage
  *
  * ```typescript
- * import { TSera } from "tsera";
+ * import { TSera } from "@tsera/core";
  *
- * // Wait for auto-initialization
- * await TSera.ready;
- *
- * // Access configuration
+ * // TSera is immediately available (synchronous initialization)
  * const config = TSera.config;
  *
  * // Access environment variables (if secrets module enabled)
@@ -25,65 +22,91 @@
  * - `TSera` - Main facade object for accessing TSera services
  * - `TseraConfig` - Configuration type for TSera projects
  * - `EnvModule` - Interface for the environment module
+ * - Core entity system (`defineEntity`, etc.)
+ * - Schema helpers (`getEntitySchema`, etc.)
+ * - Secrets management (`defineEnvConfig`, etc.)
+ * - OpenAPI generation (`generateOpenAPIDocument`)
+ * - Drizzle/Database helpers (`entityToDDL`, `createDrizzleConfig`, etc.)
  */
 
 // Main facade
-export { TSera } from "./tsera.ts";
-export type { EnvModule } from "./tsera.ts";
+export { createTSera, DEFAULT_CONFIG, TSera } from "./tsera.ts";
+export type { EnvModule, TSeraFacade } from "./tsera.ts";
+
+// Config loader
+export { createResolvedConfig, loadConfigSync } from "./config-loader.ts";
 
 // Configuration types
 export type {
-  TseraConfig,
   DbConfig,
   DeployConfig,
-  DeployTarget,
   DeployProvider,
+  DeployTarget,
   ModulesConfig,
   PathsConfig,
   ResolvedTseraConfig,
+  TseraConfig,
 } from "./cli/definitions.ts";
 
-// Core entity system
-export { defineEntity } from "./core/entity.ts";
-export type {
-  EntityConfig,
-  EntityRuntime,
-  FieldDef,
-  FieldVisibility,
-  FieldDbMetadata,
-  RelationsConfig,
-  ActionsConfig,
-  OpenAPIConfig,
-  DocsConfig,
+// Core - réexporter tout depuis core/index.ts
+// Entity system
+export {
+  type ActionsConfig,
+  defineEntity,
+  type DocsConfig,
+  type EntityConfig,
+  type EntityRuntime,
+  type FieldDbMetadata,
+  type FieldDef,
+  type FieldVisibility,
+  filterPublicFields,
+  filterStoredFields,
+  maskSecretFields,
+  type OpenAPIConfig,
+  type RelationsConfig,
 } from "./core/entity.ts";
 
 // Schema helpers
-export {
-  getEntitySchema,
-  getEntityPublicSchema,
-  getEntityInputSchemas,
-} from "./core/schema.ts";
+export { getEntityInputSchemas, getEntityPublicSchema, getEntitySchema } from "./core/schema.ts";
 
 // Secrets management
 export {
+  bootstrapEnv,
   defineEnvConfig,
-  validateSecrets,
-  parseEnvFile,
   getEnv,
   initializeSecrets,
-  bootstrapEnv,
   isValidEnvName,
+  parseEnvFile,
+  type TseraAPI,
+  validateSecrets,
+  validateType,
 } from "./core/secrets.ts";
 export type {
+  EnvName,
   EnvSchema,
   EnvVarDefinition,
   EnvVarType,
-  EnvName,
   ValidationResult,
 } from "./core/secrets.ts";
 
 // OpenAPI generation
-export { generateOpenAPIDocument } from "./core/openapi.ts";
+export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./core/openapi.ts";
 
 // Drizzle/Database helpers
-export { entityToDDL } from "./core/drizzle.ts";
+export { type Dialect, entityToDDL } from "./core/drizzle.ts";
+export {
+  createDrizzleConfig,
+  createDrizzleConfigFromTsera,
+  type CreateDrizzleConfigOptions,
+  type DatabaseCredentials,
+  type DatabaseDialect,
+  type DrizzleConfig,
+  type DrizzleMysqlConfig,
+  type DrizzlePostgresConfig,
+  type DrizzleSqliteConfig,
+  getDatabaseCredentials,
+  resolveDatabaseProvider,
+  resolveDatabaseUrl,
+  type ResolveDatabaseUrlOptions,
+  validateDatabaseConfig,
+} from "./core/drizzle-config.ts";

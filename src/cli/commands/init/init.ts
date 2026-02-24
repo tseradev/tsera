@@ -77,7 +77,9 @@ export type InitCommandContext = {
 /**
  * Function signature for init command implementations.
  */
-export type InitCommandHandler = (context: InitCommandContext) => Promise<void> | void;
+export type InitCommandHandler = (
+  context: InitCommandContext,
+) => Promise<void> | void;
 
 type InitHandlerDependencies = {
   templatesRoot?: string;
@@ -209,7 +211,10 @@ async function patchImportMapForEnvironment(
 
   // Calculate relative path from targetDir to srcDir
   // Use native relative function (handles Windows paths correctly) and convert to POSIX
-  const relativePath = relative(absoluteTargetDir, absoluteSrcDir).replace(/\\/g, "/");
+  const relativePath = relative(absoluteTargetDir, absoluteSrcDir).replace(
+    /\\/g,
+    "/",
+  );
   // Ensure path ends with / for directory imports
   const relativeImportPath = relativePath.endsWith("/") ? relativePath : `${relativePath}/`;
 
@@ -217,7 +222,10 @@ async function patchImportMapForEnvironment(
   const denoConfigPath = join(targetDir, "deno.jsonc");
   if (await pathExists(denoConfigPath)) {
     const content = await Deno.readTextFile(denoConfigPath);
-    let denoConfig: { imports?: Record<string, string>; tasks?: Record<string, string> };
+    let denoConfig: {
+      imports?: Record<string, string>;
+      tasks?: Record<string, string>;
+    };
 
     try {
       denoConfig = parseJsonc(content) as {
@@ -367,7 +375,11 @@ export function createDefaultInitHandler(
     // applyCiModule explicitly handles copying to .github/workflows/
     let ciWorkflowsCount = 0;
     if (ciEnabled) {
-      ciWorkflowsCount = await applyCiModule(targetDir, templatesRoot, context.force);
+      ciWorkflowsCount = await applyCiModule(
+        targetDir,
+        templatesRoot,
+        context.force,
+      );
     }
 
     // Patch deno.jsonc based on environment (local dev vs production)
@@ -405,9 +417,15 @@ export function createDefaultInitHandler(
     await ensureDir(configDir);
     const configPath = join(configDir, "tsera.config.ts");
     await ensureWritable(configPath, context.force, "config/tsera.config.ts");
-    await safeWrite(configPath, generateConfigFile(projectName, context.modules));
+    await safeWrite(
+      configPath,
+      generateConfigFile(projectName, context.modules),
+    );
     if (jsonMode) {
-      logger.event("init:config", { path: configPath, modules: context.modules });
+      logger.event("init:config", {
+        path: configPath,
+        modules: context.modules,
+      });
     } else {
       human?.configReady(configPath);
     }
@@ -424,7 +442,11 @@ export function createDefaultInitHandler(
       // If CI is enabled, gitignore is not the last item
       // If CI is disabled, gitignore is the last item before artifacts
       const gitignoreIsLast = !ciEnabled || ciWorkflowsCount === 0;
-      human?.gitignoreReady(gitignorePath, context.force || !gitignoreExisted, gitignoreIsLast);
+      human?.gitignoreReady(
+        gitignorePath,
+        context.force || !gitignoreExisted,
+        gitignoreIsLast,
+      );
     }
 
     if (ciEnabled && ciWorkflowsCount > 0) {
@@ -501,7 +523,10 @@ export function createDefaultInitHandler(
     // Propose CD configuration before showing "Project ready!"
     if (jsonMode) {
       // In JSON mode, log that CD configuration is skipped (interactive only)
-      logger.event("init:cd:prompt", { skipped: true, reason: "interactive-only" });
+      logger.event("init:cd:prompt", {
+        skipped: true,
+        reason: "interactive-only",
+      });
     } else if (!context.yes) {
       console.log("");
       const shouldConfigureCd = await Confirm.prompt({
@@ -581,7 +606,9 @@ export function createInitCommand(
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
     .option("-f, --force", "Overwrite existing files.", { default: false })
-    .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
+    .option("-y, --yes", "Answer yes to interactive prompts.", {
+      default: false,
+    })
     .option("--no-hono", "Disable Hono API module.")
     .option("--no-lume", "Disable Lume frontend module.")
     .option("--no-docker", "Disable Docker Compose module.")

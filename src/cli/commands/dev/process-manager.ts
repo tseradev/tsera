@@ -33,7 +33,11 @@ export type ModuleProcess = {
 /**
  * Callback invoked when a module's status changes.
  */
-export type StatusChangeCallback = (name: string, status: ProcessStatus, url?: string) => void;
+export type StatusChangeCallback = (
+  name: string,
+  status: ProcessStatus,
+  url?: string,
+) => void;
 
 /**
  * Options for starting a module.
@@ -456,7 +460,9 @@ export class ProcessManager {
 
         // Also try to extract from common patterns like "localhost:8000" or "127.0.0.1:5173"
         if (!urlMatch) {
-          const hostPortMatch = line.match(/(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{4,5})\b/i);
+          const hostPortMatch = line.match(
+            /(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{4,5})\b/i,
+          );
           if (hostPortMatch) {
             const host = hostPortMatch[1];
             const port = hostPortMatch[2];
@@ -510,7 +516,11 @@ export class ProcessManager {
   /**
    * Notifies all callbacks of a status change.
    */
-  private notifyStatusChange(name: string, status: ProcessStatus, url?: string): void {
+  private notifyStatusChange(
+    name: string,
+    status: ProcessStatus,
+    url?: string,
+  ): void {
     for (const callback of this.statusCallbacks) {
       try {
         callback(name, status, url);

@@ -34,7 +34,11 @@ Deno.test("buildDocsArtifacts - generates Markdown documentation", async () => {
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildDocsArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "doc");
@@ -56,7 +60,11 @@ Deno.test("buildDocsArtifacts - contains a table of public properties", async ()
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildDocsArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   // Verify header
@@ -88,7 +96,11 @@ Deno.test("buildDocsArtifacts - filters fields with visibility !== public", asyn
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildDocsArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   // Public Fields should only contain "public"
@@ -115,7 +127,11 @@ Deno.test("buildDocsArtifacts - uses entity.docs.description", async () => {
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildDocsArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "Custom description for Invoice entity");
@@ -130,7 +146,11 @@ Deno.test("buildDocsArtifacts - adds trailing newline", async () => {
     },
   });
 
-  const artifacts = await buildDocsArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildDocsArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertEquals(content.endsWith("\n"), true);

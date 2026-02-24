@@ -44,7 +44,9 @@ export type DoctorCommandContext = {
 /**
  * Function signature for doctor command implementations.
  */
-export type DoctorCommandHandler = (context: DoctorCommandContext) => Promise<void> | void;
+export type DoctorCommandHandler = (
+  context: DoctorCommandContext,
+) => Promise<void> | void;
 
 type DoctorHandlerDependencies = {
   cliVersion?: string;
@@ -60,7 +62,8 @@ export function createDefaultDoctorHandler(
 ): DoctorCommandHandler {
   const cliVersion = dependencies.cliVersion ?? determineCliVersion();
   const writer = dependencies.writer;
-  const exitFn = dependencies.exit ?? ((code: number): never => Deno.exit(code));
+  const exitFn = dependencies.exit ??
+    ((code: number): never => Deno.exit(code));
 
   return async (context) => {
     const jsonMode = context.global.json;
@@ -74,7 +77,11 @@ export function createDefaultDoctorHandler(
     });
 
     if (jsonMode) {
-      logger.event("doctor:start", { cwd: projectDir, fix: context.fix, quick: context.quick });
+      logger.event("doctor:start", {
+        cwd: projectDir,
+        fix: context.fix,
+        quick: context.quick,
+      });
     } else {
       human?.start();
     }
@@ -88,7 +95,9 @@ export function createDefaultDoctorHandler(
     const previousState = await readEngineState(projectDir);
     // In quick mode, only show changes
     // In full mode, show all artifacts (changed and unchanged)
-    const plan = planDag(dag, previousState, { includeUnchanged: !context.quick });
+    const plan = planDag(dag, previousState, {
+      includeUnchanged: !context.quick,
+    });
 
     if (jsonMode) {
       logger.event("doctor:plan", { summary: plan.summary });
@@ -99,7 +108,9 @@ export function createDefaultDoctorHandler(
     if (!plan.summary.changed) {
       if (jsonMode) {
         logger.event("doctor:clean", { entities: dagInputs.length });
-        logger.info("No inconsistencies detected", { entities: dagInputs.length });
+        logger.info("No inconsistencies detected", {
+          entities: dagInputs.length,
+        });
       } else {
         human?.allClear(dagInputs.length, context.quick);
       }
@@ -142,7 +153,11 @@ export function createDefaultDoctorHandler(
               changed: result.changed,
             });
           } else if (step.kind !== "noop") {
-            human?.trackFixProgress(step.kind, result.path, actionableSteps.length);
+            human?.trackFixProgress(
+              step.kind,
+              result.path,
+              actionableSteps.length,
+            );
           }
         },
       });
@@ -153,7 +168,9 @@ export function createDefaultDoctorHandler(
       if (followUp.summary.changed) {
         if (jsonMode) {
           logger.event("doctor:pending", { summary: followUp.summary });
-          logger.warn("Some inconsistencies remain", { summary: followUp.summary });
+          logger.warn("Some inconsistencies remain", {
+            summary: followUp.summary,
+          });
         } else {
           human?.reportPending(followUp.summary);
         }
@@ -194,15 +211,21 @@ export function createDoctorCommand(
     .description(
       "Diagnose project coherence, detect inconsistencies, and optionally apply safe fixes.",
     )
-    .option("--cwd <path:string>", "Project directory to diagnose.", { default: "." })
+    .option("--cwd <path:string>", "Project directory to diagnose.", {
+      default: ".",
+    })
     .option(
       "--quick",
       "Quick mode: show only changes. Use for validation in CI or before applying.",
       { default: false },
     )
-    .option("--fix", "Automatically apply safe corrections to fix detected issues.", {
-      default: false,
-    })
+    .option(
+      "--fix",
+      "Automatically apply safe corrections to fix detected issues.",
+      {
+        default: false,
+      },
+    )
     .action(async (options: DoctorActionOptions) => {
       const { json = false, cwd = ".", fix = false, quick = false } = options;
       await handler({

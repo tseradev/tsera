@@ -190,7 +190,10 @@ Deno.test("findConfigPath - does not find tsera.config.js", async () => {
   await withTempDir(async (dir) => {
     await Deno.mkdir(join(dir, "config"), { recursive: true });
     // Create JS file instead of TS
-    await Deno.writeTextFile(join(dir, "config", "tsera.config.js"), "export default {}");
+    await Deno.writeTextFile(
+      join(dir, "config", "tsera.config.js"),
+      "export default {}",
+    );
 
     const found = await findConfigPath(dir);
 

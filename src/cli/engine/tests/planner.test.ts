@@ -61,13 +61,21 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
     ...(await buildDocsArtifacts({ entity: entityV1, config, projectDir })),
     ...(await buildTestArtifacts({ entity: entityV1, config, projectDir })),
   ];
-  const openapiV1 = await buildProjectOpenAPIArtifact([entityV1], config, projectDir);
+  const openapiV1 = await buildProjectOpenAPIArtifact(
+    [entityV1],
+    config,
+    projectDir,
+  );
   if (openapiV1) {
     artifactsV1.push(openapiV1);
   }
 
   const dagV1 = await createDag([
-    { entity: entityV1, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV1 },
+    {
+      entity: entityV1,
+      sourcePath: "domain/Invoice.entity.ts",
+      artifacts: artifactsV1,
+    },
   ], { cliVersion: "0.1.0" });
 
   let state = createEmptyState();
@@ -83,13 +91,21 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
     ...(await buildDocsArtifacts({ entity: entityV2, config, projectDir })),
     ...(await buildTestArtifacts({ entity: entityV2, config, projectDir })),
   ];
-  const openapiV2 = await buildProjectOpenAPIArtifact([entityV2], config, projectDir);
+  const openapiV2 = await buildProjectOpenAPIArtifact(
+    [entityV2],
+    config,
+    projectDir,
+  );
   if (openapiV2) {
     artifactsV2.push(openapiV2);
   }
 
   const dagV2 = await createDag([
-    { entity: entityV2, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV2 },
+    {
+      entity: entityV2,
+      sourcePath: "domain/Invoice.entity.ts",
+      artifacts: artifactsV2,
+    },
   ], { cliVersion: "0.1.0" });
 
   const planUpdate = planDag(dagV2, state);
@@ -100,12 +116,20 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
     ...(await buildZodArtifacts({ entity: entityV2, config, projectDir })),
     ...(await buildDrizzleArtifacts({ entity: entityV2, config, projectDir })),
   ];
-  const openapiV3 = await buildProjectOpenAPIArtifact([entityV2], config, projectDir);
+  const openapiV3 = await buildProjectOpenAPIArtifact(
+    [entityV2],
+    config,
+    projectDir,
+  );
   if (openapiV3) {
     artifactsV3.push(openapiV3);
   }
   const dagV3 = await createDag([
-    { entity: entityV2, sourcePath: "domain/Invoice.entity.ts", artifacts: artifactsV3 },
+    {
+      entity: entityV2,
+      sourcePath: "domain/Invoice.entity.ts",
+      artifacts: artifactsV3,
+    },
   ], { cliVersion: "0.1.0" });
 
   const planDelete = planDag(dagV3, state);
@@ -115,7 +139,10 @@ Deno.test("planDag computes create/update/delete summaries", async () => {
 function toUpdates(
   steps: PlanStep[],
 ): { node: PlanStep["node"]; action: "create" | "update" | "delete" }[] {
-  const updates: { node: PlanStep["node"]; action: "create" | "update" | "delete" }[] = [];
+  const updates: {
+    node: PlanStep["node"];
+    action: "create" | "update" | "delete";
+  }[] = [];
   for (const step of steps) {
     if (step.kind === "noop") {
       continue;

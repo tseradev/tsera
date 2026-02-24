@@ -239,7 +239,9 @@ export interface EntitySpec {
   test?: "smoke" | false; // test minimal
 }
 export type EntityDef = Readonly<EntitySpec> & { __brand: "TSeraEntity" };
-export function defineEntity(spec: EntitySpec): EntityDef {/* zod runtime + freeze */}
+export function defineEntity(spec: EntitySpec): EntityDef {
+  /* zod runtime + freeze */
+}
 ```
 
 **Helpers**

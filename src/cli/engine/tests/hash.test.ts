@@ -78,14 +78,20 @@ Deno.test("hashValue - differentiates versions", async () => {
 
 Deno.test("hashValue - uses salt if provided", async () => {
   const hash1 = await hashValue({ foo: "bar" }, { version: "1.0.0" });
-  const hash2 = await hashValue({ foo: "bar" }, { version: "1.0.0", salt: "abc" });
+  const hash2 = await hashValue({ foo: "bar" }, {
+    version: "1.0.0",
+    salt: "abc",
+  });
 
   assertEquals(hash1 !== hash2, true);
 });
 
 Deno.test("hashValue - null salt is default", async () => {
   const hash1 = await hashValue({ foo: "bar" }, { version: "1.0.0" });
-  const hash2 = await hashValue({ foo: "bar" }, { version: "1.0.0", salt: undefined });
+  const hash2 = await hashValue({ foo: "bar" }, {
+    version: "1.0.0",
+    salt: undefined,
+  });
 
   assertEquals(hash1, hash2);
 });

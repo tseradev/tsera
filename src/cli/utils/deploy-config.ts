@@ -29,11 +29,16 @@ export async function readDeployTargets(
 
     // Find deployTargets property in config object
     const initializer = configVar.getInitializer();
-    if (!initializer || initializer.getKind() !== SyntaxKind.ObjectLiteralExpression) {
+    if (
+      !initializer ||
+      initializer.getKind() !== SyntaxKind.ObjectLiteralExpression
+    ) {
       return [];
     }
 
-    const objLiteral = initializer.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+    const objLiteral = initializer.asKindOrThrow(
+      SyntaxKind.ObjectLiteralExpression,
+    );
     const deployTargetsProp = objLiteral.getProperty("deployTargets");
 
     if (!deployTargetsProp) {
@@ -45,21 +50,30 @@ export async function readDeployTargets(
       return [];
     }
 
-    const propAssignment = deployTargetsProp.asKindOrThrow(SyntaxKind.PropertyAssignment);
+    const propAssignment = deployTargetsProp.asKindOrThrow(
+      SyntaxKind.PropertyAssignment,
+    );
     const propInitializer = propAssignment.getInitializer();
-    if (!propInitializer || propInitializer.getKind() !== SyntaxKind.ArrayLiteralExpression) {
+    if (
+      !propInitializer ||
+      propInitializer.getKind() !== SyntaxKind.ArrayLiteralExpression
+    ) {
       return [];
     }
 
-    const arrayLiteral = propInitializer.asKindOrThrow(SyntaxKind.ArrayLiteralExpression);
+    const arrayLiteral = propInitializer.asKindOrThrow(
+      SyntaxKind.ArrayLiteralExpression,
+    );
     const elements = arrayLiteral.getElements();
 
     const providers: DeployProvider[] = [];
     for (const element of elements) {
       if (element.getKind() === SyntaxKind.StringLiteral) {
-        const value = element.asKindOrThrow(SyntaxKind.StringLiteral).getLiteralValue();
+        const value = element.asKindOrThrow(SyntaxKind.StringLiteral)
+          .getLiteralValue();
         if (
-          value === "docker" || value === "cloudflare" || value === "deno-deploy" ||
+          value === "docker" || value === "cloudflare" ||
+          value === "deno-deploy" ||
           value === "vercel" || value === "github"
         ) {
           providers.push(value as DeployProvider);
@@ -100,20 +114,29 @@ export async function updateDeployTargets(
 
   // Find config object
   const initializer = configVar.getInitializer();
-  if (!initializer || initializer.getKind() !== SyntaxKind.ObjectLiteralExpression) {
+  if (
+    !initializer || initializer.getKind() !== SyntaxKind.ObjectLiteralExpression
+  ) {
     throw new Error(`Invalid config object in ${configPath}`);
   }
 
-  const objLiteral = initializer.asKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+  const objLiteral = initializer.asKindOrThrow(
+    SyntaxKind.ObjectLiteralExpression,
+  );
   const deployTargetsProp = objLiteral.getProperty("deployTargets");
 
   // Create new array
   const providersArray = providers.map((p) => `"${p}"`).join(", ");
   const newArrayText = `[${providersArray}]`;
 
-  if (deployTargetsProp && deployTargetsProp.getKind() === SyntaxKind.PropertyAssignment) {
+  if (
+    deployTargetsProp &&
+    deployTargetsProp.getKind() === SyntaxKind.PropertyAssignment
+  ) {
     // Update existing property
-    const propAssignment = deployTargetsProp.asKindOrThrow(SyntaxKind.PropertyAssignment);
+    const propAssignment = deployTargetsProp.asKindOrThrow(
+      SyntaxKind.PropertyAssignment,
+    );
     const propInitializer = propAssignment.getInitializer();
     if (propInitializer) {
       propInitializer.replaceWithText(newArrayText);

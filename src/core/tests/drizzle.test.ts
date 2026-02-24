@@ -7,9 +7,15 @@ const userEntity = defineEntity({
   table: true,
   fields: {
     id: { validator: z.string(), stored: true },
-    email: { validator: z.string().default("anonymous@example.com"), stored: true },
+    email: {
+      validator: z.string().default("anonymous@example.com"),
+      stored: true,
+    },
     createdAt: { validator: z.date(), stored: true },
-    preferences: { validator: z.any().default({ theme: "light" }), stored: true },
+    preferences: {
+      validator: z.any().default({ theme: "light" }),
+      stored: true,
+    },
     computed: { validator: z.string(), stored: false }, // Should not appear in DDL
   },
 });
@@ -20,7 +26,10 @@ Deno.test("entityToDDL emits a CREATE TABLE statement", () => {
   assertStringIncludes(ddl, 'CREATE TABLE IF NOT EXISTS "user_account"');
   assertStringIncludes(ddl, '"id" TEXT NOT NULL');
   assertStringIncludes(ddl, "\"email\" TEXT DEFAULT 'anonymous@example.com'");
-  assertStringIncludes(ddl, `"preferences" JSONB DEFAULT '{"theme":"light"}'::jsonb`);
+  assertStringIncludes(
+    ddl,
+    `"preferences" JSONB DEFAULT '{"theme":"light"}'::jsonb`,
+  );
   // computed should not appear (stored: false)
   assertEquals(ddl.includes('"computed"'), false);
 });
@@ -50,7 +59,10 @@ Deno.test("entityToDDL skips entities without table flag", () => {
     },
   });
 
-  assertEquals(entityToDDL(viewEntity), "-- Entity UserView is not mapped to a table.");
+  assertEquals(
+    entityToDDL(viewEntity),
+    "-- Entity UserView is not mapped to a table.",
+  );
 });
 
 Deno.test("entityToDDL handles entities with no stored fields", () => {

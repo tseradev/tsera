@@ -78,7 +78,9 @@ try {
  * @param targetDir - Target directory where the project is being created.
  * @returns True if dependencies are installed, false otherwise.
  */
-export async function checkDependenciesInstalled(targetDir: string): Promise<boolean> {
+export async function checkDependenciesInstalled(
+  targetDir: string,
+): Promise<boolean> {
   const denoJsonPath = join(targetDir, "deno.jsonc");
 
   if (!(await exists(denoJsonPath))) {
@@ -108,7 +110,9 @@ export async function checkDependenciesInstalled(targetDir: string): Promise<boo
  * @param targetDir - Target directory where the project is being created.
  * @returns True if drizzle-kit is installed, false otherwise.
  */
-export async function checkDrizzleKitInstalled(targetDir: string): Promise<boolean> {
+export async function checkDrizzleKitInstalled(
+  targetDir: string,
+): Promise<boolean> {
   // Check deno.jsonc first
   const denoJsonPath = join(targetDir, "deno.jsonc");
   if (await exists(denoJsonPath)) {
@@ -120,7 +124,9 @@ export async function checkDrizzleKitInstalled(targetDir: string): Promise<boole
       };
 
       const imports = denoConfig.imports || {};
-      if (Object.values(imports).some((v) => typeof v === "string" && v.includes("drizzle-kit"))) {
+      if (
+        Object.values(imports).some((v) => typeof v === "string" && v.includes("drizzle-kit"))
+      ) {
         return true;
       }
     } catch {
@@ -155,7 +161,10 @@ export async function checkDrizzleKitInstalled(targetDir: string): Promise<boole
  * @param targetDir - Target directory where the project is being created.
  * @returns Adapted file content.
  */
-export async function adaptConnectFile(content: string, targetDir: string): Promise<string> {
+export async function adaptConnectFile(
+  content: string,
+  targetDir: string,
+): Promise<string> {
   // Check if dependencies are installed
   const hasDependencies = await checkDependenciesInstalled(targetDir);
   if (!hasDependencies) {
@@ -171,7 +180,9 @@ export async function adaptConnectFile(content: string, targetDir: string): Prom
       switch (element.type) {
         case "import": {
           // Check if import already exists
-          const existing = sourceFile.getImportDeclaration(element.moduleSpecifier);
+          const existing = sourceFile.getImportDeclaration(
+            element.moduleSpecifier,
+          );
           if (!existing) {
             sourceFile.addImportDeclaration({
               moduleSpecifier: element.moduleSpecifier,
@@ -251,7 +262,11 @@ export async function adaptDrizzleConfigFile(
 
   try {
     const project = createTSeraProject();
-    const sourceFile = createInMemorySourceFile(project, "drizzle.config.ts", content);
+    const sourceFile = createInMemorySourceFile(
+      project,
+      "drizzle.config.ts",
+      content,
+    );
 
     // Check if import already exists (uncommented)
     const existingImport = sourceFile.getImportDeclaration("drizzle-kit");
@@ -266,7 +281,9 @@ export async function adaptDrizzleConfigFile(
 
     // Find the default export statement by searching all statements
     const statements = sourceFile.getStatements();
-    let defaultExportStatement: ReturnType<typeof sourceFile.getStatements>[number] | undefined;
+    let defaultExportStatement:
+      | ReturnType<typeof sourceFile.getStatements>[number]
+      | undefined;
 
     for (const statement of statements) {
       const text = statement.getText();
@@ -294,7 +311,9 @@ export async function adaptDrizzleConfigFile(
     const fullText = defaultExportStatement.getFullText();
 
     // Extract the object literal from "export default { ... };" or "export default { ... },"
-    const objectMatch = fullText.match(/export\s+default\s+(\{[\s\S]*?\})(?:,|;)?/);
+    const objectMatch = fullText.match(
+      /export\s+default\s+(\{[\s\S]*?\})(?:,|;)?/,
+    );
     if (!objectMatch) {
       return content;
     }

@@ -167,8 +167,12 @@ export class UpdateConsole extends BaseConsole {
    */
   updateError(
     message: string,
-    errorType: "package-not-found" | "version-unsupported" | "permission" | "network" | "unknown" =
-      "unknown",
+    errorType:
+      | "package-not-found"
+      | "version-unsupported"
+      | "permission"
+      | "network"
+      | "unknown" = "unknown",
   ): void {
     this.#spinner.fail(`${bold("Update failed")} ${dim("│")} ${gray(message)}`);
 
