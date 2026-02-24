@@ -45,3 +45,5 @@ export {
   validateSecrets,
   validateType,
 } from "./secrets.ts";
+// Re-export zod for convenience in entity definitions
+export { z, SchemaError, type ZodType } from "./utils/zod.ts";

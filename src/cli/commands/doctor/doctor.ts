@@ -195,8 +195,8 @@ export function createDefaultDoctorHandler(
     }
 
     // In quick mode, always exit with code 0
-    // In full mode, exit with code 1-2 if issues found
-    const exitCode = context.quick ? 0 : (context.global.strict ? 2 : 1);
+    // In full mode, exit with code 1 if issues found
+    const exitCode = context.quick ? 0 : 1;
     exitFn(exitCode);
   };
 }

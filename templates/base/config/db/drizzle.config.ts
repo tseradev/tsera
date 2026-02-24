@@ -10,6 +10,6 @@
  */
 
 import { createDrizzleConfigFromTsera } from "@tsera/core";
-import tseraConfig from "../../../tsera.config.ts";
+import tseraConfig from "../tsera.config.ts";
 
 export default createDrizzleConfigFromTsera(tseraConfig);

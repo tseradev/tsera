@@ -1,96 +1,80 @@
 /**
  * @module tsera
- * TSera Runtime - API for TSera projects.
+ * TSera - Configuration and environment utilities for TSera projects.
  *
- * ## Usage
+ * Configuration and environment are loaded once at module import time.
+ * Restart the process to reload.
  *
+ * @example
  * ```typescript
- * import { TSera, createTSera } from "@tsera/core";
+ * import { TSera } from "@tsera/core";
  *
- * // TSera is immediately available
- * const config = TSera.config;
+ * // Access config
+ * const dialect = TSera.config.db.dialect;
  *
- * // Or create with explicit config
- * import myConfig from "./tsera.config.ts";
- * const myTSera = createTSera(myConfig);
+ * // Access typed environment variables from secrets manager
+ * const dbUrl = TSera.env.DATABASE_URL;
  * ```
- *
- * ## Conditional Modules
- *
- * Modules are available based on configuration:
- * - If `modules.secrets = true`, `TSera.env` is available
- * - If `modules.secrets = false`, `TSera.env` is undefined
  */
 
-import type { ResolvedTseraConfig, TseraConfig } from "./cli/definitions.ts";
-import { createResolvedConfig, DEFAULT_CONFIG, loadConfigSync } from "./config-loader.ts";
-import { createEnvModule, type EnvModule as CoreEnvModule, type EnvSchema, type EnvValue } from "./core/secrets.ts";
+import type { TseraConfig } from "./cli/definitions.ts";
+import { DEFAULT_CONFIG, findConfigFile } from "./config-loader.ts";
+import {
+  bootstrapEnv,
+  createEnvModule,
+  detectEnvName,
+  type EnvModule,
+  type EnvSchema,
+  type EnvValue,
+} from "./core/secrets.ts";
 
-export type { EnvModule } from "./core/secrets.ts";
+// ============================================================================
+// Config Loading (sync)
+// ============================================================================
 
-function loadEnvVariablesSync(config: TseraConfig): Record<string, EnvValue> {
-  if (!config.modules?.secrets) {
-    return {};
-  }
+// Load config at module import time
+findConfigFile(Deno.cwd());
 
-  const envVars: Record<string, EnvValue> = {};
+// ============================================================================
+// Environment Loading (async at module import time)
+// ============================================================================
 
-  const dbUrl = Deno.env.get("DATABASE_URL");
-  if (dbUrl) {
-    envVars.DATABASE_URL = dbUrl;
-  }
-
-  for (const [key, value] of Object.entries(Deno.env.toObject())) {
-    if (key.startsWith("TSERA_") || key === "PORT" || key === "HOST") {
-      envVars[key] = value;
+async function loadEnvModule(): Promise<EnvModule<EnvSchema>> {
+  const envName = detectEnvName();
+  try {
+    const envValues = await bootstrapEnv(envName, "config/secrets");
+    // Convert to EnvValue format
+    const converted: Record<string, EnvValue> = {};
+    for (const [key, value] of Object.entries(envValues)) {
+      converted[key] = value;
     }
+    return createEnvModule(converted, {} as EnvSchema);
+  } catch {
+    // Secrets module not configured, return empty module
+    return createEnvModule({}, {} as EnvSchema);
   }
-
-  return envVars;
 }
 
-let _resolvedConfig: ResolvedTseraConfig;
-let _envModule: CoreEnvModule | undefined = undefined;
+// Top-level await - loads env at module import time
+const _envModule = await loadEnvModule();
 
-export type TSeraRuntime = {
-  config: TseraConfig;
-  resolvedConfig: ResolvedTseraConfig;
-  env?: CoreEnvModule;
-};
+// ============================================================================
+// TSera API
+// ============================================================================
 
-export function createTSera(
-  config: TseraConfig,
-  configPath: string = "programmatic",
-): TSeraRuntime {
-  const resolvedConfig = createResolvedConfig(config, configPath);
-  const envVars = loadEnvVariablesSync(config);
-  const emptySchema: EnvSchema = {};
+/**
+ * TSera - Configuration and environment utilities.
+ *
+ * Configuration and environment are loaded once at module import time.
+ * Restart the process to reload.
+ */
+export const TSera = {
+  /** Configuration loaded at module import time. */
+  config: DEFAULT_CONFIG as TseraConfig,
 
-  const envModule = (Object.keys(envVars).length > 0 || config.modules?.secrets)
-    ? createEnvModule(envVars, emptySchema)
-    : undefined;
-
-  return {
-    config: resolvedConfig.config,
-    resolvedConfig,
-    env: envModule,
-  };
-}
-
-// Initialize default TSera runtime
-_resolvedConfig = loadConfigSync();
-const _initialEnvVars = loadEnvVariablesSync(_resolvedConfig.config);
-const _emptySchema: EnvSchema = {};
-
-_envModule = (Object.keys(_initialEnvVars).length > 0 ||
-    _resolvedConfig.config.modules?.secrets)
-  ? createEnvModule(_initialEnvVars, _emptySchema)
-  : undefined;
-
-export const TSera: TSeraRuntime = {
-  config: _resolvedConfig.config,
-  resolvedConfig: _resolvedConfig,
+  /** Environment variables from secrets manager (typed per env.config.ts). */
   env: _envModule,
 };
 
 export { DEFAULT_CONFIG };
+export type { EnvModule } from "./core/secrets.ts";

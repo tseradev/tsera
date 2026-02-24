@@ -813,16 +813,294 @@ export function detectEnvName(): EnvName {
 }
 
 /**
+ * SECURITY WHITELIST: Allowed patterns in env.config.ts
+ *
+ * Only these patterns are allowed in the configuration file:
+ * - Import statements from @tsera/core (for defineEnvConfig)
+ * - Export default statements
+ * - Object literals with type, required, description fields
+ * - String literals (type names, descriptions)
+ * - Boolean literals (true/false)
+ * - Array literals (for environment-specific requirements)
+ * - Comments (single-line and multi-line)
+ * - Whitespace and newlines
+ */
+const ALLOWED_PATTERNS = [
+  // Import statements from @tsera/core only
+  /^import\s*\{\s*defineEnvConfig\s*\}\s*from\s*["']@tsera\/core["'];?$/gm,
+  // Export default with defineEnvConfig
+  /^export\s+default\s+defineEnvConfig\s*\(/gm,
+  // Object property names (UPPER_CASE with underscores)
+  /^\s*[A-Z][A-Z0-9_]*\s*:/gm,
+  // Type field with valid values
+  /^\s*type\s*:\s*["'](?:string|number|boolean|url)["']/gm,
+  // Required field with boolean or array
+  /^\s*required\s*:\s*(?:true|false|\[)/gm,
+  // Description field
+  /^\s*description\s*:\s*["']/gm,
+  // Array of environment names
+  /^\s*\[\s*["'](?:dev|staging|prod)["']\s*(?:,\s*["'](?:dev|staging|prod)["']\s*)*\]/gm,
+  // Object braces and commas
+  /^[\s{}[\],]*$/gm,
+  // Comments
+  /^\s*\/\/.*$/gm,
+  /^\s*\/\*[\s\S]*?\*\/$/gm,
+  // defineEnvConfig call closing
+  /^\s*\}\s*\)\s*;?\s*$/gm,
+  // Empty lines and whitespace
+  /^\s*$/gm,
+];
+
+/**
+ * FORBIDDEN PATTERNS: Patterns that are explicitly blocked
+ *
+ * These patterns are never allowed in configuration files:
+ * - Dynamic code execution (eval, Function constructor)
+ * - Module system manipulation (require, dynamic import)
+ * - Environment/process access (Deno.env, process)
+ * - Global object access (globalThis, window, document)
+ * - Network operations (fetch, XMLHttpRequest)
+ * - File system operations (readFile, writeFile)
+ * - Code obfuscation attempts (hex strings, unicode escapes)
+ */
+const FORBIDDEN_PATTERNS = [
+  // Code execution
+  /\beval\s*\(/i,
+  /\bFunction\s*\(/i,
+  /\bnew\s+Function\b/i,
+  // Module system
+  /\brequire\s*\(/i,
+  /\bimport\s*\(/i,
+  /\bexport\s+\*/i,
+  // Environment/Process access
+  /\bDeno\s*\./i,
+  /\bprocess\s*\./i,
+  /\bprocess\.env\b/i,
+  // Global objects
+  /\bglobalThis\b/i,
+  /\bwindow\s*\./i,
+  /\bdocument\s*\./i,
+  /\bglobal\s*\./i,
+  // Network
+  /\bfetch\s*\(/i,
+  /\bXMLHttpRequest\b/i,
+  /\bWebSocket\b/i,
+  // File system
+  /\breadFile/i,
+  /\bwriteFile/i,
+  /\bDeno\.read/i,
+  /\bDeno\.write/i,
+  // Code injection patterns
+  /\\x[0-9a-f]{2}/i, // Hex escapes
+  /\\u[0-9a-f]{4}/i, // Unicode escapes
+  /\batob\s*\(/i,
+  /\bbtoa\s*\(/i,
+  // Prototype pollution
+  /\b__proto__\b/i,
+  /\bprototype\s*\[/i,
+  /\bconstructor\s*\[/i,
+  // Template literals with expressions (potential injection)
+  /`[^`]*\$\{[^}]+\}[^`]*`/,
+];
+
+/**
+ * Validates the content of an env.config.ts file for security.
+ *
+ * This function performs a two-pass validation:
+ * 1. Check for forbidden patterns (block immediately if found)
+ * 2. Verify that remaining content matches allowed patterns
+ *
+ * @param content - The file content to validate
+ * @param filePath - Path to the file (for error messages)
+ * @throws Error if forbidden patterns are found or content doesn't match allowed patterns
+ */
+function validateEnvConfigSecurity(content: string, filePath: string): void {
+  // Pass 1: Check for forbidden patterns
+  for (const pattern of FORBIDDEN_PATTERNS) {
+    if (pattern.test(content)) {
+      throw new Error(
+        `Security: Forbidden pattern detected in ${filePath}. ` +
+          `The configuration file contains potentially dangerous code. ` +
+          `Only static object literals with type, required, and description fields are allowed.`,
+      );
+    }
+  }
+
+  // Pass 2: Normalize content and check structure
+  // Remove all allowed patterns and check if anything remains
+  let normalizedContent = content;
+
+  // Remove comments first
+  normalizedContent = normalizedContent.replace(/^\s*\/\/.*$/gm, "");
+  normalizedContent = normalizedContent.replace(/^\s*\/\*[\s\S]*?\*\/$/gm, "");
+
+  // Remove import statements
+  normalizedContent = normalizedContent.replace(
+    /^import\s*\{\s*defineEnvConfig\s*\}\s*from\s*["']@tsera\/core["'];?\s*$/gm,
+    "",
+  );
+
+  // Remove export default defineEnvConfig wrapper
+  normalizedContent = normalizedContent.replace(
+    /^export\s+default\s+defineEnvConfig\s*\(\s*\{/gm,
+    "{",
+  );
+  normalizedContent = normalizedContent.replace(/^\s*\}\s*\)\s*;?\s*$/gm, "}");
+
+  // Check for remaining suspicious content
+  // After removing all allowed patterns, only whitespace and structural chars should remain
+  const suspiciousRemaining = normalizedContent
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .filter((line) => {
+      // Allow object structure
+      if (/^[\s{}[\],:]*$/.test(line)) return false;
+      // Allow property definitions
+      if (/^\s*[A-Z][A-Z0-9_]*\s*:/.test(line)) return false;
+      // Allow type values
+      if (/^\s*type\s*:\s*["'](?:string|number|boolean|url)["']\s*,?\s*$/.test(line)) return false;
+      // Allow required values
+      if (/^\s*required\s*:\s*(?:true|false)\s*,?\s*$/.test(line)) return false;
+      // Allow required arrays
+      if (/^\s*required\s*:\s*\[/.test(line)) return false;
+      if (/^\s*\[\s*["'](?:dev|staging|prod)["']/.test(line)) return false;
+      if (/^\s*["'](?:dev|staging|prod)["']\s*,?\s*\]?/.test(line)) return false;
+      // Allow description
+      if (/^\s*description\s*:\s*["'].*["']\s*,?\s*$/.test(line)) return false;
+      // Allow closing braces
+      if (/^\s*\}\s*,?\s*$/.test(line)) return false;
+      return true;
+    });
+
+  if (suspiciousRemaining.length > 0) {
+    throw new Error(
+      `Security: Unrecognized content in ${filePath}. ` +
+        `Lines with suspicious content: ${suspiciousRemaining.slice(0, 3).join("; ")}... ` +
+        `Only static configuration objects are allowed.`,
+    );
+  }
+}
+
+/**
+ * Extracts the schema object from validated env.config.ts content.
+ *
+ * This function parses the configuration file content and extracts
+ * the schema object WITHOUT using eval or Function constructor.
+ * It uses a safe parsing approach that only handles object literals.
+ *
+ * @param content - The validated file content
+ * @returns The parsed EnvSchema object
+ * @throws Error if the content cannot be safely parsed
+ */
+function parseEnvConfigContent(content: string): EnvSchema {
+  // Extract the object literal from the content
+  // Match the object between defineEnvConfig({ ... })
+  const defineMatch = content.match(
+    /defineEnvConfig\s*\(\s*(\{[\s\S]*\})\s*\)\s*;?\s*$/,
+  );
+
+  let objectContent: string;
+  if (defineMatch) {
+    objectContent = defineMatch[1];
+  } else {
+    // Try matching export default { ... }
+    const exportMatch = content.match(/export\s+default\s*(\{[\s\S]*\})\s*;?\s*$/);
+    if (exportMatch) {
+      objectContent = exportMatch[1];
+    } else {
+      // Assume the content is already just an object
+      objectContent = content.trim();
+      if (!objectContent.startsWith("{")) {
+        throw new Error("Invalid configuration format: expected object literal");
+      }
+    }
+  }
+
+  // Parse the object literal safely
+  // We use a JSON-like parsing approach with support for:
+  // - Unquoted keys (UPPER_CASE)
+  // - Single and double quoted strings
+  // - Boolean literals
+  // - Array literals
+  try {
+    // Transform the object content to valid JSON for parsing
+    // This is safer than eval because we control the transformation
+    const jsonContent = objectContent
+      // Add quotes around unquoted property names
+      .replace(/([A-Z][A-Z0-9_]*)\s*:/g, '"$1":')
+      // Remove trailing commas (not valid in JSON)
+      .replace(/,\s*([}\]])/g, "$1")
+      // Convert single quotes to double quotes for strings
+      .replace(/'/g, '"');
+
+    const parsed = JSON.parse(jsonContent);
+
+    // Validate the parsed structure matches EnvSchema format
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value !== "object" || value === null) {
+        throw new Error(`Invalid schema entry for "${key}": expected object`);
+      }
+
+      const entry = value as Record<string, unknown>;
+      if (!("type" in entry)) {
+        throw new Error(`Invalid schema entry for "${key}": missing "type" field`);
+      }
+      if (!("required" in entry)) {
+        throw new Error(`Invalid schema entry for "${key}": missing "required" field`);
+      }
+
+      // Validate type value
+      const validTypes = ["string", "number", "boolean", "url"];
+      if (!validTypes.includes(entry.type as string)) {
+        throw new Error(
+          `Invalid schema entry for "${key}": type must be one of ${validTypes.join(", ")}`,
+        );
+      }
+
+      // Validate required value
+      if (
+        typeof entry.required !== "boolean" &&
+        !Array.isArray(entry.required)
+      ) {
+        throw new Error(
+          `Invalid schema entry for "${key}": required must be boolean or array`,
+        );
+      }
+    }
+
+    return parsed as EnvSchema;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(
+        `Failed to parse configuration: ${error.message}. ` +
+          `Ensure the configuration file contains valid JSON-like syntax.`,
+      );
+    }
+    throw error;
+  }
+}
+
+/**
  * Bootstrap function for fail-fast environment validation at app startup.
  *
  * This is the recommended entry point for environment initialization in TSera
  * applications. It performs the following steps:
  *
  * 1. Loads the environment schema from `config/secrets/env.config.ts`
- * 2. Loads environment variables from `config/secrets/.env.<env>`
- * 3. Merges .env values with process environment (process env takes precedence)
- * 4. Validates all variables against the schema
- * 5. Throws an error if validation fails (fail-fast)
+ * 2. Validates the schema file for security (no arbitrary code execution)
+ * 3. Parses the schema using safe JSON-like parsing (no eval/Function)
+ * 4. Loads environment variables from `config/secrets/.env.<env>`
+ * 5. Merges .env values with process environment (process env takes precedence)
+ * 6. Validates all variables against the schema
+ * 7. Throws an error if validation fails (fail-fast)
+ *
+ * ## Security Architecture
+ *
+ * This function uses a secure parsing approach that:
+ * - Validates content against a whitelist of allowed patterns
+ * - Blocks forbidden patterns (eval, Function, Deno.*, etc.)
+ * - Parses configuration using JSON.parse() instead of eval()
+ * - Never executes arbitrary code from configuration files
  *
  * This function should be called before starting any servers or initializing
  * application services to ensure all required environment variables are present
@@ -840,36 +1118,20 @@ export async function bootstrapEnv(
   // Load schema from env.config.ts
   const schemaPath = join(envDir, "env.config.ts");
   let schema: EnvSchema;
+
   try {
-    // Read the file directly to avoid import resolution issues
-    // This bypasses Deno's import map resolution which uses the CLI's deno.jsonc
-    let content = await Deno.readTextFile(schemaPath);
+    // Read the configuration file
+    const content = await Deno.readTextFile(schemaPath);
 
-    // Remove import statements to avoid "Cannot use import statement outside a module" error
-    // We'll define defineEnvConfig in the function scope
-    content = content.replace(/^import\s+.*?from\s+.*?;?$/gm, "");
+    // SECURITY: Validate content before parsing
+    // This prevents arbitrary code execution by checking for forbidden patterns
+    validateEnvConfigSecurity(content, schemaPath);
 
-    // Extract the expression after "export default" since it's not valid in Function constructor context
-    // The defineEnvConfig call will be evaluated directly
-    // Use the 's' flag to make '.' match newlines, capturing the entire expression
-    const exportDefaultMatch = content.match(/^export\s+default\s+(.+)$/ms);
-    if (exportDefaultMatch) {
-      // Use only the expression after "export default"
-      content = exportDefaultMatch[1];
-    }
+    // Parse the configuration safely (no eval, no Function constructor)
+    schema = parseEnvConfigContent(content);
 
-    // Evaluate the content directly as it's now just the defineEnvConfig call
-    const moduleFn = new Function(
-      "defineEnvConfig",
-      `return ${content};`,
-    );
-
-    // defineEnvConfig is available in this module, so we pass it
-    const result = moduleFn(defineEnvConfig);
-    schema = result as EnvSchema;
-
-    if (!schema) {
-      throw new Error(`No schema found in ${schemaPath}`);
+    if (!schema || Object.keys(schema).length === 0) {
+      throw new Error(`No valid schema found in ${schemaPath}`);
     }
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {

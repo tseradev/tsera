@@ -11,12 +11,12 @@
   },
   "imports": {
     "@/": "./",
+    "@tsera/core": "../../src/core/index.ts",
     "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8",
     "std/assert": "jsr:@std/assert@^1.0.18",
     "std/fs": "jsr:@std/fs@^1.0.22",
     "std/fs/walk": "jsr:@std/fs@^1.0.22/walk",
     "std/path": "jsr:@std/path@^1.1.4",
-    "tsera/": "jsr:@tsera/tsera@^1.0.0/",
     "zod": "jsr:@zod/zod@^4.3.6",
     // Database dependencies
     "@libsql/client": "npm:@libsql/client@^0.17.0",

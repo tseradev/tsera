@@ -42,12 +42,22 @@ export const DEFAULT_CONFIG: TseraConfig = {
 };
 
 /**
+ * Result of config loading with optional warning.
+ *
+ * Used when config file exists but cannot be loaded synchronously.
+ */
+export type LoadConfigResult = ResolvedTseraConfig & {
+  /** Warning message if config file was found but not loaded */
+  warning?: string;
+};
+
+/**
  * Attempts to find the project root by looking for tsera.config.ts.
  *
  * @param startDir - Directory to start searching from.
  * @returns Path to config file or null if not found.
  */
-function findConfigFile(startDir: string): string | null {
+export function findConfigFile(startDir: string): string | null {
   let currentDir = startDir;
 
   // Search up the directory tree
@@ -82,31 +92,22 @@ function findConfigFile(startDir: string): string | null {
  * 2. tsera.config.ts in the current directory or parent directories
  * 3. Falls back to default configuration if not found
  *
- * Note: Due to Deno's module system, this function can only detect
- * if a config file exists synchronously. Actual module loading happens
- * asynchronously. For programmatic usage, prefer passing the config
- * directly to createTSera().
- *
  * @param configPath - Optional path to config file.
- * @returns Resolved configuration.
+ * @returns Resolved configuration with optional warning.
  */
-export function loadConfigSync(configPath?: string): ResolvedTseraConfig {
-  // Try to find config file
+export function loadConfigSync(configPath?: string): LoadConfigResult {
   const foundPath = configPath ?? findConfigFile(Deno.cwd());
 
   if (foundPath) {
-    // Config file exists, but we can't load it synchronously in Deno
-    // Return default config with path info
-    // The actual loading should be done by importing the config directly
-    // in user code and passing it to createTSera()
-    console.warn(
-      `Warning: Config file found at ${foundPath} but synchronous loading is not supported. ` +
-        `Using default config. Import your config directly and use createTSera() for full config support.`,
-    );
+    return {
+      configPath: foundPath,
+      config: DEFAULT_CONFIG,
+      warning: `Config file found at ${foundPath} but synchronous loading is not supported. Using default config.`,
+    };
   }
 
   return {
-    configPath: foundPath ?? "default",
+    configPath: "default",
     config: DEFAULT_CONFIG,
   };
 }

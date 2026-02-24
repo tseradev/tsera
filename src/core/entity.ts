@@ -297,13 +297,13 @@ function buildPublicSchema(
 }
 
 /**
- * Builds the input schema for creation.
- * Omits id, immutable fields, and auto-generated fields (createdAt, updatedAt if db.defaultNow).
+ * Returns the list of field keys to omit from input schemas.
+ * This includes: id field, immutable fields, and auto-generated fields (db.defaultNow).
+ *
+ * @param fields - Entity field definitions.
+ * @returns Array of field keys to omit.
  */
-function buildInputCreateSchema(
-  baseSchema: ZodObject<Record<string, ZodType>>,
-  fields: Record<string, FieldDef>,
-): ZodObject<Record<string, ZodType>> {
+function getKeysToOmitForInput(fields: Record<string, FieldDef>): string[] {
   const keysToOmit: string[] = [];
 
   // Omit id
@@ -311,30 +311,44 @@ function buildInputCreateSchema(
     keysToOmit.push("id");
   }
 
-  // Omit immutable fields
+  // Omit immutable fields and auto-generated fields in a single pass
   for (const [key, field] of Object.entries(fields)) {
-    if (field.immutable === true) {
+    if (field.immutable === true || field.db?.defaultNow === true) {
       keysToOmit.push(key);
     }
   }
 
-  // Omit auto-generated fields (createdAt, updatedAt if db.defaultNow)
-  for (const [key, field] of Object.entries(fields)) {
-    if (field.db?.defaultNow === true) {
-      keysToOmit.push(key);
-    }
-  }
+  return keysToOmit;
+}
+
+/**
+ * Creates a Zod omit object from an array of keys.
+ *
+ * @param keys - Array of keys to omit.
+ * @returns Object suitable for Zod's omit() method.
+ */
+function createOmitObject(keys: string[]): Record<string, true> {
+  return keys.reduce((acc, key) => {
+    acc[key] = true;
+    return acc;
+  }, {} as Record<string, true>);
+}
+
+/**
+ * Builds the input schema for creation.
+ * Omits id, immutable fields, and auto-generated fields (createdAt, updatedAt if db.defaultNow).
+ */
+function buildInputCreateSchema(
+  baseSchema: ZodObject<Record<string, ZodType>>,
+  fields: Record<string, FieldDef>,
+): ZodObject<Record<string, ZodType>> {
+  const keysToOmit = getKeysToOmitForInput(fields);
 
   if (keysToOmit.length === 0) {
     return baseSchema;
   }
 
-  return baseSchema.omit(
-    keysToOmit.reduce((acc, key) => {
-      acc[key] = true;
-      return acc;
-    }, {} as Record<string, true>),
-  );
+  return baseSchema.omit(createOmitObject(keysToOmit));
 }
 
 /**
@@ -345,36 +359,12 @@ function buildInputUpdateSchema(
   baseSchema: ZodObject<Record<string, ZodType>>,
   fields: Record<string, FieldDef>,
 ): ZodObject<Record<string, ZodType>> {
-  const keysToOmit: string[] = [];
-
-  // Omit id
-  if ("id" in fields) {
-    keysToOmit.push("id");
-  }
-
-  // Omit immutable fields
-  for (const [key, field] of Object.entries(fields)) {
-    if (field.immutable === true) {
-      keysToOmit.push(key);
-    }
-  }
-
-  // Omit auto-generated fields (createdAt, updatedAt if db.defaultNow)
-  for (const [key, field] of Object.entries(fields)) {
-    if (field.db?.defaultNow === true) {
-      keysToOmit.push(key);
-    }
-  }
+  const keysToOmit = getKeysToOmitForInput(fields);
 
   let updateSchema = baseSchema.partial();
 
   if (keysToOmit.length > 0) {
-    updateSchema = updateSchema.omit(
-      keysToOmit.reduce((acc, key) => {
-        acc[key] = true;
-        return acc;
-      }, {} as Record<string, true>),
-    );
+    updateSchema = updateSchema.omit(createOmitObject(keysToOmit));
   }
 
   return updateSchema;

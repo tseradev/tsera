@@ -17,7 +17,7 @@ import { initDb } from "../db/connect.ts";
 import { seedSlogans } from "../db/seeds/slogans.seed.ts";
 import registerHealthRoutes from "./routes/health.ts";
 import registerSloganRoutes from "./routes/slogans.ts";
-import tseraConfig from "../../tsera.config.ts";
+import tseraConfig from "../../config/tsera.config.ts";
 
 // ============================================================================
 // Types

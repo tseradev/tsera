@@ -1,29 +1,24 @@
-// NOTE: Ces imports relatifs pointent vers le code source du CLI TSera.
-// Dans un projet généré, ces imports seront remplacés par des imports JSR
-// (ex: import { defineEntity, z } from "@tsera/core";)
-// Une fois TSera publié sur JSR, ce problème sera résolu automatiquement.
-import { defineEntity } from "../../../../src/core/entity.ts";
-import { z } from "../../../../src/core/utils/zod.ts";
+import { defineEntity, z } from "@tsera/core";
 
 export const Slogan = defineEntity({
-  // === MÉTADONNÉES / COMPORTEMENT GLOBAL ===
+  // === METADATA / GLOBAL BEHAVIOR ===
 
-  name: "Slogan", // Nom logique de l'entité (obligatoire)
+  name: "Slogan", // Logical name of the entity (required)
 
-  table: true, // Génère table + migrations (Drizzle)
-  schema: true, // Génère schémas Zod + types + OpenAPI
-  doc: true, // Génère documentation (Markdown / site / CLI)
+  table: true, // Generate table + migrations (Drizzle)
+  schema: true, // Generate Zod schemas + types + OpenAPI
+  doc: true, // Generate documentation (Markdown / site / CLI)
   test: "smoke", // false | "smoke" | "full"
-  active: true, // Si false : entité ignorée par les pipelines
+  active: true, // If false: entity ignored by pipelines
 
-  // === DÉFINITION DES CHAMPS ===
+  // === FIELD DEFINITIONS ===
 
   fields: {
     id: {
       validator: z.number().int().positive(),
       visibility: "public",
       immutable: true,
-      description: "Identifiant unique du slogan.",
+      description: "Unique identifier for the slogan.",
       example: 1,
       db: {
         primary: true,
@@ -33,22 +28,22 @@ export const Slogan = defineEntity({
     text: {
       validator: z.string().min(1).max(500),
       visibility: "public",
-      description: "Texte du slogan.",
+      description: "The slogan text.",
       example: "Minimal by design.",
     },
   },
 
-  // === BLOCS OPTIONNELS AVANCÉS ===
+  // === ADVANCED OPTIONAL BLOCKS ===
 
   openapi: {
     enabled: true,
     tags: ["slogans"],
     summary: "Slogans management",
-    description: "Entité représentant un slogan affiché sur le frontend.",
+    description: "Entity representing a slogan displayed on the frontend.",
   },
 
   docs: {
-    description: "Slogan affiché sur la page d'accueil du frontend Lume.",
+    description: "Slogan displayed on the Lume frontend homepage.",
     examples: {
       public: {
         minimal: {

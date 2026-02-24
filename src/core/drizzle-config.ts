@@ -45,6 +45,20 @@ export type PostgresCredentials = {
 };
 
 /**
+ * Valid PostgreSQL SSL modes.
+ */
+export const VALID_POSTGRES_SSL_MODES = [
+  "disable",
+  "prefer",
+  "require",
+] as const;
+
+/**
+ * Type for valid PostgreSQL SSL mode values.
+ */
+export type PostgresSslMode = typeof VALID_POSTGRES_SSL_MODES[number];
+
+/**
  * Database credentials for MySQL.
  */
 export type MysqlCredentials = {
@@ -276,6 +290,29 @@ export function resolveDatabaseProvider(): string {
 // ============================================================================
 
 /**
+ * Validates and returns a PostgreSQL SSL mode value.
+ *
+ * @param value - Raw string value from environment
+ * @returns Valid SSL mode or undefined if invalid/missing
+ */
+function validatePostgresSslMode(
+  value: string | undefined,
+): PostgresSslMode | undefined {
+  if (!value) {
+    return undefined;
+  }
+  if (VALID_POSTGRES_SSL_MODES.includes(value as PostgresSslMode)) {
+    return value as PostgresSslMode;
+  }
+  // Invalid value - return undefined rather than throwing
+  // This allows the application to start with a warning
+  console.warn(
+    `Invalid DATABASE_SSL value "${value}". Valid values: ${VALID_POSTGRES_SSL_MODES.join(", ")}. SSL disabled.`,
+  );
+  return undefined;
+}
+
+/**
  * Create Drizzle Kit configuration for SQLite.
  *
  * @param options - Configuration options
@@ -322,7 +359,7 @@ export function createPostgresConfig(
   });
 
   const sslValue = resolveEnvVar("DATABASE_SSL");
-  const ssl = sslValue as "disable" | "prefer" | "require" | undefined;
+  const ssl = validatePostgresSslMode(sslValue);
 
   return {
     schema,
@@ -485,14 +522,17 @@ export function createDrizzleConfigFromTsera(
         );
       }
 
+      // Validate SSL mode from config
+      const ssl = typeof dbConfig.ssl === "string" &&
+          VALID_POSTGRES_SSL_MODES.includes(dbConfig.ssl as PostgresSslMode)
+        ? dbConfig.ssl as PostgresSslMode
+        : undefined;
+
       return {
         schema: `./${outDir}/db/schemas/*.ts`,
         out: `./${outDir}/db/migrations`,
         dialect: "postgresql",
-        dbCredentials: {
-          url,
-          ssl: dbConfig.ssl as "disable" | "prefer" | "require" | undefined,
-        },
+        dbCredentials: { url, ssl },
       };
     }
 

@@ -1,29 +1,24 @@
-// NOTE: Ces imports relatifs pointent vers le code source du CLI TSera.
-// Dans un projet généré, ces imports seront remplacés par des imports JSR
-// (ex: import { defineEntity, z } from "@tsera/core";)
-// Une fois TSera publié sur JSR, ce problème sera résolu automatiquement.
-import { defineEntity } from "../../../../src/core/entity.ts";
-import { z } from "../../../../src/core/utils/zod.ts";
+import { defineEntity, z } from "@tsera/core";
 
 export const User = defineEntity({
-  // === MÉTADONNÉES / COMPORTEMENT GLOBAL ===
+  // === METADATA / GLOBAL BEHAVIOR ===
 
-  name: "User", // Nom logique de l'entité (obligatoire)
+  name: "User", // Logical name of the entity (required)
 
-  table: true, // Génère table + migrations (Drizzle)
-  schema: true, // Génère schémas Zod + types + OpenAPI
-  doc: true, // Génère documentation (Markdown / site / CLI)
+  table: true, // Generate table + migrations (Drizzle)
+  schema: true, // Generate Zod schemas + types + OpenAPI
+  doc: true, // Generate documentation (Markdown / site / CLI)
   test: "smoke", // false | "smoke" | "full"
-  active: true, // Si false : entité ignorée par les pipelines
+  active: true, // If false: entity ignored by pipelines
 
-  // === DÉFINITION DES CHAMPS ===
+  // === FIELD DEFINITIONS ===
 
   fields: {
     id: {
       validator: z.uuid(),
       visibility: "public",
       immutable: true,
-      description: "Identifiant unique de l'utilisateur.",
+      description: "Unique identifier for the user.",
       example: "b1c2d3e4-f5a6-7890-1234-56789abcdef0",
       db: {
         primary: true,
@@ -33,7 +28,7 @@ export const User = defineEntity({
     email: {
       validator: z.string().email(),
       visibility: "public",
-      description: "Adresse e-mail de l'utilisateur, supposée unique.",
+      description: "User email address, expected to be unique.",
       example: "user@example.com",
       db: {
         unique: true,
@@ -44,28 +39,28 @@ export const User = defineEntity({
     displayName: {
       validator: z.string().min(1).max(100).optional(),
       visibility: "public",
-      description: "Nom d'affichage optionnel.",
+      description: "Optional display name.",
       example: "John Doe",
     },
 
-    motDePasse: {
+    password: {
       validator: z.string().min(8),
-      visibility: "secret", // 🔐 jamais exposé dans User.public et masqué dans logs/docs/tests
-      description: "Mot de passe hashé.",
+      visibility: "secret", // 🔐 never exposed in User.public and masked in logs/docs/tests
+      description: "Hashed password.",
     },
 
     createdAt: {
       validator: z.date(),
       visibility: "internal",
       immutable: true,
-      description: "Date de création.",
+      description: "Creation date.",
       db: {
         defaultNow: true,
       },
     },
   },
 
-  // === BLOCS OPTIONNELS AVANCÉS ===
+  // === ADVANCED OPTIONAL BLOCKS ===
 
   // relations: (r) => ({
   //   posts: r.oneToMany("Post", {
@@ -78,11 +73,11 @@ export const User = defineEntity({
     enabled: true,
     tags: ["users", "auth"],
     summary: "User accounts management",
-    description: "Entité représentant un utilisateur applicatif.",
+    description: "Entity representing an application user.",
   },
 
   docs: {
-    description: "Utilisateur métier de la plateforme.",
+    description: "Business user of the platform.",
     examples: {
       public: {
         minimal: {
