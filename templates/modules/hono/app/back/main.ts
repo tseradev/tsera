@@ -7,6 +7,7 @@
  * - Graceful shutdown handling
  * - Environment validation at startup
  * - Database seed execution in development mode
+ * - Configuration loaded from tsera.config.ts
  *
  * @module
  */
@@ -16,6 +17,7 @@ import { initDb } from "../db/connect.ts";
 import { seedSlogans } from "../db/seeds/slogans.seed.ts";
 import registerHealthRoutes from "./routes/health.ts";
 import registerSloganRoutes from "./routes/slogans.ts";
+import tseraConfig from "../../tsera.config.ts";
 
 // ============================================================================
 // Types
@@ -29,6 +31,22 @@ type ServerState = {
   isShuttingDown: boolean;
   abortController?: AbortController;
 };
+
+// ============================================================================
+// Configuration Resolution
+// ============================================================================
+
+/**
+ * Get backend configuration from tsera.config.ts with defaults.
+ */
+function getBackConfig() {
+  const back = tseraConfig.back;
+  return {
+    port: back?.port ?? 3001,
+    host: back?.host ?? "localhost",
+    apiPrefix: back?.apiPrefix ?? "/api/v1",
+  };
+}
 
 // ============================================================================
 // Environment Resolution
@@ -212,22 +230,26 @@ if (import.meta.main) {
   // Initialize database and optionally run seeds
   await initializeDatabase(isDevelopment);
 
-  // Get port from environment or use default
+  // Get configuration from tsera.config.ts
+  const backConfig = getBackConfig();
+
+  // Allow environment override for port (useful in deployment)
   const tseraPort = tseraEnv ? tseraEnv.env("PORT") : undefined;
   const envPort = Deno.env.get("PORT");
-  const port = readPort(tseraPort) ?? readPort(envPort) ?? 3001;
+  const port = readPort(tseraPort) ?? readPort(envPort) ?? backConfig.port;
 
   // Create abort controller for graceful shutdown
   serverState.abortController = new AbortController();
 
-  console.log(`\n🚀 Server starting on http://localhost:${port}`);
+  console.log(`\n🚀 Server starting on http://${backConfig.host}:${port}`);
   console.log(`   Environment: ${isDevelopment ? "development" : "production"}`);
   console.log(`   API endpoints:`);
-  console.log(`   - GET /api/v1/health - Health check`);
-  console.log(`   - GET /api/v1/slogans - List all slogans`);
+  console.log(`   - GET ${backConfig.apiPrefix}/health - Health check`);
+  console.log(`   - GET ${backConfig.apiPrefix}/slogans - List all slogans`);
 
   Deno.serve({
     port,
+    hostname: backConfig.host,
     signal: serverState.abortController.signal,
     onListen: () => {
       console.log(`\n✓ Server ready and listening`);

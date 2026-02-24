@@ -1,5 +1,21 @@
 export { type Dialect, entityToDDL } from "./drizzle.ts";
 export {
+  createDrizzleConfig,
+  createDrizzleConfigFromTsera,
+  type CreateDrizzleConfigOptions,
+  type DatabaseCredentials,
+  type DatabaseDialect,
+  type DrizzleConfig,
+  type DrizzleMysqlConfig,
+  type DrizzlePostgresConfig,
+  type DrizzleSqliteConfig,
+  getDatabaseCredentials,
+  resolveDatabaseProvider,
+  resolveDatabaseUrl,
+  type ResolveDatabaseUrlOptions,
+  validateDatabaseConfig,
+} from "./drizzle-config.ts";
+export {
   type ActionsConfig,
   defineEntity,
   type DocsConfig,

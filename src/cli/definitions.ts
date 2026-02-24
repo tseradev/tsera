@@ -75,6 +75,30 @@ export type ModulesConfig = {
 };
 
 /**
+ * Backend (Hono) configuration.
+ */
+export type BackConfig = {
+  /** Server port (default: 3001). */
+  port: number;
+  /** Server hostname (default: "localhost"). */
+  host: string;
+  /** API route prefix (default: "/api/v1"). */
+  apiPrefix?: string;
+};
+
+/**
+ * Frontend (Lume) configuration.
+ */
+export type FrontConfig = {
+  /** Development server port (default: 3000). */
+  port: number;
+  /** Source directory for Lume files (default: "./"). */
+  srcDir: string;
+  /** Destination directory for built files (default: "./.tsera/.temp_front"). */
+  destDir: string;
+};
+
+/**
  * Complete TSera project configuration.
  */
 export type TseraConfig = {
@@ -92,6 +116,10 @@ export type TseraConfig = {
   paths: PathsConfig;
   /** Database configuration. */
   db: DbConfig;
+  /** Backend (Hono) configuration. */
+  back?: BackConfig;
+  /** Frontend (Lume) configuration. */
+  front?: FrontConfig;
   /** Deployment configuration. */
   deploy: DeployConfig;
   /** Optional module configuration. */

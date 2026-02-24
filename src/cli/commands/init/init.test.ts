@@ -195,9 +195,14 @@ Deno.test("init generates Lume frontend structure", async () => {
       configContent.includes('site.copy("assets")'),
       "Lume _config.ts should use site.copy('assets')",
     );
+    // Verify _config.ts imports tsera.config.ts for centralized configuration
     assert(
-      configContent.includes('src: "../../app/front/"'),
-      "Lume _config.ts should point to ../../app/front/",
+      configContent.includes('import tseraConfig from'),
+      "Lume _config.ts should import tsera.config.ts",
+    );
+    assert(
+      configContent.includes("tseraConfig.front"),
+      "Lume _config.ts should use tseraConfig.front for configuration",
     );
   } finally {
     await Deno.remove(tempDir, { recursive: true });

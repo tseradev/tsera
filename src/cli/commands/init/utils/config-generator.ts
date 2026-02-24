@@ -27,8 +27,6 @@ export function generateConfigFile(
   _projectName?: string,
   modules: ModuleOptions = {},
 ): string {
-  const _envVar = "TSERA_DATABASE_URL";
-
   // Create a TS-Morph project and source file
   const project = createTSeraProject();
   const sourceFile = createInMemorySourceFile(project, "tsera.config.ts");
@@ -37,12 +35,38 @@ export function generateConfigFile(
   const hasModules = Object.keys(modules).length > 0;
   const modulesConfig = hasModules
     ? `
+
+  // Module activation
   modules: {
     hono: ${modules.hono !== false},
     lume: ${modules.lume !== false},
     docker: ${modules.docker !== false},
     ci: ${modules.ci !== false},
     secrets: ${modules.secrets !== false},
+  },`
+    : "";
+
+  // Build back config if Hono is enabled
+  const backConfig = modules.hono !== false
+    ? `
+
+  // Backend (Hono) configuration
+  back: {
+    port: 3001,
+    host: "localhost",
+    apiPrefix: "/api/v1",
+  },`
+    : "";
+
+  // Build front config if Lume is enabled
+  const frontConfig = modules.lume !== false
+    ? `
+
+  // Frontend (Lume) configuration
+  front: {
+    port: 3000,
+    srcDir: "./",
+    destDir: "./.tsera/.temp_front",
   },`
     : "";
 
@@ -64,6 +88,8 @@ const config = {
     entities: ["core/entities"],
     // routes: ["app/back/routes/**/*.ts"],
   },
+
+  // Database configuration
   db: {
     // Choose between "postgres", "mysql", or "sqlite".
     dialect: "sqlite",
@@ -74,6 +100,8 @@ const config = {
     // urlEnv: "TSERA_DATABASE_URL",
     // ssl: "prefer",
   },
+${backConfig}${frontConfig}
+  // Deployment configuration
   deploy: {
     // Deployment target handled by "tsera update".
     target: "deno_deploy",

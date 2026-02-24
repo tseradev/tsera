@@ -1,47 +1,15 @@
 /**
- * Drizzle ORM configuration for SQLite.
+ * @fileoverview Drizzle Kit configuration for database migrations.
  *
- * This configuration file is used by the Drizzle CLI for migrations
- * and other database operations.
+ * This configuration is automatically generated from tsera.config.ts
+ * by the TSera core module. Database credentials are resolved from
+ * environment variables when needed.
  *
- * @module
+ * @module config/db/drizzle
+ * @see https://orm.drizzle.team/kit-docs/config-reference
  */
 
-// If you choose to use drizzle-kit, install it and uncomment the import below:
-// import type { Config } from "drizzle-kit";
+import { createDrizzleConfigFromTsera } from "tsera/core/index.ts";
+import tseraConfig from "../../../tsera.config.ts";
 
-// Get database URL from environment
-const databaseUrl = Deno.env.get("DATABASE_URL") ??
-  Deno.env.get("TSERA_DATABASE_URL");
-
-if (!databaseUrl) {
-  throw new Error(
-    "DATABASE_URL or TSERA_DATABASE_URL must be set in your environment",
-  );
-}
-
-// Validate SQLite URL format
-if (!databaseUrl.startsWith("file:")) {
-  throw new Error(
-    `DATABASE_URL must start with "file:" for SQLite. Got: ${databaseUrl}`,
-  );
-}
-
-/**
- * Drizzle Kit configuration for SQLite.
- *
- * - schema: Path to your generated schema files (managed by TSera)
- * - out: Output directory for migration files
- * - dialect: Database dialect (sqlite for libsql/SQLite)
- *
- * NOTE: Uncomment the import and use `satisfies Config` after installing drizzle-kit
- */
-export default {
-  schema: "./.tsera/db/schemas/*.ts",
-  out: "./.tsera/db/migrations",
-  dialect: "sqlite",
-  dbCredentials: {
-    url: databaseUrl,
-  },
-  // satisfies Config;
-};
+export default createDrizzleConfigFromTsera(tseraConfig);

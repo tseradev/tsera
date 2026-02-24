@@ -12,76 +12,24 @@
 import { type Client, createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  getDatabaseCredentials,
+  resolveDatabaseProvider,
+} from "tsera/core/index.ts";
 
 // ============================================================================
-// Types
-// ============================================================================
-
-type TseraEnvAccessor = {
-  env: (key: string) => unknown;
-};
-
-// ============================================================================
-// Environment Resolution
+// Database Configuration (from core)
 // ============================================================================
 
 /**
- * Resolve the TSera runtime env accessor if the secrets module is enabled.
+ * Database provider (validated to be "sqlite").
  */
-function resolveTseraEnv(): TseraEnvAccessor | undefined {
-  const globalValue: unknown = globalThis;
-  if (!isRecord(globalValue)) {
-    return undefined;
-  }
-  const tsera = globalValue["tsera"];
-  if (!isTseraEnvAccessor(tsera)) {
-    return undefined;
-  }
-  return tsera;
-}
+export const databaseProvider = resolveDatabaseProvider();
 
 /**
- * Resolve the database provider from environment.
+ * Database URL (throws if missing or invalid).
  */
-function resolveDatabaseProvider(): string {
-  const tseraEnv = resolveTseraEnv();
-  const provider = readEnvString(tseraEnv?.env("DATABASE_PROVIDER")) ??
-    Deno.env.get("DATABASE_PROVIDER");
-
-  if (provider !== "sqlite") {
-    throw new Error(
-      `DATABASE_PROVIDER must be "sqlite". Got: ${provider ?? "undefined"}`,
-    );
-  }
-
-  return provider;
-}
-
-/**
- * Resolve the database URL, preferring tsera.env when available.
- */
-function resolveDatabaseUrl(): string {
-  const tseraEnv = resolveTseraEnv();
-  const databaseUrl = readEnvString(tseraEnv?.env("DATABASE_URL")) ??
-    readEnvString(tseraEnv?.env("TSERA_DATABASE_URL")) ??
-    Deno.env.get("DATABASE_URL") ??
-    Deno.env.get("TSERA_DATABASE_URL");
-
-  if (!databaseUrl) {
-    throw new Error(
-      "DATABASE_URL is required. Set it in your environment or config/secrets/.env.* file.",
-    );
-  }
-
-  // Validate URL format for SQLite (must start with file:)
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error(
-      `DATABASE_URL must start with "file:" for SQLite. Got: ${databaseUrl}`,
-    );
-  }
-
-  return databaseUrl;
-}
+export const databaseUrl = getDatabaseCredentials("sqlite");
 
 // ============================================================================
 // Database Directory Setup
@@ -144,10 +92,6 @@ async function initializeDatabase(): Promise<{
   client: Client;
   db: ReturnType<typeof drizzle>;
 }> {
-  // Validate environment
-  resolveDatabaseProvider();
-  const databaseUrl = resolveDatabaseUrl();
-
   // Ensure directory exists for local files
   await ensureDatabaseDirectory(databaseUrl);
 
@@ -167,16 +111,6 @@ async function initializeDatabase(): Promise<{
 // ============================================================================
 // Exports
 // ============================================================================
-
-/**
- * Database URL (throws if missing or invalid).
- */
-export const databaseUrl = resolveDatabaseUrl();
-
-/**
- * Database provider (validated to be "sqlite").
- */
-export const databaseProvider = resolveDatabaseProvider();
 
 /**
  * Schema exports for use in queries.
@@ -251,20 +185,4 @@ export async function initDb(): Promise<void> {
   await createTablesIfNotExist(client);
 
   db = drizzleInstance;
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-function readEnvString(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
-
-function isTseraEnvAccessor(value: unknown): value is TseraEnvAccessor {
-  return isRecord(value) && typeof value["env"] === "function";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
