@@ -42,7 +42,6 @@ export {
   getEnv,
   initializeSecrets,
   parseEnvFile,
-  type TseraAPI,
   validateSecrets,
   validateType,
 } from "./secrets.ts";

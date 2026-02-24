@@ -1,18 +1,14 @@
 /**
  * @module tsera.test
- * Tests for the TSera facade (synchronous API).
+ * Tests for the TSera runtime (synchronous API).
  */
 
 import { assertEquals, assertThrows } from "std/assert";
 import { createTSera, DEFAULT_CONFIG, TSera } from "./mod.ts";
 
-/**
- * Test suite for TSera facade (synchronous initialization).
- */
-Deno.test("TSera Facade", async (t) => {
+Deno.test("TSera Runtime", async (t) => {
   await t.step("config property", async (t2) => {
     await t2.step("should be immediately available (sync)", () => {
-      // TSera is initialized synchronously, no await needed
       const config = TSera.config;
       assertEquals(typeof config, "object");
     });
@@ -30,18 +26,15 @@ Deno.test("TSera Facade", async (t) => {
   await t.step("env module", async (t2) => {
     await t2.step("should be undefined if secrets module disabled", () => {
       const config = TSera.config;
-      // If secrets module is disabled, env should be undefined
       if (!config.modules?.secrets) {
         assertEquals(TSera.env, undefined);
       }
     });
 
-    await t2.step("should have get, require, has methods when enabled", () => {
+    await t2.step("should have has method when enabled", () => {
       const config = TSera.config;
 
       if (config.modules?.secrets && TSera.env) {
-        assertEquals(typeof TSera.env.get, "function");
-        assertEquals(typeof TSera.env.require, "function");
         assertEquals(typeof TSera.env.has, "function");
       }
     });
@@ -55,9 +48,6 @@ Deno.test("TSera Facade", async (t) => {
   });
 });
 
-/**
- * Test suite for createTSera function.
- */
 Deno.test("createTSera", async (t) => {
   await t.step("should create TSera with explicit config", () => {
     const customConfig = {
@@ -83,15 +73,12 @@ Deno.test("createTSera", async (t) => {
       },
     };
 
-    // Set a test env var
     Deno.env.set("TSERA_TEST_VAR", "test_value");
 
     try {
       const myTSera = createTSera(configWithSecrets);
-      // env should be defined when secrets module is enabled
-      // (may be empty if no env vars match, but the module should exist)
       if (myTSera.env) {
-        assertEquals(typeof myTSera.env.get, "function");
+        assertEquals(typeof myTSera.env.has, "function");
       }
     } finally {
       Deno.env.delete("TSERA_TEST_VAR");
@@ -99,77 +86,7 @@ Deno.test("createTSera", async (t) => {
   });
 });
 
-/**
- * Test suite for EnvModule interface.
- */
 Deno.test("EnvModule Interface", async (t) => {
-  await t.step("get method", async (t2) => {
-    await t2.step("should return undefined for missing key", () => {
-      if (TSera.env) {
-        const value = TSera.env.get("NONEXISTENT_VAR_12345");
-        assertEquals(value, undefined);
-      }
-    });
-
-    await t2.step("should return value for existing key", () => {
-      // Set a test environment variable
-      Deno.env.set("TSERA_TEST_VAR", "test_value");
-
-      try {
-        // Create new TSera instance to pick up the env var
-        const configWithSecrets = {
-          ...DEFAULT_CONFIG,
-          modules: {
-            ...DEFAULT_CONFIG.modules,
-            secrets: true,
-          },
-        };
-        const myTSera = createTSera(configWithSecrets);
-
-        if (myTSera.env) {
-          const value = myTSera.env.get("TSERA_TEST_VAR");
-          assertEquals(value, "test_value");
-        }
-      } finally {
-        Deno.env.delete("TSERA_TEST_VAR");
-      }
-    });
-  });
-
-  await t.step("require method", async (t2) => {
-    await t2.step("should throw for missing key", () => {
-      if (TSera.env) {
-        assertThrows(
-          () => TSera.env!.require("NONEXISTENT_VAR_12345"),
-          Error,
-          'Required environment variable "NONEXISTENT_VAR_12345" is not set.',
-        );
-      }
-    });
-
-    await t2.step("should return value for existing key", () => {
-      Deno.env.set("TSERA_TEST_REQUIRE", "required_value");
-
-      try {
-        const configWithSecrets = {
-          ...DEFAULT_CONFIG,
-          modules: {
-            ...DEFAULT_CONFIG.modules,
-            secrets: true,
-          },
-        };
-        const myTSera = createTSera(configWithSecrets);
-
-        if (myTSera.env) {
-          const value = myTSera.env.require("TSERA_TEST_REQUIRE");
-          assertEquals(value, "required_value");
-        }
-      } finally {
-        Deno.env.delete("TSERA_TEST_REQUIRE");
-      }
-    });
-  });
-
   await t.step("has method", async (t2) => {
     await t2.step("should return false for missing key", () => {
       if (TSera.env) {
@@ -214,11 +131,7 @@ Deno.test("EnvModule Interface", async (t) => {
         const myTSera = createTSera(configWithSecrets);
 
         if (myTSera.env) {
-          // Property access via Proxy
-          const env = myTSera.env as unknown as Record<
-            string,
-            string | undefined
-          >;
+          const env = myTSera.env as unknown as Record<string, string | undefined>;
           assertEquals(env.TSERA_TEST_PROP, "prop_value");
           assertEquals(env.NONEXISTENT_VAR_12345, undefined);
         }
@@ -227,11 +140,32 @@ Deno.test("EnvModule Interface", async (t) => {
       }
     });
   });
+
+  await t.step("in operator", async (t2) => {
+    await t2.step("should support in operator for env vars", () => {
+      Deno.env.set("TSERA_TEST_IN", "in_value");
+
+      try {
+        const configWithSecrets = {
+          ...DEFAULT_CONFIG,
+          modules: {
+            ...DEFAULT_CONFIG.modules,
+            secrets: true,
+          },
+        };
+        const myTSera = createTSera(configWithSecrets);
+
+        if (myTSera.env) {
+          assertEquals("TSERA_TEST_IN" in myTSera.env, true);
+          assertEquals("NONEXISTENT_VAR_12345" in myTSera.env, false);
+        }
+      } finally {
+        Deno.env.delete("TSERA_TEST_IN");
+      }
+    });
+  });
 });
 
-/**
- * Test suite for DEFAULT_CONFIG.
- */
 Deno.test("DEFAULT_CONFIG", async (t) => {
   await t.step("should have required properties", () => {
     assertEquals(typeof DEFAULT_CONFIG.openapi, "boolean");

@@ -11,6 +11,7 @@
  * - **Validation**: Validate environment values against their declared types
  * - **File Parsing**: Parse .env files with proper comment and empty line handling
  * - **Bootstrap**: Fail-fast environment initialization at application startup
+ * - **Type Conversion**: Convert string values to proper TypeScript types
  *
  * ## Security Considerations
  *
@@ -19,10 +20,27 @@
  * - Validation errors provide actionable guidance without exposing sensitive data
  *
  * ## Usage Example
+ *
+ * ```ts
+ * // Variable requise - garantie présente
+ * const dbUrl: string = TSera.env.DATABASE_URL;
+ *
+ * // Variable optionnelle - peut être undefined
+ * const debug: boolean | undefined = TSera.env.DEBUG;
+ *
+ * // Vérification avec has()
+ * if (TSera.env.has("DEBUG")) {
+ *   console.log("Debug mode:", TSera.env.DEBUG);
+ * }
+ * ```
  */
 
 import { join } from "std/path";
 import { gray, red } from "../cli/ui/colors.ts";
+
+// ============================================================================
+// Type Definitions
+// ============================================================================
 
 /**
  * Valid environment variable types supported by TSera.
@@ -100,6 +118,114 @@ export type EnvVarDefinition = {
 export type EnvSchema = Record<string, EnvVarDefinition>;
 
 /**
+ * Types de conversion TypeScript pour chaque type EnvVarType.
+ */
+export type EnvTypeMap = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  url: string; // URL est représentée comme string
+};
+
+/**
+ * Infère les types TypeScript depuis un schéma EnvSchema.
+ *
+ * - Variables requises : type non-nullable
+ * - Variables optionnelles : type nullable (| undefined)
+ */
+export type InferEnvTypes<TSchema extends EnvSchema> = {
+  [K in keyof TSchema]: TSchema[K]["required"] extends true | EnvName[]
+    ? EnvTypeMap[TSchema[K]["type"]]
+    : EnvTypeMap[TSchema[K]["type"]] | undefined;
+};
+
+/**
+ * Valeur d'environnement convertie (string, number, boolean).
+ */
+export type EnvValue = string | number | boolean | undefined;
+
+/**
+ * Module d'accès aux variables d'environnement TSera.
+ *
+ * Les variables requises sont garanties présentes après bootstrap.
+ * Les variables optionnelles peuvent être vérifiées avec has().
+ *
+ * @example
+ * ```ts
+ * // Variable requise - garantie présente
+ * const dbUrl: string = TSera.env.DATABASE_URL;
+ *
+ * // Variable optionnelle - peut être undefined
+ * const debug: boolean | undefined = TSera.env.DEBUG;
+ *
+ * // Vérification avec has()
+ * if (TSera.env.has("DEBUG")) {
+ *   console.log("Debug mode:", TSera.env.DEBUG);
+ * }
+ * ```
+ */
+export type EnvModule<TSchema extends EnvSchema = EnvSchema> = {
+  /**
+   * Vérifie si une variable d'environnement optionnelle est définie.
+   *
+   * @param key - Nom de la variable d'environnement
+   * @returns true si la variable est définie, false sinon
+   */
+  has(key: string): boolean;
+} & {
+  /**
+   * Accès par propriété aux variables d'environnement.
+   *
+   * Les variables requises sont toujours définies (string).
+   * Les variables optionnelles peuvent être undefined.
+   */
+  [K in keyof InferEnvTypes<TSchema>]: InferEnvTypes<TSchema>[K];
+};
+
+/**
+ * Représente un problème de validation individuel.
+ */
+export type EnvValidationIssue = {
+  /** Nom de la variable en erreur */
+  variable: string;
+  /** Type d'erreur */
+  kind: "missing" | "invalid_type" | "invalid_format";
+  /** Message d'erreur lisible */
+  message: string;
+  /** Type attendu (si applicable) */
+  expectedType?: EnvVarType;
+  /** Type réel détecté (si applicable, sans exposer la valeur) */
+  actualType?: string;
+};
+
+/**
+ * Erreur de validation des variables d'environnement.
+ *
+ * Lancée lorsqu'une ou plusieurs variables requises manquent
+ * ou ont des valeurs invalides.
+ */
+export class EnvValidationError extends Error {
+  constructor(
+    public readonly errors: readonly EnvValidationIssue[],
+    public readonly envName: EnvName,
+  ) {
+    const formattedErrors = errors
+      .map((e) => `  - ${e.message}`)
+      .join("\n");
+
+    super(
+      `Environment validation failed for '.env.${envName}':\n${formattedErrors}\n\n` +
+        `Fix issues in config/secrets/.env.${envName} before starting the application.`,
+    );
+    this.name = "EnvValidationError";
+  }
+}
+
+// ============================================================================
+// Schema Definition Helper
+// ============================================================================
+
+/**
  * Type-safe environment variable schema definition helper.
  *
  * This function provides VSCode autocomplete and strong typing for
@@ -113,6 +239,10 @@ export function defineEnvConfig<T extends EnvSchema>(
 ): Readonly<T> {
   return Object.freeze(schema);
 }
+
+// ============================================================================
+// Type Validation
+// ============================================================================
 
 /**
  * Validation result type for type checking operations.
@@ -188,14 +318,6 @@ export function validateType(
  *
  * @param value - The string value to analyze
  * @returns The JavaScript type name as a string
- *
- * @example
- * ```ts
- * getActualType("12345"); // "number"
- * getActualType("true"); // "boolean"
- * getActualType("hello"); // "string"
- * getActualType("https://example.com"); // "url"
- * ```
  */
 function getActualType(value: string): string {
   // Check if it's a boolean
@@ -223,6 +345,38 @@ function getActualType(value: string): string {
 }
 
 /**
+ * Convertit une valeur string en type TypeScript selon le schéma.
+ *
+ * @param rawValue - Valeur brute depuis l'environnement
+ * @param type - Type cible depuis la définition du schéma
+ * @returns Valeur convertie ou undefined si la conversion échoue
+ */
+export function convertEnvValue(
+  rawValue: string | undefined,
+  type: EnvVarType,
+): EnvValue {
+  if (rawValue === undefined) {
+    return undefined;
+  }
+
+  switch (type) {
+    case "string":
+    case "url":
+      return rawValue;
+    case "number": {
+      const num = Number(rawValue);
+      return isNaN(num) || !isFinite(num) ? undefined : num;
+    }
+    case "boolean":
+      return rawValue.toLowerCase() === "true";
+  }
+}
+
+// ============================================================================
+// Schema Validation
+// ============================================================================
+
+/**
  * Validates environment variables against their schema definitions.
  *
  * Performs comprehensive validation of all environment variables defined in
@@ -238,18 +392,6 @@ function getActualType(value: string): string {
  * @param schema - Environment schema defining expected variables
  * @param env - Current environment name for requirement checking
  * @returns Array of validation error messages (empty if validation passes)
- *
- * @example
- * ```ts
- * const secrets = { PORT: "8000", DATABASE_URL: undefined };
- * const schema = {
- *   PORT: { type: "number", required: true },
- *   DATABASE_URL: { type: "url", required: ["prod"] },
- * };
- *
- * const errors = validateSecrets(secrets, schema, "prod");
- * // ["[prod] Missing required env var \"DATABASE_URL\". Set it in config/secrets/.env.prod."]
- * ```
  */
 export function validateSecrets(
   secrets: Record<string, string | undefined>,
@@ -296,6 +438,69 @@ export function validateSecrets(
 }
 
 /**
+ * Validates environment variables and returns detailed validation issues.
+ *
+ * This function provides structured validation results suitable for
+ * the new EnvModule API with detailed error information.
+ *
+ * @param secrets - All environment variables (including undefined for missing keys)
+ * @param schema - Environment schema defining expected variables
+ * @param env - Current environment name for requirement checking
+ * @returns Array of validation issues (empty if validation passes)
+ */
+export function validateSecretsDetailed(
+  secrets: Record<string, string | undefined>,
+  schema: EnvSchema,
+  env: EnvName,
+): EnvValidationIssue[] {
+  const issues: EnvValidationIssue[] = [];
+
+  for (const [key, keyConfig] of Object.entries(schema)) {
+    const value = secrets[key];
+
+    // Check if key is required for this environment
+    let isRequired = false;
+    if (keyConfig.required === true) {
+      isRequired = true;
+    } else if (
+      Array.isArray(keyConfig.required) && keyConfig.required.includes(env)
+    ) {
+      isRequired = true;
+    }
+
+    if (value === undefined) {
+      if (isRequired) {
+        issues.push({
+          variable: key,
+          kind: "missing",
+          message: `Missing required var "${key}".`,
+        });
+      }
+      continue;
+    }
+
+    // Validate type
+    const typeValidation = validateType(value, keyConfig.type);
+    if (!typeValidation.valid) {
+      const actualType = getActualType(value);
+      issues.push({
+        variable: key,
+        kind: "invalid_type",
+        message: `Invalid "${key}": expected ${keyConfig.type}, got ${actualType}.`,
+        expectedType: keyConfig.type,
+        actualType,
+      });
+    }
+  }
+
+  return issues;
+}
+
+// ============================================================================
+// File Parsing
+// ============================================================================
+
+/**
  * Loads environment variables from a .env file.
  *
  * Parses standard .env file format with support for:
@@ -309,17 +514,6 @@ export function validateSecrets(
  * @param filePath - Absolute or relative path to .env file
  * @returns Parsed environment variables as key-value pairs
  * @throws Error for file system errors other than NotFound
- *
- * @example
- * ```ts
- * // .env file content:
- * // PORT=8000
- * // DATABASE_URL=postgresql://localhost:5432/db
- * // DEBUG=true
- *
- * const env = await parseEnvFile(".env.dev");
- * // { PORT: "8000", DATABASE_URL: "postgresql://localhost:5432/db", DEBUG: "true" }
- * ```
  */
 export async function parseEnvFile(
   filePath: string,
@@ -354,6 +548,113 @@ export async function parseEnvFile(
   }
 }
 
+// ============================================================================
+// EnvModule Creation (Proxy-based)
+// ============================================================================
+
+/**
+ * Crée le module Env avec support d'accès par propriété.
+ *
+ * Utilise un Proxy pour intercepter les accès aux propriétés
+ * et retourner les valeurs des variables d'environnement.
+ *
+ * @param envValues - Variables d'environnement validées et converties
+ * @param schema - Schéma de définition pour la métadonnée
+ * @returns EnvModule avec accès par propriété et méthode has()
+ */
+export function createEnvModule<TSchema extends EnvSchema>(
+  envValues: Record<string, EnvValue>,
+  schema: TSchema,
+): EnvModule<TSchema> {
+  // Objet de base avec la méthode has()
+  const baseModule = {
+    has(key: string): boolean {
+      return key in envValues && envValues[key] !== undefined;
+    },
+  };
+
+  // Créer le Proxy pour intercepter les accès aux propriétés
+  return new Proxy(baseModule, {
+    /**
+     * Intercepte l'accès aux propriétés (TSera.env.VARIABLE_NAME).
+     */
+    get(
+      target: typeof baseModule,
+      prop: string | symbol,
+      _receiver: unknown,
+    ): unknown {
+      // Si c'est une méthode du module de base, la retourner
+      if (prop in target) {
+        return (target as Record<string | symbol, unknown>)[prop];
+      }
+
+      // Si c'est une propriété string, chercher la variable d'environnement
+      if (typeof prop === "string") {
+        // Retourner la valeur (peut être undefined pour les variables optionnelles)
+        return envValues[prop];
+      }
+
+      return undefined;
+    },
+
+    /**
+     * Intercepte l'opérateur `in` (ex: "DB_URL" in TSera.env).
+     */
+    has(target: typeof baseModule, prop: string | symbol): boolean {
+      if (prop in target) {
+        return true;
+      }
+
+      if (typeof prop === "string") {
+        return prop in envValues;
+      }
+
+      return false;
+    },
+
+    /**
+     * Enumère les propriétés disponibles (Object.keys, for...in).
+     */
+    ownKeys(): string[] {
+      return Object.keys(envValues).concat("has");
+    },
+
+    /**
+     * Décrit les propriétés pour Object.getOwnPropertyDescriptor.
+     */
+    getOwnPropertyDescriptor(
+      target: typeof baseModule,
+      prop: string | symbol,
+    ): PropertyDescriptor | undefined {
+      if (typeof prop !== "string") {
+        return undefined;
+      }
+
+      if (prop === "has") {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: target.has,
+        };
+      }
+
+      if (prop in envValues) {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: envValues[prop],
+        };
+      }
+
+      return undefined;
+    },
+  }) as EnvModule<TSchema>;
+}
+
+// ============================================================================
+// Environment Initialization
+// ============================================================================
+
 /**
  * Gets and validates environment variables from the current process.
  *
@@ -365,17 +666,6 @@ export async function parseEnvFile(
  * @param env - Current environment name for requirement checking (default: "dev")
  * @returns Validated environment variables (only defined values)
  * @throws Error if validation fails with detailed error messages
- *
- * @example
- * ```ts
- * const schema = {
- *   PORT: { type: "number", required: true },
- *   DATABASE_URL: { type: "url", required: true },
- * };
- *
- * const env = getEnv(schema, "prod");
- * // { PORT: "8000", DATABASE_URL: "postgresql://..." }
- * ```
  */
 export function getEnv(
   schema: EnvSchema,
@@ -419,20 +709,6 @@ export function getEnv(
  * @param envFilePath - Optional path to .env file for loading values
  * @returns Validated environment variables
  * @throws Error if validation fails with detailed error messages
- *
- * @example
- * ```ts
- * const schema = {
- *   PORT: { type: "number", required: true },
- *   DATABASE_URL: { type: "url", required: true },
- * };
- *
- * // Load from .env file if it exists
- * const env = await initializeSecrets(schema, "dev", ".env.dev");
- *
- * // Use only process environment
- * const env = await initializeSecrets(schema, "prod");
- * ```
  */
 export async function initializeSecrets(
   schema: EnvSchema,
@@ -450,6 +726,90 @@ export async function initializeSecrets(
   }
 
   return getEnv(schema, env);
+}
+
+/**
+ * Valide et convertit les variables d'environnement selon le schéma.
+ *
+ * Cette fonction charge les variables depuis un fichier .env et les fusionne
+ * avec Deno.env (process env prend précédence). Elle retourne les valeurs
+ * converties selon leurs types déclarés.
+ *
+ * @param schema - Schéma de définition
+ * @param envName - Nom de l'environnement actuel
+ * @param envDir - Répertoire contenant les fichiers .env
+ * @throws EnvValidationError si validation échoue
+ * @returns Variables validées et converties
+ */
+export async function validateAndHydrateEnv<TSchema extends EnvSchema>(
+  schema: TSchema,
+  envName: EnvName,
+  envDir: string,
+): Promise<Record<string, EnvValue>> {
+  // 1. Charger le fichier .env.{envName}
+  const envFilePath = join(envDir, `.env.${envName}`);
+  const fileEnv = await parseEnvFile(envFilePath);
+
+  // 2. Fusionner avec Deno.env (process env prend précédence)
+  const mergedEnv: Record<string, string | undefined> = {};
+  for (const key of Object.keys(schema)) {
+    mergedEnv[key] = Deno.env.get(key) ?? fileEnv[key];
+  }
+
+  // 3. Valider avec détails
+  const issues = validateSecretsDetailed(mergedEnv, schema, envName);
+
+  // 4. Si erreurs, lancer l'exception
+  if (issues.length > 0) {
+    throw new EnvValidationError(issues, envName);
+  }
+
+  // 5. Convertir les valeurs
+  const result: Record<string, EnvValue> = {};
+  for (const [key, def] of Object.entries(schema)) {
+    const rawValue = mergedEnv[key];
+    result[key] = convertEnvValue(rawValue, def.type);
+  }
+
+  return result;
+}
+
+/**
+ * Initialise le module Env au démarrage de l'application.
+ *
+ * Cette fonction DOIT être appelée avant toute utilisation de TSera.env.
+ * Elle valide toutes les variables requises et lance une erreur
+ * descriptive si validation échoue.
+ *
+ * @param schema - Schéma de définition des variables d'environnement
+ * @param envName - Nom de l'environnement actuel (défaut: "dev")
+ * @param envDir - Répertoire contenant les fichiers .env (défaut: "config/secrets")
+ * @returns Module Env hydraté
+ * @throws EnvValidationError si variables requises manquantes/invalides
+ */
+export async function initializeEnvModule<TSchema extends EnvSchema>(
+  schema: TSchema,
+  envName: EnvName = "dev",
+  envDir: string = "config/secrets",
+): Promise<EnvModule<TSchema>> {
+  // Valider et hydrater
+  const envValues = await validateAndHydrateEnv(schema, envName, envDir);
+
+  // Créer le module
+  return createEnvModule(envValues, schema);
+}
+
+/**
+ * Détecte l'environnement actuel depuis TSERA_ENV ou NODE_ENV.
+ */
+export function detectEnvName(): EnvName {
+  const env = Deno.env.get("TSERA_ENV") ?? Deno.env.get("NODE_ENV") ?? "dev";
+
+  if (isValidEnvName(env)) {
+    return env;
+  }
+
+  return "dev";
 }
 
 /**
@@ -554,24 +914,3 @@ export async function bootstrapEnv(
   return getEnv(schema, env);
 }
 
-/**
- * Type-safe API for accessing environment variables.
- *
- * Provides a consistent interface for accessing validated environment
- * variables throughout the application. This interface can be extended
- * to provide additional functionality like type-safe accessors.
- */
-export type TseraAPI = {
-  /**
-   * Gets all validated environment variables.
-   * @returns Record of all environment variables with defined values
-   */
-  getEnv(): Record<string, string>;
-
-  /**
-   * Gets a specific environment variable by key.
-   * @param key - Environment variable name
-   * @returns The environment variable value or undefined if not set
-   */
-  getEnvVar<T extends string>(key: string): T | undefined;
-};

@@ -9,19 +9,30 @@
  * - .env file parsing with comments and edge cases
  * - Environment variable loading and validation
  * - Bootstrap functionality with file loading
+ * - EnvModule Proxy-based API
+ * - Type conversion (string → number/boolean)
  */
 
-import { assertEquals, assertRejects } from "std/assert";
+import { assertEquals, assertRejects, assertThrows } from "std/assert";
 import {
   bootstrapEnv,
+  convertEnvValue,
+  createEnvModule,
   defineEnvConfig,
+  detectEnvName,
+  EnvModule,
   EnvName,
   EnvSchema,
+  EnvValidationError,
+  EnvValue,
   getEnv,
+  initializeEnvModule,
   initializeSecrets,
   isValidEnvName,
   parseEnvFile,
+  validateAndHydrateEnv,
   validateSecrets,
+  validateSecretsDetailed,
   validateType,
 } from "../secrets.ts";
 
@@ -140,6 +151,49 @@ Deno.test("validateType - rejects invalid URL values", () => {
 
   const result3 = validateType("", "url");
   assertEquals(result3.valid, false);
+});
+
+// ============================================================================
+// Type Conversion Tests
+// ============================================================================
+
+Deno.test("convertEnvValue - returns undefined for undefined input", () => {
+  assertEquals(convertEnvValue(undefined, "string"), undefined);
+  assertEquals(convertEnvValue(undefined, "number"), undefined);
+  assertEquals(convertEnvValue(undefined, "boolean"), undefined);
+  assertEquals(convertEnvValue(undefined, "url"), undefined);
+});
+
+Deno.test("convertEnvValue - converts string type", () => {
+  assertEquals(convertEnvValue("hello", "string"), "hello");
+  assertEquals(convertEnvValue("world", "string"), "world");
+});
+
+Deno.test("convertEnvValue - converts number type", () => {
+  assertEquals(convertEnvValue("123", "number"), 123);
+  assertEquals(convertEnvValue("123.45", "number"), 123.45);
+  assertEquals(convertEnvValue("0", "number"), 0);
+  assertEquals(convertEnvValue("-42", "number"), -42);
+});
+
+Deno.test("convertEnvValue - returns undefined for invalid number", () => {
+  assertEquals(convertEnvValue("not-a-number", "number"), undefined);
+  assertEquals(convertEnvValue("NaN", "number"), undefined);
+  assertEquals(convertEnvValue("Infinity", "number"), undefined);
+});
+
+Deno.test("convertEnvValue - converts boolean type", () => {
+  assertEquals(convertEnvValue("true", "boolean"), true);
+  assertEquals(convertEnvValue("false", "boolean"), false);
+  assertEquals(convertEnvValue("TRUE", "boolean"), true);
+  assertEquals(convertEnvValue("FALSE", "boolean"), false);
+  assertEquals(convertEnvValue("True", "boolean"), true);
+  assertEquals(convertEnvValue("False", "boolean"), false);
+});
+
+Deno.test("convertEnvValue - converts url type (returns string)", () => {
+  assertEquals(convertEnvValue("https://example.com", "url"), "https://example.com");
+  assertEquals(convertEnvValue("postgresql://localhost:5432/db", "url"), "postgresql://localhost:5432/db");
 });
 
 // ============================================================================
@@ -311,6 +365,36 @@ Deno.test("validateSecrets - handles undefined values correctly", () => {
 
   const errors = validateSecrets(secrets, schema, "dev");
   assertEquals(errors.length, 0);
+});
+
+// ============================================================================
+// Detailed Validation Tests
+// ============================================================================
+
+Deno.test("validateSecretsDetailed - returns structured issues", () => {
+  const schema: EnvSchema = {
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+  };
+
+  const secrets = {
+    PORT: "not-a-number",
+    // DATABASE_URL is missing
+  };
+
+  const issues = validateSecretsDetailed(secrets, schema, "dev");
+  assertEquals(issues.length, 2);
+
+  // Check missing variable issue
+  const missingIssue = issues.find((i) => i.variable === "DATABASE_URL");
+  assertEquals(missingIssue?.kind, "missing");
+  assertEquals(missingIssue?.message, 'Missing required var "DATABASE_URL".');
+
+  // Check invalid type issue
+  const invalidIssue = issues.find((i) => i.variable === "PORT");
+  assertEquals(invalidIssue?.kind, "invalid_type");
+  assertEquals(invalidIssue?.expectedType, "number");
+  assertEquals(invalidIssue?.actualType, "string");
 });
 
 // ============================================================================
@@ -1056,4 +1140,361 @@ Deno.test("defineEnvConfig - supports environment-specific requirements", () => 
   assertEquals(Array.isArray(schema.DEBUG.required), true);
   assertEquals(schema.DEBUG.required, ["dev", "staging"]);
   assertEquals(schema.DATABASE_URL.required, ["prod"]);
+});
+
+// ============================================================================
+// EnvModule Proxy Tests (New API)
+// ============================================================================
+
+Deno.test("createEnvModule - creates module with has() method", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000,
+    DEBUG: undefined,
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+
+  assertEquals(typeof envModule.has, "function");
+  assertEquals(envModule.has("PORT"), true);
+  assertEquals(envModule.has("DEBUG"), false);
+  assertEquals(envModule.has("UNKNOWN"), false);
+});
+
+Deno.test("createEnvModule - allows property access for variables", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000,
+    DATABASE_URL: "postgresql://localhost:5432/db",
+    DEBUG: true,
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+
+  assertEquals(envModule.PORT, 8000);
+  assertEquals(envModule.DATABASE_URL, "postgresql://localhost:5432/db");
+  assertEquals(envModule.DEBUG, true);
+});
+
+Deno.test("createEnvModule - returns undefined for missing optional variables", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000,
+    DEBUG: undefined,
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+
+  assertEquals(envModule.DEBUG, undefined);
+});
+
+Deno.test("createEnvModule - supports `in` operator", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000,
+    DEBUG: undefined,
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+
+  assertEquals("PORT" in envModule, true);
+  assertEquals("DEBUG" in envModule, true);
+  assertEquals("has" in envModule, true);
+  assertEquals("UNKNOWN" in envModule, false);
+});
+
+Deno.test("createEnvModule - supports Object.keys()", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000,
+    DEBUG: undefined,
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+  const keys = Object.keys(envModule);
+
+  assertEquals(keys.includes("PORT"), true);
+  assertEquals(keys.includes("DEBUG"), true);
+  assertEquals(keys.includes("has"), true);
+});
+
+Deno.test("createEnvModule - converts types correctly", () => {
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DEBUG: { type: "boolean", required: false },
+    DATABASE_URL: { type: "url", required: true },
+    API_KEY: { type: "string", required: true },
+  });
+
+  const envValues: Record<string, EnvValue> = {
+    PORT: 8000, // number
+    DEBUG: true, // boolean
+    DATABASE_URL: "postgresql://localhost:5432/db", // string (url)
+    API_KEY: "secret-key", // string
+  };
+
+  const envModule = createEnvModule(envValues, schema);
+
+  // Verify types
+  const port: number = envModule.PORT;
+  const debug: boolean | undefined = envModule.DEBUG;
+  const dbUrl: string = envModule.DATABASE_URL;
+  const apiKey: string = envModule.API_KEY;
+
+  assertEquals(port, 8000);
+  assertEquals(debug, true);
+  assertEquals(dbUrl, "postgresql://localhost:5432/db");
+  assertEquals(apiKey, "secret-key");
+});
+
+// ============================================================================
+// EnvValidationError Tests
+// ============================================================================
+
+Deno.test("EnvValidationError - formats error message correctly", () => {
+  const issues = [
+    { variable: "PORT", kind: "missing" as const, message: 'Missing required var "PORT".' },
+    { variable: "DEBUG", kind: "invalid_type" as const, message: 'Invalid "DEBUG": expected boolean, got string.' },
+  ];
+
+  const error = new EnvValidationError(issues, "dev");
+
+  assertEquals(error.name, "EnvValidationError");
+  assertEquals(error.errors.length, 2);
+  assertEquals(error.envName, "dev");
+  assertEquals(error.message.includes("Environment validation failed"), true);
+  assertEquals(error.message.includes(".env.dev"), true);
+});
+
+// ============================================================================
+// validateAndHydrateEnv Tests
+// ============================================================================
+
+Deno.test("validateAndHydrateEnv - validates and converts values", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secrets`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create .env.dev file
+  const envFilePath = `${envDir}/.env.dev`;
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=8000
+DATABASE_URL=postgresql://localhost:5432/db
+DEBUG=true`,
+  );
+
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+  const originalDebug = Deno.env.get("DEBUG");
+
+  try {
+    // Clear env to test file loading
+    Deno.env.delete("PORT");
+    Deno.env.delete("DATABASE_URL");
+    Deno.env.delete("DEBUG");
+
+    const result = await validateAndHydrateEnv(schema, "dev", envDir);
+
+    assertEquals(result.PORT, 8000); // number
+    assertEquals(result.DATABASE_URL, "postgresql://localhost:5432/db"); // string
+    assertEquals(result.DEBUG, true); // boolean
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) Deno.env.set("PORT", originalPort);
+    else Deno.env.delete("PORT");
+    if (originalDbUrl !== undefined) Deno.env.set("DATABASE_URL", originalDbUrl);
+    else Deno.env.delete("DATABASE_URL");
+    if (originalDebug !== undefined) Deno.env.set("DEBUG", originalDebug);
+    else Deno.env.delete("DEBUG");
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+Deno.test("validateAndHydrateEnv - throws EnvValidationError on missing required", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secrets`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create empty .env.dev file
+  const envFilePath = `${envDir}/.env.dev`;
+  await Deno.writeTextFile(envFilePath, "");
+
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+  });
+
+  const originalPort = Deno.env.get("PORT");
+
+  try {
+    Deno.env.delete("PORT");
+
+    await assertRejects(
+      () => validateAndHydrateEnv(schema, "dev", envDir),
+      EnvValidationError,
+    );
+  } finally {
+    if (originalPort !== undefined) Deno.env.set("PORT", originalPort);
+    else Deno.env.delete("PORT");
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+// ============================================================================
+// initializeEnvModule Tests
+// ============================================================================
+
+Deno.test("initializeEnvModule - creates EnvModule from schema and env files", async () => {
+  const tempDir = await Deno.makeTempDir();
+  const envDir = `${tempDir}/config/secrets`;
+  await Deno.mkdir(envDir, { recursive: true });
+
+  // Create .env.dev file
+  const envFilePath = `${envDir}/.env.dev`;
+  await Deno.writeTextFile(
+    envFilePath,
+    `PORT=8000
+DATABASE_URL=postgresql://localhost:5432/db
+DEBUG=true`,
+  );
+
+  const schema = defineEnvConfig({
+    PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "url", required: true },
+    DEBUG: { type: "boolean", required: false },
+  });
+
+  const originalPort = Deno.env.get("PORT");
+  const originalDbUrl = Deno.env.get("DATABASE_URL");
+  const originalDebug = Deno.env.get("DEBUG");
+
+  try {
+    // Clear env to test file loading
+    Deno.env.delete("PORT");
+    Deno.env.delete("DATABASE_URL");
+    Deno.env.delete("DEBUG");
+
+    const envModule = await initializeEnvModule(schema, "dev", envDir);
+
+    // Test property access
+    assertEquals(envModule.PORT, 8000);
+    assertEquals(envModule.DATABASE_URL, "postgresql://localhost:5432/db");
+    assertEquals(envModule.DEBUG, true);
+
+    // Test has() method
+    assertEquals(envModule.has("PORT"), true);
+    assertEquals(envModule.has("DATABASE_URL"), true);
+    assertEquals(envModule.has("DEBUG"), true);
+  } finally {
+    // Restore original values
+    if (originalPort !== undefined) Deno.env.set("PORT", originalPort);
+    else Deno.env.delete("PORT");
+    if (originalDbUrl !== undefined) Deno.env.set("DATABASE_URL", originalDbUrl);
+    else Deno.env.delete("DATABASE_URL");
+    if (originalDebug !== undefined) Deno.env.set("DEBUG", originalDebug);
+    else Deno.env.delete("DEBUG");
+
+    await Deno.remove(tempDir, { recursive: true });
+  }
+});
+
+// ============================================================================
+// detectEnvName Tests
+// ============================================================================
+
+Deno.test("detectEnvName - returns 'dev' by default", () => {
+  const originalTsraEnv = Deno.env.get("TSERA_ENV");
+  const originalNodeEnv = Deno.env.get("NODE_ENV");
+
+  try {
+    Deno.env.delete("TSERA_ENV");
+    Deno.env.delete("NODE_ENV");
+
+    assertEquals(detectEnvName(), "dev");
+  } finally {
+    if (originalTsraEnv !== undefined) Deno.env.set("TSERA_ENV", originalTsraEnv);
+    else Deno.env.delete("TSERA_ENV");
+    if (originalNodeEnv !== undefined) Deno.env.set("NODE_ENV", originalNodeEnv);
+    else Deno.env.delete("NODE_ENV");
+  }
+});
+
+Deno.test("detectEnvName - reads TSERA_ENV first", () => {
+  const originalTsraEnv = Deno.env.get("TSERA_ENV");
+  const originalNodeEnv = Deno.env.get("NODE_ENV");
+
+  try {
+    Deno.env.set("TSERA_ENV", "prod");
+    Deno.env.set("NODE_ENV", "staging");
+
+    assertEquals(detectEnvName(), "prod");
+  } finally {
+    if (originalTsraEnv !== undefined) Deno.env.set("TSERA_ENV", originalTsraEnv);
+    else Deno.env.delete("TSERA_ENV");
+    if (originalNodeEnv !== undefined) Deno.env.set("NODE_ENV", originalNodeEnv);
+    else Deno.env.delete("NODE_ENV");
+  }
+});
+
+Deno.test("detectEnvName - falls back to NODE_ENV", () => {
+  const originalTsraEnv = Deno.env.get("TSERA_ENV");
+  const originalNodeEnv = Deno.env.get("NODE_ENV");
+
+  try {
+    Deno.env.delete("TSERA_ENV");
+    Deno.env.set("NODE_ENV", "staging");
+
+    assertEquals(detectEnvName(), "staging");
+  } finally {
+    if (originalTsraEnv !== undefined) Deno.env.set("TSERA_ENV", originalTsraEnv);
+    else Deno.env.delete("TSERA_ENV");
+    if (originalNodeEnv !== undefined) Deno.env.set("NODE_ENV", originalNodeEnv);
+    else Deno.env.delete("NODE_ENV");
+  }
+});
+
+Deno.test("detectEnvName - returns 'dev' for invalid values", () => {
+  const originalTsraEnv = Deno.env.get("TSERA_ENV");
+  const originalNodeEnv = Deno.env.get("NODE_ENV");
+
+  try {
+    Deno.env.delete("TSERA_ENV");
+    Deno.env.set("NODE_ENV", "production");
+
+    assertEquals(detectEnvName(), "dev");
+  } finally {
+    if (originalTsraEnv !== undefined) Deno.env.set("TSERA_ENV", originalTsraEnv);
+    else Deno.env.delete("TSERA_ENV");
+    if (originalNodeEnv !== undefined) Deno.env.set("NODE_ENV", originalNodeEnv);
+    else Deno.env.delete("NODE_ENV");
+  }
 });

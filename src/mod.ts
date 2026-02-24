@@ -2,9 +2,6 @@
  * @module mod
  * TSera Public API - Main entry point for library usage.
  *
- * This module exports the public API of TSera for use in
- * generated projects and external applications.
- *
  * ## Usage
  *
  * ```typescript
@@ -14,12 +11,15 @@
  * const config = TSera.config;
  *
  * // Access environment variables (if secrets module enabled)
- * const dbUrl = TSera.env?.require("DATABASE_URL");
+ * if (TSera.env?.has("DATABASE_URL")) {
+ *   const dbUrl = TSera.env.DATABASE_URL;
+ * }
  * ```
  *
  * ## Exports
  *
- * - `TSera` - Main facade object for accessing TSera services
+ * - `TSera` - Main runtime object for accessing TSera services
+ * - `TSeraRuntime` - Type for the TSera runtime instance
  * - `TseraConfig` - Configuration type for TSera projects
  * - `EnvModule` - Interface for the environment module
  * - Core entity system (`defineEntity`, etc.)
@@ -29,9 +29,9 @@
  * - Drizzle/Database helpers (`entityToDDL`, `createDrizzleConfig`, etc.)
  */
 
-// Main facade
+// Main runtime
 export { createTSera, DEFAULT_CONFIG, TSera } from "./tsera.ts";
-export type { EnvModule, TSeraFacade } from "./tsera.ts";
+export type { EnvModule, TSeraRuntime } from "./tsera.ts";
 
 // Config loader
 export { createResolvedConfig, loadConfigSync } from "./config-loader.ts";
@@ -48,7 +48,7 @@ export type {
   TseraConfig,
 } from "./cli/definitions.ts";
 
-// Core - réexporter tout depuis core/index.ts
+// Core - re-export everything from core/index.ts
 // Entity system
 export {
   type ActionsConfig,
@@ -77,7 +77,6 @@ export {
   initializeSecrets,
   isValidEnvName,
   parseEnvFile,
-  type TseraAPI,
   validateSecrets,
   validateType,
 } from "./core/secrets.ts";
