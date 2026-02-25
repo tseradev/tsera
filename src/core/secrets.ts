@@ -164,23 +164,25 @@ export type EnvValue = string | number | boolean | undefined;
  * }
  * ```
  */
-export type EnvModule<TSchema extends EnvSchema = EnvSchema> = {
-  /**
-   * Checks if an optional environment variable is defined.
-   *
-   * @param key - Name of the environment variable
-   * @returns true if the variable is defined, false otherwise
-   */
-  has(key: string): boolean;
-} & {
-  /**
-   * Property access to environment variables.
-   *
-   * Required variables are always defined (string).
-   * Optional variables may be undefined.
-   */
-  [K in keyof InferEnvTypes<TSchema>]: InferEnvTypes<TSchema>[K];
-};
+export type EnvModule<TSchema extends EnvSchema = EnvSchema> =
+  & {
+    /**
+     * Checks if an optional environment variable is defined.
+     *
+     * @param key - Name of the environment variable
+     * @returns true if the variable is defined, false otherwise
+     */
+    has(key: string): boolean;
+  }
+  & {
+    /**
+     * Property access to environment variables.
+     *
+     * Required variables are always defined (string).
+     * Optional variables may be undefined.
+     */
+    [K in keyof InferEnvTypes<TSchema>]: InferEnvTypes<TSchema>[K];
+  };
 
 /**
  * Represents an individual validation issue.
@@ -1177,4 +1179,3 @@ export async function bootstrapEnv(
   // Return validated environment variables
   return getEnv(schema, env);
 }
-

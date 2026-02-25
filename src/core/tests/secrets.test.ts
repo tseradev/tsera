@@ -193,7 +193,10 @@ Deno.test("convertEnvValue - converts boolean type", () => {
 
 Deno.test("convertEnvValue - converts url type (returns string)", () => {
   assertEquals(convertEnvValue("https://example.com", "url"), "https://example.com");
-  assertEquals(convertEnvValue("postgresql://localhost:5432/db", "url"), "postgresql://localhost:5432/db");
+  assertEquals(
+    convertEnvValue("postgresql://localhost:5432/db", "url"),
+    "postgresql://localhost:5432/db",
+  );
 });
 
 // ============================================================================
@@ -1275,7 +1278,11 @@ Deno.test("createEnvModule - converts types correctly", () => {
 Deno.test("EnvValidationError - formats error message correctly", () => {
   const issues = [
     { variable: "PORT", kind: "missing" as const, message: 'Missing required var "PORT".' },
-    { variable: "DEBUG", kind: "invalid_type" as const, message: 'Invalid "DEBUG": expected boolean, got string.' },
+    {
+      variable: "DEBUG",
+      kind: "invalid_type" as const,
+      message: 'Invalid "DEBUG": expected boolean, got string.',
+    },
   ];
 
   const error = new EnvValidationError(issues, "dev");

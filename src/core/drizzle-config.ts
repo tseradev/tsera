@@ -307,7 +307,9 @@ function validatePostgresSslMode(
   // Invalid value - return undefined rather than throwing
   // This allows the application to start with a warning
   console.warn(
-    `Invalid DATABASE_SSL value "${value}". Valid values: ${VALID_POSTGRES_SSL_MODES.join(", ")}. SSL disabled.`,
+    `Invalid DATABASE_SSL value "${value}". Valid values: ${
+      VALID_POSTGRES_SSL_MODES.join(", ")
+    }. SSL disabled.`,
   );
   return undefined;
 }
