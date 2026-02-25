@@ -22,13 +22,13 @@
  * ## Usage Example
  *
  * ```ts
- * // Variable requise - garantie présente
+ * // Required variable - guaranteed to be present
  * const dbUrl: string = TSera.env.DATABASE_URL;
  *
- * // Variable optionnelle - peut être undefined
+ * // Optional variable - may be undefined
  * const debug: boolean | undefined = TSera.env.DEBUG;
  *
- * // Vérification avec has()
+ * // Check with has()
  * if (TSera.env.has("DEBUG")) {
  *   console.log("Debug mode:", TSera.env.DEBUG);
  * }
@@ -118,20 +118,20 @@ export type EnvVarDefinition = {
 export type EnvSchema = Record<string, EnvVarDefinition>;
 
 /**
- * Types de conversion TypeScript pour chaque type EnvVarType.
+ * TypeScript conversion types for each EnvVarType.
  */
 export type EnvTypeMap = {
   string: string;
   number: number;
   boolean: boolean;
-  url: string; // URL est représentée comme string
+  url: string; // URL is represented as string
 };
 
 /**
- * Infère les types TypeScript depuis un schéma EnvSchema.
+ * Infers TypeScript types from an EnvSchema.
  *
- * - Variables requises : type non-nullable
- * - Variables optionnelles : type nullable (| undefined)
+ * - Required variables: non-nullable type
+ * - Optional variables: nullable type (| undefined)
  */
 export type InferEnvTypes<TSchema extends EnvSchema> = {
   [K in keyof TSchema]: TSchema[K]["required"] extends true | EnvName[]
@@ -140,25 +140,25 @@ export type InferEnvTypes<TSchema extends EnvSchema> = {
 };
 
 /**
- * Valeur d'environnement convertie (string, number, boolean).
+ * Converted environment value (string, number, boolean).
  */
 export type EnvValue = string | number | boolean | undefined;
 
 /**
- * Module d'accès aux variables d'environnement TSera.
+ * TSera environment variable access module.
  *
- * Les variables requises sont garanties présentes après bootstrap.
- * Les variables optionnelles peuvent être vérifiées avec has().
+ * Required variables are guaranteed to be present after bootstrap.
+ * Optional variables can be checked with has().
  *
  * @example
  * ```ts
- * // Variable requise - garantie présente
+ * // Required variable - guaranteed to be present
  * const dbUrl: string = TSera.env.DATABASE_URL;
  *
- * // Variable optionnelle - peut être undefined
+ * // Optional variable - may be undefined
  * const debug: boolean | undefined = TSera.env.DEBUG;
  *
- * // Vérification avec has()
+ * // Check with has()
  * if (TSera.env.has("DEBUG")) {
  *   console.log("Debug mode:", TSera.env.DEBUG);
  * }
@@ -166,43 +166,43 @@ export type EnvValue = string | number | boolean | undefined;
  */
 export type EnvModule<TSchema extends EnvSchema = EnvSchema> = {
   /**
-   * Vérifie si une variable d'environnement optionnelle est définie.
+   * Checks if an optional environment variable is defined.
    *
-   * @param key - Nom de la variable d'environnement
-   * @returns true si la variable est définie, false sinon
+   * @param key - Name of the environment variable
+   * @returns true if the variable is defined, false otherwise
    */
   has(key: string): boolean;
 } & {
   /**
-   * Accès par propriété aux variables d'environnement.
+   * Property access to environment variables.
    *
-   * Les variables requises sont toujours définies (string).
-   * Les variables optionnelles peuvent être undefined.
+   * Required variables are always defined (string).
+   * Optional variables may be undefined.
    */
   [K in keyof InferEnvTypes<TSchema>]: InferEnvTypes<TSchema>[K];
 };
 
 /**
- * Représente un problème de validation individuel.
+ * Represents an individual validation issue.
  */
 export type EnvValidationIssue = {
-  /** Nom de la variable en erreur */
+  /** Name of the variable in error */
   variable: string;
-  /** Type d'erreur */
+  /** Error type */
   kind: "missing" | "invalid_type" | "invalid_format";
-  /** Message d'erreur lisible */
+  /** Human-readable error message */
   message: string;
-  /** Type attendu (si applicable) */
+  /** Expected type (if applicable) */
   expectedType?: EnvVarType;
-  /** Type réel détecté (si applicable, sans exposer la valeur) */
+  /** Actual detected type (if applicable, without exposing the value) */
   actualType?: string;
 };
 
 /**
- * Erreur de validation des variables d'environnement.
+ * Environment variable validation error.
  *
- * Lancée lorsqu'une ou plusieurs variables requises manquent
- * ou ont des valeurs invalides.
+ * Thrown when one or more required variables are missing
+ * or have invalid values.
  */
 export class EnvValidationError extends Error {
   constructor(
@@ -345,11 +345,11 @@ function getActualType(value: string): string {
 }
 
 /**
- * Convertit une valeur string en type TypeScript selon le schéma.
+ * Converts a string value to TypeScript type according to the schema.
  *
- * @param rawValue - Valeur brute depuis l'environnement
- * @param type - Type cible depuis la définition du schéma
- * @returns Valeur convertie ou undefined si la conversion échoue
+ * @param rawValue - Raw value from environment
+ * @param type - Target type from schema definition
+ * @returns Converted value or undefined if conversion fails
  */
 export function convertEnvValue(
   rawValue: string | undefined,
@@ -553,44 +553,44 @@ export async function parseEnvFile(
 // ============================================================================
 
 /**
- * Crée le module Env avec support d'accès par propriété.
+ * Creates the Env module with property access support.
  *
- * Utilise un Proxy pour intercepter les accès aux propriétés
- * et retourner les valeurs des variables d'environnement.
+ * Uses a Proxy to intercept property access
+ * and return environment variable values.
  *
- * @param envValues - Variables d'environnement validées et converties
- * @param schema - Schéma de définition pour la métadonnée
- * @returns EnvModule avec accès par propriété et méthode has()
+ * @param envValues - Validated and converted environment variables
+ * @param schema - Definition schema for metadata
+ * @returns EnvModule with property access and has() method
  */
 export function createEnvModule<TSchema extends EnvSchema>(
   envValues: Record<string, EnvValue>,
-  schema: TSchema,
+  _schema: TSchema,
 ): EnvModule<TSchema> {
-  // Objet de base avec la méthode has()
+  // Base object with has() method
   const baseModule = {
     has(key: string): boolean {
       return key in envValues && envValues[key] !== undefined;
     },
   };
 
-  // Créer le Proxy pour intercepter les accès aux propriétés
+  // Create Proxy to intercept property access
   return new Proxy(baseModule, {
     /**
-     * Intercepte l'accès aux propriétés (TSera.env.VARIABLE_NAME).
+     * Intercepts property access (TSera.env.VARIABLE_NAME).
      */
     get(
       target: typeof baseModule,
       prop: string | symbol,
       _receiver: unknown,
     ): unknown {
-      // Si c'est une méthode du module de base, la retourner
+      // If it's a base module method, return it
       if (prop in target) {
         return (target as Record<string | symbol, unknown>)[prop];
       }
 
-      // Si c'est une propriété string, chercher la variable d'environnement
+      // If it's a string property, look up the environment variable
       if (typeof prop === "string") {
-        // Retourner la valeur (peut être undefined pour les variables optionnelles)
+        // Return the value (may be undefined for optional variables)
         return envValues[prop];
       }
 
@@ -598,7 +598,7 @@ export function createEnvModule<TSchema extends EnvSchema>(
     },
 
     /**
-     * Intercepte l'opérateur `in` (ex: "DB_URL" in TSera.env).
+     * Intercepts the `in` operator (e.g., "DB_URL" in TSera.env).
      */
     has(target: typeof baseModule, prop: string | symbol): boolean {
       if (prop in target) {
@@ -613,14 +613,14 @@ export function createEnvModule<TSchema extends EnvSchema>(
     },
 
     /**
-     * Enumère les propriétés disponibles (Object.keys, for...in).
+     * Enumerates available properties (Object.keys, for...in).
      */
     ownKeys(): string[] {
       return Object.keys(envValues).concat("has");
     },
 
     /**
-     * Décrit les propriétés pour Object.getOwnPropertyDescriptor.
+     * Describes properties for Object.getOwnPropertyDescriptor.
      */
     getOwnPropertyDescriptor(
       target: typeof baseModule,
@@ -729,42 +729,42 @@ export async function initializeSecrets(
 }
 
 /**
- * Valide et convertit les variables d'environnement selon le schéma.
+ * Validates and converts environment variables according to the schema.
  *
- * Cette fonction charge les variables depuis un fichier .env et les fusionne
- * avec Deno.env (process env prend précédence). Elle retourne les valeurs
- * converties selon leurs types déclarés.
+ * This function loads variables from a .env file and merges them
+ * with Deno.env (process env takes precedence). It returns values
+ * converted according to their declared types.
  *
- * @param schema - Schéma de définition
- * @param envName - Nom de l'environnement actuel
- * @param envDir - Répertoire contenant les fichiers .env
- * @throws EnvValidationError si validation échoue
- * @returns Variables validées et converties
+ * @param schema - Definition schema
+ * @param envName - Current environment name
+ * @param envDir - Directory containing .env files
+ * @throws EnvValidationError if validation fails
+ * @returns Validated and converted variables
  */
 export async function validateAndHydrateEnv<TSchema extends EnvSchema>(
   schema: TSchema,
   envName: EnvName,
   envDir: string,
 ): Promise<Record<string, EnvValue>> {
-  // 1. Charger le fichier .env.{envName}
+  // 1. Load the .env.{envName} file
   const envFilePath = join(envDir, `.env.${envName}`);
   const fileEnv = await parseEnvFile(envFilePath);
 
-  // 2. Fusionner avec Deno.env (process env prend précédence)
+  // 2. Merge with Deno.env (process env takes precedence)
   const mergedEnv: Record<string, string | undefined> = {};
   for (const key of Object.keys(schema)) {
     mergedEnv[key] = Deno.env.get(key) ?? fileEnv[key];
   }
 
-  // 3. Valider avec détails
+  // 3. Validate with details
   const issues = validateSecretsDetailed(mergedEnv, schema, envName);
 
-  // 4. Si erreurs, lancer l'exception
+  // 4. If errors, throw exception
   if (issues.length > 0) {
     throw new EnvValidationError(issues, envName);
   }
 
-  // 5. Convertir les valeurs
+  // 5. Convert values
   const result: Record<string, EnvValue> = {};
   for (const [key, def] of Object.entries(schema)) {
     const rawValue = mergedEnv[key];
@@ -775,32 +775,34 @@ export async function validateAndHydrateEnv<TSchema extends EnvSchema>(
 }
 
 /**
- * Initialise le module Env au démarrage de l'application.
+ * Initializes the Env module at application startup.
  *
- * Cette fonction DOIT être appelée avant toute utilisation de TSera.env.
- * Elle valide toutes les variables requises et lance une erreur
- * descriptive si validation échoue.
+ * This function MUST be called before any use of TSera.env.
+ * It validates all required variables and throws a descriptive
+ * error if validation fails.
  *
- * @param schema - Schéma de définition des variables d'environnement
- * @param envName - Nom de l'environnement actuel (défaut: "dev")
- * @param envDir - Répertoire contenant les fichiers .env (défaut: "config/secrets")
- * @returns Module Env hydraté
- * @throws EnvValidationError si variables requises manquantes/invalides
+ * @param schema - Environment variable definition schema
+ * @param envName - Current environment name (default: "dev")
+ * @param envDir - Directory containing .env files (default: "config/secrets")
+ * @returns Hydrated Env module
+ * @throws EnvValidationError if required variables are missing/invalid
  */
 export async function initializeEnvModule<TSchema extends EnvSchema>(
   schema: TSchema,
   envName: EnvName = "dev",
   envDir: string = "config/secrets",
 ): Promise<EnvModule<TSchema>> {
-  // Valider et hydrater
+  // Validate and hydrate
   const envValues = await validateAndHydrateEnv(schema, envName, envDir);
 
-  // Créer le module
+  // Create the module
   return createEnvModule(envValues, schema);
 }
 
 /**
- * Détecte l'environnement actuel depuis TSERA_ENV ou NODE_ENV.
+ * Detects the current environment from TSERA_ENV or NODE_ENV.
+ *
+ * @returns The detected environment name (defaults to "dev")
  */
 export function detectEnvName(): EnvName {
   const env = Deno.env.get("TSERA_ENV") ?? Deno.env.get("NODE_ENV") ?? "dev";
@@ -825,7 +827,7 @@ export function detectEnvName(): EnvName {
  * - Comments (single-line and multi-line)
  * - Whitespace and newlines
  */
-const ALLOWED_PATTERNS = [
+const _ALLOWED_PATTERNS = [
   // Import statements from @tsera/core only
   /^import\s*\{\s*defineEnvConfig\s*\}\s*from\s*["']@tsera\/core["'];?$/gm,
   // Export default with defineEnvConfig
