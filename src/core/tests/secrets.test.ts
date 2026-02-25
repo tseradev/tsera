@@ -13,14 +13,13 @@
  * - Type conversion (string → number/boolean)
  */
 
-import { assertEquals, assertRejects, assertThrows } from "std/assert";
+import { assertEquals, assertRejects } from "std/assert";
 import {
   bootstrapEnv,
   convertEnvValue,
   createEnvModule,
   defineEnvConfig,
   detectEnvName,
-  EnvModule,
   EnvName,
   EnvSchema,
   EnvValidationError,
