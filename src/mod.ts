@@ -1,35 +1,34 @@
 /**
  * @module mod
- * TSera Public API - Main entry point for library usage.
- *
- * Configuration and environment are loaded once at module import time.
- * Restart the process to reload.
+ * TSera public API - Main entry point for library usage.
  *
  * @example
  * ```typescript
- * import { TSera } from "@tsera/core";
+ * import { TSera, defineEntity, z } from "@tsera/core";
  *
- * // Access config (loaded once at import time)
+ * // Access runtime config and environment
  * const dialect = TSera.config.db.dialect;
- *
- * // Access typed environment variables from secrets manager
  * const dbUrl = TSera.env.DATABASE_URL;
+ *
+ * // Define entities
+ * const User = defineEntity({
+ *   name: "User",
+ *   fields: {
+ *     id: { validator: z.uuid() },
+ *     email: { validator: z.string().email() },
+ *   },
+ * });
  * ```
  */
 
-// Main runtime
+// Runtime
 export { DEFAULT_CONFIG, TSera } from "./tsera.ts";
 export type { EnvModule } from "./tsera.ts";
 
-// Config loader
-export {
-  createResolvedConfig,
-  findConfigFile,
-  loadConfigSync,
-} from "./config-loader.ts";
-export type { LoadConfigResult } from "./config-loader.ts";
+// Config utilities
+export { CONFIG_PATH, hasConfigFile } from "./config-loader.ts";
 
-// Configuration types
+// Config types
 export type {
   DbConfig,
   DeployConfig,
@@ -37,9 +36,8 @@ export type {
   DeployTarget,
   ModulesConfig,
   PathsConfig,
-  ResolvedTseraConfig,
   TseraConfig,
 } from "./cli/definitions.ts";
 
-// Core - re-export everything from core/index.ts
+// Core (entity, drizzle, secrets, etc.)
 export * from "./core/index.ts";
