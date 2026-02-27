@@ -14,7 +14,7 @@ Deno.test("deploy-sync: creates workflows for enabled providers", async () => {
     const configPath = join(configDir, "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
-      `import type { TseraConfig } from "tsera/cli/definitions.ts";
+      `import type { TseraConfig } from "@tsera/core";
 const config: TseraConfig = {
   openapi: true,
   docs: true,
@@ -72,7 +72,7 @@ Deno.test("deploy-sync: removes workflows for disabled providers", async () => {
     const configPath = join(configDir, "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
-      `import type { TseraConfig } from "tsera/cli/definitions.ts";
+      `import type { TseraConfig } from "@tsera/core";
 const config: TseraConfig = {
   openapi: true,
   docs: true,

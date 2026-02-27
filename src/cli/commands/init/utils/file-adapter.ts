@@ -349,13 +349,13 @@ export async function adaptDrizzleConfigFile(
 }
 
 /**
- * Adapts entity files to transform relative imports pointing to src/ into tsera/ imports.
+ * Adapts entity files to transform relative imports pointing to src/ into @tsera/core imports.
  * This allows entity files in templates to work locally in the TSera repo with relative imports,
- * and then be transformed to use tsera/ imports when copied to a new project.
+ * and then be transformed to use @tsera/core imports when copied to a new project.
  *
  * @param content - Original file content with relative imports.
  * @param targetDir - Target directory where the project is being created (unused but kept for consistency).
- * @returns Adapted file content with tsera/ imports.
+ * @returns Adapted file content with @tsera/core imports.
  */
 export function adaptEntityImports(
   content: string,
@@ -373,8 +373,8 @@ export function adaptEntityImports(
     for (const importDecl of importDeclarations) {
       const moduleSpecifier = importDecl.getModuleSpecifierValue();
 
-      // Skip if already using tsera/ imports
-      if (moduleSpecifier.startsWith("tsera/")) {
+      // Skip if already using @tsera/core imports
+      if (moduleSpecifier.startsWith("@tsera/")) {
         continue;
       }
 
@@ -384,10 +384,9 @@ export function adaptEntityImports(
         // Extract the path after src/
         const srcIndex = moduleSpecifier.indexOf("src/");
         if (srcIndex !== -1) {
-          const pathAfterSrc = moduleSpecifier.substring(srcIndex + 4); // +4 for "src/"
-
-          // Transform to tsera/ import
-          const newModuleSpecifier = `tsera/${pathAfterSrc}`;
+          // Transform to @tsera/core import
+          // All core imports should use @tsera/core
+          const newModuleSpecifier = "@tsera/core";
 
           // Update the import declaration
           importDecl.setModuleSpecifier(newModuleSpecifier);

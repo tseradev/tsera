@@ -26,7 +26,7 @@ export const User = defineEntity({
     },
 
     email: {
-      validator: z.string().email(),
+      validator: z.email(),
       visibility: "public",
       description: "User email address, expected to be unique.",
       example: "user@example.com",

@@ -11,10 +11,7 @@
  */
 
 import { type Client, createClient } from "@libsql/client";
-import {
-  getDatabaseCredentials,
-  resolveDatabaseProvider,
-} from "@tsera/core";
+import { getDatabaseCredentials, resolveDatabaseProvider } from "@tsera/core";
 import { drizzle } from "drizzle-orm/libsql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 

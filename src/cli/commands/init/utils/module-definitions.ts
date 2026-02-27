@@ -54,16 +54,6 @@ export const MODULE_DEFINITIONS: Record<string, TemplateModule> = {
 };
 
 /**
- * Module-specific dependencies that should be added to import_map.json
- * when the module is enabled.
- */
-export const MODULE_DEPENDENCIES: Record<string, Record<string, string>> = {
-  hono: {
-    "hono": "jsr:@hono/hono@^4.10.7",
-  },
-};
-
-/**
  * Validates that all module dependencies are satisfied.
  *
  * @param enabledModules - List of enabled module names.

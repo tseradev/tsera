@@ -63,7 +63,7 @@ export type EnvConfig = EnvVarDefinition;
  * @example
  * ```ts
  * import { z } from "zod";
- * import { defineEnvConfig } from "tsera/core";
+ * import { defineEnvConfig } from "@tsera/core";
  *
  * export default defineEnvConfig({
  *   DATABASE_URL: {

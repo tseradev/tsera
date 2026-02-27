@@ -188,7 +188,7 @@ export async function copyDirectory(
         content = await adaptDrizzleConfigFile(content, target);
       }
 
-      // Adapt entity files to transform relative imports to tsera/ imports
+      // Adapt entity files to transform relative imports to @tsera/core imports
       // Detect entity files: files ending with .entity.ts or in entities/ or domain/ directories
       const isEntityFile = relativePath.endsWith(".entity.ts") ||
         relativePath.includes("/entities/") ||

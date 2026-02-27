@@ -15,7 +15,7 @@
  *   name: "User",
  *   fields: {
  *     id: { validator: z.uuid() },
- *     email: { validator: z.string().email() },
+ *     email: { validator: z.email() },
  *   },
  * });
  * ```

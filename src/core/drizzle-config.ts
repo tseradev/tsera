@@ -413,7 +413,7 @@ export function createMysqlConfig(
  * @example
  * ```ts
  * // drizzle.config.ts
- * import { createDrizzleConfig } from "tsera/core/drizzle-config";
+ * import { createDrizzleConfig } from "@tsera/core";
  *
  * export default createDrizzleConfig();
  * ```
@@ -486,7 +486,7 @@ function mapDialect(dialect: TseraDbConfig["dialect"]): DatabaseDialect {
  * @example
  * ```ts
  * // drizzle.config.ts
- * import { createDrizzleConfigFromTsera } from "tsera/core/drizzle-config";
+ * import { createDrizzleConfigFromTsera } from "@tsera/core";
  * import tseraConfig from "../tsera.config.ts";
  *
  * export default createDrizzleConfigFromTsera(tseraConfig);

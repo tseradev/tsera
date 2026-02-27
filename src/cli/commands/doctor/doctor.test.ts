@@ -44,9 +44,6 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     if (!importMap.imports) {
       importMap.imports = {};
     }
-    importMap.imports["tsera/"] = fileUrl;
-    importMap.imports["tsera/core/"] = `${fileUrl}core/`;
-    importMap.imports["tsera/cli/"] = `${fileUrl}cli/`;
     importMap.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
     await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
   } else {
@@ -60,9 +57,6 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       if (!denoConfig.imports) {
         denoConfig.imports = {};
       }
-      denoConfig.imports["tsera/"] = fileUrl;
-      denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
-      denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
       denoConfig.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
       await Deno.writeTextFile(
         denoConfigPath,
