@@ -10,7 +10,7 @@
  */
 
 import { eq } from "drizzle-orm";
-import { db, slogans } from "../connect.ts";
+import { getDb, slogans } from "../connect.ts";
 
 /**
  * Default slogans to seed.
@@ -29,11 +29,8 @@ const DEFAULT_SLOGANS = [
  * - Safe to run multiple times
  */
 async function seedSlogans(): Promise<void> {
-  if (!db) {
-    throw new Error(
-      "Database connection is not initialized. Call initDb() first.",
-    );
-  }
+  // Get database connection (initializes if needed)
+  const db = await getDb();
 
   console.log("Seeding slogans...");
 

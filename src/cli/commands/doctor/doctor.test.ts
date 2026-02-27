@@ -47,6 +47,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     importMap.imports["tsera/"] = fileUrl;
     importMap.imports["tsera/core/"] = `${fileUrl}core/`;
     importMap.imports["tsera/cli/"] = `${fileUrl}cli/`;
+    importMap.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
     await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
   } else {
     // Lume projects: imports are in deno.jsonc
@@ -62,6 +63,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       denoConfig.imports["tsera/"] = fileUrl;
       denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
       denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
+      denoConfig.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
       await Deno.writeTextFile(
         denoConfigPath,
         JSON.stringify(denoConfig, null, 2) + "\n",

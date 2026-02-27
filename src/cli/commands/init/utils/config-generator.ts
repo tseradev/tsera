@@ -110,7 +110,15 @@ ${backConfig}${frontConfig}
   },
   // List of enabled deployment providers for CD (empty = no CD).
   // Configure via "tsera deploy init" or during "tsera init".
-  deployTargets: [],${modulesConfig}
+  deployTargets: [],
+
+  // Available environment names for DENO_ENV validation.
+  // Used throughout the project for environment-specific behavior.
+  environments: ["dev", "staging", "prod"],
+
+  // Development mode flag.
+  // When true, enables development-specific features.
+  dev: true,${modulesConfig}
 };
 
 export default config;

@@ -1,5 +1,5 @@
 import { Command } from "cliffy/command";
-import { bootstrapEnv, type EnvName, isValidEnvName } from "../../../core/secrets.ts";
+import { bootstrapEnv } from "../../../core/secrets.ts";
 import { dirname } from "../../../shared/path.ts";
 import { applyPlan } from "../../engine/applier.ts";
 import { createDag } from "../../engine/dag.ts";
@@ -50,42 +50,6 @@ export type DevCommandHandler = (
 
 /** Debounce delay in milliseconds for file watch events. */
 const WATCH_DEBOUNCE_MS = 150;
-
-/**
- * Resolves runtime environment name for secrets bootstrap.
- *
- * Priority:
- * 1. TSERA_ENV (strictly validated)
- * 2. NODE_ENV (best-effort mapping)
- * 3. "dev" fallback
- */
-function resolveSecretsEnvName(): EnvName {
-  const explicit = Deno.env.get("TSERA_ENV");
-  if (explicit) {
-    const resolved = normalizeEnvName(explicit);
-    if (!resolved) {
-      throw new Error(
-        `Invalid TSERA_ENV "${explicit}". Expected one of: dev, staging, prod.`,
-      );
-    }
-    return resolved;
-  }
-
-  const nodeEnv = Deno.env.get("NODE_ENV");
-  const resolvedFromNodeEnv = nodeEnv ? normalizeEnvName(nodeEnv) : undefined;
-  return resolvedFromNodeEnv ?? "dev";
-}
-
-/**
- * Maps raw env values to TSera environment names.
- */
-function normalizeEnvName(value: string): EnvName | undefined {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === "development") return "dev";
-  if (normalized === "production") return "prod";
-  if (normalized === "stage") return "staging";
-  return isValidEnvName(normalized) ? normalized : undefined;
-}
 
 /**
  * Creates the default dev command handler that orchestrates planning and applying the DAG.
@@ -188,13 +152,21 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         `Coherence check failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+    // Store serialized env values to pass to child processes
+    let tseraEnvValues: string | undefined;
+
     if (activeModules.secrets) {
       modulesStatus.set("secrets", { status: "starting" });
       updateUI();
 
       try {
-        const envName = resolveSecretsEnvName();
-        await bootstrapEnv(envName, "config/secrets");
+        // bootstrapEnv detects environment automatically via detectEnvName()
+        // Returns validated environment values that we'll pass to child processes
+        const envValues = await bootstrapEnv("config/secrets/env.config.ts", "config/secrets");
+
+        // Serialize values for child processes (backend, frontend)
+        // This allows them to use TSera.env without re-running bootstrapEnv
+        tseraEnvValues = JSON.stringify(envValues);
 
         modulesStatus.set("secrets", { status: "ready" });
         updateUI();
@@ -262,6 +234,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
             args: ["task", "dev:front"],
             cwd: projectRoot,
             showLogs: context.logs,
+            tseraEnvValues,
           }).catch((err) => {
             modulesStatus.set("frontend", {
               status: "error",
@@ -288,6 +261,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         args: ["task", "dev:back"],
         cwd: projectRoot,
         showLogs: context.logs,
+        tseraEnvValues,
       });
     } else if (activeModules.frontend) {
       modulesStatus.set("frontend", { status: "starting" });
@@ -298,6 +272,7 @@ function createDefaultDevHandler(metadata: CliMetadata): DevCommandHandler {
         args: ["task", "dev:front"],
         cwd: projectRoot,
         showLogs: context.logs,
+        tseraEnvValues,
       });
     }
 

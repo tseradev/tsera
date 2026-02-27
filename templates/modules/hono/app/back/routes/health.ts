@@ -1,6 +1,6 @@
 import { count } from "drizzle-orm";
 import type { Context, Hono } from "hono";
-import { db, slogans } from "../../db/connect.ts";
+import { getDb, slogans } from "../../db/connect.ts";
 
 /**
  * Health check response types.
@@ -32,11 +32,8 @@ type HealthResponse = HealthResponseOk | HealthResponseDown;
 export default function registerHealthRoutes(app: Hono): Hono {
   app.get("/api/v1/health", async (c: Context) => {
     try {
-      // Check if database is available
-      if (!db) {
-        const response: HealthResponseDown = { status: "down" };
-        return c.json(response, 503);
-      }
+      // Get database connection (initializes if needed)
+      const db = await getDb();
 
       // Perform a minimal database query to verify connectivity
       // Using count on slogans table as a lightweight health check

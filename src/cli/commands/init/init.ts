@@ -248,6 +248,12 @@ async function patchImportMapForEnvironment(
       if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
         if (key === "tsera/") {
           denoConfig.imports[key] = relativeImportPath;
+        } else if (key === "@tsera/core") {
+          // Patch @tsera/core to use local core module
+          // Path points directly to src/core/index.ts
+          // Use forward slashes for Deno import map compatibility
+          const coreIndexPath = `${relativePath}/core/index.ts`;
+          denoConfig.imports[key] = coreIndexPath;
         }
       }
     }
@@ -713,18 +719,12 @@ function buildGitignore(): string {
   const content = [
     "# TSera",
     ".tsera/",
-    "drizzle/",
     "dist/",
     "node_modules/",
     ".env",
     ".env.*",
     "_site",
     "_cache",
-    "",
-    "# TSera secrets",
-    "config/secrets/.env.dev",
-    "config/secrets/.env.staging",
-    "config/secrets/.env.prod",
     "",
     "coverage/",
     "*.log",

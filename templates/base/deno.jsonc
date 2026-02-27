@@ -11,8 +11,9 @@
   },
   "imports": {
     "@/": "./",
-    "@tsera/core": "../../src/core/index.ts",
+    "@tsera/core": "jsr:@tsera/core@latest",
     "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8",
+
     "std/assert": "jsr:@std/assert@^1.0.18",
     "std/fs": "jsr:@std/fs@^1.0.22",
     "std/fs/walk": "jsr:@std/fs@^1.0.22/walk",

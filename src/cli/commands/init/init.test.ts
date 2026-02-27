@@ -28,6 +28,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
     importMap.imports["tsera/"] = fileUrl;
     importMap.imports["tsera/core/"] = `${fileUrl}core/`;
     importMap.imports["tsera/cli/"] = `${fileUrl}cli/`;
+    importMap.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
     await Deno.writeTextFile(importMapPath, JSON.stringify(importMap, null, 2));
   } else {
     // Lume projects: imports are in deno.jsonc
@@ -43,6 +44,7 @@ async function updateImportMapForTests(projectDir: string): Promise<void> {
       denoConfig.imports["tsera/"] = fileUrl;
       denoConfig.imports["tsera/core/"] = `${fileUrl}core/`;
       denoConfig.imports["tsera/cli/"] = `${fileUrl}cli/`;
+      denoConfig.imports["@tsera/core"] = `${fileUrl}core/index.ts`;
       await Deno.writeTextFile(
         denoConfigPath,
         JSON.stringify(denoConfig, null, 2) + "\n",
@@ -130,12 +132,12 @@ Deno.test("init generates the full skeleton and manifest", async () => {
     );
     const envConfig = await Deno.readTextFile(envConfigPath);
     assert(
-      envConfig.includes('import { defineEnvConfig } from "tsera/core"'),
-      "env.config.ts should import defineEnvConfig from tsera/core",
+      envConfig.includes('import { z } from "zod"'),
+      "env.config.ts should import z from zod",
     );
     assert(
-      envConfig.includes("export default defineEnvConfig"),
-      "env.config.ts should export default defineEnvConfig",
+      envConfig.includes("export default") && envConfig.includes("validator:"),
+      "env.config.ts should export default an EnvConfigSchema object with validator properties",
     );
 
     // Verify Docker files are in config/docker/

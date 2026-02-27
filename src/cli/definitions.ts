@@ -99,6 +99,12 @@ export type FrontConfig = {
 };
 
 /**
+ * Environment name type - dynamically configured via tsera.config.ts.
+ * Default values are provided but can be overridden.
+ */
+export type EnvName = string;
+
+/**
  * Complete TSera project configuration.
  */
 export type TseraConfig = {
@@ -129,7 +135,23 @@ export type TseraConfig = {
    * Corresponding CD workflows will be generated in .github/workflows/
    */
   deployTargets?: DeployProvider[];
+  /**
+   * Available environment names (e.g., ["dev", "staging", "prod"]).
+   * Used for environment validation throughout the project.
+   * Defaults to ["dev", "staging", "prod"] if not specified.
+   */
+  environments?: string[];
+  /**
+   * Development mode flag.
+   * When true, enables development-specific features and relaxed validation.
+   */
+  dev?: boolean;
 };
+
+/**
+ * Default environment names used when not configured.
+ */
+export const DEFAULT_ENVIRONMENTS = ["dev", "staging", "prod"] as const;
 
 /**
  * Resolved configuration with the absolute path to the configuration file.

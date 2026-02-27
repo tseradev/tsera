@@ -49,6 +49,14 @@ const config = {
   // Configure via "tsera deploy init" or during "tsera init".
   deployTargets: [],
 
+  // Available environment names for DENO_ENV validation.
+  // Used throughout the project for environment-specific behavior.
+  environments: ["dev", "staging", "prod"],
+
+  // Development mode flag.
+  // When true, enables development-specific features.
+  dev: true,
+
   // Module activation
   modules: {
     hono: true,

@@ -168,7 +168,7 @@ function getTseraEnv(): TseraEnvAccessor | undefined {
   if (!isRecord(globalValue)) {
     return undefined;
   }
-  const tsera = globalValue["tsera"];
+  const tsera = globalValue["TSera"];
   if (!isTseraEnvAccessor(tsera)) {
     return undefined;
   }
@@ -186,18 +186,16 @@ function readEnvString(value: unknown): string | undefined {
 }
 
 /**
- * Resolve a single environment variable from multiple sources.
+ * Resolve a single environment variable from TSera runtime env.
  *
- * Priority order:
- * 1. TSera runtime env (if secrets module is enabled)
- * 2. Deno.env
+ * Requires TSera.env to be initialized (via tsera dev or TSERA_ENV_VALUES).
  *
  * @param key - Environment variable name
  * @returns String value or undefined
  */
 export function resolveEnvVar(key: string): string | undefined {
   const tseraEnv = getTseraEnv();
-  return readEnvString(tseraEnv?.env(key)) ?? Deno.env.get(key);
+  return readEnvString(tseraEnv?.env(key));
 }
 
 /**

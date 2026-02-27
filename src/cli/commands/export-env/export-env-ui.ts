@@ -66,12 +66,10 @@ export class ExportEnvConsole extends BaseConsole {
 
   /**
    * Reports that the schema was loaded and validation is starting.
-   *
-   * @param count - Number of variables to validate
    */
-  schemaLoaded(count: number): void {
+  schemaLoaded(): void {
     this.#spinner.update(
-      `${gray(`Validating ${count} variable(s)...`)}`,
+      `${gray(`Schema loaded, validating...`)}`,
     );
   }
 

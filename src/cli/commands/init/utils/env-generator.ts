@@ -41,7 +41,7 @@ export function generateEnvFiles(
 function generateDevEnv(db: DbConfig, modules: string[]): string {
   const lines: string[] = [
     "# Development Environment",
-    "# This file is loaded when TSERA_ENV is not set or set to 'dev'",
+    "# This file is loaded when DENO_ENV=dev (or by default)",
     "# Fill in all required values below before starting the application",
     "",
     "# Database Configuration",
@@ -95,6 +95,11 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
+  // Environment identifier - DENO_ENV in this file determines the environment
+  lines.push("# Environment");
+  lines.push("DENO_ENV=dev");
+  lines.push("");
+
   lines.push("# Debugging");
   lines.push("DEBUG=true");
 
@@ -107,7 +112,7 @@ function generateDevEnv(db: DbConfig, modules: string[]): string {
 function generateStagingEnv(db: DbConfig, modules: string[]): string {
   const lines: string[] = [
     "# Staging Environment",
-    "# This file is loaded when TSERA_ENV=staging",
+    "# DENO_ENV=staging in this file determines the environment.",
     "# Fill in all required values below before starting the application",
     "",
     "# Database Configuration",
@@ -161,6 +166,11 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
+  // Environment identifier (source of truth for environment detection)
+  lines.push("# Environment");
+  lines.push("DENO_ENV=staging");
+  lines.push("");
+
   lines.push("# Debugging");
   lines.push("DEBUG=false");
 
@@ -173,7 +183,7 @@ function generateStagingEnv(db: DbConfig, modules: string[]): string {
 function generateProdEnv(db: DbConfig, modules: string[]): string {
   const lines: string[] = [
     "# Production Environment",
-    "# This file is loaded when TSERA_ENV=prod",
+    "# DENO_ENV=prod in this file determines the environment.",
     "# ⚠️  IMPORTANT: Fill in all required values before deploying to production!",
     "",
     "# Database Configuration",
@@ -227,6 +237,11 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
     lines.push("");
   }
 
+  // Environment identifier (source of truth for environment detection)
+  lines.push("# Environment");
+  lines.push("DENO_ENV=prod");
+  lines.push("");
+
   lines.push("# Debugging (should be false in production)");
   lines.push("DEBUG=false");
 
@@ -234,7 +249,7 @@ function generateProdEnv(db: DbConfig, modules: string[]): string {
 }
 
 /**
- * Generates env.config.ts file with declarative schema definitions.
+ * Generates env.config.ts file with EnvConfigSchema format.
  *
  * @param config - Generation configuration.
  * @returns TypeScript code for env.config.ts.
@@ -243,53 +258,34 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
   const { db, modules } = config;
 
   const lines: string[] = [
+    'import type { EnvConfigSchema } from "@tsera/core";',
+    'import { z } from "zod";',
+    "",
     "/**",
     " * Environment variable schema for this TSera project.",
-    " *",
-    " * This schema defines all environment variables required by the application,",
-    " * their types, and in which environments they are required.",
-    " *",
-    " * TSera will validate these variables at startup and refuse to start if",
-    " * any required variables are missing or invalid.",
-    " *",
-    " * Schema format:",
-    ' * - type: "string" | "number" | "boolean" | "url" (REQUIRED)',
-    ' * - required: true | false | ["env1", "env2"] (REQUIRED)',
-    " *   - true: required in all environments",
-    " *   - false: optional in all environments",
-    ' *   - ["env1", "env2"]: required only in specified environments',
-    " * - description: human-readable description (optional but recommended)",
+    " * Each variable is defined with:",
+    " * - `validator` - Zod schema for validation and type coercion",
+    " * - `required` - Either `true` (always required), `false` (optional), or an array of environment names",
     " */",
     "",
-    'import { defineEnvConfig } from "tsera/core/secrets.ts";',
-    "",
-    "export default defineEnvConfig({",
+    "const config: EnvConfigSchema = {",
   ];
 
   // Database variables
   lines.push("  // Database Configuration");
   lines.push("  DATABASE_PROVIDER: {");
-  lines.push('    type: "string" as const,');
+  lines.push("    validator: z.string(),");
   lines.push("    required: true,");
-  lines.push(
-    `    description: "${getDbDescription(db.dialect)} database provider",`,
-  );
   lines.push("  },");
   lines.push("  DATABASE_URL: {");
-  lines.push('    type: "url" as const,');
+  lines.push("    validator: z.string().url(),");
   lines.push("    required: true,");
-  lines.push(
-    `    description: "${getDbDescription(db.dialect)} connection URL",`,
-  );
   lines.push("  },");
 
   if (db.dialect === "postgres" || db.dialect === "mysql") {
     lines.push("  DATABASE_SSL: {");
-    lines.push('    type: "string" as const,');
-    lines.push('    required: ["dev", "staging"],');
-    lines.push(
-      '    description: "SSL mode for database connection (disable, prefer, require)",',
-    );
+    lines.push("    validator: z.string(),");
+    lines.push("    required: false,");
     lines.push("  },");
   }
 
@@ -298,19 +294,16 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("");
     lines.push("  // API Server (Hono)");
     lines.push("  PORT: {");
-    lines.push('    type: "number" as const,');
-    lines.push("    required: false,");
-    lines.push('    description: "API server port",');
+    lines.push("    validator: z.coerce.number(),");
+    lines.push("    required: true,");
     lines.push("  },");
     lines.push("  HOST: {");
-    lines.push('    type: "string" as const,');
-    lines.push("    required: false,");
-    lines.push('    description: "API server host",');
+    lines.push("    validator: z.string(),");
+    lines.push("    required: true,");
     lines.push("  },");
     lines.push("  API_PREFIX: {");
-    lines.push('    type: "string" as const,');
-    lines.push("    required: false,");
-    lines.push('    description: "API route prefix",');
+    lines.push("    validator: z.string(),");
+    lines.push("    required: true,");
     lines.push("  },");
   }
 
@@ -319,9 +312,8 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("");
     lines.push("  // Frontend Server (Lume)");
     lines.push("  LUME_PORT: {");
-    lines.push('    type: "number" as const,');
-    lines.push("    required: false,");
-    lines.push('    description: "Lume frontend server port",');
+    lines.push("    validator: z.coerce.number(),");
+    lines.push("    required: true,");
     lines.push("  },");
   }
 
@@ -330,14 +322,12 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("");
     lines.push("  // Docker Configuration");
     lines.push("  DOCKER_REGISTRY: {");
-    lines.push('    type: "string" as const,');
-    lines.push('    required: ["staging", "prod"],');
-    lines.push('    description: "Docker registry URL",');
+    lines.push("    validator: z.string(),");
+    lines.push("    required: false,");
     lines.push("  },");
     lines.push("  DOCKER_IMAGE_NAME: {");
-    lines.push('    type: "string" as const,');
+    lines.push("    validator: z.string(),");
     lines.push("    required: false,");
-    lines.push('    description: "Docker image name",');
     lines.push("  },");
   }
 
@@ -346,43 +336,33 @@ export function generateEnvSchema(config: EnvGenerationConfig): string {
     lines.push("");
     lines.push("  // CI Configuration");
     lines.push("  DEPLOY_TOKEN: {");
-    lines.push('    type: "string" as const,');
-    lines.push('    required: ["staging", "prod"],');
-    lines.push('    description: "Deployment authentication token",');
+    lines.push("    validator: z.string(),");
+    lines.push("    required: false,");
     lines.push("  },");
     lines.push("  CI_REGISTRY: {");
-    lines.push('    type: "string" as const,');
-    lines.push('    required: ["staging", "prod"],');
-    lines.push('    description: "CI container registry",');
+    lines.push("    validator: z.string(),");
+    lines.push("    required: false,");
     lines.push("  },");
   }
 
-  // Debug variable
+  // Environment and Debug variables
+  lines.push("");
+  lines.push("  // Environment");
+  lines.push("  DENO_ENV: {");
+  lines.push("    validator: z.string(),");
+  lines.push("    required: true,");
+  lines.push("  },");
+
   lines.push("");
   lines.push("  // Debugging");
   lines.push("  DEBUG: {");
-  lines.push('    type: "boolean" as const,');
-  lines.push("    required: false,");
-  lines.push('    description: "Enable debug logging",');
+  lines.push("    validator: z.coerce.boolean(),");
+  lines.push("    required: true,");
   lines.push("  },");
 
-  lines.push("});");
+  lines.push("};");
+  lines.push("");
+  lines.push("export default config;");
 
   return lines.join("\n");
-}
-
-/**
- * Gets a human-readable description for a database dialect.
- */
-function getDbDescription(dialect: DbConfig["dialect"]): string {
-  switch (dialect) {
-    case "postgres":
-      return "PostgreSQL";
-    case "mysql":
-      return "MySQL";
-    case "sqlite":
-      return "SQLite";
-    default:
-      return "Database";
-  }
 }

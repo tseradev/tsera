@@ -1,6 +1,6 @@
 import { asc } from "drizzle-orm";
 import type { Context, Hono } from "hono";
-import { db, slogans } from "../../db/connect.ts";
+import { getDb, slogans } from "../../db/connect.ts";
 
 /**
  * Slogan type from database schema.
@@ -57,14 +57,8 @@ function createErrorResponse(
 export default function registerSloganRoutes(app: Hono): Hono {
   app.get("/api/v1/slogans", async (c: Context) => {
     try {
-      // Check if database is available
-      if (!db) {
-        const errorResponse = createErrorResponse(
-          "DATABASE_UNAVAILABLE",
-          "Database connection is not available",
-        );
-        return c.json(errorResponse, 503);
-      }
+      // Get database connection (initializes if needed)
+      const db = await getDb();
 
       // Fetch all slogans sorted by id ascending
       const allSlogans: SloganRow[] = await db.select().from(slogans).orderBy(asc(slogans.id));

@@ -34,16 +34,24 @@ export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.
 export { getEntityInputSchemas, getEntityPublicSchema, getEntitySchema } from "./schema.ts";
 export {
   bootstrapEnv,
+  configureEnvNames,
+  createEnvModule,
+  DEFAULT_ENV_NAMES,
   defineEnvConfig,
+  detectEnvName,
+  type EnvConfig,
+  type EnvConfigSchema,
+  type EnvModule,
   type EnvName,
-  type EnvSchema,
+  EnvValidationError,
+  type EnvValidationIssue,
+  type EnvValue,
   type EnvVarDefinition,
-  type EnvVarType,
-  getEnv,
-  initializeSecrets,
+  getConfiguredEnvNames,
+  initializeEnvModule,
+  isValidEnvName,
   parseEnvFile,
-  validateSecrets,
-  validateType,
 } from "./secrets.ts";
+
 // Re-export zod for convenience in entity definitions
 export { SchemaError, z, type ZodType } from "./utils/zod.ts";

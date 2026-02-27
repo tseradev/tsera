@@ -53,6 +53,8 @@ export type StartModuleOptions = {
   cwd: string;
   /** Show logs in real-time to console */
   showLogs?: boolean;
+  /** Serialized TSera environment values to pass to child process */
+  tseraEnvValues?: string;
 };
 
 /**
@@ -165,9 +167,24 @@ export class ProcessManager {
     this.notifyStatusChange(name, "starting");
 
     try {
+      // Build environment - inherit from parent and add TSera-specific values
+      // This ensures that:
+      // 1. System environment (PATH, HOME, etc.) is available to child processes
+      // 2. TSera validated env values are passed via TSERA_ENV_VALUES
+      const env: Record<string, string> = {};
+      // Inherit all parent environment variables (PATH, HOME, etc.)
+      for (const [key, value] of Object.entries(Deno.env.toObject())) {
+        env[key] = value;
+      }
+      // Add serialized TSera environment values for child processes
+      if (options.tseraEnvValues) {
+        env["TSERA_ENV_VALUES"] = options.tseraEnvValues;
+      }
+
       const cmd = new Deno.Command(command, {
         args,
         cwd,
+        env,
         stdout: "piped",
         stderr: "piped",
         stdin: "null",

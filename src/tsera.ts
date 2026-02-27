@@ -24,30 +24,15 @@
 
 import type { TseraConfig } from "./cli/definitions.ts";
 import { DEFAULT_CONFIG } from "./config-loader.ts";
-import {
-  bootstrapEnv,
-  createEnvModule,
-  detectEnvName,
-  type EnvModule,
-  type EnvSchema,
-  type EnvValue,
-} from "./core/secrets.ts";
+import { bootstrapEnv, createEnvModule, type EnvModule, type EnvValue } from "./core/secrets.ts";
 
-/**
- * Loads environment module from config/secrets directory.
- * Falls back to empty module if secrets are not configured.
- */
-async function loadEnvModule(): Promise<EnvModule<EnvSchema>> {
-  const envName = detectEnvName();
+/** Loads environment module from config/secrets directory. */
+async function loadEnvModule(): Promise<EnvModule<Record<string, EnvValue>>> {
   try {
-    const envValues = await bootstrapEnv(envName, "config/secrets");
-    const converted: Record<string, EnvValue> = {};
-    for (const [key, value] of Object.entries(envValues)) {
-      converted[key] = value;
-    }
-    return createEnvModule(converted, {} as EnvSchema);
+    const envValues = await bootstrapEnv("config/secrets/env.config.ts", "config/secrets");
+    return createEnvModule(envValues);
   } catch {
-    return createEnvModule({}, {} as EnvSchema);
+    return createEnvModule({}) as EnvModule<Record<string, EnvValue>>;
   }
 }
 
