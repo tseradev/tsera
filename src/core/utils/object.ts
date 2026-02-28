@@ -22,7 +22,7 @@ export function deepFreeze<T>(
 
   // Skip Zod schemas - they use lazy getters that break if frozen
   if (
-    valueType === "object" && value !== null &&
+    valueType === "object" &&
     "_zod" in (value as Record<string, unknown>)
   ) {
     return value as Readonly<T>;
