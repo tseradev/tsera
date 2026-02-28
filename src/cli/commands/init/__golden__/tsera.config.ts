@@ -25,7 +25,6 @@ const config = {
     // ssl: "prefer",
   },
 
-
   // Backend (Hono) configuration
   back: {
     port: 3001,

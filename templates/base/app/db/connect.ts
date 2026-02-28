@@ -119,7 +119,8 @@ async function createTablesIfNotExist(client: Client): Promise<void> {
  * @throws Error if configuration is invalid
  */
 async function initializeConnection(): Promise<DbConnection> {
-  const provider = resolveDatabaseProvider();
+  // Resolve provider for future use (multi-database support)
+  resolveDatabaseProvider();
   const url = getDatabaseCredentials("sqlite");
 
   await ensureDatabaseDirectory(url);
