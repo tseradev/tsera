@@ -19,18 +19,30 @@ Deno.test("createLogger renders modern text output", () => {
   assert(lines.length === 2, "Expected two log lines to be emitted.");
   const first = stripAnsi(lines[0]);
   assert(first.includes("ℹ INFO"), "The info badge should be present.");
-  assert(first.includes("Project initialized"), "The message should be included.");
-  assert(first.includes("directory=/tmp/demo"), "Context should be rendered inline.");
+  assert(
+    first.includes("Project initialized"),
+    "The message should be included.",
+  );
+  assert(
+    first.includes("directory=/tmp/demo"),
+    "Context should be rendered inline.",
+  );
 
   const second = stripAnsi(lines[1]);
-  assert(second.startsWith("🚀 Init"), "Events should include an expressive icon.");
+  assert(
+    second.startsWith("🚀 Init"),
+    "Events should include an expressive icon.",
+  );
   assert(second.includes("Plan"), "Event segments should be humanised.");
   assert(second.includes("summary="), "Event context should be appended.");
 });
 
 Deno.test("createLogger preserves structured JSON mode", () => {
   const lines: string[] = [];
-  const logger = createLogger({ json: true, writer: (line) => lines.push(line) });
+  const logger = createLogger({
+    json: true,
+    writer: (line) => lines.push(line),
+  });
 
   logger.info("hello", { ok: true });
   logger.event("init:start", { directory: "." });
@@ -38,7 +50,11 @@ Deno.test("createLogger preserves structured JSON mode", () => {
   assertEquals(lines.length, 2);
 
   const info = JSON.parse(lines[0]);
-  assertEquals(info, { level: "info", message: "hello", context: { ok: true } });
+  assertEquals(info, {
+    level: "info",
+    message: "hello",
+    context: { ok: true },
+  });
 
   const event = JSON.parse(lines[1]);
   assertEquals(event.level, "info");

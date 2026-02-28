@@ -7,7 +7,9 @@ import type { ZodObject, ZodType } from "./utils/zod.ts";
  * @param entity - TSera runtime entity.
  * @returns Main Zod schema.
  */
-export function getEntitySchema(entity: EntityRuntime): ZodObject<Record<string, ZodType>> {
+export function getEntitySchema(
+  entity: EntityRuntime,
+): ZodObject<Record<string, ZodType>> {
   return entity.schema;
 }
 
@@ -17,7 +19,9 @@ export function getEntitySchema(entity: EntityRuntime): ZodObject<Record<string,
  * @param entity - TSera runtime entity.
  * @returns Public Zod schema.
  */
-export function getEntityPublicSchema(entity: EntityRuntime): ZodObject<Record<string, ZodType>> {
+export function getEntityPublicSchema(
+  entity: EntityRuntime,
+): ZodObject<Record<string, ZodType>> {
   return entity.public;
 }
 

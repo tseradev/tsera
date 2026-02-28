@@ -155,7 +155,8 @@ export class TerminalSpinner {
     // Detect if we're in an interactive terminal
     const isInteractive = typeof Deno.stdout.isTerminal === "function" &&
       Deno.stdout.isTerminal();
-    const inCi = (typeof Deno.env.get === "function") && Deno.env.get("CI") === "true";
+    const inCi = (typeof Deno.env.get === "function") &&
+      Deno.env.get("CI") === "true";
 
     // Enable spinner only in interactive, non-CI environments with colors
     this.#enabled = isInteractive && !inCi && !Deno.noColor;

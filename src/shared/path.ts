@@ -63,7 +63,11 @@ function normalizeSegments(segments: string[], absolute: boolean): string[] {
 /**
  * Reassembles normalised path segments into a string using the provided separator.
  */
-function formatPath(segments: string[], absolute: boolean, sep: string): string {
+function formatPath(
+  segments: string[],
+  absolute: boolean,
+  sep: string,
+): string {
   const joined = segments.join(sep);
   if (!absolute) {
     return joined.length === 0 ? "." : joined;
@@ -194,7 +198,9 @@ function posixRelative(from: string, to: string): string {
   const fromSegs = splitSegments(fromNorm, "/");
   const toSegs = splitSegments(toNorm, "/");
 
-  while (fromSegs.length > 0 && toSegs.length > 0 && fromSegs[0] === toSegs[0]) {
+  while (
+    fromSegs.length > 0 && toSegs.length > 0 && fromSegs[0] === toSegs[0]
+  ) {
     fromSegs.shift();
     toSegs.shift();
   }

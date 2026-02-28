@@ -82,35 +82,50 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   // Build header content
   const versionText = `v${config.version}`;
   const emoji = "⚙️ ";
-  const titleContent = palette.accent(emoji) + " " + palette.strong(config.cliName);
+  const titleContent = palette.accent(emoji) + " " +
+    palette.strong(config.cliName);
 
   // Center-align content in box using helper function
   builder.append(palette.highlight("  " + topLine) + "\n");
   builder.append(
-    palette.highlight("  │") + " ".repeat(boxWidth - 2) + palette.highlight("│") + "\n",
+    palette.highlight("  │") + " ".repeat(boxWidth - 2) +
+      palette.highlight("│") + "\n",
   );
   builder.append(centerInBox(titleContent, boxWidth, palette) + "\n");
-  builder.append(centerInBox(palette.subtle(config.tagline), boxWidth, palette) + "\n");
-  builder.append(centerInBox(palette.subtle(versionText), boxWidth, palette) + "\n");
   builder.append(
-    palette.highlight("  │") + " ".repeat(boxWidth - 2) + palette.highlight("│") + "\n",
+    centerInBox(palette.subtle(config.tagline), boxWidth, palette) + "\n",
+  );
+  builder.append(
+    centerInBox(palette.subtle(versionText), boxWidth, palette) + "\n",
+  );
+  builder.append(
+    palette.highlight("  │") + " ".repeat(boxWidth - 2) +
+      palette.highlight("│") + "\n",
   );
   builder.append(palette.highlight("  " + bottomLine) + "\n");
   builder.append("\n");
 
   // TSera description
   builder.append(
-    "  " + palette.subtle("TSera is a DX engine that unifies backend, frontend, and infra.") + "\n",
+    "  " +
+      palette.subtle(
+        "TSera is a DX engine that unifies backend, frontend, and infra.",
+      ) + "\n",
   );
   builder.append(
-    "  " + palette.subtle("It keeps your code, schema, tests, and docs continuously coherent.") +
+    "  " +
+      palette.subtle(
+        "It keeps your code, schema, tests, and docs continuously coherent.",
+      ) +
       "\n",
   );
   builder.append("\n");
 
   // Usage section
   builder.append(palette.accent("  ◆ ") + palette.heading("USAGE") + "\n");
-  builder.append(formatUsage(config.cliName.toLowerCase(), config.usage, palette) + "\n");
+  builder.append(
+    formatUsage(config.cliName.toLowerCase(), config.usage, palette) + "\n",
+  );
   builder.append("\n");
 
   // Calculate label width for all entries (commands + global options) to ensure alignment
@@ -122,14 +137,30 @@ export function renderModernHelp(config: ModernHelpConfig): string {
 
   // Commands section
   builder.append(palette.accent("  ◆ ") + palette.heading("COMMANDS") + "\n");
-  for (const line of formatTwoColumn(config.commands, width, palette, maxLabelWidth)) {
+  for (
+    const line of formatTwoColumn(
+      config.commands,
+      width,
+      palette,
+      maxLabelWidth,
+    )
+  ) {
     builder.append(line + "\n");
   }
   builder.append("\n");
 
   // Global options section
-  builder.append(palette.accent("  ◆ ") + palette.heading("GLOBAL OPTIONS") + "\n");
-  for (const line of formatTwoColumn(config.globalOptions, width, palette, maxLabelWidth)) {
+  builder.append(
+    palette.accent("  ◆ ") + palette.heading("GLOBAL OPTIONS") + "\n",
+  );
+  for (
+    const line of formatTwoColumn(
+      config.globalOptions,
+      width,
+      palette,
+      maxLabelWidth,
+    )
+  ) {
     builder.append(line + "\n");
   }
   builder.append("\n");
@@ -139,9 +170,12 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   builder.append("\n");
 
   // Quick start section
-  builder.append(palette.success("  ✓ ") + palette.heading("QUICK START") + "\n");
   builder.append(
-    "    " + palette.subtle("1.") + " " + palette.label("Initialize a new project:") + "\n",
+    palette.success("  ✓ ") + palette.heading("QUICK START") + "\n",
+  );
+  builder.append(
+    "    " + palette.subtle("1.") + " " +
+      palette.label("Initialize a new project:") + "\n",
   );
   builder.append(
     "       " + palette.accent("$") + " " +
@@ -149,7 +183,8 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   );
   builder.append("\n");
   builder.append(
-    "    " + palette.subtle("2.") + " " + palette.label("Start development mode:") + "\n",
+    "    " + palette.subtle("2.") + " " +
+      palette.label("Start development mode:") + "\n",
   );
   builder.append(
     "       " + palette.accent("$") + " " +
@@ -170,7 +205,8 @@ export function renderModernHelp(config: ModernHelpConfig): string {
   if (config.customSections && config.customSections.length > 0) {
     for (const section of config.customSections) {
       builder.append(
-        palette.accent("  ◆ ") + palette.heading(section.title.toUpperCase()) + "\n",
+        palette.accent("  ◆ ") + palette.heading(section.title.toUpperCase()) +
+          "\n",
       );
       for (const contentLine of section.content) {
         builder.append("    " + contentLine + "\n");

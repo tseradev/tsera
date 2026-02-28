@@ -55,7 +55,9 @@ const DEFAULT_MANIPULATION_SETTINGS = {
  * const sourceFile = project.createSourceFile("example.ts", "");
  * ```
  */
-export function createTSeraProject(options: Partial<ProjectOptions> = {}): Project {
+export function createTSeraProject(
+  options: Partial<ProjectOptions> = {},
+): Project {
   return new Project({
     useInMemoryFileSystem: true,
     compilerOptions: {

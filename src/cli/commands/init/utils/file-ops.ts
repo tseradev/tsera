@@ -6,14 +6,21 @@ import { directoryHasEntries, pathExists, safeWrite } from "../../../utils/fsx.t
  *
  * @throws {Error} If the path exists and is not a directory, or if it's not empty and force is false.
  */
-export async function ensureDirectoryReady(path: string, force: boolean): Promise<void> {
+export async function ensureDirectoryReady(
+  path: string,
+  force: boolean,
+): Promise<void> {
   if (await pathExists(path)) {
     const stat = await Deno.stat(path);
     if (!stat.isDirectory) {
-      throw new Error(`The path ${path} already exists and is not a directory.`);
+      throw new Error(
+        `The path ${path} already exists and is not a directory.`,
+      );
     }
     if (!force && await directoryHasEntries(path)) {
-      throw new Error(`The directory ${path} is not empty. Use --force to continue.`);
+      throw new Error(
+        `The directory ${path} is not empty. Use --force to continue.`,
+      );
     }
     return;
   }
@@ -26,7 +33,11 @@ export async function ensureDirectoryReady(path: string, force: boolean): Promis
  *
  * @throws {Error} If the file exists and force is false.
  */
-export async function ensureWritable(path: string, force: boolean, label: string): Promise<void> {
+export async function ensureWritable(
+  path: string,
+  force: boolean,
+  label: string,
+): Promise<void> {
   if (!await pathExists(path)) {
     return;
   }

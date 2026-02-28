@@ -1,76 +1,59 @@
+import type { EnvConfigSchema } from "@tsera/core";
+import { z } from "zod";
+
 /**
  * Environment variable schema for this TSera project.
- *
- * This schema defines all environment variables required by application,
- * their types, and in which environments they are required.
- *
- * TSera will validate these variables at startup and refuse to start if
- * any required variables are missing or invalid.
- *
- * Schema format:
- * - type: "string" | "number" | "boolean" | "url" (REQUIRED)
- * - required: true | false | ["env1", "env2"] (REQUIRED)
- *   - true: required in all environments
- *   - false: optional in all environments
- *   - ["env1", "env2"]: required only in specified environments
- * - description: human-readable description (optional but recommended)
+ * Each variable is defined with:
+ * - `validator` - Zod schema for validation and type coercion
+ * - `required` - Either `true` (always required), `false` (optional), or an array of environment names
  */
 
-import { defineEnvConfig } from "tsera/core/index.ts";
-
-export default defineEnvConfig({
+const config: EnvConfigSchema = {
   // Database Configuration
   DATABASE_PROVIDER: {
-    type: "string",
+    validator: z.string(),
     required: true,
-    description: "Database provider (must be 'sqlite')",
   },
   DATABASE_URL: {
-    type: "url",
+    validator: z.string().url(),
     required: true,
-    description: "SQLite database file URL (must start with 'file:')",
   },
   DATABASE_SSL: {
-    type: "string",
+    validator: z.string(),
     required: false,
-    description: "SSL mode for database connection (not used for SQLite)",
   },
 
   // API Server (Hono)
   PORT: {
-    type: "number",
-    required: false,
-    description: "API server port",
+    validator: z.coerce.number(),
+    required: true,
   },
   HOST: {
-    type: "string",
-    required: false,
-    description: "API server host",
+    validator: z.string(),
+    required: true,
   },
   API_PREFIX: {
-    type: "string",
-    required: false,
-    description: "API route prefix",
+    validator: z.string(),
+    required: true,
   },
 
   // Frontend Server (Lume)
   LUME_PORT: {
-    type: "number",
-    required: false,
-    description: "Lume frontend server port",
+    validator: z.coerce.number(),
+    required: true,
   },
 
   // Environment
   DENO_ENV: {
-    type: "string",
-    required: false,
-    description: "Environment (development, staging, production)",
+    validator: z.string(),
+    required: true,
   },
 
   // Debugging
   DEBUG: {
-    type: "boolean",
-    required: false,
-    description: "Enable debug logging",
+    validator: z.coerce.boolean(),
+    required: true,
   },
-});
+};
+
+export default config;

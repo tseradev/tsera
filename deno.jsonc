@@ -1,11 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/denoland/deno/v2.6.8/cli/schemas/config-file.v1.json",
+  "name": "@tsera/core",
+  "version": "0.1.0",
   "compilerOptions": {
     "strict": true
   },
-  "exclude": [
-    "templates/"
-  ],
+  "exports": {
+    ".": "./src/mod.ts"
+  },
   "nodeModulesDir": "none",
   "fmt": {
     "useTabs": false,
@@ -32,6 +34,7 @@
     "publish": "deno publish"
   },
   "imports": {
+    "@tsera/core": "./src/core/index.ts",
     "cliffy/command": "jsr:@cliffy/command@1.0.0-rc.8",
     "cliffy/prompt": "jsr:@cliffy/prompt@1.0.0-rc.8",
     "hono": "jsr:@hono/hono@^4.11.9",
@@ -42,7 +45,6 @@
     "std/jsonc": "jsr:@std/jsonc@1",
     "std/path": "jsr:@std/path@^1.1.4",
     "ts-morph": "jsr:@ts-morph/ts-morph@23",
-    "tsera/": "./src/",
     "zod": "jsr:@zod/zod@^4.3.6"
   }
 }

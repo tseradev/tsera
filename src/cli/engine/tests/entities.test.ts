@@ -29,9 +29,7 @@ async function createTestImportMap(projectDir: string): Promise<void> {
   const normalizedSrcPath = srcPath.replace(/\\/g, "/");
   const importMap = {
     imports: {
-      "tsera/": `file://${normalizedSrcPath}/`,
-      "tsera/core/": `file://${normalizedSrcPath}/core/`,
-      "tsera/cli/": `file://${normalizedSrcPath}/cli/`,
+      "@tsera/core": `file://${normalizedSrcPath}/core/index.ts`,
     },
   };
   await Deno.writeTextFile(
@@ -58,7 +56,7 @@ Deno.test("discoverEntities loads the paths defined in configuration", async () 
     await Deno.writeTextFile(
       entityPath,
       [
-        'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { defineEntity } from "@tsera/core";',
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Example",',
@@ -92,7 +90,7 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
     await Deno.writeTextFile(
       firstPath,
       [
-        'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { defineEntity } from "@tsera/core";',
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "User",',
@@ -104,7 +102,7 @@ Deno.test("discoverEntities detects convention-based entities", async () => {
     await Deno.writeTextFile(
       secondPath,
       [
-        'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { defineEntity } from "@tsera/core";',
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "Order",',
@@ -182,7 +180,7 @@ Deno.test("prepareDagInputs adds an aggregated OpenAPI artifact", async () => {
     await Deno.writeTextFile(
       entityPath,
       [
-        'import { defineEntity } from "tsera/core/entity.ts";',
+        'import { defineEntity } from "@tsera/core";',
         'import { z } from "zod";',
         "export default defineEntity({",
         '  name: "User",',

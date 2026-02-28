@@ -7,11 +7,13 @@
  * - Graceful shutdown handling
  * - Environment validation at startup
  * - Database seed execution in development mode
+ * - Configuration loaded from tsera.config.ts
  *
  * @module
  */
 
 import { Hono } from "hono";
+import tseraConfig from "../../config/tsera.config.ts";
 import { initDb } from "../db/connect.ts";
 import { seedSlogans } from "../db/seeds/slogans.seed.ts";
 import registerHealthRoutes from "./routes/health.ts";
@@ -21,9 +23,21 @@ import registerSloganRoutes from "./routes/slogans.ts";
 // Types
 // ============================================================================
 
+/**
+ * TSera environment accessor interface.
+ * Provides type-safe access to environment variables via TSera.env().
+ */
 type TseraEnvAccessor = {
   env: (key: string) => unknown;
 };
+
+/**
+ * Extend globalThis to include TSera runtime.
+ * This declaration allows TypeScript to recognize globalThis.TSera.
+ */
+declare global {
+  var TSera: TseraEnvAccessor | undefined;
+}
 
 type ServerState = {
   isShuttingDown: boolean;
@@ -31,8 +45,60 @@ type ServerState = {
 };
 
 // ============================================================================
+// Configuration Resolution
+// ============================================================================
+
+/**
+ * Get backend configuration from tsera.config.ts with defaults.
+ */
+function getBackConfig() {
+  const back = tseraConfig.back;
+  return {
+    port: back?.port ?? 3001,
+    host: back?.host ?? "localhost",
+    apiPrefix: back?.apiPrefix ?? "/api/v1",
+  };
+}
+
+// ============================================================================
 // Environment Resolution
 // ============================================================================
+
+/**
+ * Initialize TSera environment from serialized values passed by parent process.
+ *
+ * When running via `tsera dev`, the CLI serializes validated environment values
+ * and passes them via TSERA_ENV_VALUES environment variable. This allows child
+ * processes to access TSera.env without re-running bootstrapEnv().
+ */
+function initializeTseraEnv(): void {
+  // Skip if already initialized
+  if (globalThis.TSera !== undefined) {
+    return;
+  }
+
+  const serialized = Deno.env.get("TSERA_ENV_VALUES");
+  if (!serialized) {
+    console.error(
+      "ERROR: TSERA_ENV_VALUES not found. The backend must be started via 'tsera dev'.",
+    );
+    Deno.exit(1);
+  }
+
+  try {
+    const values = JSON.parse(serialized) as Record<string, unknown>;
+    globalThis.TSera = {
+      env: (key: string): unknown => values[key],
+    };
+  } catch (error) {
+    console.error(
+      `ERROR: Failed to parse TSERA_ENV_VALUES: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    Deno.exit(1);
+  }
+}
 
 /**
  * Resolve the TSera runtime env accessor if the secrets module is enabled.
@@ -42,7 +108,7 @@ function resolveTseraEnv(): TseraEnvAccessor | undefined {
   if (!isRecord(globalValue)) {
     return undefined;
   }
-  const tsera = globalValue["tsera"];
+  const tsera = globalValue["TSera"];
   if (!isTseraEnvAccessor(tsera)) {
     return undefined;
   }
@@ -81,9 +147,14 @@ function readPort(value: unknown): number | undefined {
 function validateEnvironment(): void {
   const tseraEnv = resolveTseraEnv();
 
+  if (!tseraEnv) {
+    throw new Error(
+      "TSera environment not initialized. The backend must be started via 'tsera dev'.",
+    );
+  }
+
   // Validate DATABASE_PROVIDER
-  const provider = readEnvString(tseraEnv?.env("DATABASE_PROVIDER")) ??
-    Deno.env.get("DATABASE_PROVIDER");
+  const provider = readEnvString(tseraEnv.env("DATABASE_PROVIDER"));
 
   if (provider !== "sqlite") {
     throw new Error(
@@ -92,12 +163,11 @@ function validateEnvironment(): void {
   }
 
   // Validate DATABASE_URL
-  const databaseUrl = readEnvString(tseraEnv?.env("DATABASE_URL")) ??
-    Deno.env.get("DATABASE_URL");
+  const databaseUrl = readEnvString(tseraEnv.env("DATABASE_URL"));
 
   if (!databaseUrl) {
     throw new Error(
-      "DATABASE_URL is required. Set it in your environment or config/secrets/.env.* file.",
+      "DATABASE_URL is required. Set it in config/secrets/.env.* file.",
     );
   }
 
@@ -193,6 +263,10 @@ export const app = createApp();
 
 // Start server when run directly
 if (import.meta.main) {
+  // Initialize TSera environment from parent process (if available)
+  // This MUST be called before any other code that uses TSera.env
+  initializeTseraEnv();
+
   const serverState: ServerState = {
     isShuttingDown: false,
   };
@@ -205,29 +279,37 @@ if (import.meta.main) {
 
   // Determine if we should run seeds (development mode)
   const tseraEnv = resolveTseraEnv();
-  const envValue = readEnvString(tseraEnv?.env("DENO_ENV")) ??
-    Deno.env.get("DENO_ENV");
+  if (!tseraEnv) {
+    throw new Error(
+      "TSera environment not initialized. The backend must be started via 'tsera dev'.",
+    );
+  }
+  const envValue = readEnvString(tseraEnv.env("DENO_ENV"));
   const isDevelopment = envValue !== "production";
 
   // Initialize database and optionally run seeds
   await initializeDatabase(isDevelopment);
 
-  // Get port from environment or use default
-  const tseraPort = tseraEnv ? tseraEnv.env("PORT") : undefined;
-  const envPort = Deno.env.get("PORT");
-  const port = readPort(tseraPort) ?? readPort(envPort) ?? 3001;
+  // Get configuration from tsera.config.ts
+  const backConfig = getBackConfig();
+
+  // Get port from TSera environment
+  const port = readPort(tseraEnv.env("PORT")) ?? backConfig.port;
 
   // Create abort controller for graceful shutdown
   serverState.abortController = new AbortController();
 
-  console.log(`\n🚀 Server starting on http://localhost:${port}`);
-  console.log(`   Environment: ${isDevelopment ? "development" : "production"}`);
+  console.log(`\n🚀 Server starting on http://${backConfig.host}:${port}`);
+  console.log(
+    `   Environment: ${isDevelopment ? "development" : "production"}`,
+  );
   console.log(`   API endpoints:`);
-  console.log(`   - GET /api/v1/health - Health check`);
-  console.log(`   - GET /api/v1/slogans - List all slogans`);
+  console.log(`   - GET ${backConfig.apiPrefix}/health - Health check`);
+  console.log(`   - GET ${backConfig.apiPrefix}/slogans - List all slogans`);
 
   Deno.serve({
     port,
+    hostname: backConfig.host,
     signal: serverState.abortController.signal,
     onListen: () => {
       console.log(`\n✓ Server ready and listening`);

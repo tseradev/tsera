@@ -221,10 +221,14 @@ function zodSchemaToOpenAPI(zodSchema: ZodType): SchemaObject {
 
     // Extract from parent (Zod v4)
     if (innerZod.parent) {
-      if (innerZod.parent.minLength != null && innerSchema.minLength === undefined) {
+      if (
+        innerZod.parent.minLength != null && innerSchema.minLength === undefined
+      ) {
         innerSchema.minLength = innerZod.parent.minLength;
       }
-      if (innerZod.parent.maxLength != null && innerSchema.maxLength === undefined) {
+      if (
+        innerZod.parent.maxLength != null && innerSchema.maxLength === undefined
+      ) {
         innerSchema.maxLength = innerZod.parent.maxLength;
       }
     }
@@ -326,11 +330,9 @@ export function generateOpenAPIDocument(
     // Generate schema from entity.public (already filtered)
     schemas[entity.name] = entityToSchema(entity);
 
-    // Generate paths from entity.actions if available
-    if (entity.actions) {
-      // TODO: Implement path generation from actions
-      // For now, leave empty
-    }
+    // Note: Path generation from entity.actions is not yet implemented.
+    // Currently, only schema components are generated. API endpoints must be
+    // documented manually or via route introspection (future feature).
   }
 
   return {

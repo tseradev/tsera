@@ -34,7 +34,11 @@ Deno.test("buildZodArtifacts - generates User super-object and namespace", async
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
 
   assertEquals(artifacts.length, 1);
   assertEquals(artifacts[0].kind, "schema");
@@ -54,10 +58,22 @@ Deno.test("buildZodArtifacts - generates User super-object and namespace", async
   assertStringIncludes(content, "create: UserInputCreateSchema");
   assertStringIncludes(content, "update: UserInputUpdateSchema");
   assertStringIncludes(content, "export namespace User {");
-  assertStringIncludes(content, "export type type_ = z.infer<typeof UserSchema>");
-  assertStringIncludes(content, "export type public_ = z.infer<typeof UserPublicSchema>");
-  assertStringIncludes(content, "export type input_create = z.input<typeof UserInputCreateSchema>");
-  assertStringIncludes(content, "export type input_update = z.input<typeof UserInputUpdateSchema>");
+  assertStringIncludes(
+    content,
+    "export type type_ = z.infer<typeof UserSchema>",
+  );
+  assertStringIncludes(
+    content,
+    "export type public_ = z.infer<typeof UserPublicSchema>",
+  );
+  assertStringIncludes(
+    content,
+    "export type input_create = z.input<typeof UserInputCreateSchema>",
+  );
+  assertStringIncludes(
+    content,
+    "export type input_update = z.input<typeof UserInputUpdateSchema>",
+  );
   assertStringIncludes(content, 'export type id = type_["id"]');
 });
 
@@ -73,7 +89,11 @@ Deno.test("buildZodArtifacts - generates schema for primitive types", async () =
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
 
   assertEquals(artifacts.length, 1);
   const content = artifacts[0].content as string;
@@ -93,7 +113,11 @@ Deno.test("buildZodArtifacts - handles optional fields", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "title: z.string()");
@@ -109,7 +133,11 @@ Deno.test("buildZodArtifacts - handles nullable fields", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "content: z.string()");
@@ -126,7 +154,11 @@ Deno.test("buildZodArtifacts - handles default values", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, 'theme: z.string().default("dark")');
@@ -138,11 +170,18 @@ Deno.test("buildZodArtifacts - handles descriptions", async () => {
   const entity = defineEntity({
     name: "Product",
     fields: {
-      name: { validator: z.string().describe("Product name"), visibility: "public" },
+      name: {
+        validator: z.string().describe("Product name"),
+        visibility: "public",
+      },
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, 'name: z.string().describe("Product name")');
@@ -157,7 +196,11 @@ Deno.test("buildZodArtifacts - handles arrays", async () => {
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "tags: z.array(z.string())");
@@ -168,11 +211,18 @@ Deno.test("buildZodArtifacts - combines optional and nullable", async () => {
   const entity = defineEntity({
     name: "Profile",
     fields: {
-      bio: { validator: z.string().optional().nullable(), visibility: "public" },
+      bio: {
+        validator: z.string().optional().nullable(),
+        visibility: "public",
+      },
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   assertStringIncludes(content, "bio: z.string().optional().nullable()");
@@ -183,13 +233,23 @@ Deno.test("buildZodArtifacts - generates syntactically valid code", async () => 
     name: "Complex",
     fields: {
       id: { validator: z.string(), visibility: "public" },
-      count: { validator: z.number().default(0).optional(), visibility: "public" },
+      count: {
+        validator: z.number().default(0).optional(),
+        visibility: "public",
+      },
       tags: { validator: z.array(z.string()).optional(), visibility: "public" },
-      data: { validator: z.any().nullable().describe("Arbitrary JSON data"), visibility: "public" },
+      data: {
+        validator: z.any().nullable().describe("Arbitrary JSON data"),
+        visibility: "public",
+      },
     },
   });
 
-  const artifacts = await buildZodArtifacts({ entity, config: baseConfig, projectDir });
+  const artifacts = await buildZodArtifacts({
+    entity,
+    config: baseConfig,
+    projectDir,
+  });
   const content = artifacts[0].content as string;
 
   // Verify that code is well formatted and contains key elements

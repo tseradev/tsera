@@ -251,7 +251,10 @@ export class DevConsole extends BaseConsole {
    * @param stateKey String representation of the current state (for comparison)
    * @private
    */
-  #renderModulesSimple(modules: Map<string, ModuleStatus>, stateKey: string): void {
+  #renderModulesSimple(
+    modules: Map<string, ModuleStatus>,
+    stateKey: string,
+  ): void {
     const { lines, allReady, anyError } = this.#buildModuleLines(modules);
 
     const newLineCount = lines.length;

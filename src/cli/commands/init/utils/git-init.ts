@@ -83,7 +83,10 @@ export async function initializeGitRepository(
       const stderr = new TextDecoder().decode(commitResult.stderr);
       // Check if the error is just "nothing to commit" (empty repository)
       const stderrText = stderr.trim();
-      if (stderrText.includes("nothing to commit") || stderrText.includes("no changes")) {
+      if (
+        stderrText.includes("nothing to commit") ||
+        stderrText.includes("no changes")
+      ) {
         return {
           initialized: true,
           committed: false,

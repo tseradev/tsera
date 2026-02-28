@@ -67,13 +67,17 @@ export function clampWidth(
 /**
  * Check whether the provided console size function expects no arguments.
  */
-function isZeroArgConsoleSize(fn: ConsoleSizeFn): fn is () => { columns: number } {
+function isZeroArgConsoleSize(
+  fn: ConsoleSizeFn,
+): fn is () => { columns: number } {
   return fn.length === 0;
 }
 
 /**
  * Check whether the console size function expects a resource identifier argument.
  */
-function isRidConsoleSize(fn: ConsoleSizeFn): fn is (rid: number) => { columns: number } {
+function isRidConsoleSize(
+  fn: ConsoleSizeFn,
+): fn is (rid: number) => { columns: number } {
   return fn.length > 0;
 }

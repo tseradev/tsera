@@ -7,7 +7,10 @@
  * @param value - Object or primitive to freeze.
  * @returns A deeply frozen version of the provided value.
  */
-export function deepFreeze<T>(value: T, visited = new WeakSet<object>()): Readonly<T> {
+export function deepFreeze<T>(
+  value: T,
+  visited = new WeakSet<object>(),
+): Readonly<T> {
   if (value === null) {
     return value as Readonly<T>;
   }
@@ -18,7 +21,10 @@ export function deepFreeze<T>(value: T, visited = new WeakSet<object>()): Readon
   }
 
   // Skip Zod schemas - they use lazy getters that break if frozen
-  if (valueType === "object" && value !== null && "_zod" in (value as Record<string, unknown>)) {
+  if (
+    valueType === "object" &&
+    "_zod" in (value as Record<string, unknown>)
+  ) {
     return value as Readonly<T>;
   }
 

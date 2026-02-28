@@ -129,14 +129,16 @@ export async function copyDirectory(
     let targetPath = join(target, relativePath);
 
     // Special handling for docker module: all files should go to config/docker/
-    const isDockerModule = source.includes("docker") && !source.includes("config/docker");
+    const isDockerModule = source.includes("docker") &&
+      !source.includes("config/docker");
     if (isDockerModule) {
       // File is from docker module, place it in config/docker/
       targetPath = join(target, "config", "docker", lastPart);
     }
 
     // Special handling for secrets module: env.config.ts should go to config/secrets/
-    const isSecretsModule = source.includes("secrets") && !source.includes("secrets/config");
+    const isSecretsModule = source.includes("secrets") &&
+      !source.includes("secrets/config");
     const isEnvConfigFile = lastPart === "env.config.ts";
 
     if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
@@ -171,7 +173,10 @@ export async function copyDirectory(
       let content = await Deno.readTextFile(entry.path);
 
       // Adapt connect.ts to uncomment database imports if dependencies are available
-      if (relativePath === "app/db/connect.ts" || relativePath.endsWith("/connect.ts")) {
+      if (
+        relativePath === "app/db/connect.ts" ||
+        relativePath.endsWith("/connect.ts")
+      ) {
         content = await adaptConnectFile(content, target);
       }
 
@@ -183,7 +188,7 @@ export async function copyDirectory(
         content = await adaptDrizzleConfigFile(content, target);
       }
 
-      // Adapt entity files to transform relative imports to tsera/ imports
+      // Adapt entity files to transform relative imports to @tsera/core imports
       // Detect entity files: files ending with .entity.ts or in entities/ or domain/ directories
       const isEntityFile = relativePath.endsWith(".entity.ts") ||
         relativePath.includes("/entities/") ||
@@ -203,7 +208,9 @@ export async function copyDirectory(
     let copiedPath = relativePath;
     if (isDockerModule) {
       copiedPath = `config/docker/${lastPart}`;
-    } else if (isSecretsModule && isEnvConfigFile && relativePath === lastPart) {
+    } else if (
+      isSecretsModule && isEnvConfigFile && relativePath === lastPart
+    ) {
       copiedPath = `config/secrets/${lastPart}`;
     }
     result.copiedFiles.push(copiedPath);

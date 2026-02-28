@@ -205,9 +205,12 @@ export class InitConsole extends BaseConsole {
    * @param entities - The number of entities discovered
    */
   planReady(summary: PlanSummary, entities: number): void {
-    const entityInfo = formatCount(entities, "entity", "entities") + " detected";
+    const entityInfo = formatCount(entities, "entity", "entities") +
+      " detected";
     this.write("");
-    this.write(`${magenta("◆")} ${bold("Artifacts")} ${dim("│")} ${gray(entityInfo)}`);
+    this.write(
+      `${magenta("◆")} ${bold("Artifacts")} ${dim("│")} ${gray(entityInfo)}`,
+    );
     if (summary.changed) {
       this.writeMiddle(
         `${dim("→")} ${yellow("Generating project assets…")}`,
@@ -237,7 +240,11 @@ export class InitConsole extends BaseConsole {
    * @param path - The file path being modified
    * @param changed - Whether the file was actually changed
    */
-  trackStep(kind: PlanStepKind, path: string | undefined, changed: boolean): void {
+  trackStep(
+    kind: PlanStepKind,
+    path: string | undefined,
+    changed: boolean,
+  ): void {
     if (!changed && kind !== "delete") {
       return;
     }
@@ -253,7 +260,9 @@ export class InitConsole extends BaseConsole {
    */
   applyComplete(summary: PlanSummary): void {
     const actions = formatActionSummary(summary);
-    this.writeLast(`${green("✓")} Artifacts updated ${dim("│")} ${gray(actions)}`);
+    this.writeLast(
+      `${green("✓")} Artifacts updated ${dim("│")} ${gray(actions)}`,
+    );
   }
 
   /**
@@ -325,7 +334,9 @@ export class InitConsole extends BaseConsole {
       // Only show git init if it wasn't already done
       this.write(
         `    ${prompt} ${
-          brightMagenta('git init && git add -A && git commit -m "feat: boot tsera"')
+          brightMagenta(
+            'git init && git add -A && git commit -m "feat: boot tsera"',
+          )
         }`,
       );
     }

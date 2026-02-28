@@ -1,8 +1,9 @@
 /**
  * SQLite database connection using Drizzle ORM with libsql.
  *
- * This module centralizes database connection and provides:
- * - Drizzle ORM client for type-safe queries
+ * This module provides centralized database connection management with:
+ * - Lazy initialization via getDb()
+ * - Type-safe Drizzle ORM client
  * - Schema exports for use in routes
  * - Automatic directory creation for local SQLite files
  *
@@ -10,6 +11,7 @@
  */
 
 import { type Client, createClient } from "@libsql/client";
+import { getDatabaseCredentials, resolveDatabaseProvider } from "@tsera/core";
 import { drizzle } from "drizzle-orm/libsql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -17,96 +19,14 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 // Types
 // ============================================================================
 
-type TseraEnvAccessor = {
-  env: (key: string) => unknown;
+/**
+ * Cached database connection state.
+ */
+type DbConnection = {
+  client: Client;
+  db: ReturnType<typeof drizzle>;
+  url: string;
 };
-
-// ============================================================================
-// Environment Resolution
-// ============================================================================
-
-/**
- * Resolve the TSera runtime env accessor if the secrets module is enabled.
- */
-function resolveTseraEnv(): TseraEnvAccessor | undefined {
-  const globalValue: unknown = globalThis;
-  if (!isRecord(globalValue)) {
-    return undefined;
-  }
-  const tsera = globalValue["tsera"];
-  if (!isTseraEnvAccessor(tsera)) {
-    return undefined;
-  }
-  return tsera;
-}
-
-/**
- * Resolve the database provider from environment.
- */
-function resolveDatabaseProvider(): string {
-  const tseraEnv = resolveTseraEnv();
-  const provider = readEnvString(tseraEnv?.env("DATABASE_PROVIDER")) ??
-    Deno.env.get("DATABASE_PROVIDER");
-
-  if (provider !== "sqlite") {
-    throw new Error(
-      `DATABASE_PROVIDER must be "sqlite". Got: ${provider ?? "undefined"}`,
-    );
-  }
-
-  return provider;
-}
-
-/**
- * Resolve the database URL, preferring tsera.env when available.
- */
-function resolveDatabaseUrl(): string {
-  const tseraEnv = resolveTseraEnv();
-  const databaseUrl = readEnvString(tseraEnv?.env("DATABASE_URL")) ??
-    readEnvString(tseraEnv?.env("TSERA_DATABASE_URL")) ??
-    Deno.env.get("DATABASE_URL") ??
-    Deno.env.get("TSERA_DATABASE_URL");
-
-  if (!databaseUrl) {
-    throw new Error(
-      "DATABASE_URL is required. Set it in your environment or config/secrets/.env.* file.",
-    );
-  }
-
-  // Validate URL format for SQLite (must start with file:)
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error(
-      `DATABASE_URL must start with "file:" for SQLite. Got: ${databaseUrl}`,
-    );
-  }
-
-  return databaseUrl;
-}
-
-// ============================================================================
-// Database Directory Setup
-// ============================================================================
-
-/**
- * Ensures the directory for the SQLite database file exists.
- */
-async function ensureDatabaseDirectory(dbUrl: string): Promise<void> {
-  // Extract path from file: URL
-  const filePath = dbUrl.replace(/^file:/, "");
-
-  // Get directory path
-  const lastSlash = filePath.lastIndexOf("/");
-  const dirPath = lastSlash > 0 ? filePath.substring(0, lastSlash) : ".";
-
-  try {
-    await Deno.mkdir(dirPath, { recursive: true });
-  } catch (error) {
-    // Ignore if directory already exists
-    if (!(error instanceof Deno.errors.AlreadyExists)) {
-      throw error;
-    }
-  }
-}
 
 // ============================================================================
 // Schema Definitions
@@ -133,51 +53,6 @@ export const users = sqliteTable("users", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 
-// ============================================================================
-// Database Client Initialization
-// ============================================================================
-
-/**
- * Initialize the libsql client and Drizzle ORM.
- */
-async function initializeDatabase(): Promise<{
-  client: Client;
-  db: ReturnType<typeof drizzle>;
-}> {
-  // Validate environment
-  resolveDatabaseProvider();
-  const databaseUrl = resolveDatabaseUrl();
-
-  // Ensure directory exists for local files
-  await ensureDatabaseDirectory(databaseUrl);
-
-  // Create libsql client
-  const client = createClient({
-    url: databaseUrl,
-  });
-
-  // Create Drizzle ORM instance
-  const db = drizzle(client, {
-    schema: { slogans, users },
-  });
-
-  return { client, db };
-}
-
-// ============================================================================
-// Exports
-// ============================================================================
-
-/**
- * Database URL (throws if missing or invalid).
- */
-export const databaseUrl = resolveDatabaseUrl();
-
-/**
- * Database provider (validated to be "sqlite").
- */
-export const databaseProvider = resolveDatabaseProvider();
-
 /**
  * Schema exports for use in queries.
  */
@@ -186,41 +61,39 @@ export const schema = {
   users,
 };
 
-/**
- * Promise that resolves to the database client and Drizzle instance.
- * Use this for async initialization.
- */
-let dbPromise:
-  | Promise<{
-    client: Client;
-    db: ReturnType<typeof drizzle>;
-  }>
-  | null = null;
+// ============================================================================
+// Database Connection
+// ============================================================================
+
+/** Cached database connection (singleton). */
+let connection: DbConnection | null = null;
 
 /**
- * Get or create the database connection.
+ * Ensures the directory for the SQLite database file exists.
+ *
+ * @param dbUrl - Database URL (file: prefix)
  */
-export async function getDb(): Promise<ReturnType<typeof drizzle>> {
-  if (!dbPromise) {
-    dbPromise = initializeDatabase();
+async function ensureDatabaseDirectory(dbUrl: string): Promise<void> {
+  const filePath = dbUrl.replace(/^file:/, "");
+  const lastSlash = filePath.lastIndexOf("/");
+  const dirPath = lastSlash > 0 ? filePath.substring(0, lastSlash) : ".";
+
+  try {
+    await Deno.mkdir(dirPath, { recursive: true });
+  } catch (error) {
+    if (!(error instanceof Deno.errors.AlreadyExists)) {
+      throw error;
+    }
   }
-  const { db } = await dbPromise;
-  return db;
 }
 
 /**
- * Synchronous database export for convenience.
- * Note: This will be undefined until the database is initialized.
- * Use getDb() for async initialization or call initDb() at startup.
- */
-export let db: ReturnType<typeof drizzle> | undefined = undefined;
-
-/**
  * Create tables if they don't exist.
- * This is useful for development mode where migrations may not have been run.
+ * Useful for development mode where migrations may not have been run.
+ *
+ * @param client - libsql client
  */
 async function createTablesIfNotExist(client: Client): Promise<void> {
-  // Create slogans table
   await client.execute(`
     CREATE TABLE IF NOT EXISTS slogans (
       id INTEGER PRIMARY KEY,
@@ -228,7 +101,6 @@ async function createTablesIfNotExist(client: Client): Promise<void> {
     )
   `);
 
-  // Create users table
   await client.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -241,30 +113,74 @@ async function createTablesIfNotExist(client: Client): Promise<void> {
 }
 
 /**
- * Initialize the database connection synchronously.
- * Call this at application startup.
+ * Initialize the database connection.
+ *
+ * @returns Database connection state
+ * @throws Error if configuration is invalid
  */
-export async function initDb(): Promise<void> {
-  const { client, db: drizzleInstance } = await initializeDatabase();
+async function initializeConnection(): Promise<DbConnection> {
+  // Resolve provider for future use (multi-database support)
+  resolveDatabaseProvider();
+  const url = getDatabaseCredentials("sqlite");
 
-  // Create tables if they don't exist (useful for development)
+  await ensureDatabaseDirectory(url);
+
+  const client = createClient({ url });
+  const db = drizzle(client, { schema });
+
   await createTablesIfNotExist(client);
 
-  db = drizzleInstance;
+  return { client, db, url };
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-function readEnvString(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
+/**
+ * Get the Drizzle ORM database instance.
+ * Initializes the connection on first call (lazy initialization).
+ *
+ * @returns Drizzle ORM instance
+ *
+ * @example
+ * ```ts
+ * const db = await getDb();
+ * const allUsers = await db.select().from(users);
+ * ```
+ */
+export async function getDb(): Promise<ReturnType<typeof drizzle>> {
+  if (!connection) {
+    connection = await initializeConnection();
+  }
+  return connection.db;
 }
 
-function isTseraEnvAccessor(value: unknown): value is TseraEnvAccessor {
-  return isRecord(value) && typeof value["env"] === "function";
+/**
+ * Get the underlying libsql client.
+ * Useful for raw queries or advanced operations.
+ *
+ * @returns libsql client
+ */
+export async function getClient(): Promise<Client> {
+  if (!connection) {
+    connection = await initializeConnection();
+  }
+  return connection.client;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+/**
+ * Get the resolved database URL.
+ *
+ * @returns Database URL
+ */
+export async function getDatabaseUrl(): Promise<string> {
+  if (!connection) {
+    connection = await initializeConnection();
+  }
+  return connection.url;
+}
+
+/**
+ * Initialize database at application startup.
+ * Call this to eagerly initialize the connection.
+ */
+export async function initDb(): Promise<void> {
+  await getDb();
 }

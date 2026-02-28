@@ -33,7 +33,11 @@ export type ModuleProcess = {
 /**
  * Callback invoked when a module's status changes.
  */
-export type StatusChangeCallback = (name: string, status: ProcessStatus, url?: string) => void;
+export type StatusChangeCallback = (
+  name: string,
+  status: ProcessStatus,
+  url?: string,
+) => void;
 
 /**
  * Options for starting a module.
@@ -49,6 +53,8 @@ export type StartModuleOptions = {
   cwd: string;
   /** Show logs in real-time to console */
   showLogs?: boolean;
+  /** Serialized TSera environment values to pass to child process */
+  tseraEnvValues?: string;
 };
 
 /**
@@ -161,9 +167,24 @@ export class ProcessManager {
     this.notifyStatusChange(name, "starting");
 
     try {
+      // Build environment - inherit from parent and add TSera-specific values
+      // This ensures that:
+      // 1. System environment (PATH, HOME, etc.) is available to child processes
+      // 2. TSera validated env values are passed via TSERA_ENV_VALUES
+      const env: Record<string, string> = {};
+      // Inherit all parent environment variables (PATH, HOME, etc.)
+      for (const [key, value] of Object.entries(Deno.env.toObject())) {
+        env[key] = value;
+      }
+      // Add serialized TSera environment values for child processes
+      if (options.tseraEnvValues) {
+        env["TSERA_ENV_VALUES"] = options.tseraEnvValues;
+      }
+
       const cmd = new Deno.Command(command, {
         args,
         cwd,
+        env,
         stdout: "piped",
         stderr: "piped",
         stdin: "null",
@@ -456,7 +477,9 @@ export class ProcessManager {
 
         // Also try to extract from common patterns like "localhost:8000" or "127.0.0.1:5173"
         if (!urlMatch) {
-          const hostPortMatch = line.match(/(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{4,5})\b/i);
+          const hostPortMatch = line.match(
+            /(localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{4,5})\b/i,
+          );
           if (hostPortMatch) {
             const host = hostPortMatch[1];
             const port = hostPortMatch[2];
@@ -510,7 +533,11 @@ export class ProcessManager {
   /**
    * Notifies all callbacks of a status change.
    */
-  private notifyStatusChange(name: string, status: ProcessStatus, url?: string): void {
+  private notifyStatusChange(
+    name: string,
+    status: ProcessStatus,
+    url?: string,
+  ): void {
     for (const callback of this.statusCallbacks) {
       try {
         callback(name, status, url);

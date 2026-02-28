@@ -62,7 +62,9 @@ export function createEmptyState(): EngineState {
  * @param projectDir - Project root directory.
  * @returns Engine state, or empty state if no manifest exists.
  */
-export async function readEngineState(projectDir: string): Promise<EngineState> {
+export async function readEngineState(
+  projectDir: string,
+): Promise<EngineState> {
   const path = join(projectDir, STATE_DIR, MANIFEST_FILENAME);
   const manifest = await readJsonFile<ManifestFile>(path);
   if (!manifest) {
@@ -77,7 +79,10 @@ export async function readEngineState(projectDir: string): Promise<EngineState> 
  * @param projectDir - Project root directory.
  * @param state - Engine state to persist.
  */
-export async function writeEngineState(projectDir: string, state: EngineState): Promise<void> {
+export async function writeEngineState(
+  projectDir: string,
+  state: EngineState,
+): Promise<void> {
   const path = join(projectDir, STATE_DIR, MANIFEST_FILENAME);
   const file: ManifestFile = { version: 1, snapshots: state.snapshots };
   await writeJsonFile(path, file);
@@ -89,9 +94,16 @@ export async function writeEngineState(projectDir: string, state: EngineState): 
  * @param projectDir - Project root directory.
  * @param dag - Dependency graph to persist.
  */
-export async function writeDagState(projectDir: string, dag: Dag): Promise<void> {
+export async function writeDagState(
+  projectDir: string,
+  dag: Dag,
+): Promise<void> {
   const snapshot = serialiseDag(dag);
-  const file: GraphFile = { version: 1, nodes: snapshot.nodes, edges: snapshot.edges };
+  const file: GraphFile = {
+    version: 1,
+    nodes: snapshot.nodes,
+    edges: snapshot.edges,
+  };
   const path = join(projectDir, STATE_DIR, GRAPH_FILENAME);
   await writeJsonFile(path, file);
 }

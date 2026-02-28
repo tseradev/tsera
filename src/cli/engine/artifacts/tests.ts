@@ -356,7 +356,10 @@ Deno.test("${entityName} input.create validates a minimal example", () => {
   let content = sourceFile.getFullText();
 
   // TS-Morph may format std/assert to @std/assert, fix it
-  content = content.replace(/(from\s+["'])@std\/assert(["'])/g, "$1std/assert$2");
+  content = content.replace(
+    /(from\s+["'])@std\/assert(["'])/g,
+    "$1std/assert$2",
+  );
 
   const path = join("core", "entities", `${entity.name}.test.ts`);
   const contentWithHeader = await applyGeneratedTextHeader({

@@ -13,16 +13,20 @@ export type HashOptions = {
 /**
  * Computes a SHA-256 hash of the provided bytes.
  *
+ * The function ensures a contiguous ArrayBuffer for crypto.subtle.digest by:
+ * - Using the underlying buffer directly if the Uint8Array spans the entire buffer
+ * - Creating a sliced copy otherwise to guarantee a contiguous memory region
+ *
  * @param bytes - Byte array to hash.
  * @returns Hexadecimal representation of the hash.
  */
 export async function hashBytes(bytes: Uint8Array): Promise<string> {
-  const view = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
-    ? bytes
-    : bytes.slice();
-  const source = view.byteOffset === 0 && view.byteLength === view.buffer.byteLength
-    ? view.buffer
-    : view.slice().buffer;
+  // Check if the Uint8Array is a full view of its underlying buffer.
+  // If so, we can use the buffer directly; otherwise, slice to get a contiguous copy.
+  const source = bytes.byteOffset === 0 &&
+      bytes.byteLength === bytes.buffer.byteLength
+    ? bytes.buffer
+    : bytes.slice().buffer;
   const buffer = await crypto.subtle.digest("SHA-256", source as ArrayBuffer);
   return encodeHex(new Uint8Array(buffer));
 }
@@ -44,7 +48,10 @@ export async function hashText(text: string): Promise<string> {
  * @param options - Hash computation options.
  * @returns Hexadecimal representation of the hash.
  */
-export async function hashValue(value: unknown, options: HashOptions): Promise<string> {
+export async function hashValue(
+  value: unknown,
+  options: HashOptions,
+): Promise<string> {
   const serialised = stableStringify({
     version: options.version,
     salt: options.salt ?? null,

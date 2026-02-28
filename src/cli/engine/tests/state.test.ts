@@ -347,6 +347,9 @@ Deno.test("applySnapshots - does not mutate original state", () => {
   applySnapshots(state, [{ node, action: "create" }]);
 
   // Original state must not be modified
-  assertEquals(state.snapshots["entity:Post" as keyof typeof state.snapshots], undefined);
+  assertEquals(
+    state.snapshots["entity:Post" as keyof typeof state.snapshots],
+    undefined,
+  );
   assertEquals(Object.keys(state.snapshots).length, 1);
 });

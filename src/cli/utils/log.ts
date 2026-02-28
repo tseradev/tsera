@@ -98,7 +98,11 @@ export function createLogger(options: LoggerOptions = {}): Logger {
   const writer = options.writer ?? ((line: string) => console.log(line));
   const jsonMode = options.json ?? false;
 
-  function write(level: LogLevel, message: string, context?: Record<string, unknown>): void {
+  function write(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
     if (jsonMode) {
       const payload: LogEvent = { level, message };
       if (context && Object.keys(context).length > 0) {
@@ -109,7 +113,9 @@ export function createLogger(options: LoggerOptions = {}): Logger {
     }
 
     const style = LEVEL_STYLES[level];
-    const badge = style.color(`${style.icon} ${style.label.toUpperCase().padEnd(5)}`);
+    const badge = style.color(
+      `${style.icon} ${style.label.toUpperCase().padEnd(5)}`,
+    );
     const formattedMessage = style.accent(message);
     const contextBlock = context && Object.keys(context).length > 0
       ? ` ${dim("›")} ${formatContext(context)}`
@@ -118,7 +124,10 @@ export function createLogger(options: LoggerOptions = {}): Logger {
     writer(`${badge} ${formattedMessage}${contextBlock}`);
   }
 
-  function writeEvent(eventName: string, context?: Record<string, unknown>): void {
+  function writeEvent(
+    eventName: string,
+    context?: Record<string, unknown>,
+  ): void {
     if (jsonMode) {
       const payload: LogEvent = {
         level: "info",

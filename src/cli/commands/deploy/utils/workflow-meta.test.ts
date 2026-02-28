@@ -48,7 +48,10 @@ Deno.test("workflow-meta: updates workflow hash", async () => {
     );
 
     const meta = await readWorkflowsMeta(testDir);
-    assertEquals(meta[".github/workflows/cd-docker-prod.yml"], "sha256-newhash");
+    assertEquals(
+      meta[".github/workflows/cd-docker-prod.yml"],
+      "sha256-newhash",
+    );
   } finally {
     await Deno.remove(testDir, { recursive: true }).catch(() => {});
   }
@@ -68,7 +71,10 @@ Deno.test("workflow-meta: removes workflow from meta", async () => {
     );
 
     // Then remove it
-    await removeWorkflowFromMeta(testDir, ".github/workflows/cd-docker-prod.yml");
+    await removeWorkflowFromMeta(
+      testDir,
+      ".github/workflows/cd-docker-prod.yml",
+    );
 
     const meta = await readWorkflowsMeta(testDir);
     assertEquals(meta[".github/workflows/cd-docker-prod.yml"], undefined);

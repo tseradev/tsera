@@ -1,11 +1,11 @@
 import { Command } from "cliffy/command";
 import { Confirm } from "cliffy/prompt";
-import { parse as parseJsonc } from "std/jsonc";
 import { normalizeNewlines } from "../../../shared/newline.ts";
-import { dirname, join, relative, resolve } from "../../../shared/path.ts";
+import { join, resolve } from "../../../shared/path.ts";
 import { applyPlan } from "../../engine/applier.ts";
 import { createDag } from "../../engine/dag.ts";
 import { prepareDagInputs } from "../../engine/entities.ts";
+import { patchForDevMode } from "../../engine/is-dev.ts";
 import { planDag } from "../../engine/planner.ts";
 import { readEngineState, writeDagState, writeEngineState } from "../../engine/state.ts";
 import type { GlobalCLIOptions } from "../../router.ts";
@@ -77,7 +77,9 @@ export type InitCommandContext = {
 /**
  * Function signature for init command implementations.
  */
-export type InitCommandHandler = (context: InitCommandContext) => Promise<void> | void;
+export type InitCommandHandler = (
+  context: InitCommandContext,
+) => Promise<void> | void;
 
 type InitHandlerDependencies = {
   templatesRoot?: string;
@@ -150,147 +152,6 @@ async function applyCiModule(
   }
 
   return copiedCount;
-}
-
-/**
- * Checks if the target directory is inside the TSera repository.
- * Used to determine if we should use local sources or JSR imports.
- *
- * @param targetDir - Path to the project being created.
- * @param templatesRoot - Path to templates directory.
- * @returns True if targetDir is inside TSera repo, false otherwise.
- */
-function isInsideTSeraRepo(
-  targetDir: string,
-  templatesRoot: string,
-): boolean {
-  // templatesRoot is .../templates, go up one level to get repo root
-  const repoRoot = dirname(templatesRoot);
-
-  // Normalize both paths for comparison (handle Windows/POSIX differences)
-  const normalizedTarget = resolve(targetDir).replace(/\\/g, "/");
-  const normalizedRoot = resolve(repoRoot).replace(/\\/g, "/");
-
-  // Check if target is inside repo root
-  return normalizedTarget.startsWith(normalizedRoot + "/") ||
-    normalizedTarget === normalizedRoot;
-}
-
-/**
- * Patches the deno.jsonc in the target directory based on the environment.
- *
- * - If the project is created inside the TSera repo (dev mode):
- *   Replaces the "tsera" task alias to use local CLI source.
- *
- * - If the project is created outside the TSera repo (production):
- *   Leaves JSR imports as-is.
- *
- * This allows seamless development within the repo while ensuring
- * production projects use the published JSR package.
- */
-async function patchImportMapForEnvironment(
-  targetDir: string,
-  templatesRoot: string,
-): Promise<void> {
-  // Check if we're inside the TSera repository
-  const isLocalDev = isInsideTSeraRepo(targetDir, templatesRoot);
-
-  // If not in local dev, leave JSR imports as-is
-  if (!isLocalDev) {
-    return;
-  }
-
-  // Calculate the relative path from targetDir to the TSera src directory
-  // templatesRoot is .../templates, so go up one level to get the repo root, then src/
-  const repoRoot = dirname(templatesRoot);
-  const srcDir = join(repoRoot, "src");
-  const absoluteSrcDir = resolve(srcDir);
-  const absoluteTargetDir = resolve(targetDir);
-
-  // Calculate relative path from targetDir to srcDir
-  // Use native relative function (handles Windows paths correctly) and convert to POSIX
-  const relativePath = relative(absoluteTargetDir, absoluteSrcDir).replace(/\\/g, "/");
-  // Ensure path ends with / for directory imports
-  const relativeImportPath = relativePath.endsWith("/") ? relativePath : `${relativePath}/`;
-
-  // Patch deno.jsonc
-  const denoConfigPath = join(targetDir, "deno.jsonc");
-  if (await pathExists(denoConfigPath)) {
-    const content = await Deno.readTextFile(denoConfigPath);
-    let denoConfig: { imports?: Record<string, string>; tasks?: Record<string, string> };
-
-    try {
-      denoConfig = parseJsonc(content) as {
-        imports?: Record<string, string>;
-        tasks?: Record<string, string>;
-      };
-    } catch {
-      // If parsing fails, skip patching
-      return;
-    }
-
-    if (!denoConfig.imports) {
-      return;
-    }
-
-    // Replace JSR imports with relative paths for dev mode
-    // This ensures imports resolve correctly from the project directory
-    // Only patch imports that start with jsr:@tsera/
-    for (const [key, value] of Object.entries(denoConfig.imports)) {
-      if (typeof value === "string" && value.startsWith("jsr:@tsera/")) {
-        if (key === "tsera/") {
-          denoConfig.imports[key] = relativeImportPath;
-        }
-      }
-    }
-
-    // Patch "tsera" task alias to use local CLI source
-    // This ensures all tasks using "deno task tsera" work with local source
-    if (denoConfig.tasks && typeof denoConfig.tasks === "object") {
-      const tasks = denoConfig.tasks as Record<string, string>;
-      // Check if tsera task uses JSR and patch it
-      if (tasks.tsera && tasks.tsera.includes("jsr:@tsera/cli")) {
-        // Calculate relative path from targetDir to src/cli/main.ts
-        const cliMainPath = join(repoRoot, "src", "cli", "main.ts");
-        const absoluteCliMainPath = resolve(cliMainPath);
-
-        // Normalize paths to forward slashes for consistent comparison
-        const targetNormalized = absoluteTargetDir.replace(/\\/g, "/");
-        const cliNormalized = absoluteCliMainPath.replace(/\\/g, "/");
-        const targetParts = targetNormalized.split("/").filter((p) => p && p !== ".");
-        const cliParts = cliNormalized.split("/").filter((p) => p && p !== ".");
-
-        // Find common prefix (case-insensitive on Windows)
-        let commonLength = 0;
-        const minLength = Math.min(targetParts.length, cliParts.length);
-        for (let i = 0; i < minLength; i++) {
-          const targetPart = Deno.build.os === "windows"
-            ? targetParts[i].toLowerCase()
-            : targetParts[i];
-          const cliPart = Deno.build.os === "windows" ? cliParts[i].toLowerCase() : cliParts[i];
-          if (targetPart === cliPart) {
-            commonLength++;
-          } else {
-            break;
-          }
-        }
-
-        // Build relative path
-        const upLevels = targetParts.length - commonLength;
-        const downParts = cliParts.slice(commonLength);
-        const cliRelativePath = upLevels > 0
-          ? "../".repeat(upLevels) + downParts.join("/")
-          : downParts.join("/");
-
-        // Patch only the "tsera" task alias - other tasks use "deno task tsera"
-        tasks.tsera = `deno run -A ${cliRelativePath}`;
-      }
-    }
-
-    // Write back (preserve JSONC format)
-    const updatedContent = JSON.stringify(denoConfig, null, 2) + "\n";
-    await safeWrite(denoConfigPath, normalizeNewlines(updatedContent));
-  }
 }
 
 /**
@@ -367,11 +228,21 @@ export function createDefaultInitHandler(
     // applyCiModule explicitly handles copying to .github/workflows/
     let ciWorkflowsCount = 0;
     if (ciEnabled) {
-      ciWorkflowsCount = await applyCiModule(targetDir, templatesRoot, context.force);
+      ciWorkflowsCount = await applyCiModule(
+        targetDir,
+        templatesRoot,
+        context.force,
+      );
     }
 
     // Patch deno.jsonc based on environment (local dev vs production)
-    await patchImportMapForEnvironment(targetDir, templatesRoot);
+    const devModeResult = await patchForDevMode(targetDir, templatesRoot);
+    if (jsonMode && devModeResult.isDevMode) {
+      logger.event("init:devmode", {
+        enabled: true,
+        modifiedFiles: devModeResult.modifiedFiles,
+      });
+    }
 
     // Generate VSCode configuration files (always generated, independent of modules)
     const vscodeResult = await generateVscodeConfig({
@@ -405,9 +276,15 @@ export function createDefaultInitHandler(
     await ensureDir(configDir);
     const configPath = join(configDir, "tsera.config.ts");
     await ensureWritable(configPath, context.force, "config/tsera.config.ts");
-    await safeWrite(configPath, generateConfigFile(projectName, context.modules));
+    await safeWrite(
+      configPath,
+      generateConfigFile(projectName, context.modules),
+    );
     if (jsonMode) {
-      logger.event("init:config", { path: configPath, modules: context.modules });
+      logger.event("init:config", {
+        path: configPath,
+        modules: context.modules,
+      });
     } else {
       human?.configReady(configPath);
     }
@@ -424,7 +301,11 @@ export function createDefaultInitHandler(
       // If CI is enabled, gitignore is not the last item
       // If CI is disabled, gitignore is the last item before artifacts
       const gitignoreIsLast = !ciEnabled || ciWorkflowsCount === 0;
-      human?.gitignoreReady(gitignorePath, context.force || !gitignoreExisted, gitignoreIsLast);
+      human?.gitignoreReady(
+        gitignorePath,
+        context.force || !gitignoreExisted,
+        gitignoreIsLast,
+      );
     }
 
     if (ciEnabled && ciWorkflowsCount > 0) {
@@ -501,7 +382,10 @@ export function createDefaultInitHandler(
     // Propose CD configuration before showing "Project ready!"
     if (jsonMode) {
       // In JSON mode, log that CD configuration is skipped (interactive only)
-      logger.event("init:cd:prompt", { skipped: true, reason: "interactive-only" });
+      logger.event("init:cd:prompt", {
+        skipped: true,
+        reason: "interactive-only",
+      });
     } else if (!context.yes) {
       console.log("");
       const shouldConfigureCd = await Confirm.prompt({
@@ -581,7 +465,9 @@ export function createInitCommand(
     .description("Initialize a new TSera project.")
     .arguments("[directory]")
     .option("-f, --force", "Overwrite existing files.", { default: false })
-    .option("-y, --yes", "Answer yes to interactive prompts.", { default: false })
+    .option("-y, --yes", "Answer yes to interactive prompts.", {
+      default: false,
+    })
     .option("--no-hono", "Disable Hono API module.")
     .option("--no-lume", "Disable Lume frontend module.")
     .option("--no-docker", "Disable Docker Compose module.")
@@ -686,18 +572,12 @@ function buildGitignore(): string {
   const content = [
     "# TSera",
     ".tsera/",
-    "drizzle/",
     "dist/",
     "node_modules/",
     ".env",
     ".env.*",
     "_site",
     "_cache",
-    "",
-    "# TSera secrets",
-    "config/secrets/.env.dev",
-    "config/secrets/.env.staging",
-    "config/secrets/.env.prod",
     "",
     "coverage/",
     "*.log",

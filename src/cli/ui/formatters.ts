@@ -112,7 +112,10 @@ export function formatRelativePath(path: string, projectDir: string): string {
   const normalizedDir = projectDir.replace(/\\/g, "/");
 
   if (normalizedPath.startsWith(normalizedDir)) {
-    const suffix = normalizedPath.slice(normalizedDir.length).replace(/^\//, "");
+    const suffix = normalizedPath.slice(normalizedDir.length).replace(
+      /^\//,
+      "",
+    );
     return suffix.length > 0 ? suffix : ".";
   }
 
@@ -207,13 +210,19 @@ export function formatActionSummary(summary: PlanSummary): string {
   const parts: string[] = [];
 
   if (summary.create > 0) {
-    parts.push(`${summary.create} ${summary.create === 1 ? "creation" : "creations"}`);
+    parts.push(
+      `${summary.create} ${summary.create === 1 ? "creation" : "creations"}`,
+    );
   }
   if (summary.update > 0) {
-    parts.push(`${summary.update} ${summary.update === 1 ? "update" : "updates"}`);
+    parts.push(
+      `${summary.update} ${summary.update === 1 ? "update" : "updates"}`,
+    );
   }
   if (summary.delete > 0) {
-    parts.push(`${summary.delete} ${summary.delete === 1 ? "deletion" : "deletions"}`);
+    parts.push(
+      `${summary.delete} ${summary.delete === 1 ? "deletion" : "deletions"}`,
+    );
   }
 
   return parts.length > 0 ? parts.join(" • ") : "no changes";
@@ -274,7 +283,11 @@ export function formatActionSummaryWithSymbols(summary: PlanSummary): string {
  * formatCount(3, "entity", "entities");  // "3 entities"
  * ```
  */
-export function formatCount(count: number, singular: string, plural?: string): string {
+export function formatCount(
+  count: number,
+  singular: string,
+  plural?: string,
+): string {
   const label = count === 1 ? singular : (plural ?? `${singular}s`);
   return `${count} ${label}`;
 }

@@ -33,7 +33,11 @@ Deno.test("buildProjectOpenAPIArtifact - generates an OpenAPI document", async (
     },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([entity], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [entity],
+    baseConfig,
+    projectDir,
+  );
 
   assertEquals(artifact !== null, true);
   assertEquals(artifact!.kind, "openapi");
@@ -51,7 +55,11 @@ Deno.test("buildProjectOpenAPIArtifact - returns null when OpenAPI disabled", as
   });
 
   const configWithoutOpenAPI = { ...baseConfig, openapi: false };
-  const artifact = await buildProjectOpenAPIArtifact([entity], configWithoutOpenAPI, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [entity],
+    configWithoutOpenAPI,
+    projectDir,
+  );
 
   assertEquals(artifact, null);
 });
@@ -66,7 +74,11 @@ Deno.test("buildProjectOpenAPIArtifact - includes entity metadata", async () => 
     fields: { id: { validator: z.string(), visibility: "public" } },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([user, post], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [user, post],
+    baseConfig,
+    projectDir,
+  );
 
   assertEquals(artifact!.data?.entities, ["User", "Post"]);
 
@@ -85,7 +97,11 @@ Deno.test("buildProjectOpenAPIArtifact - generates valid JSON", async () => {
     },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([entity], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [entity],
+    baseConfig,
+    projectDir,
+  );
   const parsed = parseJson(artifact!.content as string);
 
   assertEquals(parsed.openapi, "3.1.0");
@@ -105,7 +121,11 @@ Deno.test("buildProjectOpenAPIArtifact - filters entities with openapi.enabled =
     openapi: { enabled: false },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([visible, hidden], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [visible, hidden],
+    baseConfig,
+    projectDir,
+  );
   const parsed = parseJson(artifact!.content as string);
   const schemas = readSchemas(parsed);
 
@@ -124,7 +144,11 @@ Deno.test("buildProjectOpenAPIArtifact - filters non-public fields", async () =>
     },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([entity], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [entity],
+    baseConfig,
+    projectDir,
+  );
   const parsed = parseJson(artifact!.content as string);
   const schemas = readSchemas(parsed);
   const schema = readSchema(schemas, "Test");
@@ -146,7 +170,11 @@ Deno.test("buildProjectOpenAPIArtifact - creates schema dependencies", async () 
     fields: { id: { validator: z.string(), visibility: "public" } },
   });
 
-  const artifact = await buildProjectOpenAPIArtifact([user, post], baseConfig, projectDir);
+  const artifact = await buildProjectOpenAPIArtifact(
+    [user, post],
+    baseConfig,
+    projectDir,
+  );
 
   assertEquals(artifact!.dependsOn !== undefined, true);
   assertEquals(artifact!.dependsOn!.length, 2);
@@ -184,7 +212,9 @@ function readMeta(document: Record<string, unknown>): {
   };
 }
 
-function readSchemas(document: Record<string, unknown>): Record<string, unknown> {
+function readSchemas(
+  document: Record<string, unknown>,
+): Record<string, unknown> {
   const components = document["components"];
   if (!isRecord(components)) {
     throw new Error("Missing OpenAPI components section.");
@@ -207,7 +237,9 @@ function readSchema(
   return schema;
 }
 
-function readProperties(schema: Record<string, unknown>): Record<string, unknown> {
+function readProperties(
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
   const properties = schema["properties"];
   if (!isRecord(properties)) {
     throw new Error("Missing schema properties.");

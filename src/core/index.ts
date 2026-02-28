@@ -1,5 +1,21 @@
 export { type Dialect, entityToDDL } from "./drizzle.ts";
 export {
+  createDrizzleConfig,
+  createDrizzleConfigFromTsera,
+  type CreateDrizzleConfigOptions,
+  type DatabaseCredentials,
+  type DatabaseDialect,
+  type DrizzleConfig,
+  type DrizzleMysqlConfig,
+  type DrizzlePostgresConfig,
+  type DrizzleSqliteConfig,
+  getDatabaseCredentials,
+  resolveDatabaseProvider,
+  resolveDatabaseUrl,
+  type ResolveDatabaseUrlOptions,
+  validateDatabaseConfig,
+} from "./drizzle-config.ts";
+export {
   type ActionsConfig,
   defineEntity,
   type DocsConfig,
@@ -18,15 +34,24 @@ export { generateOpenAPIDocument, type OpenAPIDocumentOptions } from "./openapi.
 export { getEntityInputSchemas, getEntityPublicSchema, getEntitySchema } from "./schema.ts";
 export {
   bootstrapEnv,
+  configureEnvNames,
+  createEnvModule,
+  DEFAULT_ENV_NAMES,
   defineEnvConfig,
+  detectEnvName,
+  type EnvConfig,
+  type EnvConfigSchema,
+  type EnvModule,
   type EnvName,
-  type EnvSchema,
+  EnvValidationError,
+  type EnvValidationIssue,
+  type EnvValue,
   type EnvVarDefinition,
-  type EnvVarType,
-  getEnv,
-  initializeSecrets,
+  getConfiguredEnvNames,
+  initializeEnvModule,
+  isValidEnvName,
   parseEnvFile,
-  type TseraAPI,
-  validateSecrets,
-  validateType,
 } from "./secrets.ts";
+
+// Re-export zod for convenience in entity definitions
+export { SchemaError, z, type ZodType } from "./utils/zod.ts";

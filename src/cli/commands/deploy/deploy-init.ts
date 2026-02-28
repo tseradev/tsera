@@ -21,7 +21,9 @@ export type DeployInitContext = {
  *
  * @param context - Command context.
  */
-export async function handleDeployInit(context: DeployInitContext): Promise<void> {
+export async function handleDeployInit(
+  context: DeployInitContext,
+): Promise<void> {
   const { projectDir, global } = context;
   const jsonMode = global.json;
 

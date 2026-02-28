@@ -20,7 +20,10 @@ interface LogEvent {
 
 const CLI_ENTRY = join(Deno.cwd(), "src", "cli", "main.ts");
 
-async function runCli(args: string[], options: RunCliOptions): Promise<CliResult> {
+async function runCli(
+  args: string[],
+  options: RunCliOptions,
+): Promise<CliResult> {
   const command = new Deno.Command(Deno.execPath(), {
     args: ["run", "-A", CLI_ENTRY, ...args],
     cwd: options.cwd,
@@ -69,17 +72,28 @@ Deno.test("E2E: basic init with all modules", async () => {
   const projectDir = join(workspace, "demo-full");
 
   try {
-    const initResult = await runCli(["init", "demo-full", "--yes"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-full", "--yes"], {
+      cwd: workspace,
+    });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
 
     // Check core files
-    assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
-    assert(await exists(join(projectDir, "core", "entities", "User.ts")), "Entity missing");
+    assert(
+      await exists(join(projectDir, "config", "tsera.config.ts")),
+      "Config missing",
+    );
+    assert(
+      await exists(join(projectDir, "core", "entities", "User.ts")),
+      "Entity missing",
+    );
 
     // Check Hono module
-    assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono main.ts missing");
+    assert(
+      await exists(join(projectDir, "app", "back", "main.ts")),
+      "Hono main.ts missing",
+    );
     assert(
       await exists(join(projectDir, "app", "back", "routes", "health.ts")),
       "Health route missing",
@@ -134,16 +148,28 @@ Deno.test("E2E: selective module disabling", async () => {
     }
 
     // Check that base and enabled modules exist
-    assert(await exists(join(projectDir, "config", "tsera.config.ts")), "Config missing");
-    assert(await exists(join(projectDir, "app", "back", "main.ts")), "Hono should be present");
+    assert(
+      await exists(join(projectDir, "config", "tsera.config.ts")),
+      "Config missing",
+    );
+    assert(
+      await exists(join(projectDir, "app", "back", "main.ts")),
+      "Hono should be present",
+    );
     assert(
       await exists(join(projectDir, "config", "secrets", "env.config.ts")),
       "Secrets should be present",
     );
 
     // Check that disabled modules don't exist
-    assert(!await exists(join(projectDir, "app", "front")), "Lume should be disabled");
-    assert(!await exists(join(projectDir, "config", "docker")), "Docker should be disabled");
+    assert(
+      !await exists(join(projectDir, "app", "front")),
+      "Lume should be disabled",
+    );
+    assert(
+      !await exists(join(projectDir, "config", "docker")),
+      "Docker should be disabled",
+    );
     assert(!await exists(join(projectDir, ".github")), "CI should be disabled");
   } finally {
     await Deno.remove(workspace, { recursive: true });
@@ -155,7 +181,9 @@ Deno.test("E2E: coherence and artifact generation", async () => {
   const projectDir = join(workspace, "demo-coherence");
 
   try {
-    const initResult = await runCli(["init", "demo-coherence", "--yes"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-coherence", "--yes"], {
+      cwd: workspace,
+    });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
@@ -166,7 +194,9 @@ Deno.test("E2E: coherence and artifact generation", async () => {
     assert(await exists(schemaPath), "Schema not generated");
     assert(await exists(docPath), "Documentation not generated");
 
-    const firstDev = await runCli(["--json", "doctor", "--quick"], { cwd: projectDir });
+    const firstDev = await runCli(["--json", "doctor", "--quick"], {
+      cwd: projectDir,
+    });
     if (!firstDev.success) {
       throw new Error(`Dev command failed: ${firstDev.stderr}`);
     }
@@ -197,7 +227,9 @@ Deno.test("E2E: export-env command works", async () => {
 
   try {
     // Initialize project
-    const initResult = await runCli(["init", "demo-export-env", "--yes"], { cwd: workspace });
+    const initResult = await runCli(["init", "demo-export-env", "--yes"], {
+      cwd: workspace,
+    });
     if (!initResult.success) {
       throw new Error(`Init failed: ${initResult.stderr}`);
     }
@@ -240,10 +272,13 @@ export const envSchema = {
       stderr: "piped",
     });
 
-    const { code: shCode, stdout: shStdout, stderr: shStderr } = await shCommand.output();
+    const { code: shCode, stdout: shStdout, stderr: shStderr } = await shCommand
+      .output();
 
     if (shCode !== 0) {
-      throw new Error(`sh export failed: ${new TextDecoder().decode(shStderr)}`);
+      throw new Error(
+        `sh export failed: ${new TextDecoder().decode(shStderr)}`,
+      );
     }
 
     const shOutput = new TextDecoder().decode(shStdout);
@@ -275,14 +310,18 @@ export const envSchema = {
     const { code: jsonCode, stdout: jsonStdout, stderr: jsonStderr } = await jsonCommand.output();
 
     if (jsonCode !== 0) {
-      throw new Error(`json export failed: ${new TextDecoder().decode(jsonStderr)}`);
+      throw new Error(
+        `json export failed: ${new TextDecoder().decode(jsonStderr)}`,
+      );
     }
 
     const jsonOutput = new TextDecoder().decode(jsonStdout);
     const secrets = JSON.parse(jsonOutput) as Record<string, unknown>;
 
     if (secrets.TEST_TEST_API_KEY !== "test-secret-key") {
-      throw new Error(`json output missing expected secret. Got: ${JSON.stringify(secrets)}`);
+      throw new Error(
+        `json output missing expected secret. Got: ${JSON.stringify(secrets)}`,
+      );
     }
   } finally {
     await Deno.remove(workspace, { recursive: true });

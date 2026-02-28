@@ -26,7 +26,10 @@ import {
 } from "./export-env.ts";
 
 // Helper to create a mock logger
-function createMockLogger(): { logger: Logger; events: { type: string; data: unknown }[] } {
+function createMockLogger(): {
+  logger: Logger;
+  events: { type: string; data: unknown }[];
+} {
   const events: { type: string; data: unknown }[] = [];
   const logger: Logger = {
     debug: () => {},
@@ -111,65 +114,47 @@ Deno.test("loadSchema returns schema when file exists", async () => {
   await Deno.mkdir(configDir, { recursive: true });
 
   const schemaPath = `${configDir}/env.config.ts`;
+  // Use EnvConfigSchema format with Zod validators
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.number(), required: true },
+  DATABASE_URL: { validator: z.string(), required: true },
+};`,
   );
 
   try {
     const schema = await loadSchema(tempDir);
 
-    assertEquals(schema, {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    });
+    // loadSchema now returns LoadedSchema with zodSchema and isNewFormat
+    assertEquals(schema?.isNewFormat, true);
+    assertEquals(typeof schema?.zodSchema, "object");
+    assertEquals(typeof schema?.zodSchema.safeParse, "function");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }
 });
 
-Deno.test("loadSchema supports multiple export formats", async () => {
+Deno.test("loadSchema supports EnvConfigSchema format", async () => {
   const tempDir = await Deno.makeTempDir();
   const configDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(configDir, { recursive: true });
 
-  // Test default export
+  // Test default export with EnvConfigSchema format
   const schemaPath1 = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath1,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.number(), required: true },
+};`,
   );
 
   try {
     const schema1 = await loadSchema(tempDir);
-    assertEquals(schema1, { PORT: { type: "number", required: true } });
-
-    // Test envSchema export
-    await Deno.writeTextFile(
-      schemaPath1,
-      `export const envSchema = {
-        PORT: { type: "number", required: true },
-      };`,
-    );
-
-    const schema2 = await loadSchema(tempDir);
-    assertEquals(schema2, { PORT: { type: "number", required: true } });
-
-    // Test schema export
-    await Deno.writeTextFile(
-      schemaPath1,
-      `export const schema = {
-        PORT: { type: "number", required: true },
-      };`,
-    );
-
-    const schema3 = await loadSchema(tempDir);
-    assertEquals(schema3, { PORT: { type: "number", required: true } });
+    assertEquals(schema1?.isNewFormat, true);
+    assertEquals(typeof schema1?.zodSchema, "object");
   } finally {
     await Deno.remove(tempDir, { recursive: true });
   }
@@ -204,9 +189,10 @@ Deno.test("handler returns exit code 2 for invalid format (usage error)", async 
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const { logger: mockLogger, events: capturedEvents } = createMockLogger();
@@ -238,7 +224,10 @@ Deno.test("handler returns exit code 2 for invalid format (usage error)", async 
       assertEquals(exitCode, 2);
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:error");
-      assertEquals((capturedEvents[1]?.data as { type: string })?.type, "usage");
+      assertEquals(
+        (capturedEvents[1]?.data as { type: string })?.type,
+        "usage",
+      );
     } else {
       throw error;
     }
@@ -255,10 +244,11 @@ Deno.test("handler returns exit code 1 for validation errors (general error)", a
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+  DATABASE_URL: { validator: z.string().url(), required: true },
+};`,
   );
 
   const { logger: mockLogger, events: capturedEvents } = createMockLogger();
@@ -291,7 +281,10 @@ Deno.test("handler returns exit code 1 for validation errors (general error)", a
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:schema");
       assertEquals(capturedEvents[2]?.type, "export-env:error");
-      assertEquals((capturedEvents[2]?.data as { type: string })?.type, "validation");
+      assertEquals(
+        (capturedEvents[2]?.data as { type: string })?.type,
+        "validation",
+      );
     } else {
       throw error;
     }
@@ -333,7 +326,10 @@ Deno.test("handler returns exit code 1 for missing schema (general error)", asyn
       assertEquals(exitCode, 1);
       assertEquals(capturedEvents[0]?.type, "export-env:start");
       assertEquals(capturedEvents[1]?.type, "export-env:error");
-      assertEquals((capturedEvents[1]?.data as { type: string })?.type, "schema");
+      assertEquals(
+        (capturedEvents[1]?.data as { type: string })?.type,
+        "schema",
+      );
     } else {
       throw error;
     }
@@ -354,9 +350,10 @@ Deno.test("handler emits NDJSON events in JSON mode", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const { logger: mockLogger, events: capturedEvents } = createMockLogger();
@@ -381,12 +378,14 @@ Deno.test("handler emits NDJSON events in JSON mode", async () => {
   // Verify event sequence
   assertEquals(capturedEvents[0]?.type, "export-env:start");
   assertEquals(capturedEvents[1]?.type, "export-env:schema");
+  assertEquals(capturedEvents[1]?.data, { isNewFormat: true });
   assertEquals(capturedEvents[2]?.type, "export-env:exporting");
   assertEquals(capturedEvents[3]?.type, "export-env:success");
 
   // Verify event data
   assertEquals((capturedEvents[0]?.data as { env: string })?.env, "dev");
   assertEquals((capturedEvents[0]?.data as { format: string })?.format, "json");
+  assertEquals((capturedEvents[1]?.data as { isNewFormat: boolean })?.isNewFormat, true);
   assertEquals((capturedEvents[3]?.data as { count: number })?.count, 1);
 
   // Verify JSON output (compact format in console mode)
@@ -404,9 +403,10 @@ Deno.test("handler uses human UI in non-JSON mode with file output", async () =>
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const capturedOutput: string[] = [];
@@ -450,9 +450,10 @@ Deno.test("handler outputs raw content in console mode (no file)", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const capturedOutput: string[] = [];
@@ -487,9 +488,10 @@ Deno.test("handler outputs raw shell format in console mode", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const capturedOutput: string[] = [];
@@ -527,9 +529,10 @@ Deno.test("export-env validates format option", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -587,9 +590,10 @@ Deno.test("export-env validates env option", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -613,7 +617,12 @@ Deno.test("export-env validates env option", async () => {
     };
 
     try {
-      await exportEnvCommand.parse(["--format", "json", "--env", "invalid-env"]);
+      await exportEnvCommand.parse([
+        "--format",
+        "json",
+        "--env",
+        "invalid-env",
+      ]);
       throw new Error("Should have thrown");
     } catch (error) {
       if (error instanceof Error && error.message === "exit:2") {
@@ -647,10 +656,11 @@ Deno.test("export-env exports to JSON format (compact in console mode)", async (
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+  DATABASE_URL: { validator: z.string().url(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -708,10 +718,11 @@ Deno.test("export-env exports to shell format (KEY=value)", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+  DATABASE_URL: { validator: z.string().url(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -737,7 +748,10 @@ Deno.test("export-env exports to shell format (KEY=value)", async () => {
 
       // Check shell output format (KEY=value)
       assertStringIncludes(stdoutOutput, "PORT=8000");
-      assertStringIncludes(stdoutOutput, "DATABASE_URL=postgresql://localhost:5432/db");
+      assertStringIncludes(
+        stdoutOutput,
+        "DATABASE_URL=postgresql://localhost:5432/db",
+      );
     } finally {
       console.log = originalStdout;
     }
@@ -767,9 +781,10 @@ Deno.test("export-env applies prefix to exported variables", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -817,10 +832,11 @@ Deno.test("export-env validates environment variables", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-      DATABASE_URL: { type: "url", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+  DATABASE_URL: { validator: z.string().url(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -880,7 +896,7 @@ Deno.test("export-env validates environment variables", async () => {
   }
 });
 
-Deno.test("export-env uses TSERA_ENV as default environment", async () => {
+Deno.test("export-env uses --env option to specify environment", async () => {
   const tempDir = await Deno.makeTempDir();
   const configDir = `${tempDir}/config/secrets`;
   await Deno.mkdir(configDir, { recursive: true });
@@ -888,19 +904,18 @@ Deno.test("export-env uses TSERA_ENV as default environment", async () => {
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: ["prod"] },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: ["prod"] },
+};`,
   );
 
   const originalCwd = Deno.cwd;
   const originalPort = Deno.env.get("PORT");
-  const originalTseraEnv = Deno.env.get("TSERA_ENV");
 
   try {
     Deno.cwd = () => tempDir;
     Deno.env.set("PORT", "8000");
-    Deno.env.set("TSERA_ENV", "prod");
 
     const capturedStdout: string[] = [];
     const originalStdout = console.log;
@@ -910,9 +925,9 @@ Deno.test("export-env uses TSERA_ENV as default environment", async () => {
     };
 
     try {
-      await exportEnvCommand.parse(["--format", "json"]);
+      await exportEnvCommand.parse(["--format", "json", "--env", "prod"]);
 
-      // Should succeed because TSERA_ENV=prod and PORT is required for prod
+      // Should succeed because --env prod and PORT is provided
       const stdoutOutput = capturedStdout.join("");
       const jsonOutput = JSON.parse(stdoutOutput);
       assertEquals(jsonOutput.PORT, "8000");
@@ -926,11 +941,6 @@ Deno.test("export-env uses TSERA_ENV as default environment", async () => {
       Deno.env.set("PORT", originalPort);
     } else {
       Deno.env.delete("PORT");
-    }
-    if (originalTseraEnv !== undefined) {
-      Deno.env.set("TSERA_ENV", originalTseraEnv);
-    } else {
-      Deno.env.delete("TSERA_ENV");
     }
 
     await Deno.remove(tempDir, { recursive: true });
@@ -965,7 +975,10 @@ Deno.test("export-env throws error when schema not found", async () => {
     } catch (error) {
       if (error instanceof Error && error.message === "exit:1") {
         const stderrOutput = capturedStderr.join("\n");
-        assertStringIncludes(stderrOutput, "config/secrets/env.config.ts not found");
+        assertStringIncludes(
+          stderrOutput,
+          "config/secrets/env.config.ts not found",
+        );
         assertStringIncludes(stderrOutput, "secrets module is installed");
       } else {
         throw error;
@@ -989,9 +1002,10 @@ Deno.test("export-env handles values with special characters in shell format", a
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      MESSAGE: { type: "string", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  MESSAGE: { validator: z.string(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -1043,9 +1057,10 @@ Deno.test("export-env writes to file in config/secrets/ with --file option", asy
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -1097,9 +1112,10 @@ Deno.test("export-env writes pretty JSON to file in config/secrets/", async () =
   const schemaPath = `${configDir}/env.config.ts`;
   await Deno.writeTextFile(
     schemaPath,
-    `export default {
-      PORT: { type: "number", required: true },
-    };`,
+    `import { z } from "zod";
+export default {
+  PORT: { validator: z.coerce.number(), required: true },
+};`,
   );
 
   const originalCwd = Deno.cwd;
@@ -1117,7 +1133,12 @@ Deno.test("export-env writes pretty JSON to file in config/secrets/", async () =
     };
 
     try {
-      await exportEnvCommand.parse(["--format", "json", "--file", "secrets.json"]);
+      await exportEnvCommand.parse([
+        "--format",
+        "json",
+        "--file",
+        "secrets.json",
+      ]);
 
       // Verify file was created in config/secrets/ with pretty JSON
       const outputPath = `${tempDir}/config/secrets/secrets.json`;

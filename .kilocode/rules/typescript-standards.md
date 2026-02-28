@@ -200,7 +200,7 @@ import { z } from "zod";
 
 const UserSchema = z.object({
   id: z.string(),
-  email: z.string().email(),
+  email: z.email(),
   createdAt: z.date(),
 });
 

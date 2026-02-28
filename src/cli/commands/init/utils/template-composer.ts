@@ -245,7 +245,7 @@ async function generateEnvironmentFiles(
     // Pattern matches: from "../../../src/core/secrets.ts" (or any number of ../)
     content = content.replace(
       /from ["'](\.\.\/)*src\/core\/secrets\.ts["']/,
-      'from "tsera/core/secrets.ts"',
+      'from "@tsera/core"',
     );
     await safeWrite(envConfigTarget, content);
     result.copiedFiles.push("config/secrets/env.config.ts");

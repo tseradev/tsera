@@ -33,7 +33,9 @@ export type DeploySyncContext = {
  *
  * @param context - Command context.
  */
-export async function handleDeploySync(context: DeploySyncContext): Promise<void> {
+export async function handleDeploySync(
+  context: DeploySyncContext,
+): Promise<void> {
   const { projectDir, force, global } = context;
   const jsonMode = global.json;
   const logger = createLogger({ json: jsonMode });
@@ -42,7 +44,10 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
   const human = jsonMode ? undefined : new DeploySyncConsole({ projectDir: absoluteProjectDir });
 
   if (jsonMode) {
-    logger.event("deploy:sync:start", { projectDir: absoluteProjectDir, force });
+    logger.event("deploy:sync:start", {
+      projectDir: absoluteProjectDir,
+      force,
+    });
   } else {
     human?.start();
   }
@@ -149,12 +154,16 @@ export async function handleDeploySync(context: DeploySyncContext): Promise<void
       if (!workflowsToRemoveByProvider.has("docker" as DeployProvider)) {
         workflowsToRemoveByProvider.set("docker" as DeployProvider, []);
       }
-      workflowsToRemoveByProvider.get("docker" as DeployProvider)!.push(workflowPath);
+      workflowsToRemoveByProvider.get("docker" as DeployProvider)!.push(
+        workflowPath,
+      );
     }
   }
 
   // Process removals grouped by provider
-  for (const [provider, workflowPaths] of workflowsToRemoveByProvider.entries()) {
+  for (
+    const [provider, workflowPaths] of workflowsToRemoveByProvider.entries()
+  ) {
     const providerName = getProviderName(provider);
 
     if (!jsonMode && workflowPaths.length > 0) {

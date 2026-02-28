@@ -25,7 +25,7 @@ Deno.test("deploy-init: updates deployTargets and calls sync", async () => {
     const configPath = join(configDir, "tsera.config.ts");
     await Deno.writeTextFile(
       configPath,
-      `import type { TseraConfig } from "tsera/cli/definitions.ts";
+      `import type { TseraConfig } from "@tsera/core";
 const config: TseraConfig = {
   openapi: true,
   docs: true,

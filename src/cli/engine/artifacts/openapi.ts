@@ -120,8 +120,12 @@ type GeneratedAtContext = {
   document: unknown;
 };
 
-async function resolveGeneratedAt(context: GeneratedAtContext): Promise<string> {
-  const existing = await readTextFileIfExists(join(context.projectDir, context.path));
+async function resolveGeneratedAt(
+  context: GeneratedAtContext,
+): Promise<string> {
+  const existing = await readTextFileIfExists(
+    join(context.projectDir, context.path),
+  );
   if (!existing) {
     return new Date().toISOString();
   }
